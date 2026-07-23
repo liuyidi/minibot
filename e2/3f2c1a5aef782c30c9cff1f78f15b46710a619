@@ -1,0 +1,75 @@
+docs-plan/README.md
+  s_0232d72a539a79::t_90024602216d29 1-6,8
+  s_0232d72a539a79::t_006d22ae6a0e1f 7
+  s_0232d72a539a79::t_95f38500e9fd49 9
+minibot/src/minibot/api/routes/sessions.py
+  s_0232d72a539a79::t_da4a6634caa0f2 39
+  s_0232d72a539a79::t_d203f435955470 155
+docs/README.md
+  s_0232d72a539a79::t_22af55d9c759fb 66-67
+minibot/src/minibot/static/devui/trace.html
+  s_0232d72a539a79::t_0956109c7f9b55 38,40-43,48,58-59,76,78-79,82-85,89-91,109-117,135-138,140-167,173,199-204,207,209
+  s_0232d72a539a79::t_e2573898eafbcd 1-37,39,44-47,49-57,60-75,77,80-81,86-88,92-108,118-134,139,168-172,174-198,205-206,208,210-378
+minibot/src/minibot/agent/runner.py
+  s_0232d72a539a79::t_0d3f989cc516de 13-49,57,80-107,119-127,133,153-168,172-179,181-182,185-187,194-211,217,222-231,237
+minibot/tests/test_api.py
+  s_0232d72a539a79::t_6c1df3a672b77d 61-69
+  s_0232d72a539a79::t_dfbfbf88c9c52c 51-60
+docs-plan/minibot-core-impact.md
+  s_0232d72a539a79::t_2765242126900a 292-303
+  s_0232d72a539a79::t_a7ee0477dfe064 1-291,304-327,329-331
+  s_0232d72a539a79::t_1e8d4c1eff35f7 328
+minibot/pyproject.toml
+  s_0232d72a539a79::t_80c0e7700e8d66 24-26
+minibot/src/minibot/static/devui/index.html
+  s_0232d72a539a79::t_9bf178f96fb51c 295-296,306,308-309
+  s_0232d72a539a79::t_aded35ec377d62 9,21-41,101,103,117,136-137,163,169,186,195,209,235
+  s_0232d72a539a79::t_ff5f0b76282fed 440-444,453-455,458
+  s_0232d72a539a79::t_0a9ab503392fc9 213,218-219
+  s_0232d72a539a79::t_8d61fb82822070 7,63-77,90,207,214-217,220-221,234,255-257,279-280,286,297-305,307,446-452,467,502,538,541,555,574-580
+  s_0232d72a539a79::t_6d4ec38e50abd5 445
+  s_0232d72a539a79::t_1cd81789b14cae 568-573,581-582
+  s_0232d72a539a79::t_735b5884520efd 1-6,8,10-20,42-62,78-89,91-100,102,104-116,118-135,138-162,164-168,170-185,187-194,196-206,208,210-212,222-233,236-254,259-278,281-285,287-294,310-439,456-457,459-466,468-501,503-537,539-540,542-554,556-567,583-606
+  s_0232d72a539a79::t_85e588f0cb4638 258
+docs/server.md
+  s_0232d72a539a79::t_c73e9f342a8591 30-39,51
+  s_0232d72a539a79::t_4dc971ae50498d 55-56
+minibot/src/minibot/static/devui/common.js
+  s_0232d72a539a79::t_7fc72658b535f3 1-138
+minibot/src/minibot/api/ws.py
+  s_0232d72a539a79::t_2e91dce7b5e8c9 179-188
+  s_0232d72a539a79::t_7e1e1253bb4705 69
+minibot/tests/test_runner_trace.py
+  s_0232d72a539a79::t_100c4364849a9d 1-4,6-32,34-48,56-73
+  s_0232d72a539a79::t_1eef27f9e8a50f 5,33,49-55
+minibot/src/minibot/main.py
+  s_0232d72a539a79::t_95e9ff5dbc777b 6,11-12,18-19,41-44,50-53
+docs-plan/minibot-fastapi-migration.md
+  s_0232d72a539a79::t_3877c76c283489 172-185
+  s_0232d72a539a79::t_ea972a941b79a6 232
+  s_0232d72a539a79::t_991a75d43f791a 56-63
+  s_0232d72a539a79::t_77afba854a3703 1-55,64-171,186-231
+docs-plan/minibot-current-status.md
+  s_0232d72a539a79::t_c4ba704ae18d1b 1-106,108-231
+  s_0232d72a539a79::t_4ce23f3e4cab3e 107
+minibot/README.md
+  s_0232d72a539a79::t_3906d3894e6dcd 30-31
+  s_0232d72a539a79::t_f01646a4cbe87c 33-35
+  s_0232d72a539a79::t_b51a0108e7a0a1 28-29,32
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.35-trip",
+  "base_commit_sha": "e23f2c1a5aef782c30c9cff1f78f15b46710a619",
+  "prompts": {},
+  "sessions": {
+    "s_0232d72a539a79": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "42fdadbe-87e9-48ea-8c4f-32032541d97b",
+        "model": "default"
+      },
+      "human_author": "liuyidi <liuyidi1993@gmail.com>"
+    }
+  }
+}
