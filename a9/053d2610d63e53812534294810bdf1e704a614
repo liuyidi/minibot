@@ -1,0 +1,85 @@
+docs-plan/phase-1.5-subagent.md
+  s_0232d72a539a79::t_50edcd9858c63b 1-2,4-5,7-11,13-17,19,21,23
+  s_0232d72a539a79::t_ccfcc5fc7d616a 3,6,12,18,20,22,24
+minibot/src/minibot/api/routes/sessions.py
+  s_0232d72a539a79::t_033f276623b1d1 91-92,100,102-106,110,116
+minibot/src/minibot/static/devui/index.html
+  s_0232d72a539a79::t_6b75a549f2f27b 905,907
+  s_0232d72a539a79::t_08d6fbdabd5f56 606-609,612-636
+  s_0232d72a539a79::t_676b627d590f76 1280-1283
+  s_0232d72a539a79::t_cb8d7b9a2880a3 944,948-949
+  s_0232d72a539a79::t_914b76510b5695 967
+minibot/src/minibot/agent/tools/spawn.py
+  s_0232d72a539a79::t_d9a1b9a4eefe38 1-154
+minibot/src/minibot/agent/loop.py
+  s_0232d72a539a79::t_2ef47a28822306 64-68
+  s_0232d72a539a79::t_3365d53a2d8163 174-175,182-189,196,205,208-255,257,264-293
+  s_0232d72a539a79::t_8eaf0983d11695 256,258-263
+  s_0232d72a539a79::t_a6b44d25857a3e 125,127-129
+  s_0232d72a539a79::t_16e3df7797a4ee 158-161
+minibot/src/minibot/static/devui/common.js
+  s_0232d72a539a79::t_1a56e6918b58bd 176
+minibot/src/minibot/static/devui/context.html
+  s_0232d72a539a79::t_f572e4b4a86d6a 1-72,76-78,80-87,99-136,139-159,169-204
+  s_0232d72a539a79::t_153e614cbba71d 73-75,79,88-98
+  s_0232d72a539a79::t_03c5924752032d 137-138,160-168
+docs-plan/phase-3a-context.md
+  s_0232d72a539a79::t_20d06a656d0270 1-2,4-9,11,14-19,21-24
+  s_0232d72a539a79::t_34936bf82dc4de 3,10,12-13,20
+minibot/src/minibot/agent/context.py
+  s_0232d72a539a79::t_36162ca059d502 1-140
+minibot/src/minibot/static/devui/tools.html
+  s_0232d72a539a79::t_0a35b49d49197b 68,74-75,87-90
+  s_0232d72a539a79::t_3b39cfb8b64da8 129-130,160-172,194
+minibot/src/minibot/config/app_config.py
+  s_0232d72a539a79::t_125f4e355590fd 23-26
+minibot/tests/test_context_phase3a.py
+  s_0232d72a539a79::t_782f9b6e389354 62-73,83,87-88,90
+  s_0232d72a539a79::t_db5342f9d2d738 1-61,74-82,84-86,89,91-109
+minibot/src/minibot/app_state.py
+  s_0232d72a539a79::t_f9b2574aad803b 102-104
+docs-plan/minibot-fastapi-migration.md
+  s_0232d72a539a79::t_459bc90cf6f077 287
+  s_0232d72a539a79::t_2702062edf2270 1080
+  s_0232d72a539a79::t_7972f7b75ebf2a 577-578,587-588
+  s_0232d72a539a79::t_5c3ce47adf63fb 1124
+  s_0232d72a539a79::t_0541735cdaf5ed 627,629-631,633-637,639,641
+  s_0232d72a539a79::t_b09a8b060099e2 575,581-585,590,592
+  s_0232d72a539a79::t_61cc615a32ceba 1108
+  s_0232d72a539a79::t_14502dd23d6405 1153
+  s_0232d72a539a79::t_5b071c91254083 1110
+  s_0232d72a539a79::t_b82a8c9c7db479 643-657,659
+  s_0232d72a539a79::t_13eadb130c0a0b 327,331-332,334-337,339-340,343
+minibot/src/minibot/agent/tools/builtin.py
+  s_0232d72a539a79::t_c9ef604b90ac93 32-33
+minibot/src/minibot/api/routes/misc.py
+  s_0232d72a539a79::t_25ccb33ef2306c 267-278,286
+  s_0232d72a539a79::t_54260f318401c1 201-228
+  s_0232d72a539a79::t_bb05ac544ff43a 7
+  s_0232d72a539a79::t_1d78cc2b1d66e9 243-246
+  s_0232d72a539a79::t_99a6c62528f2c6 182-198,237-238,248,253-259
+minibot/tests/test_spawn_phase15.py
+  s_0232d72a539a79::t_af2e910181e78a 1-49,51-83
+  s_0232d72a539a79::t_199f64df215039 50
+minibot/src/minibot/session/store.py
+  s_0232d72a539a79::t_8bd05b29e7ae3d 201-213
+  s_0232d72a539a79::t_2b82ab4b946e61 35
+  s_0232d72a539a79::t_0a4f980fc31b6e 230,250-251,260
+  s_0232d72a539a79::t_cc088d08902239 275
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.38-trip",
+  "base_commit_sha": "a9053d2610d63e53812534294810bdf1e704a614",
+  "prompts": {},
+  "sessions": {
+    "s_0232d72a539a79": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "42fdadbe-87e9-48ea-8c4f-32032541d97b",
+        "model": "default"
+      },
+      "human_author": "liuyidi <liuyidi1993@gmail.com>"
+    }
+  }
+}
