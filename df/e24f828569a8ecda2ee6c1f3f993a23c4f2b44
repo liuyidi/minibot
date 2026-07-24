@@ -1,0 +1,86 @@
+minibot/src/minibot/agent/tools/base.py
+  s_0232d72a539a79::t_29d510195c3790 12-13
+minibot/src/minibot/security/workspace_access.py
+  s_0232d72a539a79::t_cd1285edb0ea8f 1-76
+minibot/src/minibot/security/__init__.py
+  s_0232d72a539a79::t_8283b1099d5710 1-20
+minibot/src/minibot/agent/tools/web.py
+  s_0232d72a539a79::t_d3d8e41175c0d4 1-104
+minibot/src/minibot/agent/tools/shell.py
+  s_0232d72a539a79::t_89f6bbbcfb9d50 119,126
+  s_0232d72a539a79::t_327e64ed1bd992 1-5,7,9-19,22-118,120-125,127-142
+  s_0232d72a539a79::t_92debda2425b89 6,8,20-21
+minibot/src/minibot/api/routes/misc.py
+  s_0232d72a539a79::t_7f4dbca876e416 192,200-201,203-204,208,212,216
+  s_0232d72a539a79::t_e04b8f2d76000c 179-191,193-199,202,205-207,209-211,213-215,217-219
+minibot/src/minibot/app_state.py
+  s_0232d72a539a79::t_700e8ca2cd5394 88
+  s_0232d72a539a79::t_6f22ee78108df4 12
+minibot/src/minibot/agent/tools/search.py
+  s_0232d72a539a79::t_fb92fbef1873ce 1-149
+minibot/src/minibot/agent/tools/registry.py
+  s_0232d72a539a79::t_4c2f077cfed0ca 1,5-6,10-28,34,45-67,71-73,75-77,79-91,93-120
+minibot/src/minibot/static/devui/index.html
+  s_0232d72a539a79::t_2e07fcfcece03b 193-203
+  s_0232d72a539a79::t_7968b8fabe7450 642,644-645,659-681,713-742,744-750
+  s_0232d72a539a79::t_1858fd10335574 684
+  s_0232d72a539a79::t_fb22196624321d 682-683,685-712,743,751-752
+  s_0232d72a539a79::t_1cab7640320413 205-241
+  s_0232d72a539a79::t_c0314061060996 942
+  s_0232d72a539a79::t_d857f60a393dc5 1074-1075
+  s_0232d72a539a79::t_39b3d7d8737249 1016-1019,1028,1030
+  s_0232d72a539a79::t_b9958e96b30d01 1119,1142-1162
+minibot/src/minibot/security/network.py
+  s_0232d72a539a79::t_31400a1f01e6b1 1-116
+minibot/tests/test_tools_phase1.py
+  s_0232d72a539a79::t_40bd4c9fab89a8 5,39-119
+  s_0232d72a539a79::t_53cc5bd4a55cfb 1-4,6-38,120-144
+docs-plan/minibot-fastapi-migration.md
+  s_0232d72a539a79::t_1499c1e9751cb5 549,556,558-565,567,569
+  s_0232d72a539a79::t_8dc4d21261e3d0 1103
+  s_0232d72a539a79::t_4b3116c98192a4 284
+  s_0232d72a539a79::t_363ea6354b6d1b 1088-1089,1092
+  s_0232d72a539a79::t_64153645620ce1 369
+  s_0232d72a539a79::t_45691a5bbb79bb 1138
+  s_0232d72a539a79::t_5677bdda767941 285
+  s_0232d72a539a79::t_7bb8e7eb787a66 332-333
+minibot/src/minibot/static/devui/common.js
+  s_0232d72a539a79::t_6633a546043ce4 175
+minibot/src/minibot/agent/tools/builtin.py
+  s_0232d72a539a79::t_9d21682ea0028e 1-36
+docs-plan/README.md
+  s_0232d72a539a79::t_880412a3416418 16
+minibot/tests/test_api.py
+  s_0232d72a539a79::t_98470a08c38ec4 60-64
+minibot/src/minibot/static/devui/tools.html
+  s_0232d72a539a79::t_380996cf1654e9 1-179
+minibot/src/minibot/static/devui/trace.html
+  s_0232d72a539a79::t_3cf08a16b5c032 302
+  s_0232d72a539a79::t_d6f2981ae14ca2 435-458
+  s_0232d72a539a79::t_247af5c926cb7e 466-557,579-603
+  s_0232d72a539a79::t_3e14f1e11e7ee1 184-215
+  s_0232d72a539a79::t_be87fa87b650a4 289-291,295
+docs-plan/when-i-paste-a-url-llm-tools.md
+  s_0232d72a539a79::t_a6e3134289fbc7 1-287
+minibot/src/minibot/agent/tools/filesystem.py
+  s_0232d72a539a79::t_b6557727cb64d6 1-264
+minibot/src/minibot/agent/loop.py
+  s_0232d72a539a79::t_2fe96da619f665 119,148-149
+  s_0232d72a539a79::t_168d9cb4e0a090 22
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.38-trip",
+  "base_commit_sha": "dfe24f828569a8ecda2ee6c1f3f993a23c4f2b44",
+  "prompts": {},
+  "sessions": {
+    "s_0232d72a539a79": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "42fdadbe-87e9-48ea-8c4f-32032541d97b",
+        "model": "default"
+      },
+      "human_author": "liuyidi <liuyidi1993@gmail.com>"
+    }
+  }
+}
