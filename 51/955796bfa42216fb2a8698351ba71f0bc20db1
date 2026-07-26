@@ -1,0 +1,77 @@
+minibot/src/minibot/cron/store.py
+  s_0232d72a539a79::t_7a3774a51aaeca 1-44
+minibot/src/minibot/static/devui/common.js
+  s_0232d72a539a79::t_baca1ad4ad0df3 206
+minibot/src/minibot/bus/worker.py
+  s_0232d72a539a79::t_e417dc7cf1ce06 69-72,81,83-96,102,105,115-123
+minibot/src/minibot/static/devui/index.html
+  s_0232d72a539a79::t_e3f52644a7974a 1679
+minibot/src/minibot/cron/schedule.py
+  s_0232d72a539a79::t_3b7c150c407230 1-81
+minibot/tests/test_cron_phase4.py
+  s_0232d72a539a79::t_70a44b6be4f19e 156-176
+  s_0232d72a539a79::t_5c9635896f3437 94-155
+  s_0232d72a539a79::t_7bd5431d9a5296 1-93
+docs-plan/phase-4-cron.md
+  s_0232d72a539a79::t_0393a628541031 1-2,4-13,15-17,19-25
+  s_0232d72a539a79::t_401c3aba7c4601 3,14,18,26
+docs-plan/minibot-fastapi-migration.md
+  s_0232d72a539a79::t_7e169eacc55be2 343,346-358
+  s_0232d72a539a79::t_cd367b7b8ed284 1187
+  s_0232d72a539a79::t_4f0728711741d4 286-288,290-292,297-298
+  s_0232d72a539a79::t_292d1484b53746 212,214-216,219-223,225
+  s_0232d72a539a79::t_e1362bcbf0e5b5 1042-1060
+  s_0232d72a539a79::t_a04805ff3d93be 1,6-8,11
+  s_0232d72a539a79::t_265a0f341cb97b 1094-1099
+  s_0232d72a539a79::t_5c17bc55ac02ec 1101
+  s_0232d72a539a79::t_6d43953b803373 328,330,334-342,344-345,361,367,370-372
+  s_0232d72a539a79::t_01db9ea508c3ff 1110-1113,1116,1118,1120-1124,1126-1134,1137-1141,1147-1152,1154-1181,1188-1189,1191-1194,1199,1201-1203,1205-1207,1209
+  s_0232d72a539a79::t_f3748c097cbf0f 1204
+  s_0232d72a539a79::t_af805912457a37 289
+  s_0232d72a539a79::t_ea5ee567f6f68a 1135-1136,1142-1146
+  s_0232d72a539a79::t_0893710ba647f3 331
+  s_0232d72a539a79::t_4f580692df341c 63
+minibot/src/minibot/cron/service.py
+  s_0232d72a539a79::t_b7510cd5140305 36,40,42-58
+  s_0232d72a539a79::t_3036b470f52c82 41
+  s_0232d72a539a79::t_dbcad06f75e464 1-35,37-39,59-265
+minibot/src/minibot/cron/types.py
+  s_0232d72a539a79::t_6cef45190490be 1-93
+minibot/docs/superpowers/specs/2026-07-26-phase4-cron-design.md
+  s_0232d72a539a79::t_8db8ec4f3cb74a 1-46
+minibot/src/minibot/static/devui/automations.html
+  s_0232d72a539a79::t_9f20f585ddaa6e 136-137,141-164,181,329
+  s_0232d72a539a79::t_23343671c7eb97 1-135,138-140,165-180,182-328,330-338
+minibot/pyproject.toml
+  s_0232d72a539a79::t_4ae1c712e816d2 11
+minibot/src/minibot/main.py
+  s_0232d72a539a79::t_cc9171aaf7bcd2 14
+  s_0232d72a539a79::t_dbc59b13c72af2 75
+  s_0232d72a539a79::t_d62df6e41b9c8a 34-38,42-44
+minibot/src/minibot/api/routes/automations.py
+  s_0232d72a539a79::t_b6f7b17c324d8a 1-52,55-119
+  s_0232d72a539a79::t_2b09ad2a395461 53-54
+minibot/src/minibot/app_state.py
+  s_0232d72a539a79::t_ac0ed705ae6476 5,21
+  s_0232d72a539a79::t_c298eb5e535f2e 147
+  s_0232d72a539a79::t_91e47736014bf5 126-127,131-133,150
+  s_0232d72a539a79::t_0df94c615fe710 20
+  s_0232d72a539a79::t_ad2968b3b1f6c3 124-125,128-130,134-146,148-149
+  s_0232d72a539a79::t_3cfd479f1d0ae9 42
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.38-trip",
+  "base_commit_sha": "51955796bfa42216fb2a8698351ba71f0bc20db1",
+  "prompts": {},
+  "sessions": {
+    "s_0232d72a539a79": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "42fdadbe-87e9-48ea-8c4f-32032541d97b",
+        "model": "default"
+      },
+      "human_author": "liuyidi <liuyidi1993@gmail.com>"
+    }
+  }
+}
