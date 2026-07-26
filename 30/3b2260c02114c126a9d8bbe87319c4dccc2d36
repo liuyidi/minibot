@@ -1,0 +1,171 @@
+minibot/.env.example
+  s_6d7f85b34e18a1::t_1b7b679d45a99a 1-11
+minibot/src/minibot/static/devui/trace.html
+  s_0232d72a539a79::t_cff27fcf301634 402-412,416
+  s_0232d72a539a79::t_cacfe1b4208870 637-647,658
+  s_0232d72a539a79::t_6b8547c60ecdd4 231-280
+  s_0232d72a539a79::t_031685dd59d2ed 7
+  s_0232d72a539a79::t_ffa6f0a60e4d54 367
+  s_0232d72a539a79::t_b6bd3cfdd6080b 492-495,497-500,506
+  s_0232d72a539a79::t_939e8ab41cd3bb 351-352
+  s_0232d72a539a79::t_02018e7e0e8a66 427-474
+minibot/docs/superpowers/specs/2026-07-26-minibot-mini-langfuse-design.md
+  s_6d7f85b34e18a1::t_cb39cd877b1ac7 7,18,20-22,32
+  s_6d7f85b34e18a1::t_04d352694a5666 1-6,8-17,19,23-31
+minibot/src/minibot/static/devui/skills.html
+  s_0232d72a539a79::t_7cb604af73d647 1-214
+minibot/src/minibot/config/settings.py
+  s_6d7f85b34e18a1::t_b353517a2eb8b4 33-38
+minibot/src/minibot/agent/tools/builtin.py
+  s_0232d72a539a79::t_750d68e6e2e559 7,15,27-28,35-37
+minibot/src/minibot/static/devui/tools.html
+  s_0232d72a539a79::t_4d021943cd8152 169-182,186,188-194,197-207
+  s_0232d72a539a79::t_eda2f4311499c9 45-48,52,104,116
+  s_0232d72a539a79::t_f3c2728cbc25f2 63-96
+  s_0232d72a539a79::t_ece508c560edad 7
+  s_0232d72a539a79::t_5d06274d24f939 105-106
+  s_0232d72a539a79::t_9cddbbcef10ea0 195-196
+minibot/tests/test_trace_context_meta.py
+  s_0232d72a539a79::t_7d76c41736cf19 1-55
+minibot/src/minibot/agent/tools/registry.py
+  s_0232d72a539a79::t_065425af483b42 15-26,29-42
+  s_0232d72a539a79::t_80a0e1f23c4198 76,83-126,129
+  s_0232d72a539a79::t_f1a87d5e27f49d 137
+  s_0232d72a539a79::t_7f00376b4e4a34 27-28
+minibot/src/minibot/api/routes/misc.py
+  s_0232d72a539a79::t_ef24eba77f7f41 210-237,268-364
+  s_0232d72a539a79::t_15940a8d9934d0 31-41
+  s_0232d72a539a79::t_936c592dfc798a 373-376,379,383-384,421-422
+minibot/src/minibot/static/devui/common.js
+  s_0232d72a539a79::t_30f578483bbace 284-286
+  s_0232d72a539a79::t_51db2da262a1a6 140-165,170,173
+  s_0232d72a539a79::t_a5e2017012bac5 203-204
+minibot/src/minibot/api/ws.py
+  s_6d7f85b34e18a1::t_b133946a8627c4 96
+minibot/tests/test_workspace.py
+  s_0232d72a539a79::t_be402224eda556 38,53-63
+minibot/src/minibot/api/routes/sessions.py
+  s_6d7f85b34e18a1::t_ea28036c54e37a 220,222-275
+  s_6d7f85b34e18a1::t_d9860bd45c8bb2 42-54
+  s_0232d72a539a79::t_2ef4e67558fd76 115-118,122-130,139-140
+minibot/src/minibot/agent/memory.py
+  s_0232d72a539a79::t_d71c8c27f42b0b 1-63
+minibot/src/minibot/agent/tools/memory_tools.py
+  s_0232d72a539a79::t_81036ae4d10d7a 1-67
+minibot/src/minibot/static/devui/index.html
+  s_0232d72a539a79::t_3d23d8b7e5bd07 1030
+  s_6d7f85b34e18a1::t_268bda037491a7 628-629
+  s_0232d72a539a79::t_ee4591890e9394 1344-1346
+  s_6d7f85b34e18a1::t_bb9d1744efed6b 554-559
+  s_0232d72a539a79::t_3ab2ceb9f77573 1348-1349
+  s_6d7f85b34e18a1::t_e9fcc6a2ad6101 1140
+  s_6d7f85b34e18a1::t_7ac7ba4a93535b 695-734
+  s_0232d72a539a79::t_d8144252aca7db 1246
+  s_0232d72a539a79::t_172c4d6a27dfe5 1272
+  s_6d7f85b34e18a1::t_c548e7ff5a24b7 1303-1304
+  s_0232d72a539a79::t_5b8d13494824fd 1366-1367
+  s_6d7f85b34e18a1::t_1f262c02771cee 205-221
+  s_6d7f85b34e18a1::t_1b0fcfffd6ba09 603
+  s_6d7f85b34e18a1::t_1690b7fbd468cc 1209-1223
+  s_0232d72a539a79::t_c57f2e1b3ac4b2 654-665,667,670,673-675
+minibot/src/minibot/skills/github/SKILL.md
+  s_0232d72a539a79::t_306d228361b108 1-19
+minibot/README.md
+  s_6d7f85b34e18a1::t_285e0b4d22722e 41
+  s_0232d72a539a79::t_dbd51ba644f5f1 43-46
+  s_6d7f85b34e18a1::t_2b1441bd0c89ff 28-40,42
+minibot/tests/test_dev_memory_skills_ui.py
+  s_0232d72a539a79::t_6f08263c66abb6 1-48
+minibot/src/minibot/agent/runner.py
+  s_6d7f85b34e18a1::t_91b7255cce22f2 79
+  s_6d7f85b34e18a1::t_ef8824feea60da 13
+  s_6d7f85b34e18a1::t_4195a646861e18 151
+  s_6d7f85b34e18a1::t_44f3806bb1e406 96
+  s_6d7f85b34e18a1::t_ce906fb80143f7 144-146,148-150,152-185,255-262
+  s_0232d72a539a79::t_8a222655262f74 95,107,118-119,126,138-140
+minibot/src/minibot/workspace.py
+  s_0232d72a539a79::t_afd331b2b65c92 13-22,29-30
+minibot/src/minibot/static/devui/memory.html
+  s_0232d72a539a79::t_28dd7a3eadccd3 1-212
+minibot/src/minibot/agent/context.py
+  s_0232d72a539a79::t_d90ebf043dabd9 31-70
+  s_0232d72a539a79::t_30f3872b419fad 1,9-11,28-29,106,109-110,121-141,152-153,182-186,197-205
+minibot/pyproject.toml
+  s_0232d72a539a79::t_d179418a65b8c6 26
+minibot/src/minibot/static/devui/context.html
+  s_0232d72a539a79::t_731bf78115b0b0 81
+  s_0232d72a539a79::t_7cd0d5bc12d836 145
+  s_0232d72a539a79::t_a6662956192cac 26,66-67,75-77,91,93-97,156-157,165-169
+minibot/src/minibot/agent/skills.py
+  s_0232d72a539a79::t_736244c2ba51c1 1-96,99-100,103-114,116,133,135,141
+  s_0232d72a539a79::t_112c9871bbd331 115,117-132,134,136-140
+  s_0232d72a539a79::t_5660f6cef55a13 97-98,101-102
+minibot/docs/superpowers/plans/2026-07-26-minibot-mini-langfuse.md
+  s_6d7f85b34e18a1::t_8e192e202933dc 1-13
+minibot/src/minibot/observability/__init__.py
+  s_6d7f85b34e18a1::t_4a38eb3f1b791f 1-5
+minibot/tests/test_langfuse_adapter.py
+  s_6d7f85b34e18a1::t_e56983e11faaa0 40,44-45
+  s_6d7f85b34e18a1::t_43a22ad0bd43f6 1-39,41-43,46-56
+docs-plan/minibot-fastapi-migration.md
+  s_0232d72a539a79::t_c547b177711dce 1153
+  s_0232d72a539a79::t_69796c544243ac 1125
+minibot/src/minibot/skills/memory/SKILL.md
+  s_0232d72a539a79::t_104a058bfa975d 1-26
+minibot/src/minibot/observability/langfuse.py
+  s_6d7f85b34e18a1::t_5cde44ff4790be 1-4,8-11,13-18,21-22,25-97,99-103,132,182-218,220-247,249-264
+  s_6d7f85b34e18a1::t_ae7e8596df51ec 5-7,12,19-20,23-24,98,104-131,133-181,219,248,265-276
+minibot/src/minibot/api/routes/settings.py
+  s_6d7f85b34e18a1::t_6fb0f96bd68e61 61-65
+minibot/tests/test_langfuse_phase_c.py
+  s_6d7f85b34e18a1::t_b5affa88826bc7 1-44
+minibot/tests/test_memory_skills_phase3b.py
+  s_0232d72a539a79::t_892a22290e6f6d 1-121
+minibot/src/minibot/skills/summarize/SKILL.md
+  s_0232d72a539a79::t_78362ebaaf7de6 1-16
+docs-plan/phase-3b-memory-skills.md
+  s_0232d72a539a79::t_164a040a5775fe 1-2,4-7,16-20,23-25
+  s_0232d72a539a79::t_a08ae0f0e3fdb9 3,8-14,21-22,26-32
+  s_0232d72a539a79::t_6680b124578a42 15
+minibot/src/minibot/bus/worker.py
+  s_6d7f85b34e18a1::t_2194abfd7c7458 89
+minibot/src/minibot/main.py
+  s_6d7f85b34e18a1::t_1d0dfd1a1202e0 23-24,27,35
+minibot/tests/test_api.py
+  s_6d7f85b34e18a1::t_1fb4412962be86 69-90
+  s_6d7f85b34e18a1::t_1f382e9bdef10c 45-46
+  s_6d7f85b34e18a1::t_18694ffe19e6ab 91
+minibot/src/minibot/agent/loop.py
+  s_6d7f85b34e18a1::t_126b50fc7f459a 347-349,358,369
+  s_0232d72a539a79::t_e870110cfb66dd 210
+  s_6d7f85b34e18a1::t_550af1b73f0f50 277-291,293-306
+  s_6d7f85b34e18a1::t_79c8ee5a70944d 65
+  s_6d7f85b34e18a1::t_a34c24c30f8661 211-213,224-225,234
+  s_6d7f85b34e18a1::t_9bcbb6b5ffa4c1 129,132-162,164,168-180
+  s_6d7f85b34e18a1::t_2e628574a20a1b 163,165-167
+  s_0232d72a539a79::t_ee1c7ed6a46760 217,221-223,233
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.38-trip",
+  "base_commit_sha": "303b2260c02114c126a9d8bbe87319c4dccc2d36",
+  "prompts": {},
+  "sessions": {
+    "s_0232d72a539a79": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "42fdadbe-87e9-48ea-8c4f-32032541d97b",
+        "model": "default"
+      },
+      "human_author": "liuyidi <liuyidi1993@gmail.com>"
+    },
+    "s_6d7f85b34e18a1": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "88a3d5a1-260b-4346-82aa-244915858d5b",
+        "model": "default"
+      },
+      "human_author": "liuyidi <liuyidi1993@gmail.com>"
+    }
+  }
+}
