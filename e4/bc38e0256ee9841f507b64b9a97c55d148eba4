@@ -1,0 +1,19 @@
+minibot/docs/superpowers/specs/2026-07-26-multi-provider-presets-design.md
+  s_0232d72a539a79::t_7bf20a578db0ae 1-147
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.38-trip",
+  "base_commit_sha": "e4bc38e0256ee9841f507b64b9a97c55d148eba4",
+  "prompts": {},
+  "sessions": {
+    "s_0232d72a539a79": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "42fdadbe-87e9-48ea-8c4f-32032541d97b",
+        "model": "default"
+      },
+      "human_author": "liuyidi <liuyidi1993@gmail.com>"
+    }
+  }
+}
