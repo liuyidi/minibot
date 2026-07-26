@@ -1,0 +1,94 @@
+minibot/docs/superpowers/plans/2026-07-26-phase5-mcp-presets.md
+  s_0232d72a539a79::t_ea2a03b4e6fb2c 1-73
+minibot/src/minibot/static/devui/mcp.html
+  s_0232d72a539a79::t_41c17776701a26 249,251
+  s_0232d72a539a79::t_1592c7bca333f0 574-608
+  s_0232d72a539a79::t_649594e3f6232f 655
+  s_0232d72a539a79::t_561183485ad97a 129-130,134-139,143,147,149,160,162-164,174-186,188,193-198,201
+  s_0232d72a539a79::t_11f9ee7048ba3c 243,246,255-274
+  s_0232d72a539a79::t_b02b115a5163aa 1-41,43-45,62-128,131-133,140-142,144-146,148,150-159,161,165-173,187,189-192,199-200,202-242,244-245,247-248,250,252-254,275-283,292-298,300-314,316,318-376,382,387-390,407-408,450-451,485-490,494-573,609-654,656-666
+  s_0232d72a539a79::t_b93050d8537d15 427-434
+  s_0232d72a539a79::t_2b4d33eeda31fd 377-381,383-386,391-406,409-426,435-449,452-484,491-493
+  s_0232d72a539a79::t_4f639429d621c3 284-291,299,315,317
+  s_0232d72a539a79::t_0875fc28598884 42,46-61
+minibot/src/minibot/agent/tools/registry.py
+  s_0232d72a539a79::t_ef694f5ce33075 38,42
+  s_0232d72a539a79::t_dee69995211e78 68-76
+  s_0232d72a539a79::t_5440592a491e3e 86-92,98,101
+minibot/src/minibot/agent/tools/mcp.py
+  s_0232d72a539a79::t_1e98cc31547e05 10,27-28
+  s_0232d72a539a79::t_f6c708ec5290d6 58
+  s_0232d72a539a79::t_3ade101ad57eb5 1-9,11-26,29-57,59-119,129,131-144,159-164,178-179,193-199,213-220,222-233,236-248,302-311,313-324,327-358,360,421-430,432-433,440-451,453-455,457-460,462,477-480,482-490,496-498,507-513,515-517,519-522,524-527,529-532,534-538,548-565,567,569-646
+  s_0232d72a539a79::t_239ab6fdc1108e 120-128,130,145-158,165-177,180-192,200-212,221,234-235,249-301,312,325-326,359,361-420,431,434-439,452,456,461,463-476,481,491-495,499-506,514,518,523,528,533,539-547,566,568
+minibot/src/minibot/api/routes/settings.py
+  s_0232d72a539a79::t_5ca485311404f5 221-298
+  s_0232d72a539a79::t_388e4a95f4fa17 21,24
+  s_0232d72a539a79::t_9d39ee380279f2 202-220,299-418
+  s_0232d72a539a79::t_014b0ebec4483d 18-20,22-23,25-28
+minibot/tests/test_mcp_presets.py
+  s_0232d72a539a79::t_206481df92d0b2 80-82,87,97-101,109-111,121-125
+  s_0232d72a539a79::t_0ff86f586b20d0 151-176,183-184
+  s_0232d72a539a79::t_c7f6a14c7ba26e 1-4,6-79,83-86,88-96,102-108,112-120,126-130,133-137,139-141,143,145-148
+  s_0232d72a539a79::t_a96053d2982b1a 131-132,138,142,144,149-150,177-182
+  s_0232d72a539a79::t_2d94fd0881b9f2 5
+minibot/pyproject.toml
+  s_0232d72a539a79::t_f6cbcc44a058ce 10
+minibot/src/minibot/api/routes/sessions.py
+  s_0232d72a539a79::t_816ac3cccdea2c 138-142
+docs-plan/minibot-fastapi-migration.md
+  s_0232d72a539a79::t_8ac8cb254e4d59 1155
+  s_0232d72a539a79::t_3814ce57d24b2d 1127
+  s_0232d72a539a79::t_3e1283a05127e2 289
+minibot/README.md
+  s_0232d72a539a79::t_c84d5abd3257e7 43-52
+minibot/docs/superpowers/specs/2026-07-26-phase5-mcp-presets-design.md
+  s_0232d72a539a79::t_b54d03f0714fc9 1-73
+minibot/src/minibot/api/routes/misc.py
+  s_0232d72a539a79::t_36adfc5780cd71 58-60,62-66,68-70
+  s_0232d72a539a79::t_fccbba08d36318 61,67
+minibot/src/minibot/app_state.py
+  s_0232d72a539a79::t_32da98c3faf5c1 13,38,73,75-76,92,117
+minibot/src/minibot/config/mcp_presets.py
+  s_0232d72a539a79::t_ac0fdb658d19a6 18
+  s_0232d72a539a79::t_397c7d8539f146 194-292
+  s_0232d72a539a79::t_5121c8c0cb9df1 1-17,19-193
+minibot/src/minibot/static/devui/common.js
+  s_0232d72a539a79::t_7790387c66c456 205,226,233-236
+docs-plan/phase-5-mcp.md
+  s_0232d72a539a79::t_86f84d2d21ac69 1-2,4-6,8,13-16
+  s_0232d72a539a79::t_c3f6000c4a1685 3,7,9-12,17-24
+minibot/src/minibot/config/app_config.py
+  s_0232d72a539a79::t_016ece068479c9 18,38-39
+  s_0232d72a539a79::t_829688a431e0fb 132
+minibot/src/minibot/static/devui/tools.html
+  s_0232d72a539a79::t_fc106dd98967e3 107
+minibot/src/minibot/main.py
+  s_0232d72a539a79::t_593b00e1e678a3 31-33,37-38
+  s_0232d72a539a79::t_547b110a5e926f 5
+minibot/.env.example
+  s_6d7f85b34e18a1::t_dfc394b1feb496 9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.38-trip",
+  "base_commit_sha": "4d2cf000e64035af3b3689cb18080da5b8e618eb",
+  "prompts": {},
+  "sessions": {
+    "s_0232d72a539a79": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "42fdadbe-87e9-48ea-8c4f-32032541d97b",
+        "model": "default"
+      },
+      "human_author": "liuyidi <liuyidi1993@gmail.com>"
+    },
+    "s_6d7f85b34e18a1": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "88a3d5a1-260b-4346-82aa-244915858d5b",
+        "model": "default"
+      },
+      "human_author": "liuyidi <liuyidi1993@gmail.com>"
+    }
+  }
+}
