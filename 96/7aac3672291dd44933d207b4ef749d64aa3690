@@ -1,0 +1,21 @@
+minibot/tests/test_memory_skills_phase3b.py
+  s_0232d72a539a79::t_78ebfd7f9f89d7 47
+minibot/src/minibot/skills/skill-creator/SKILL.md
+  s_0232d72a539a79::t_f129f5a820e002 273-274
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.38-trip",
+  "base_commit_sha": "967aac3672291dd44933d207b4ef749d64aa3690",
+  "prompts": {},
+  "sessions": {
+    "s_0232d72a539a79": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "42fdadbe-87e9-48ea-8c4f-32032541d97b",
+        "model": "default"
+      },
+      "human_author": "liuyidi <liuyidi1993@gmail.com>"
+    }
+  }
+}
