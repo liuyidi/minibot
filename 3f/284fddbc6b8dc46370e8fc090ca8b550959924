@@ -1,0 +1,25 @@
+minibot/README.md
+  s_6d7f85b34e18a1::t_a6eca9d35c69cd 28-40
+minibot/Dockerfile
+  s_6d7f85b34e18a1::t_372655c1a4c8f4 1
+  s_6d7f85b34e18a1::t_9b62a4a4e36687 3-12,20-21
+  s_6d7f85b34e18a1::t_7192bdd2cfd76e 2,13-19,22-34
+minibot/pyproject.toml
+  s_6d7f85b34e18a1::t_02a8f6057cbe55 25-26
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.38-trip",
+  "base_commit_sha": "3f284fddbc6b8dc46370e8fc090ca8b550959924",
+  "prompts": {},
+  "sessions": {
+    "s_6d7f85b34e18a1": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "88a3d5a1-260b-4346-82aa-244915858d5b",
+        "model": "default"
+      },
+      "human_author": "liuyidi <liuyidi1993@gmail.com>"
+    }
+  }
+}
