@@ -1,0 +1,19 @@
+webui/src/components/settings/SettingsView.tsx
+  s_69f48817e6fd5e::t_2d6822218d69ac 1788-1792,1801-1803
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.38-trip",
+  "base_commit_sha": "f4550b162dc27b0a3df2e4494077cb5f192d2896",
+  "prompts": {},
+  "sessions": {
+    "s_69f48817e6fd5e": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "6732db57-4dba-4151-9320-31951e27e47d",
+        "model": "default"
+      },
+      "human_author": "liuyidi <liuyidi1993@gmail.com>"
+    }
+  }
+}
