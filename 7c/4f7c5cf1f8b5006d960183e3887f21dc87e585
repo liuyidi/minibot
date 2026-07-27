@@ -1,0 +1,82 @@
+minibot/docs/superpowers/plans/2026-07-27-webui-settings-slim.md
+  s_69f48817e6fd5e::t_0cf3dda3aa27e3 1-17,32-40,44-50,55-61,65-67
+  s_69f48817e6fd5e::t_c9d9ae785c754e 41-43
+  s_69f48817e6fd5e::t_f49418f9f39828 62-64
+  s_69f48817e6fd5e::t_d6d4a6056c1395 51-54
+  s_69f48817e6fd5e::t_5cdce32c9117eb 18-31
+  s_69f48817e6fd5e::t_66852ba3c13e98 68-69
+webui/src/lib/api.ts
+  s_69f48817e6fd5e::t_eadf88442568c5 70
+webui/src/tests/settings-view.test.tsx
+  s_69f48817e6fd5e::t_8f8c4dadcae288 781,805
+  s_69f48817e6fd5e::t_5762dd37e993d1 289,294,307-313,316-330,332,334-341
+  s_69f48817e6fd5e::t_7b3aa81a92c29e 1
+  s_69f48817e6fd5e::t_3a3c73d7d126d3 797-801,804,806
+webui/src/components/LanguageSwitcher.tsx
+  s_69f48817e6fd5e::t_be6447f439069d 5,22,32,35,38
+minibot/tests/test_settings_payload_webui.py
+  s_69f48817e6fd5e::t_58bc01c70df4f8 1-19,21-24
+  s_69f48817e6fd5e::t_a9327af165fe85 20
+webui/src/components/Sidebar.tsx
+  s_69f48817e6fd5e::t_e67b18f6ff73ee 112,114,118,120-121,124-134
+webui/src/tests/ui-entry.test.ts
+  s_69f48817e6fd5e::t_b82a3fe47e68f5 1-35
+minibot/src/minibot/config/app_config.py
+  s_69f48817e6fd5e::t_ae66c81f71a883 103-105,110,170-171,176,181,206-229
+  s_69f48817e6fd5e::t_2e2cee5c157c7d 187-199
+minibot/docs/superpowers/specs/2026-07-27-webui-settings-slim-design.md
+  s_69f48817e6fd5e::t_df7dd0c99941be 1-38
+webui/src/components/settings/SettingsView.tsx
+  s_69f48817e6fd5e::t_1e1c0e1d2e9f9c 859-864
+  s_69f48817e6fd5e::t_0432a08acd71fb 1490-1523
+  s_69f48817e6fd5e::t_f5c64b5ab4ff31 597-598
+  s_69f48817e6fd5e::t_57c853760d93d6 2012
+  s_69f48817e6fd5e::t_b78228b98d18e4 1913,1919
+  s_69f48817e6fd5e::t_2d2f54bab504ce 110-113
+  s_69f48817e6fd5e::t_a9b4a1eeedc7a7 488-489,492
+  s_69f48817e6fd5e::t_b1d3dd42eb46a5 378
+  s_69f48817e6fd5e::t_f4e9c30edb8907 1797-1799
+webui/src/i18n/locales/en/common.json
+  s_69f48817e6fd5e::t_66d2b7dfdbbffa 10
+webui/public/brand/minibot_mark.svg
+  s_69f48817e6fd5e::t_027747387e3297 1-12
+webui/src/tests/api.test.ts
+  s_69f48817e6fd5e::t_62943230dd86a2 283
+  s_69f48817e6fd5e::t_99aec485953fa1 662
+webui/src/App.tsx
+  s_69f48817e6fd5e::t_9105e5542d16f9 47
+  s_69f48817e6fd5e::t_2652ca0779a576 121,127-133
+webui/index.html
+  s_69f48817e6fd5e::t_26c2c76224ed8f 97-98,101-102,105-106,109-110,113-114,117-118,121-122,125-126,129-130
+  s_69f48817e6fd5e::t_c8d50cccbbd314 9,14-15
+  s_69f48817e6fd5e::t_e1fae5f1679813 172
+webui/src/tests/app-layout.test.tsx
+  s_69f48817e6fd5e::t_d9ca30b372d1fa 1609
+  s_69f48817e6fd5e::t_fd66d7fe4be338 417-418,423
+  s_69f48817e6fd5e::t_cf7d6be2455151 580-581
+  s_69f48817e6fd5e::t_ae82748394b9a9 647-648
+  s_69f48817e6fd5e::t_fb6291ac865b6a 1579,1586-1587,1607,1610,1613,1624-1625
+  s_69f48817e6fd5e::t_c3b190afb374c9 491-492
+  s_69f48817e6fd5e::t_4e6e890cf1c361 1490-1493,1497,1499-1500,1512-1513,1515-1517,1527-1529
+  s_69f48817e6fd5e::t_21db219cb77615 274,279-282,285,317,323,331,336-337
+webui/src/lib/ui-entry.ts
+  s_69f48817e6fd5e::t_a9f0adaaf577a4 9,11-30
+webui/src/i18n/locales/zh-CN/common.json
+  s_69f48817e6fd5e::t_87d05fe273178d 10
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.38-trip",
+  "base_commit_sha": "7c4f7c5cf1f8b5006d960183e3887f21dc87e585",
+  "prompts": {},
+  "sessions": {
+    "s_69f48817e6fd5e": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "6732db57-4dba-4151-9320-31951e27e47d",
+        "model": "default"
+      },
+      "human_author": "liuyidi <liuyidi1993@gmail.com>"
+    }
+  }
+}
