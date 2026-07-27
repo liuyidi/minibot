@@ -1,0 +1,36 @@
+webui/src/i18n/locales/zh-CN/common.json
+  s_6d7f85b34e18a1::t_29797f0b22ad79 61-65
+Dockerfile.minibot
+  s_6d7f85b34e18a1::t_0d85bb85893fab 1-54
+webui/src/lib/portal.ts
+  s_6d7f85b34e18a1::t_5f857e2fe038a8 1-14
+webui/src/components/Sidebar.tsx
+  s_6d7f85b34e18a1::t_553b498e04793a 6-9,15,23
+  s_6d7f85b34e18a1::t_3ffa8bf08d7352 235-264,284-324
+webui/src/i18n/locales/en/common.json
+  s_6d7f85b34e18a1::t_a300e4694cd486 61-65
+minibot/src/minibot/main.py
+  s_6d7f85b34e18a1::t_4f0c2c2289c154 16,77-82
+minibot/src/minibot/static/devui/common.js
+  s_6d7f85b34e18a1::t_bd544dbb4d9c32 197-220
+minibot/src/minibot/webui_static.py
+  s_6d7f85b34e18a1::t_64dc55bdedb25e 1-84
+minibot/tests/test_webui_static.py
+  s_6d7f85b34e18a1::t_0a47225b0eb8d1 1-22
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.38-trip",
+  "base_commit_sha": "53a69aed1824718a4067176c125838b2696e382f",
+  "prompts": {},
+  "sessions": {
+    "s_6d7f85b34e18a1": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "88a3d5a1-260b-4346-82aa-244915858d5b",
+        "model": "default"
+      },
+      "human_author": "liuyidi <liuyidi1993@gmail.com>"
+    }
+  }
+}
