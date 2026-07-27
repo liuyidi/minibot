@@ -1,0 +1,25 @@
+minibot/src/minibot/api/ws.py
+  s_6d7f85b34e18a1::t_b15230a1020653 162-169
+  s_6d7f85b34e18a1::t_f93f2171d1ee86 158-161
+minibot/src/minibot/agent/loop.py
+  s_6d7f85b34e18a1::t_be9e4898a1d0d2 409
+  s_6d7f85b34e18a1::t_9e389c82407903 216
+minibot/tests/test_streaming_phase2.py
+  s_6d7f85b34e18a1::t_26a532e3482afd 128-188
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.38-trip",
+  "base_commit_sha": "fe6526806e2884a4ff271f9e3e90fda65e46688b",
+  "prompts": {},
+  "sessions": {
+    "s_6d7f85b34e18a1": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "88a3d5a1-260b-4346-82aa-244915858d5b",
+        "model": "default"
+      },
+      "human_author": "liuyidi <liuyidi1993@gmail.com>"
+    }
+  }
+}
