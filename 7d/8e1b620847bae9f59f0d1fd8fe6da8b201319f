@@ -1,0 +1,26 @@
+webui/src/components/LanguageSwitcher.tsx
+  s_6d7f85b34e18a1::t_becf6c1650c0c1 10,51
+webui/src/tests/i18n.test.tsx
+  s_6d7f85b34e18a1::t_5634f8b3a56a8c 134,137-139
+webui/src/i18n/config.ts
+  s_6d7f85b34e18a1::t_f33053d9fdd59b 17,20-23
+webui/src/components/Sidebar.tsx
+  s_6d7f85b34e18a1::t_0911cebad62ee7 288
+  s_6d7f85b34e18a1::t_786a23b169fe3f 21
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.38-trip",
+  "base_commit_sha": "7d8e1b620847bae9f59f0d1fd8fe6da8b201319f",
+  "prompts": {},
+  "sessions": {
+    "s_6d7f85b34e18a1": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "88a3d5a1-260b-4346-82aa-244915858d5b",
+        "model": "default"
+      },
+      "human_author": "liuyidi <liuyidi1993@gmail.com>"
+    }
+  }
+}
