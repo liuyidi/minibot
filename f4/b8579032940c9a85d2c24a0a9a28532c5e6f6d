@@ -1,0 +1,23 @@
+webui/src/components/Sidebar.tsx
+  s_6d7f85b34e18a1::t_e5afc2407549e1 164-190
+  s_6d7f85b34e18a1::t_a0c892c723ed01 24
+  s_6d7f85b34e18a1::t_41859d9e1ac7c2 278-286
+webui/src/lib/ui-entry.ts
+  s_6d7f85b34e18a1::t_2f23e4c9569bff 1-10
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.38-trip",
+  "base_commit_sha": "f4b8579032940c9a85d2c24a0a9a28532c5e6f6d",
+  "prompts": {},
+  "sessions": {
+    "s_6d7f85b34e18a1": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "88a3d5a1-260b-4346-82aa-244915858d5b",
+        "model": "default"
+      },
+      "human_author": "liuyidi <liuyidi1993@gmail.com>"
+    }
+  }
+}
