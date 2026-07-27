@@ -1,0 +1,35 @@
+minibot/src/minibot/knowledge/models.py
+  s_6d7f85b34e18a1::t_10640cad09fc58 1-33
+minibot/src/minibot/agent/tools/registry.py
+  s_6d7f85b34e18a1::t_1963e66939861b 30-32,40,46-55
+minibot/src/minibot/agent/tools/builtin.py
+  s_6d7f85b34e18a1::t_4e730db832a229 7,13,31-35,45-46
+minibot/src/minibot/knowledge/__init__.py
+  s_6d7f85b34e18a1::t_d309822efd36bd 1-5
+minibot/src/minibot/knowledge/client.py
+  s_6d7f85b34e18a1::t_af7f80813de0a3 1-217
+minibot/src/minibot/config/settings.py
+  s_6d7f85b34e18a1::t_0e9bb0c4248d61 39-44
+minibot/tests/test_kb_client.py
+  s_6d7f85b34e18a1::t_79226408fbefe9 1-130
+minibot/src/minibot/agent/tools/kb.py
+  s_6d7f85b34e18a1::t_5978920e4101de 1-180
+minibot/tests/test_kb_tools.py
+  s_6d7f85b34e18a1::t_7437139e9776f5 1-112
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.38-trip",
+  "base_commit_sha": "7d90ef18af28acd54d464feb8c6edf03d05f70e1",
+  "prompts": {},
+  "sessions": {
+    "s_6d7f85b34e18a1": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "88a3d5a1-260b-4346-82aa-244915858d5b",
+        "model": "default"
+      },
+      "human_author": "liuyidi <liuyidi1993@gmail.com>"
+    }
+  }
+}
