@@ -10,7 +10,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from minibot.api.routes import auth, automations, misc, sessions, settings, workspaces
+from minibot.api.routes import auth, automations, misc, sessions, settings, status, workspaces
 from minibot.api.ws import router as ws_router
 from minibot.app_state import build_app_state
 from minibot.webui_static import mount_webui, root_redirect_to_devui
@@ -69,6 +69,7 @@ def create_app() -> FastAPI:
     app.include_router(settings.router)
     app.include_router(misc.router)
     app.include_router(automations.router)
+    app.include_router(status.router)
     app.include_router(ws_router)
 
     if _DEVUI_DIR.is_dir():

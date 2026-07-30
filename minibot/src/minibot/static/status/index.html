@@ -1,0 +1,926 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light dark" />
+  <title>bot.liuyidi.me Status</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --panel: #ffffff;
+      --panel-alt: #f9fbfe;
+      --text: #101828;
+      --muted: #667085;
+      --line: #d9e0ea;
+      --soft-line: #edf2f7;
+      --accent: #46b9a9;
+      --accent-strong: #21a38f;
+      --green: #22c55e;
+      --amber: #f59e0b;
+      --red: #ef4444;
+      --gray: #94a3b8;
+      --shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+      --radius: 28px;
+    }
+    html[data-theme="dark"] {
+      --bg: #0d1219;
+      --panel: #131926;
+      --panel-alt: #0f1722;
+      --text: #edf2f7;
+      --muted: #93a0b4;
+      --line: #273243;
+      --soft-line: #1d2634;
+      --accent: #58d3c1;
+      --accent-strong: #38c3b0;
+      --shadow: 0 24px 50px rgba(0, 0, 0, 0.35);
+    }
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(70, 185, 169, 0.18), transparent 34%),
+        radial-gradient(circle at top right, rgba(59, 130, 246, 0.12), transparent 28%),
+        var(--bg);
+      color: var(--text);
+    }
+    a { color: inherit; text-decoration: none; }
+    button {
+      font: inherit;
+      color: inherit;
+      border: 0;
+      background: none;
+    }
+    .page {
+      width: min(1240px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 28px 0 40px;
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 800;
+      font-size: 28px;
+      letter-spacing: -0.04em;
+    }
+    .brand-mark {
+      width: 38px;
+      height: 38px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--accent), #78e1d0);
+      box-shadow: 0 12px 24px rgba(70, 185, 169, 0.28);
+      position: relative;
+      flex: none;
+    }
+    .brand-mark::before {
+      content: "";
+      position: absolute;
+      inset: 9px;
+      border: 2px solid rgba(255, 255, 255, 0.9);
+      border-top-color: transparent;
+      border-left-color: transparent;
+      border-radius: 50%;
+      transform: rotate(-10deg);
+    }
+    .topbar-spacer { flex: 1; }
+    .topbar-actions {
+      display: inline-flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .action {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 46px;
+      padding: 0 16px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: color-mix(in srgb, var(--panel) 88%, transparent);
+      color: var(--text);
+      box-shadow: 0 6px 20px rgba(15, 23, 42, 0.04);
+      cursor: pointer;
+      transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+    }
+    .action:hover {
+      transform: translateY(-1px);
+      border-color: color-mix(in srgb, var(--accent) 40%, var(--line));
+    }
+    .action.primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+      color: white;
+      border-color: transparent;
+      font-weight: 700;
+    }
+    .hero {
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 18%, var(--panel)), var(--panel));
+      border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--line));
+      border-radius: 34px;
+      padding: 28px;
+      box-shadow: var(--shadow);
+      margin-bottom: 24px;
+    }
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: auto -12% -45% auto;
+      width: 290px;
+      height: 290px;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.38), transparent 68%);
+      pointer-events: none;
+      filter: blur(8px);
+    }
+    .hero-top {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+      position: relative;
+      z-index: 1;
+    }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--panel) 84%, transparent);
+      border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--line));
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .status-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 999px;
+      background: var(--green);
+      box-shadow: 0 0 0 6px rgba(34, 197, 94, 0.12);
+      flex: none;
+    }
+    .hero-title {
+      margin: 8px 0 10px;
+      font-size: clamp(32px, 4.7vw, 58px);
+      line-height: 1.05;
+      letter-spacing: -0.055em;
+      position: relative;
+      z-index: 1;
+    }
+    .hero-subtitle {
+      margin: 0;
+      max-width: 960px;
+      font-size: clamp(16px, 1.8vw, 20px);
+      line-height: 1.65;
+      color: var(--muted);
+      position: relative;
+      z-index: 1;
+    }
+    .hero-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+      position: relative;
+      z-index: 1;
+    }
+    .meta-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: color-mix(in srgb, var(--panel) 86%, transparent);
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .meta-chip strong { color: var(--text); }
+    .section {
+      margin-top: 22px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      justify-content: space-between;
+      padding: 22px 24px 18px;
+      border-bottom: 1px solid var(--soft-line);
+      background: color-mix(in srgb, var(--panel) 96%, transparent);
+    }
+    .section-title {
+      margin: 0;
+      font-size: 22px;
+      letter-spacing: -0.03em;
+    }
+    .section-subtitle {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .section-content {
+      padding: 18px 18px 22px;
+    }
+    .components {
+      display: grid;
+      gap: 14px;
+    }
+    .component {
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: var(--panel-alt);
+      padding: 18px;
+    }
+    .component-top {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .component-main {
+      min-width: 0;
+      display: grid;
+      gap: 6px;
+    }
+    .component-name-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .component-name {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+    }
+    .component-badge {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 5px 10px;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 12px;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+    .component-desc {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.55;
+      max-width: 820px;
+    }
+    .component-state {
+      text-align: right;
+      flex: none;
+      min-width: 120px;
+    }
+    .component-state strong {
+      display: block;
+      font-size: 24px;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+    }
+    .component-state span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .component-bars {
+      display: grid;
+      grid-template-columns: repeat(30, minmax(0, 1fr));
+      gap: 4px;
+      margin-bottom: 14px;
+    }
+    .bar {
+      height: 32px;
+      border-radius: 10px;
+      background: var(--soft-line);
+    }
+    .bar.operational { background: linear-gradient(180deg, #4ade80, #22c55e); }
+    .bar.degraded { background: linear-gradient(180deg, #fdba74, #f59e0b); }
+    .bar.outage { background: linear-gradient(180deg, #f87171, #ef4444); }
+    .bar.disabled { background: linear-gradient(180deg, #cbd5e1, #94a3b8); }
+    .component-details {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .detail-pill {
+      padding: 8px 11px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.35);
+    }
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .weekday {
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding-bottom: 6px;
+    }
+    .day {
+      min-height: 74px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--panel-alt);
+      padding: 10px;
+      position: relative;
+      overflow: hidden;
+    }
+    .day.muted {
+      opacity: 0.42;
+    }
+    .day.today {
+      border-color: color-mix(in srgb, var(--accent) 48%, var(--line));
+      box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 22%, transparent);
+    }
+    .day-num {
+      font-size: 15px;
+      font-weight: 700;
+    }
+    .day-mark {
+      position: absolute;
+      right: 10px;
+      bottom: 10px;
+      width: 12px;
+      height: 12px;
+      border-radius: 999px;
+      background: var(--green);
+    }
+    .day-mark.degraded { background: var(--amber); }
+    .day-mark.outage { background: var(--red); }
+    .incident-list {
+      display: grid;
+      gap: 12px;
+    }
+    .incident {
+      display: grid;
+      gap: 5px;
+      padding: 14px 16px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--panel-alt);
+    }
+    .incident-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .incident-status {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+    }
+    .incident-status.degraded { background: var(--amber); }
+    .incident-status.outage { background: var(--red); }
+    .incident-title {
+      font-weight: 700;
+    }
+    .incident-time {
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .empty-state {
+      padding: 22px 16px;
+      border: 1px dashed var(--line);
+      border-radius: 18px;
+      color: var(--muted);
+      text-align: center;
+      background: color-mix(in srgb, var(--panel) 90%, transparent);
+    }
+    .footer {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 4px 8px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .footer-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .footer-links a {
+      color: var(--text);
+      opacity: 0.78;
+    }
+    .footer-links a:hover { opacity: 1; }
+    @media (max-width: 900px) {
+      .page { width: min(100% - 24px, 1240px); }
+      .topbar { align-items: flex-start; }
+      .topbar, .section-header, .component-top, .footer {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .component-state { text-align: left; }
+    }
+    @media (max-width: 720px) {
+      .brand { font-size: 24px; }
+      .hero { padding: 22px; }
+      .section-header { padding: 18px 18px 14px; }
+      .section-content { padding: 14px; }
+      .calendar-grid { gap: 8px; }
+      .day { min-height: 62px; padding: 8px; }
+      .component-bars { grid-template-columns: repeat(15, minmax(0, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="topbar">
+      <a class="brand" href="/status" aria-label="bot.liuyidi.me status page">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span>bot.liuyidi.me</span>
+      </a>
+      <div class="topbar-spacer"></div>
+      <div class="topbar-actions">
+        <button class="action primary" id="subscribe-btn" type="button">订阅更新</button>
+        <button class="action" id="lang-btn" type="button">EN</button>
+        <button class="action" id="theme-btn" type="button" aria-label="Toggle theme">☼</button>
+      </div>
+    </div>
+
+    <section class="hero" id="hero">
+      <div class="hero-top">
+        <div class="status-pill">
+          <span class="status-dot" id="hero-dot"></span>
+          <span id="hero-badge">状态良好</span>
+        </div>
+        <div class="meta-chip"><strong id="runtime-name">minibot</strong> <span id="runtime-version">v0.1.0</span></div>
+        <div class="meta-chip"><span id="hero-uptime">Uptime —</span></div>
+        <div class="meta-chip"><span id="hero-updated">Updated —</span></div>
+      </div>
+      <h1 class="hero-title" id="hero-title">一切运行正常</h1>
+      <p class="hero-subtitle" id="hero-subtitle">核心服务健康运行。当前有 0 个可选集成处于未启用或未配置状态。</p>
+      <div class="hero-meta" id="hero-meta"></div>
+    </section>
+
+    <section class="section">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title" id="components-title">系统状态</h2>
+          <p class="section-subtitle" id="components-subtitle">核心服务、可选集成和运行时元信息。</p>
+        </div>
+        <div class="meta-chip"><span id="components-count">0 个组件</span></div>
+      </div>
+      <div class="section-content">
+        <div class="components" id="components"></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title" id="calendar-title">事件日历</h2>
+          <p class="section-subtitle" id="calendar-subtitle">最近 30 天的状态轨迹与当前月事件。</p>
+        </div>
+        <div class="meta-chip"><span id="calendar-month">—</span></div>
+      </div>
+      <div class="section-content">
+        <div class="calendar-grid" id="calendar"></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title" id="incidents-title">事件记录</h2>
+          <p class="section-subtitle" id="incidents-subtitle">如果有降级或中断，这里会显示最近的记录。</p>
+        </div>
+        <div class="meta-chip"><span id="incident-count">0 条事件</span></div>
+      </div>
+      <div class="section-content">
+        <div class="incident-list" id="incidents"></div>
+      </div>
+    </section>
+
+    <div class="footer">
+      <div id="footer-copy">状态页基于 `/status.json` 实时渲染，`/health` 仍用于机器健康检查。</div>
+      <div class="footer-links">
+        <a href="/health" target="_blank" rel="noreferrer" id="footer-health">健康检查</a>
+        <a href="/ui/" target="_blank" rel="noreferrer" id="footer-ui">Dev UI</a>
+        <a href="/status.json" target="_blank" rel="noreferrer" id="footer-json">status.json</a>
+      </div>
+    </div>
+  </div>
+
+  <script id="status-bootstrap" type="application/json">__STATUS_BOOTSTRAP__</script>
+  <script>
+    (() => {
+      const bootstrap = JSON.parse(document.getElementById("status-bootstrap").textContent || "{}");
+      const copy = {
+        zh: {
+          subscribe: "订阅更新",
+          copied: "已复制状态地址",
+          title: "一切运行正常",
+          degraded: "性能有所下降",
+          outage: "部分服务中断",
+          allGood: "核心服务健康运行。",
+          componentSuffix: "个组件",
+          incidents: "条事件",
+          calendar: "事件日历",
+          records: "事件记录",
+          noIncident: "暂无事件记录。",
+          noIncidentHint: "如果有降级或中断，这里会显示最近的记录。",
+          noIncidentCalendar: "近 30 天没有记录到事件。",
+          heroUpdated: "更新于",
+          heroUptime: "运行时长",
+          statusLabels: {
+            operational: "一切正常",
+            degraded: "部分受影响",
+            outage: "服务中断",
+            disabled: "未启用",
+          },
+          componentTags: {
+            required: "必需",
+            optional: "可选",
+          },
+        },
+        en: {
+          subscribe: "Subscribe",
+          copied: "Status URL copied",
+          title: "All systems operational",
+          degraded: "Degraded performance",
+          outage: "Partial outage",
+          allGood: "Core services are healthy.",
+          componentSuffix: "components",
+          incidents: "incidents",
+          calendar: "Event calendar",
+          records: "Incident log",
+          noIncident: "No incidents recorded yet.",
+          noIncidentHint: "If something degrades or goes down, it will appear here.",
+          noIncidentCalendar: "No incidents were recorded over the last 30 days.",
+          heroUpdated: "Updated",
+          heroUptime: "Uptime",
+          statusLabels: {
+            operational: "Operational",
+            degraded: "Degraded",
+            outage: "Outage",
+            disabled: "Disabled",
+          },
+          componentTags: {
+            required: "Required",
+            optional: "Optional",
+          },
+        },
+      };
+
+      const state = {
+        lang: localStorage.getItem("bot-status-lang") || (navigator.language || "").toLowerCase().startsWith("zh") ? "zh" : "en",
+        theme: localStorage.getItem("bot-status-theme") || "light",
+      };
+
+      const els = {
+        heroDot: document.getElementById("hero-dot"),
+        heroBadge: document.getElementById("hero-badge"),
+        runtimeName: document.getElementById("runtime-name"),
+        runtimeVersion: document.getElementById("runtime-version"),
+        heroUptime: document.getElementById("hero-uptime"),
+        heroUpdated: document.getElementById("hero-updated"),
+        heroTitle: document.getElementById("hero-title"),
+        heroSubtitle: document.getElementById("hero-subtitle"),
+        heroMeta: document.getElementById("hero-meta"),
+        componentsTitle: document.getElementById("components-title"),
+        componentsSubtitle: document.getElementById("components-subtitle"),
+        componentsCount: document.getElementById("components-count"),
+        components: document.getElementById("components"),
+        calendarTitle: document.getElementById("calendar-title"),
+        calendarSubtitle: document.getElementById("calendar-subtitle"),
+        calendarMonth: document.getElementById("calendar-month"),
+        calendar: document.getElementById("calendar"),
+        incidentsTitle: document.getElementById("incidents-title"),
+        incidentsSubtitle: document.getElementById("incidents-subtitle"),
+        incidentCount: document.getElementById("incident-count"),
+        incidents: document.getElementById("incidents"),
+        footerCopy: document.getElementById("footer-copy"),
+        footerHealth: document.getElementById("footer-health"),
+        footerUi: document.getElementById("footer-ui"),
+        footerJson: document.getElementById("footer-json"),
+        subscribeBtn: document.getElementById("subscribe-btn"),
+        langBtn: document.getElementById("lang-btn"),
+        themeBtn: document.getElementById("theme-btn"),
+      };
+
+      function t(key) {
+        return copy[state.lang][key];
+      }
+
+      function applyTheme() {
+        document.documentElement.setAttribute("data-theme", state.theme);
+        localStorage.setItem("bot-status-theme", state.theme);
+        els.themeBtn.textContent = state.theme === "light" ? "☾" : "☼";
+      }
+
+      function applyCopy() {
+        els.subscribeBtn.textContent = t("subscribe");
+        els.langBtn.textContent = state.lang === "zh" ? "EN" : "中";
+        els.componentsTitle.textContent = state.lang === "zh" ? "系统状态" : "System status";
+        els.componentsSubtitle.textContent =
+          state.lang === "zh" ? "核心服务、可选集成和运行时元信息。" : "Core services, optional integrations and runtime metadata.";
+        els.calendarTitle.textContent = t("calendar");
+        els.calendarSubtitle.textContent =
+          state.lang === "zh" ? "最近 30 天的状态轨迹与当前月事件。" : "Recent 30-day health and this month's events.";
+        els.incidentsTitle.textContent = t("records");
+        els.incidentsSubtitle.textContent = t("noIncidentHint");
+        els.footerCopy.textContent =
+          state.lang === "zh"
+            ? "状态页基于 `/status.json` 实时渲染，`/health` 仍用于机器健康检查。"
+            : "This status page is rendered from `/status.json`; `/health` remains the machine probe.";
+      }
+
+      function formatDuration(seconds) {
+        const s = Math.max(0, Number(seconds) || 0);
+        if (s < 60) return state.lang === "zh" ? `${Math.round(s)} 秒` : `${Math.round(s)}s`;
+        const m = Math.floor(s / 60);
+        const r = Math.floor(s % 60);
+        if (m < 60) return state.lang === "zh" ? `${m} 分 ${r} 秒` : `${m}m ${r}s`;
+        const h = Math.floor(m / 60);
+        const mm = m % 60;
+        return state.lang === "zh" ? `${h} 小时 ${mm} 分` : `${h}h ${mm}m`;
+      }
+
+      function formatDateTime(iso) {
+        if (!iso) return "—";
+        try {
+          return new Intl.DateTimeFormat(state.lang === "zh" ? "zh-CN" : "en-US", {
+            dateStyle: "medium",
+            timeStyle: "short",
+          }).format(new Date(iso));
+        } catch (_) {
+          return iso;
+        }
+      }
+
+      function formatDate(iso) {
+        if (!iso) return "—";
+        try {
+          return new Intl.DateTimeFormat(state.lang === "zh" ? "zh-CN" : "en-US", {
+            month: "short",
+            day: "numeric",
+          }).format(new Date(iso));
+        } catch (_) {
+          return iso;
+        }
+      }
+
+      function formatPct(n) {
+        if (typeof n !== "number" || !Number.isFinite(n)) return "—";
+        return `${n.toFixed(2)}%`;
+      }
+
+      function colorClass(status) {
+        return status === "operational"
+          ? "operational"
+          : status === "degraded"
+            ? "degraded"
+            : status === "outage"
+              ? "outage"
+              : "disabled";
+      }
+
+      function renderHero(data) {
+        const overall = data.overall || {};
+        const title = (overall.label && overall.label[state.lang]) || t("title");
+        const subtitle = (overall.subtitle && overall.subtitle[state.lang]) || t("allGood");
+        const badge = (overall.badge && overall.badge[state.lang]) || t("title");
+        const runtime = data.runtime || {};
+        els.heroTitle.textContent = title;
+        els.heroSubtitle.textContent = subtitle;
+        els.heroBadge.textContent = badge;
+        els.runtimeName.textContent = runtime.name || "minibot";
+        els.runtimeVersion.textContent = `v${runtime.version || "0.1.0"}`;
+        els.heroUptime.textContent = `${t("heroUptime")} ${formatDuration(runtime.uptime_seconds)}`;
+        els.heroUpdated.textContent = `${t("heroUpdated")} ${formatDateTime(data.generated_at)}`;
+        els.heroDot.style.background = overall.status === "operational"
+          ? "var(--green)"
+          : overall.status === "degraded"
+            ? "var(--amber)"
+            : "var(--red)";
+        els.heroDot.style.boxShadow = overall.status === "operational"
+          ? "0 0 0 6px rgba(34, 197, 94, 0.12)"
+          : overall.status === "degraded"
+            ? "0 0 0 6px rgba(245, 158, 11, 0.12)"
+            : "0 0 0 6px rgba(239, 68, 68, 0.12)";
+
+        const chips = [
+          runtime.host ? `HTTP ${runtime.host}:${runtime.port}` : null,
+          data.optional_disabled != null
+            ? `${data.optional_disabled} ${state.lang === "zh" ? "个可选集成" : "optional integrations"}`
+            : null,
+          data.links?.health ? `GET ${data.links.health}` : null,
+        ].filter(Boolean);
+        els.heroMeta.innerHTML = chips
+          .map((chip) => `<span class="meta-chip">${chip}</span>`)
+          .join("");
+      }
+
+      function renderComponents(data) {
+        const components = Array.isArray(data.components) ? data.components : [];
+        els.componentsCount.textContent = `${components.length} ${t("componentSuffix")}`;
+        els.components.innerHTML = components
+          .map((component) => {
+            const name = (component.label && component.label[state.lang]) || component.key;
+            const desc = (component.description && component.description[state.lang]) || "";
+            const details = (component.details && component.details[state.lang]) || [];
+            const bars = Array.isArray(component.history) ? component.history : [];
+            const pct = formatPct(component.availability);
+            const stateLabel = t("statusLabels")[component.status] || component.status;
+            const requiredLabel = component.required
+              ? t("componentTags").required
+              : t("componentTags").optional;
+            return `
+              <article class="component">
+                <div class="component-top">
+                  <div class="component-main">
+                    <div class="component-name-row">
+                      <div class="component-name">${name}</div>
+                      <span class="component-badge">${requiredLabel}</span>
+                    </div>
+                    <div class="component-desc">${desc}</div>
+                  </div>
+                  <div class="component-state">
+                    <strong>${pct}</strong>
+                    <span>${stateLabel}</span>
+                  </div>
+                </div>
+                <div class="component-bars">
+                  ${bars
+                    .slice(0, 30)
+                    .map((bar) => `<span class="bar ${colorClass(bar)}"></span>`)
+                    .join("")}
+                </div>
+                <div class="component-details">
+                  ${details.map((item) => `<span class="detail-pill">${item}</span>`).join("")}
+                </div>
+              </article>
+            `;
+          })
+          .join("");
+      }
+
+      function renderCalendar(data) {
+        const incidents = Array.isArray(data.incidents) ? data.incidents : [];
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = today.getMonth();
+        const first = new Date(year, month, 1);
+        const start = first.getDay(); // 0 Sunday
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const prevDays = new Date(year, month, 0).getDate();
+        const cells = [];
+        const monthName = new Intl.DateTimeFormat(state.lang === "zh" ? "zh-CN" : "en-US", {
+          year: "numeric",
+          month: "long",
+        }).format(today);
+        els.calendarMonth.textContent = monthName;
+
+        const byDate = new Map();
+        for (const incident of incidents) {
+          if (!incident.date) continue;
+          const severity = incident.severity === "outage" ? "outage" : incident.severity === "degraded" ? "degraded" : "operational";
+          byDate.set(incident.date, severity);
+        }
+
+        const weekdays = state.lang === "zh"
+          ? ["一", "二", "三", "四", "五", "六", "日"]
+          : ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+        const weekdayHtml = weekdays.map((label) => `<div class="weekday">${label}</div>`).join("");
+
+        for (let i = 0; i < 7; i += 1) {
+          cells.push(`<div class="weekday">${weekdays[i]}</div>`);
+        }
+
+        for (let i = start - 1; i >= 0; i -= 1) {
+          const num = prevDays - i;
+          cells.push(`<div class="day muted"><div class="day-num">${num}</div></div>`);
+        }
+        for (let d = 1; d <= daysInMonth; d += 1) {
+          const dateKey = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+          const mark = byDate.get(dateKey);
+          const isToday =
+            d === today.getDate() &&
+            month === today.getMonth() &&
+            year === today.getFullYear();
+          cells.push(`
+            <div class="day${isToday ? " today" : ""}">
+              <div class="day-num">${d}</div>
+              ${mark ? `<span class="day-mark ${mark}"></span>` : ""}
+            </div>
+          `);
+        }
+
+        els.calendar.innerHTML = cells.join("");
+        if (!incidents.length) {
+          els.calendar.insertAdjacentHTML(
+            "beforeend",
+            `<div class="empty-state" style="grid-column: 1 / -1; margin-top: 8px;">${t("noIncidentCalendar")}</div>`
+          );
+        }
+      }
+
+      function renderIncidents(data) {
+        const incidents = Array.isArray(data.incidents) ? data.incidents : [];
+        els.incidentCount.textContent = `${incidents.length} ${t("incidents")}`;
+        if (!incidents.length) {
+          els.incidents.innerHTML = `
+            <div class="empty-state">
+              <div style="font-weight:700; margin-bottom: 6px;">${t("noIncident")}</div>
+              <div>${t("noIncidentHint")}</div>
+            </div>
+          `;
+          return;
+        }
+        els.incidents.innerHTML = incidents
+          .map((incident) => {
+            const title = incident.title?.[state.lang] || incident.title?.en || incident.component;
+            const detail = incident.detail?.[state.lang] || incident.detail?.en || "";
+            return `
+              <article class="incident">
+                <div class="incident-head">
+                  <span class="incident-status ${colorClass(incident.severity)}"></span>
+                  <div class="incident-title">${title}</div>
+                  <div class="incident-time">${formatDate(incident.date)} · ${formatDateTime(incident.time)}</div>
+                </div>
+                <div class="component-desc">${detail}</div>
+              </article>
+            `;
+          })
+          .join("");
+      }
+
+      function renderAll(data) {
+        renderHero(data);
+        renderComponents(data);
+        renderCalendar(data);
+        renderIncidents(data);
+      }
+
+      async function refresh() {
+        try {
+          const res = await fetch("/status.json", { cache: "no-store" });
+          if (!res.ok) return;
+          const data = await res.json();
+          renderAll(data);
+        } catch (_) {}
+      }
+
+      els.subscribeBtn.addEventListener("click", async () => {
+        const url = `${location.origin}/status.json`;
+        try {
+          await navigator.clipboard.writeText(url);
+          els.subscribeBtn.textContent = t("copied");
+          setTimeout(() => (els.subscribeBtn.textContent = t("subscribe")), 1600);
+        } catch (_) {
+          window.prompt("Copy status URL", url);
+        }
+      });
+      els.langBtn.addEventListener("click", () => {
+        state.lang = state.lang === "zh" ? "en" : "zh";
+        localStorage.setItem("bot-status-lang", state.lang);
+        applyCopy();
+        renderAll(bootstrap);
+      });
+      els.themeBtn.addEventListener("click", () => {
+        state.theme = state.theme === "light" ? "dark" : "light";
+        localStorage.setItem("bot-status-theme", state.theme);
+        applyTheme();
+      });
+
+      applyTheme();
+      applyCopy();
+      renderAll(bootstrap);
+      setInterval(refresh, 60_000);
+    })();
+  </script>
+</body>
+</html>

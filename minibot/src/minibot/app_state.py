@@ -46,6 +46,7 @@ class AppState:
     tokens: dict[str, TokenRecord] = field(default_factory=dict)
     fallback_stats: FallbackStats = field(default_factory=FallbackStats)
     fault_controller: FaultController = field(default_factory=FaultController)
+    started_at: float = field(default_factory=time.time)
 
     def rebuild_provider(self) -> None:
         if not self.config.openai_api_key:

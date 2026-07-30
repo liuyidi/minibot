@@ -13,6 +13,7 @@ from fastapi.staticfiles import StaticFiles
 _SPA_RESERVED_PREFIXES = (
     "api/",
     "auth/",
+    "status",
     "webui/",
     "ws",
     "ui/",
