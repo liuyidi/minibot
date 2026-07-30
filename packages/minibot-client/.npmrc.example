@@ -1,0 +1,4 @@
+# GitHub Packages — private @minibot/* scope
+# Copy to consuming project root as `.npmrc` (never commit real tokens).
+@minibot:registry=https://npm.pkg.github.com
+# //npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}

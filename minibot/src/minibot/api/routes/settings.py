@@ -52,6 +52,7 @@ class ModelConfigurationBody(BaseModel):
     api_key: str | None = None
     api_base: str | None = None
     temperature: float | None = None
+    fallback: list[str] | None = None
     activate: bool = False
 
 
@@ -157,9 +158,11 @@ async def create_model_configuration(
             preset_id=payload.id,
             label=payload.label,
             model=payload.model,
+            provider=payload.provider,
             api_key=payload.api_key,
             api_base=payload.api_base,
             temperature=payload.temperature,
+            fallback=payload.fallback,
             activate=payload.activate,
         )
     except PresetError as exc:

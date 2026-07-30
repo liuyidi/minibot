@@ -228,6 +228,7 @@
         { href: "./memory.html", title: "Memory", desc: "MEMORY.md 读写与注入对照" },
         { href: "./skills.html", title: "Skills", desc: "技能发现、覆盖、body 预览" },
         { href: "./mcp.html", title: "MCP", desc: "MCP presets、注入 tools、正向/异常情景" },
+        { href: "./providers.html", title: "Providers", desc: "registry / Anthropic / nanobot 导入" },
         { href: "./automations.html", title: "Automations", desc: "Cron jobs：创建 / 启停 / 立即跑" },
       ],
     },
@@ -244,13 +245,18 @@
     {
       category: "运行时与并发",
       items: [
-        { href: "./runtime.html", title: "Runtime", desc: "AgentLoop lock / 最近 turn" },
+        { href: "./runtime.html", title: "Runtime", desc: "Loop / Bus / Fallback 故障注入" },
         { href: "./race.html", title: "Race Demo", desc: "无锁破坏 vs 有锁对照" },
       ],
     },
     {
       category: "Providers / MCP",
       items: [
+        {
+          href: "./providers.html",
+          title: "Providers 页",
+          desc: "registry + 导入向导（Insight UI）",
+        },
         {
           href: "/api/dev/providers",
           title: "Active provider JSON",

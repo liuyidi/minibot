@@ -135,6 +135,23 @@ async def deliver_outbound(msg: OutboundMessage) -> None:
         )
         return
 
+    if kind == "provider_switched":
+        await hub.send(
+            chat_id,
+            {
+                "event": "provider_switched",
+                "chat_id": chat_id,
+                "from": meta.get("from"),
+                "to": meta.get("to"),
+                "from_label": meta.get("from_label"),
+                "to_label": meta.get("to_label"),
+                "from_provider": meta.get("from_provider"),
+                "to_provider": meta.get("to_provider"),
+                "reason": meta.get("reason"),
+            },
+        )
+        return
+
     if kind == "turn_end":
         await hub.send(chat_id, {"event": "turn_end", "chat_id": chat_id})
         await hub.send(chat_id, {"event": "goal_status", "chat_id": chat_id, "status": "idle"})
@@ -186,6 +203,8 @@ async def deliver_outbound(msg: OutboundMessage) -> None:
                 "tools_used": tools,
                 "langfuse_trace_id": meta.get("langfuse_trace_id") or "",
                 "reasoning": meta.get("reasoning") or "",
+                "used_provider": meta.get("used_provider") or "",
+                "used_preset": meta.get("used_preset") or "",
             },
         )
         return

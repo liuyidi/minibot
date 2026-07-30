@@ -36,6 +36,8 @@ minibot uses a layered config: env vars → `~/.minibot/config.json` → in-memo
 | `MINIBOT_SERVER_DATA_DIR` | `~/.minibot` | Data root |
 | `MINIBOT_SERVER_MINIKB_BASE_URL` | — | Optional minikb URL (e.g. `http://127.0.0.1:8080`) |
 
+Providers are selected via Settings model presets (`openai` / `anthropic` / `openrouter` / `deepseek` / `ollama` / `custom`). Anthropic uses the native Messages API; others use OpenAI-compatible `/chat/completions`. Optional: import keys from `~/.nanobot/config.json` via `/ui/providers.html`.
+
 See [`minibot/README.md`](./minibot/README.md) for full env / Docker / MCP / minikb / langfuse wiring.
 
 ## Architecture
@@ -57,8 +59,10 @@ WebUI / cli_chat
 
 Current baseline and migration plan live in:
 
-- [`docs-plan/minibot-current-status.md`](./docs-plan/minibot-current-status.md)
-- [`docs-plan/minibot-fastapi-migration.md`](./docs-plan/minibot-fastapi-migration.md)
+- [`docs/status.md`](./docs/status.md)
+- [`docs/migration.md`](./docs/migration.md)
+- [`docs/client-api.md`](./docs/client-api.md) — unified client contract + OpenAPI plan
+- [`packages/minibot-client`](./packages/minibot-client) — `@minibot/client` (RN / webui / desktop)
 
 Next milestone: **Phase 6 余量** — provider registry + nanobot config import, so Settings can stand alone from legacy.
 

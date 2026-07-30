@@ -17,6 +17,35 @@ from minibot.config.presets import (
 )
 from minibot.config.mcp_presets import McpPreset, presets_public_list as mcp_presets_public_list
 from minibot.config.settings import Settings, get_settings
+from minibot.providers.registry import list_providers
+
+
+def _providers_public(config: AppConfig) -> list[dict[str, Any]]:
+    active = (config.provider or "openai").strip() or "openai"
+    key = config.openai_api_key
+    masked = mask_key(key)
+    out: list[dict[str, Any]] = []
+    for spec in list_providers(include_stubs=True):
+        name = str(spec["name"])
+        is_active = name == active
+        out.append(
+            {
+                "name": name,
+                "label": spec["label"],
+                "backend": spec["backend"],
+                "implemented": spec["implemented"],
+                "configured": bool(key) if is_active else False,
+                "auth_type": "api_key",
+                "api_key_required": name not in {"ollama"},
+                "api_key_hint": masked if is_active else None,
+                "api_base": config.openai_base_url if is_active else spec["default_api_base"],
+                "default_api_base": spec["default_api_base"],
+                "model_selectable": True,
+                "api_type": "messages" if spec["backend"] == "anthropic" else "chat_completions",
+                "notes": spec.get("notes") or "",
+            }
+        )
+    return out
 
 
 class AppConfig(BaseModel):
@@ -134,20 +163,7 @@ def settings_public_payload(config: AppConfig) -> dict[str, Any]:
         },
         "model_presets": presets,
         "mcp_presets": mcp_presets_public_list(config),
-        "providers": [
-            {
-                "name": "openai",
-                "label": "OpenAI Compatible",
-                "configured": bool(key),
-                "auth_type": "api_key",
-                "api_key_required": True,
-                "api_key_hint": masked or None,
-                "api_base": config.openai_base_url,
-                "default_api_base": "https://api.openai.com/v1",
-                "model_selectable": True,
-                "api_type": "chat_completions",
-            }
-        ],
+        "providers": _providers_public(config),
         "web_search": {
             "provider": "none",
             "max_results": 5,

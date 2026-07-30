@@ -1,0 +1,41 @@
+name: Publish @minibot/client
+
+# GitHub Packages requires package scope == org/user that owns the package.
+# Publish under org `minibot` (create at https://github.com/organizations/plan).
+# Repo can stay liuyidi/minibot if the workflow uses a PAT with packages:write
+# on that org, OR move/mirror the package-publish repo under org minibot.
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "client-v*"
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/minibot-client
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          registry-url: https://npm.pkg.github.com
+          scope: "@minibot"
+      - name: Install & test
+        run: |
+          npm install
+          npm run build
+          npm test
+      - name: Publish to GitHub Packages
+        run: npm publish
+        env:
+          # Repo under org minibot → default GITHUB_TOKEN works.
+          # Repo under liuyidi → set secret PKG_TOKEN (org minibot write:packages PAT).
+          NODE_AUTH_TOKEN: ${{ secrets.PKG_TOKEN != '' && secrets.PKG_TOKEN || secrets.GITHUB_TOKEN }}

@@ -19,7 +19,9 @@ from minibot.config.app_config import AppConfig, load_app_config, save_app_confi
 from minibot.config.settings import Settings, get_settings
 from minibot.cron.service import CronService
 from minibot.cron.types import CronJob
-from minibot.providers.openai_compat import OpenAICompatProvider
+from minibot.providers.factory import build_provider_chain
+from minibot.providers.fallback import FallbackStats
+from minibot.providers.fault_inject import FaultController
 from minibot.session.store import SessionStore
 
 
@@ -42,11 +44,18 @@ class AppState:
     cron: CronService | None = None
     bus_worker: BusWorker | None = None
     tokens: dict[str, TokenRecord] = field(default_factory=dict)
+    fallback_stats: FallbackStats = field(default_factory=FallbackStats)
+    fault_controller: FaultController = field(default_factory=FaultController)
 
     def rebuild_provider(self) -> None:
-        provider = OpenAICompatProvider(
-            api_key=self.config.openai_api_key or self.settings.resolved_api_key(),
-            base_url=self.config.openai_base_url,
+        if not self.config.openai_api_key:
+            key = self.settings.resolved_api_key()
+            if key:
+                self.config.openai_api_key = key
+        provider = build_provider_chain(
+            self.config,
+            stats=self.fallback_stats,
+            fault=self.fault_controller,
         )
         self.runner = AgentRunner(provider)
         self.loop.runner = self.runner
@@ -94,9 +103,12 @@ def build_app_state() -> AppState:
         config.openai_api_key = settings.resolved_api_key()
     tools = register_default_tools()
     mcp = McpManager(tools)
-    provider = OpenAICompatProvider(
-        api_key=config.openai_api_key,
-        base_url=config.openai_base_url,
+    fallback_stats = FallbackStats()
+    fault_controller = FaultController()
+    provider = build_provider_chain(
+        config,
+        stats=fallback_stats,
+        fault=fault_controller,
     )
     runner = AgentRunner(provider)
     sessions = SessionStore(data_dir=settings.data_dir)
@@ -119,6 +131,8 @@ def build_app_state() -> AppState:
         loop=loop,
         config=config,
         mcp=mcp,
+        fallback_stats=fallback_stats,
+        fault_controller=fault_controller,
     )
     state.bus_worker = BusWorker(state)
     cron_path = settings.data_dir.expanduser() / "cron" / "jobs.json"

@@ -88,7 +88,7 @@ Chat lives there; LLM/tool execution traces open in a dedicated page
 [`/ui/trace.html`](http://127.0.0.1:8766/ui/trace.html) (auto-syncs when you send messages).
 
 Baseline of what is already implemented and where config files live:
-[`docs-plan/minibot-current-status.md`](../docs-plan/minibot-current-status.md).
+[`docs/status.md`](../docs/status.md).
 
 ```bash
 curl http://127.0.0.1:8766/health
@@ -112,5 +112,5 @@ cd minibot && python -m minibot.cli_chat
 | `AUTH_SECRET` | empty | If set, bootstrap requires `X-Nanobot-Auth` or `X-Minibot-Auth` |
 | `REQUIRE_AUTH` | `false` | Force token checks |
 
-See [docs/server-api.md](../docs/server-api.md) for REST + WebSocket contract.
+See [docs/client-api.md](../docs/client-api.md) for the unified REST + WebSocket contract outline.
 See [docs/server.md](../docs/server.md) for migration notes vs legacy `nanobot gateway`.

@@ -19,6 +19,7 @@ from minibot.providers.base import (
     TextDelta,
     UsageEnd,
 )
+from minibot.providers.fallback import FallbackProvider
 
 _PREVIEW_LIMIT = 800
 
@@ -86,6 +87,8 @@ class AgentRunResult:
     langfuse_trace_id: str = ""
     reasoning: str = ""
     aborted: bool = False
+    used_provider: str = ""
+    used_preset: str = ""
 
 
 @dataclass(slots=True)
@@ -160,9 +163,29 @@ class AgentRunner:
         definitions = tools.get_definitions()
         trace: list[dict[str, Any]] = []
         last_reasoning = ""
+        used_provider = ""
+        used_preset = ""
 
         def aborted() -> bool:
             return bool(should_abort and should_abort())
+
+        def flush_switches() -> list[RunnerEvent]:
+            nonlocal used_provider, used_preset
+            events: list[RunnerEvent] = []
+            if isinstance(self.provider, FallbackProvider):
+                for entry in self.provider.drain_switches():
+                    events.append(RunnerEvent(kind="provider_switched", data=entry))
+                meta = self.provider.used_meta()
+                used_provider = str(meta.get("used_provider") or used_provider)
+                used_preset = str(meta.get("used_preset") or used_preset)
+            else:
+                used_provider = type(self.provider).__name__
+            return events
+
+        def attach_used(result: AgentRunResult) -> AgentRunResult:
+            result.used_provider = used_provider
+            result.used_preset = used_preset
+            return result
 
         prep_t0 = time.perf_counter()
         prepare: dict[str, Any] = {
@@ -176,6 +199,8 @@ class AgentRunner:
             "system_injected": bool(system),
             "messages": _messages_snapshot(working),
         }
+        if isinstance(self.provider, FallbackProvider):
+            prepare["fallback_chain"] = [s.id for s in self.provider.slots]
         if context_meta:
             prepare["context"] = context_meta
         trace.append(_close_step(prepare, prep_t0))
@@ -184,14 +209,16 @@ class AgentRunner:
             if aborted():
                 content = "(aborted)"
                 working.append({"role": "assistant", "content": content})
-                result = AgentRunResult(
-                    content=content,
-                    messages=working,
-                    tools_used=tools_used,
-                    stop_reason="aborted",
-                    trace=trace,
-                    reasoning=last_reasoning,
-                    aborted=True,
+                result = attach_used(
+                    AgentRunResult(
+                        content=content,
+                        messages=working,
+                        tools_used=tools_used,
+                        stop_reason="aborted",
+                        trace=trace,
+                        reasoning=last_reasoning,
+                        aborted=True,
+                    )
                 )
                 yield RunnerEvent(kind="done", data={"result": result})
                 return
@@ -237,18 +264,22 @@ class AgentRunner:
                     model=model,
                     temperature=temperature,
                 ):
+                    for sw in flush_switches():
+                        yield sw
                     if aborted():
                         gen.update(output={"aborted": True}, status="ERROR", status_message="aborted")
                         content = "".join(content_parts) or "(aborted)"
                         working.append({"role": "assistant", "content": content})
-                        result = AgentRunResult(
-                            content=content,
-                            messages=working,
-                            tools_used=tools_used,
-                            stop_reason="aborted",
-                            trace=trace,
-                            reasoning="".join(reasoning_parts),
-                            aborted=True,
+                        result = attach_used(
+                            AgentRunResult(
+                                content=content,
+                                messages=working,
+                                tools_used=tools_used,
+                                stop_reason="aborted",
+                                trace=trace,
+                                reasoning="".join(reasoning_parts),
+                                aborted=True,
+                            )
                         )
                         yield RunnerEvent(kind="stream_aborted", stream_id=stream_id)
                         yield RunnerEvent(kind="done", data={"result": result})
@@ -288,9 +319,18 @@ class AgentRunner:
                 if saw_reasoning:
                     yield RunnerEvent(kind="reasoning_end", stream_id=reasoning_id)
                 yield RunnerEvent(kind="stream_end", stream_id=stream_id)
+                for sw in flush_switches():
+                    yield sw
 
                 usage = response.usage
                 last_reasoning = response.reasoning or "".join(reasoning_parts)
+                if used_provider:
+                    # annotate the preceding llm_request with actual provider used
+                    for step in reversed(trace):
+                        if step.get("type") == "llm_request" and step.get("iteration") == iteration:
+                            step["used_provider"] = used_provider
+                            step["used_preset"] = used_preset
+                            break
                 if response.finish_reason == "error":
                     gen.update(
                         output={"error": _preview(response.content)},
@@ -329,17 +369,28 @@ class AgentRunner:
                     "ts": response_ts,
                     "request_ts": request_ts,
                     "usage": usage,
+                    "used_provider": used_provider,
+                    "used_preset": used_preset,
                 }
                 trace.append(err_step)
-                done = {"type": "done", "t_start": _now_ms(), "stop_reason": "error", "content": _preview(content)}
+                done = {
+                    "type": "done",
+                    "t_start": _now_ms(),
+                    "stop_reason": "error",
+                    "content": _preview(content),
+                    "used_provider": used_provider,
+                    "used_preset": used_preset,
+                }
                 trace.append(_close_step(done, time.perf_counter()))
-                result = AgentRunResult(
-                    content=content,
-                    messages=working,
-                    tools_used=tools_used,
-                    stop_reason="error",
-                    trace=trace,
-                    reasoning=last_reasoning,
+                result = attach_used(
+                    AgentRunResult(
+                        content=content,
+                        messages=working,
+                        tools_used=tools_used,
+                        stop_reason="error",
+                        trace=trace,
+                        reasoning=last_reasoning,
+                    )
                 )
                 yield RunnerEvent(kind="done", data={"result": result})
                 return
@@ -428,14 +479,16 @@ class AgentRunner:
                     if aborted():
                         content = "(aborted)"
                         working.append({"role": "assistant", "content": content})
-                        result = AgentRunResult(
-                            content=content,
-                            messages=working,
-                            tools_used=tools_used,
-                            stop_reason="aborted",
-                            trace=trace,
-                            reasoning=last_reasoning,
-                            aborted=True,
+                        result = attach_used(
+                            AgentRunResult(
+                                content=content,
+                                messages=working,
+                                tools_used=tools_used,
+                                stop_reason="aborted",
+                                trace=trace,
+                                reasoning=last_reasoning,
+                                aborted=True,
+                            )
                         )
                         yield RunnerEvent(kind="done", data={"result": result})
                         return
@@ -466,15 +519,19 @@ class AgentRunner:
                 "tools_used": list(tools_used),
                 "content": _preview(content),
                 "final_messages": _messages_snapshot(working),
+                "used_provider": used_provider,
+                "used_preset": used_preset,
             }
             trace.append(_close_step(done, time.perf_counter()))
-            result = AgentRunResult(
-                content=content,
-                messages=working,
-                tools_used=tools_used,
-                stop_reason="completed",
-                trace=trace,
-                reasoning=last_reasoning,
+            result = attach_used(
+                AgentRunResult(
+                    content=content,
+                    messages=working,
+                    tools_used=tools_used,
+                    stop_reason="completed",
+                    trace=trace,
+                    reasoning=last_reasoning,
+                )
             )
             yield RunnerEvent(kind="done", data={"result": result})
             return
@@ -489,15 +546,19 @@ class AgentRunner:
             "tools_used": list(tools_used),
             "content": _preview(content),
             "final_messages": _messages_snapshot(working),
+            "used_provider": used_provider,
+            "used_preset": used_preset,
         }
         trace.append(_close_step(done, time.perf_counter()))
-        result = AgentRunResult(
-            content=content,
-            messages=working,
-            tools_used=tools_used,
-            stop_reason="max_iterations",
-            trace=trace,
-            reasoning=last_reasoning,
+        result = attach_used(
+            AgentRunResult(
+                content=content,
+                messages=working,
+                tools_used=tools_used,
+                stop_reason="max_iterations",
+                trace=trace,
+                reasoning=last_reasoning,
+            )
         )
         yield RunnerEvent(kind="done", data={"result": result})
 

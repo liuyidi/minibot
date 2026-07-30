@@ -219,6 +219,8 @@ class AgentLoop:
                                 "stop_reason": result.stop_reason,
                                 "reasoning": result.reasoning,
                                 "langfuse_trace_id": result.langfuse_trace_id or "",
+                                "used_provider": result.used_provider,
+                                "used_preset": result.used_preset,
                             },
                         )
                         await bus.publish_outbound(
@@ -407,6 +409,14 @@ class AgentLoop:
                         chat_id=session_id,
                         kind="stream_aborted",
                         extra={"_streamed": True},
+                    )
+                elif ev.kind == "provider_switched":
+                    await self._publish_stream(
+                        bus,
+                        channel=channel,
+                        chat_id=session_id,
+                        kind="provider_switched",
+                        extra=dict(ev.data or {}),
                     )
                 elif ev.kind == "done":
                     result = ev.data.get("result")

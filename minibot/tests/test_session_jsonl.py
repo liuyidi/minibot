@@ -83,7 +83,7 @@ def test_api_sessions_survive_app_restart(
     monkeypatch.setenv("MINIBOT_SERVER_DATA_DIR", str(tmp_path))
     get_settings.cache_clear()
     monkeypatch.setattr(
-        "minibot.app_state.OpenAICompatProvider",
+        "minibot.providers.factory.build_provider",
         lambda **_kwargs: fake_provider,
     )
 

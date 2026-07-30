@@ -115,6 +115,38 @@
       WS 仍走 Bus（0.4）；REST/CLI 同步 Loop。
     </p>
     <section>
+      <h2>Provider fallback · Insight</h2>
+      <p class="hint" style="margin-top:0">
+        触发条件可视化 + 离线模拟 / 实弹注入。模拟不打真实 LLM；实弹会 arm primary 后跑 Loop turn（需已配置 fallback 链与 backup key）。
+      </p>
+      <div id="fallback">—</div>
+      <div id="fallbackRules" style="margin-top:12px"></div>
+      <div id="fallbackChain" style="margin-top:12px"></div>
+      <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+        <span style="color:var(--muted);font-size:12px">离线模拟</span>
+        <button type="button" class="fb-sim" data-mode="soft_error">soft error</button>
+        <button type="button" class="fb-sim" data-mode="http_429">429</button>
+        <button type="button" class="fb-sim" data-mode="http_503">503</button>
+        <button type="button" class="fb-sim" data-mode="timeout">timeout</button>
+        <button type="button" class="fb-sim" data-mode="connection">connection</button>
+      </div>
+      <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+        <span style="color:var(--muted);font-size:12px">实弹（arm → live turn）</span>
+        <button type="button" class="fb-live" data-mode="soft_error">arm soft</button>
+        <button type="button" class="fb-live" data-mode="http_429">arm 429</button>
+        <button type="button" class="fb-live" data-mode="http_503">arm 503</button>
+        <button type="button" class="fb-live" data-mode="timeout">arm timeout</button>
+        <button type="button" class="fb-live" data-mode="connection">arm conn</button>
+        <button type="button" id="btnFaultDisarm">disarm</button>
+      </div>
+      <div id="fallbackProbe" class="empty" style="margin-top:10px">点上方按钮跑一次对照</div>
+      <ul style="margin:12px 0 0;padding-left:18px;font-size:13px;line-height:1.7;color:var(--muted)">
+        <li><strong style="color:var(--text)">正常</strong>：离线模拟任意 mode → switches+1，reason_kind 对应，used=backup。</li>
+        <li><strong style="color:var(--text)">异常对照</strong>：chain off（无 fallback）时实弹 → 无切换，turn 以 error 结束。</li>
+        <li><strong style="color:var(--text)">异常对照</strong>：流式已吐出 delta 后不再切换（见 phase-6.5）。</li>
+      </ul>
+    </section>
+    <section>
       <h2>Entry path</h2>
       <div id="entry">—</div>
     </section>
@@ -195,6 +227,67 @@
         (ok
           ? ` <span style="color:var(--muted);font-size:12px">唯一合法入口</span>`
           : ` <span class="err" style="font-size:12px">期望 entry_path=loop</span>`);
+
+      const fb = data.fallback || {};
+      const recent = fb.recent || [];
+      const fault = fb.fault || {};
+      $("fallback").innerHTML =
+        `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px">` +
+        `<span class="badge ${fb.active_is_fallback ? "ok" : "warn"}">chain: ${fb.active_is_fallback ? "on" : "off"}</span>` +
+        `<span class="badge">attempts: <b>${fb.attempts || 0}</b></span>` +
+        `<span class="badge ${fb.switches ? "warn" : "ok"}">switches: <b>${fb.switches || 0}</b></span>` +
+        `<span class="badge">last_used: <code>${escapeHtml(fb.last_used || "—")}</code></span>` +
+        `<span class="badge ${fault.armed ? "warn" : ""}">fault: ${fault.armed ? escapeHtml(fault.mode || "?") + " ×" + (fault.remaining || 0) : "idle"}</span>` +
+        `</div>` +
+        (recent.length
+          ? `<table><thead><tr><th>kind</th><th>from</th><th>to</th><th>reason</th></tr></thead><tbody>` +
+            recent
+              .slice(0, 8)
+              .map(
+                (e) =>
+                  `<tr><td><span class="badge warn">${escapeHtml(e.reason_kind || "?")}</span></td>` +
+                  `<td><code>${escapeHtml(e.from || "")}</code></td>` +
+                  `<td><code>${escapeHtml(e.to || "")}</code></td>` +
+                  `<td style="color:var(--muted);font-size:12px">${escapeHtml(e.reason || "")}</td></tr>`
+              )
+              .join("") +
+            `</tbody></table>`
+          : `<div class="empty">尚无 fallback 切换 — 用下方「离线模拟」或配置 fallback 后实弹</div>`);
+
+      const rules = fb.rules || [];
+      $("fallbackRules").innerHTML =
+        `<div style="color:var(--muted);font-size:12px;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.04em">Failover rules</div>` +
+        (rules.length
+          ? `<table><thead><tr><th>kind</th><th>trigger</th><th>example</th></tr></thead><tbody>` +
+            rules
+              .map(
+                (r) =>
+                  `<tr><td><span class="badge">${escapeHtml(r.kind || "")}</span></td>` +
+                  `<td><code>${escapeHtml(r.trigger || "")}</code></td>` +
+                  `<td style="color:var(--muted);font-size:12px">${escapeHtml(r.example || "")}</td></tr>`
+              )
+              .join("") +
+            `</tbody></table>`
+          : `<div class="empty">—</div>`);
+
+      const chain = fb.chain || [];
+      $("fallbackChain").innerHTML =
+        `<div style="color:var(--muted);font-size:12px;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.04em">Chain slots</div>` +
+        (chain.length
+          ? `<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">` +
+            chain
+              .map(
+                (s, i) =>
+                  `<span class="badge ${i === 0 ? "ok" : ""}">${i === 0 ? "primary" : "backup"} · ` +
+                  `<code>${escapeHtml(s.id || "")}</code> · ${escapeHtml(s.provider || "")} · ` +
+                  `<code>${escapeHtml(s.model || "")}</code>` +
+                  (s.pending ? " · pending" : "") +
+                  `</span>` +
+                  (i < chain.length - 1 ? `<span style="color:var(--muted)">→</span>` : "")
+              )
+              .join("") +
+            `</div>`
+          : `<div class="empty">—</div>`);
 
       const counts = data.entry_counts || {};
       const keys = ["rest", "ws", "cli", "dev", "unknown"];
@@ -379,6 +472,75 @@
       $("meta").textContent = "error";
     });
     $("auto").onchange = schedule;
+
+    async function fallbackPost(path, body) {
+      $("meta").textContent = `${path}…`;
+      const res = await fetch(path, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(body || {}),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const detail = data.detail || res.statusText || String(res.status);
+        throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+      }
+      return data;
+    }
+
+    function renderProbe(data, label) {
+      const sw = data.switch || (data.fallback && data.fallback.last_switch) || null;
+      const kind = data.reason_kind || (sw && sw.reason_kind) || "—";
+      $("fallbackProbe").innerHTML =
+        `<div style="font-size:13px">` +
+        `<span class="badge ok">${escapeHtml(label)}</span> ` +
+        `mode=<code>${escapeHtml(data.mode || "—")}</code> · ` +
+        `kind=<span class="badge warn">${escapeHtml(kind)}</span> · ` +
+        `used=<code>${escapeHtml(data.used_preset || (data.used && data.used.used_preset) || "—")}</code> · ` +
+        `finish=<code>${escapeHtml(data.finish_reason || data.stop_reason || "—")}</code>` +
+        (data.content
+          ? `<div style="margin-top:6px;color:var(--muted)">${escapeHtml(String(data.content).slice(0, 200))}</div>`
+          : "") +
+        `</div>`;
+    }
+
+    document.querySelectorAll(".fb-sim").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        try {
+          const mode = btn.getAttribute("data-mode");
+          const data = await fallbackPost("/api/dev/fallback/simulate", { mode });
+          renderProbe(data, "simulate");
+          await load();
+        } catch (e) {
+          $("fallbackProbe").innerHTML = `<div class="err">${escapeHtml(String(e))}</div>`;
+          $("meta").textContent = "error";
+        }
+      });
+    });
+
+    document.querySelectorAll(".fb-live").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        try {
+          const mode = btn.getAttribute("data-mode");
+          const data = await fallbackPost("/api/dev/fallback/probe-live", { mode });
+          renderProbe({ ...data, mode }, "live probe");
+          await load();
+        } catch (e) {
+          $("fallbackProbe").innerHTML = `<div class="err">${escapeHtml(String(e))}</div>`;
+          $("meta").textContent = "error";
+        }
+      });
+    });
+
+    $("btnFaultDisarm").onclick = () =>
+      fallbackPost("/api/dev/fallback/disarm", {})
+        .then(() => load())
+        .catch((e) => {
+          $("fallbackProbe").innerHTML = `<div class="err">${escapeHtml(String(e))}</div>`;
+        });
 
     syncThemeBtn();
     bootstrap()

@@ -43,16 +43,43 @@ async def skills(_auth: AuthDep, state: StateDep) -> dict[str, Any]:
 
 @router.get("/api/dev/providers")
 async def dev_providers(_auth: AuthDep, state: StateDep) -> dict[str, Any]:
-    """Dev UI: active OpenAI-compat preset summary (keys masked)."""
+    """Dev UI: registry + active preset summary (keys masked)."""
     from minibot.config.presets import active_preset_summary, ensure_presets, presets_public_list
+    from minibot.providers.registry import list_providers
 
     ensure_presets(state.config)
+    impl = getattr(state.runner.provider, "__class__", type("X", (), {})).__name__
     return {
         "ok": True,
         "active": active_preset_summary(state.config),
         "presets": presets_public_list(state.config),
-        "implementation": "openai_compat",
+        "registry": list_providers(include_stubs=True),
+        "implementation": impl,
+        "runtime_class": f"{state.runner.provider.__class__.__module__}.{state.runner.provider.__class__.__name__}",
     }
+
+
+@router.get("/api/dev/nanobot-import")
+async def nanobot_import_status(_auth: AuthDep) -> dict[str, Any]:
+    from minibot.config.nanobot_import import detect_nanobot_config, preview_nanobot_import
+
+    detect = detect_nanobot_config()
+    preview = preview_nanobot_import() if detect.get("exists") else None
+    return {"ok": True, "detect": detect, "preview": preview}
+
+
+@router.post("/api/dev/nanobot-import")
+async def nanobot_import_run(_auth: AuthDep, state: StateDep) -> dict[str, Any]:
+    from minibot.config.nanobot_import import import_nanobot_into_config
+
+    try:
+        result = import_nanobot_into_config(state.config, activate_first=True)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except (OSError, ValueError) as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    state.save_config()
+    return {"ok": True, **result}
 
 
 @router.get("/api/dev/mcp")
@@ -125,7 +152,154 @@ async def runtime(_auth: AuthDep, state: StateDep) -> dict[str, Any]:
     snap = state.loop.runtime_snapshot()
     worker = state.bus_worker.status() if state.bus_worker is not None else {}
     snap["bus"] = state.bus.snapshot(worker=worker)
+    snap["fallback"] = _fallback_runtime_payload(state)
     return snap
+
+
+def _fallback_runtime_payload(state: Any) -> dict[str, Any]:
+    from minibot.config.presets import ensure_presets, find_preset
+    from minibot.providers.fault_inject import FAILOVER_RULES, FAULT_MODES
+    from minibot.providers.fallback import FallbackProvider
+
+    ensure_presets(state.config)
+    stats = state.fallback_stats
+    provider = state.runner.provider
+    chain: list[dict[str, Any]] = []
+    if isinstance(provider, FallbackProvider):
+        for s in provider.slots:
+            chain.append(
+                {
+                    "id": s.id,
+                    "label": s.label,
+                    "provider": s.provider_name,
+                    "backend": s.backend,
+                    "model": s.model,
+                }
+            )
+    else:
+        active = find_preset(state.config, state.config.active_preset)
+        chain.append(
+            {
+                "id": state.config.active_preset,
+                "label": (active.label if active else "") or state.config.active_preset,
+                "provider": state.config.provider,
+                "backend": type(provider).__name__,
+                "model": state.config.model,
+            }
+        )
+        for fid in list(getattr(active, "fallback", None) or []) if active else []:
+            p = find_preset(state.config, fid)
+            if p is None:
+                continue
+            chain.append(
+                {
+                    "id": p.id,
+                    "label": p.label or p.id,
+                    "provider": p.provider,
+                    "backend": "(not wrapped — activate after setting fallback)",
+                    "model": p.model,
+                    "pending": True,
+                }
+            )
+
+    recent = []
+    for e in stats.recent[:10]:
+        recent.append(dict(e))
+
+    return {
+        "attempts": stats.attempts,
+        "switches": stats.switches,
+        "last_used": stats.last_used,
+        "last_switch": stats.last_switch,
+        "recent": recent,
+        "active_is_fallback": isinstance(provider, FallbackProvider),
+        "chain": chain,
+        "rules": list(FAILOVER_RULES),
+        "fault_modes": list(FAULT_MODES),
+        "fault": state.fault_controller.snapshot(),
+    }
+
+
+@router.post("/api/dev/fallback/arm")
+async def fallback_arm(
+    _auth: AuthDep,
+    state: StateDep,
+    body: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Arm primary-slot fault for next live chat / demo-turn (Dev Insight)."""
+    payload = body or {}
+    mode = str(payload.get("mode") or "soft_error").strip()
+    oneshot = payload.get("oneshot", True)
+    if isinstance(oneshot, str):
+        oneshot = oneshot.lower() not in {"0", "false", "no"}
+    try:
+        snap = state.fault_controller.arm(mode, oneshot=bool(oneshot))
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    return {"ok": True, "fault": snap, "fallback": _fallback_runtime_payload(state)}
+
+
+@router.post("/api/dev/fallback/disarm")
+async def fallback_disarm(_auth: AuthDep, state: StateDep) -> dict[str, Any]:
+    snap = state.fault_controller.disarm()
+    return {"ok": True, "fault": snap, "fallback": _fallback_runtime_payload(state)}
+
+
+@router.post("/api/dev/fallback/simulate")
+async def fallback_simulate(
+    _auth: AuthDep,
+    state: StateDep,
+    body: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Offline probe: Fake primary fails with mode → backup succeeds; records into live stats."""
+    from minibot.providers.fault_inject import FAULT_MODES, simulate_fallback_chain
+
+    payload = body or {}
+    mode = str(payload.get("mode") or "soft_error").strip()
+    if mode not in FAULT_MODES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"unknown mode {mode!r}; choose from {list(FAULT_MODES)}",
+        )
+    # Record into live fallback_stats so Runtime panel updates (Insight DoD).
+    result = await simulate_fallback_chain(mode=mode, stats=state.fallback_stats)  # type: ignore[arg-type]
+    return {
+        "ok": True,
+        **result,
+        "fallback": _fallback_runtime_payload(state),
+    }
+
+
+@router.post("/api/dev/fallback/probe-live")
+async def fallback_probe_live(
+    _auth: AuthDep,
+    state: StateDep,
+    body: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Arm fault (optional) then run a Loop demo turn on the live provider chain."""
+    payload = body or {}
+    mode = payload.get("mode")
+    if mode:
+        try:
+            state.fault_controller.arm(str(mode).strip(), oneshot=True)
+        except ValueError as exc:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+    session = state.sessions.create(title="fallback-probe")
+    content = str(payload.get("content") or "fallback probe").strip() or "fallback probe"
+    result = await state.loop.handle_turn(session.id, content, entry="dev")
+    used = {}
+    provider = state.runner.provider
+    if hasattr(provider, "used_meta"):
+        used = provider.used_meta()  # type: ignore[union-attr]
+    return {
+        "ok": True,
+        "session_id": session.id,
+        "content": result.content,
+        "stop_reason": result.stop_reason,
+        "used": used,
+        "fallback": _fallback_runtime_payload(state),
+    }
 
 
 @router.post("/api/dev/runtime/demo-turn")
@@ -148,6 +322,7 @@ async def runtime_demo_turn(
     snap = state.loop.runtime_snapshot()
     worker = state.bus_worker.status() if state.bus_worker is not None else {}
     snap["bus"] = state.bus.snapshot(worker=worker)
+    snap["fallback"] = _fallback_runtime_payload(state)
     return {
         "session_id": session_id,
         "content": result.content,

@@ -101,7 +101,7 @@ def app(data_dir: Path, fake_provider: FakeProvider, monkeypatch: pytest.MonkeyP
     def _factory(**_kwargs: Any) -> FakeProvider:
         return fake_provider
 
-    monkeypatch.setattr("minibot.app_state.OpenAICompatProvider", _factory)
+    monkeypatch.setattr("minibot.providers.factory.build_provider", _factory)
     return create_app()
 
 

@@ -7,6 +7,9 @@
 .web
 .orion
 
+# packages (npm workspaces)
+packages/*/node_modules/
+
 # Claude / AI assistant artifacts
 docs/superpowers/
 docs/plans/

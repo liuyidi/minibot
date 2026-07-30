@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>minibot Providers</title>
+  <script src="./common.js"></script>
+  <style>
+    :root, html[data-theme="dark"] {
+      --bg: #0f1115; --panel: #171a21; --border: #2a3140; --text: #e8ecf4;
+      --muted: #8b95a8; --accent: #5b8def; --ok: #3ecf8e; --warn: #e6b84d;
+      --err: #e35d6a; --btn: #222833; --hover: #1c2230;
+    }
+    html[data-theme="light"] {
+      --bg: #f4f6fa; --panel: #fff; --border: #d8dee8; --text: #1a2030;
+      --muted: #667085; --accent: #3b6fd8; --ok: #1a9f63; --warn: #b8860b;
+      --err: #c93c4a; --btn: #eef2f8; --hover: #eef2f8;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font: 14px/1.5 ui-sans-serif, system-ui, -apple-system, sans-serif;
+      background: var(--bg); color: var(--text);
+      min-height: 100vh; display: grid; grid-template-rows: auto 1fr;
+    }
+    header {
+      display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+      padding: 10px 16px; border-bottom: 1px solid var(--border); background: var(--panel);
+    }
+    header h1 { margin: 0; font-size: 16px; font-weight: 600; }
+    header a, button {
+      background: var(--btn); color: var(--text); border: 1px solid var(--border);
+      border-radius: 8px; padding: 6px 10px; cursor: pointer; font: inherit; text-decoration: none;
+    }
+    header a:hover, button:hover { border-color: var(--accent); }
+    header a.active { border-color: var(--accent); color: var(--accent); }
+    .meta { color: var(--muted); font-size: 12px; margin-left: auto; }
+    main { padding: 20px 24px; max-width: 1100px; }
+    .hint { color: var(--muted); font-size: 13px; margin: 0 0 16px; }
+    .banner {
+      display: none;
+      border: 1px solid color-mix(in srgb, var(--warn) 50%, var(--border));
+      background: color-mix(in srgb, var(--warn) 12%, transparent);
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 14px;
+    }
+    .banner.show { display: block; }
+    .banner strong { display: block; margin-bottom: 4px; }
+    .banner .actions { margin-top: 8px; display: flex; gap: 8px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+    section, .card {
+      background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px;
+    }
+    section h2, .card h3 { margin: 0 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+    .card h3 { text-transform: none; letter-spacing: 0; font-size: 14px; color: var(--text); }
+    .pill {
+      display: inline-block; font-size: 11px; padding: 1px 8px; border-radius: 999px;
+      border: 1px solid var(--border); color: var(--muted); margin-right: 6px;
+    }
+    .pill.ok { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 40%, var(--border)); }
+    .pill.warn { color: var(--warn); }
+    .pill.err { color: var(--err); }
+    code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; }
+    pre {
+      background: color-mix(in srgb, var(--btn) 70%, transparent);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px;
+      overflow: auto;
+      font-size: 12px;
+      max-height: 320px;
+    }
+    .stack { display: grid; gap: 14px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Providers</h1>
+    <a href="./">Chat</a>
+    <a href="./mcp.html">MCP</a>
+    <a class="active" href="./providers.html">Providers</a>
+    <a href="./knowledge.html">Knowledge</a>
+    <a href="./trace.html">Trace</a>
+    <button type="button" id="btnTheme">浅色</button>
+    <button type="button" id="btnRefresh">刷新</button>
+    <span class="meta" id="hdrMeta">loading…</span>
+  </header>
+  <main>
+    <p class="hint">
+      Phase 6 Insight：绿色 = 已实现 backend；黄色 = stub（异常对照：激活会失败）。
+      可从 <code>~/.nanobot/config.json</code> 一键导入 presets。
+    </p>
+
+    <div class="banner" id="importBanner">
+      <strong>发现 ~/.nanobot/config.json</strong>
+      <div class="meta" id="importPreview" style="margin-left:0">—</div>
+      <div class="actions">
+        <button type="button" id="btnImport">一键导入为 model presets</button>
+      </div>
+    </div>
+
+    <div class="stack">
+      <section>
+        <h2>当前生效</h2>
+        <div id="activeBox" class="meta" style="margin-left:0">loading…</div>
+      </section>
+
+      <section>
+        <h2>Registry</h2>
+        <div class="grid" id="registry"></div>
+      </section>
+
+      <section>
+        <h2>Raw JSON</h2>
+        <pre id="raw">{}</pre>
+      </section>
+    </div>
+  </main>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const ui = window.MinibotDevUI;
+    let token = "";
+
+    function escapeHtml(s) {
+      return String(s ?? "").replace(/[&<>"']/g, (c) => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+      }[c]));
+    }
+
+    function syncThemeBtn() {
+      $("btnTheme").textContent = ui.currentTheme() === "light" ? "暗色" : "浅色";
+    }
+
+    async function bootstrap() {
+      const res = await fetch("/auth/bootstrap");
+      if (!res.ok) throw new Error(`bootstrap ${res.status}`);
+      token = (await res.json()).token || "";
+    }
+
+    async function api(path, opts) {
+      const headers = { ...(opts && opts.headers) };
+      if (token) headers.Authorization = `Bearer ${token}`;
+      if (opts && opts.body && !headers["Content-Type"]) {
+        headers["Content-Type"] = "application/json";
+      }
+      const res = await fetch(path, { ...opts, headers });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const detail = data.detail || res.statusText || String(res.status);
+        throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+      }
+      return data;
+    }
+
+    async function load() {
+      const data = await api("/api/dev/providers");
+      const active = data.active || {};
+      $("hdrMeta").textContent =
+        `${active.provider || "?"} · ${active.backend || "?"} · ${active.model || ""}`;
+      $("activeBox").innerHTML =
+        `<span class="pill ok">${escapeHtml(active.backend || "?")}</span>` +
+        `<span class="pill">${escapeHtml(active.provider || "")}</span>` +
+        `${escapeHtml(active.label || "")} · <code>${escapeHtml(active.model || "")}</code><br/>` +
+        `base: <code>${escapeHtml(active.api_base || "")}</code><br/>` +
+        `key: ${escapeHtml(active.api_key_masked || "(none)")}<br/>` +
+        `fallback: <code>${escapeHtml((active.fallback || []).join(", ") || "(none)")}</code><br/>` +
+        `runtime: <code>${escapeHtml(data.runtime_class || data.implementation || "")}</code>` +
+        ` · <a href="./runtime.html" style="color:var(--accent)">Runtime fallback 调试 →</a>`;
+
+      const box = $("registry");
+      box.innerHTML = "";
+      for (const p of data.registry || []) {
+        const card = document.createElement("div");
+        card.className = "card";
+        const impl = p.implemented
+          ? `<span class="pill ok">implemented</span>`
+          : `<span class="pill warn">stub</span>`;
+        card.innerHTML =
+          `<h3>${escapeHtml(p.label || p.name)} ${impl}</h3>` +
+          `<div class="meta" style="margin-left:0">name=<code>${escapeHtml(p.name)}</code> · backend=<code>${escapeHtml(p.backend)}</code><br/>` +
+          `default_base=<code>${escapeHtml(p.default_api_base || "(none)")}</code><br/>` +
+          `${escapeHtml(p.notes || "")}</div>`;
+        box.appendChild(card);
+      }
+      $("raw").textContent = JSON.stringify(data, null, 2);
+
+      const ni = await api("/api/dev/nanobot-import");
+      const banner = $("importBanner");
+      if (ni.detect && ni.detect.exists) {
+        banner.classList.add("show");
+        const prev = ni.preview || {};
+        $("importPreview").textContent =
+          `path=${ni.detect.path} · keys=[${(prev.provider_keys_found || []).join(", ")}] · ` +
+          `model_presets=${prev.model_preset_count || 0}`;
+      } else {
+        banner.classList.remove("show");
+      }
+    }
+
+    $("btnTheme").onclick = () => {
+      ui.toggleTheme();
+      syncThemeBtn();
+    };
+    $("btnRefresh").onclick = () => load().catch((e) => alert(e.message || e));
+    $("btnImport").onclick = async () => {
+      if (!confirm("从 ~/.nanobot/config.json 导入 providers 为 minibot presets？")) return;
+      try {
+        const res = await api("/api/dev/nanobot-import", { method: "POST", body: "{}" });
+        alert(`imported created=${(res.created || []).join(",") || "(none)"} updated=${(res.updated || []).join(",") || "(none)"}`);
+        await load();
+      } catch (e) {
+        alert(e.message || e);
+      }
+    };
+
+    syncThemeBtn();
+    bootstrap()
+      .then(load)
+      .catch((e) => {
+        $("activeBox").textContent = String(e.message || e);
+        $("hdrMeta").textContent = "error";
+      });
+  </script>
+</body>
+</html>

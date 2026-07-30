@@ -951,12 +951,21 @@
   <div class="modal-backdrop" id="presetModal" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="presetModalTitle">
       <h2 id="presetModalTitle">新增模型</h2>
-      <p class="modal-sub" id="presetModalSub">OpenAI-compatible endpoint</p>
+      <p class="modal-sub" id="presetModalSub">OpenAI-compatible 或 Anthropic Messages</p>
       <input type="hidden" id="dlgPresetId" value="" />
       <label for="dlgLabel">显示名称</label>
-      <input id="dlgLabel" type="text" placeholder="DeepSeek / OpenAI …" autocomplete="off" />
+      <input id="dlgLabel" type="text" placeholder="DeepSeek / OpenAI / Claude …" autocomplete="off" />
+      <label for="dlgProvider">provider</label>
+      <select id="dlgProvider" aria-label="provider">
+        <option value="openai">openai (OpenAI-compat)</option>
+        <option value="anthropic">anthropic (Messages API)</option>
+        <option value="openrouter">openrouter</option>
+        <option value="deepseek">deepseek</option>
+        <option value="ollama">ollama</option>
+        <option value="custom">custom</option>
+      </select>
       <label for="dlgModel">model</label>
-      <input id="dlgModel" type="text" placeholder="deepseek-v4-flash" autocomplete="off" />
+      <input id="dlgModel" type="text" placeholder="deepseek-v4-flash / claude-sonnet-4-20250514" autocomplete="off" />
       <label for="dlgBase">api_base</label>
       <input id="dlgBase" type="text" placeholder="https://api.deepseek.com/v1" autocomplete="off" />
       <label for="dlgKey">api_key <span id="dlgKeyHint" style="font-weight:400">（新建必填）</span></label>
@@ -1044,6 +1053,21 @@
       const el = $("log");
       const line = `[${new Date().toLocaleTimeString()}] ${msg}`;
       el.textContent = `${line}\n${el.textContent}`.slice(0, 4000);
+    }
+
+    function showToast(text) {
+      let host = document.getElementById("toastHost");
+      if (!host) {
+        host = document.createElement("div");
+        host.id = "toastHost";
+        host.style.cssText = "position:fixed;right:16px;bottom:16px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none";
+        document.body.appendChild(host);
+      }
+      const el = document.createElement("div");
+      el.textContent = text;
+      el.style.cssText = "pointer-events:auto;background:var(--panel);color:var(--text);border:1px solid var(--accent);border-radius:10px;padding:10px 14px;box-shadow:0 8px 24px rgba(0,0,0,.25);font-size:13px;max-width:320px";
+      host.appendChild(el);
+      setTimeout(() => el.remove(), 4500);
     }
 
     function pushTrace(payload) {
@@ -1444,6 +1468,15 @@
       $("dlgError").textContent = "";
     }
 
+    const PROVIDER_DEFAULTS = {
+      openai: "https://api.openai.com/v1",
+      anthropic: "https://api.anthropic.com",
+      openrouter: "https://openrouter.ai/api/v1",
+      deepseek: "https://api.deepseek.com/v1",
+      ollama: "http://127.0.0.1:11434/v1",
+      custom: "",
+    };
+
     function openPresetModal(mode, preset) {
       const modal = $("presetModal");
       if (!modal) return;
@@ -1451,11 +1484,14 @@
       $("presetModalTitle").textContent = mode === "edit" ? "编辑模型" : "新增模型";
       $("presetModalSub").textContent = mode === "edit"
         ? "修改后保存并保持为当前激活模型"
-        : "填写 OpenAI-compatible 端点，保存后可在 Settings 切换";
+        : "选择 provider（openai_compat / anthropic），保存后可在 Settings 切换";
       $("dlgPresetId").value = mode === "edit" ? (preset?.id || "") : "";
       $("dlgLabel").value = mode === "edit" ? (preset?.label || preset?.id || "") : "";
+      $("dlgProvider").value = mode === "edit" ? (preset?.provider || "openai") : "openai";
       $("dlgModel").value = mode === "edit" ? (preset?.model || "") : "";
-      $("dlgBase").value = mode === "edit" ? (preset?.api_base || "") : "https://api.openai.com/v1";
+      $("dlgBase").value = mode === "edit"
+        ? (preset?.api_base || "")
+        : (PROVIDER_DEFAULTS[$("dlgProvider").value] || "https://api.openai.com/v1");
       $("dlgKey").value = "";
       $("dlgKey").placeholder = mode === "edit" ? (preset?.api_key_masked || "留空则不修改") : "必填";
       $("dlgKeyHint").textContent = mode === "edit" ? "（留空不改）" : "（新建必填）";
@@ -1627,6 +1663,11 @@
           finalizeStreamBubble();
         } else if (event === "stream_end") {
           finalizeStreamBubble();
+        } else if (event === "provider_switched") {
+          const fromL = msg.from_label || msg.from || "?";
+          const toL = msg.to_label || msg.to || "?";
+          showToast(`provider: ${fromL} → ${toL}`);
+          log(`fallback ${fromL} → ${toL} (${msg.reason || ""})`);
         } else if (event === "goal_status" && msg.status === "running") {
           setStreamingUi(true);
         } else if (event === "turn_end") {
@@ -1778,6 +1819,7 @@
         id: id || undefined,
         label,
         model,
+        provider: $("dlgProvider").value || "openai",
         api_base,
         activate: true,
       };
@@ -1902,6 +1944,15 @@
     $("btnDelPreset").onclick = () => deleteSelectedPreset().catch((e) => log(String(e.message || e)));
     $("dlgCancel").onclick = () => closePresetModal();
     $("dlgSave").onclick = () => savePresetFromModal();
+    $("dlgProvider").onchange = () => {
+      const p = $("dlgProvider").value;
+      if (PROVIDER_DEFAULTS[p] !== undefined) {
+        $("dlgBase").value = PROVIDER_DEFAULTS[p];
+      }
+      if (p === "anthropic" && !$("dlgModel").value) {
+        $("dlgModel").value = "claude-sonnet-4-20250514";
+      }
+    };
     $("presetModal").addEventListener("click", (ev) => {
       if (ev.target === $("presetModal")) closePresetModal();
     });
