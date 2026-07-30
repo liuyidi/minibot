@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>minibot Knowledge</title>
+  <script src="./common.js"></script>
+  <style>
+    :root, html[data-theme="dark"] {
+      --bg: #0f1115; --panel: #171a21; --border: #2a3140; --text: #e8ecf4;
+      --muted: #8b95a8; --accent: #5b8def; --ok: #3ecf8e; --warn: #e6b84d;
+      --err: #e35d6a; --btn: #222833; --user: #243044; --bot: #1c2433;
+    }
+    html[data-theme="light"] {
+      --bg: #f4f6fa; --panel: #fff; --border: #d8dee8; --text: #1a2030;
+      --muted: #667085; --accent: #3b6fd8; --ok: #1a9f63; --warn: #b8860b;
+      --err: #c93c4a; --btn: #eef2f8; --user: #dce8fb; --bot: #eef1f6;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font: 14px/1.5 ui-sans-serif, system-ui, -apple-system, sans-serif;
+      background: var(--bg); color: var(--text);
+      min-height: 100vh; display: grid; grid-template-rows: auto 1fr;
+    }
+    header {
+      display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+      padding: 10px 16px; border-bottom: 1px solid var(--border); background: var(--panel);
+    }
+    header h1 { margin: 0; font-size: 16px; font-weight: 600; }
+    header a, button, select, input {
+      background: var(--btn); color: var(--text); border: 1px solid var(--border);
+      border-radius: 8px; padding: 6px 10px; cursor: pointer; font: inherit; text-decoration: none;
+    }
+    input { cursor: text; }
+    .meta { color: var(--muted); font-size: 12px; margin-left: auto; }
+    main { padding: 16px 20px; display: grid; grid-template-columns: 320px 1fr; gap: 16px; }
+    @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+    .panel {
+      background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px;
+    }
+    .panel h2 { margin: 0 0 10px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+    .hint { color: var(--muted); font-size: 13px; margin: 0 0 14px; }
+    .badge {
+      display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 999px;
+      border: 1px solid var(--border); margin-right: 6px;
+    }
+    .badge.ok { color: var(--ok); }
+    .badge.warn { color: var(--warn); }
+    .badge.err { color: var(--err); }
+    .kb-list { display: flex; flex-direction: column; gap: 6px; }
+    .kb-item {
+      border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; cursor: pointer;
+      background: var(--bg);
+    }
+    .kb-item:hover { border-color: var(--accent); }
+    .kb-item.active { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--bg)); }
+    .kb-item .name { font-weight: 600; }
+    .kb-item .slug { color: var(--muted); font-size: 12px; }
+    .kb-item .kind { float: right; font-size: 11px; color: var(--accent); text-transform: uppercase; }
+    .form { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+    .form input[type="text"] { flex: 1 1 240px; min-width: 120px; }
+    .form select { width: auto; }
+    .results { display: flex; flex-direction: column; gap: 10px; }
+    .card {
+      border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px;
+      background: var(--bg);
+    }
+    .card .title { font-weight: 600; margin-bottom: 4px; }
+    .card .score { color: var(--accent); font-size: 12px; }
+    .card .text { color: var(--text); font-size: 13px; margin: 6px 0; white-space: pre-wrap; }
+    .card .id { color: var(--muted); font-size: 11px; font-family: ui-monospace, Menlo, monospace; }
+    .empty { color: var(--muted); font-style: italic; }
+    .error { color: var(--err); }
+    pre {
+      margin: 0; white-space: pre-wrap; word-break: break-word;
+      font: 12px/1.45 ui-monospace, Menlo, Consolas, monospace;
+      background: transparent; color: var(--text); border: 1px solid var(--border);
+      border-radius: 8px; padding: 10px; max-height: 320px; overflow: auto;
+    }
+    .tabs { display: flex; gap: 6px; margin-bottom: 12px; }
+    .tab { background: transparent; border: 1px solid var(--border); }
+    .tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .citation { border-left: 2px solid var(--accent); padding-left: 10px; margin: 6px 0; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Knowledge</h1>
+    <a href="./">← Chat</a>
+    <a href="./tools.html">Tools</a>
+    <button type="button" id="btnRefresh">刷新</button>
+    <button type="button" id="btnTheme">浅色</button>
+    <span class="meta" id="meta">loading…</span>
+  </header>
+  <main>
+    <div class="panel" id="leftPanel">
+      <h2>连接状态</h2>
+      <div id="status" class="empty">—</div>
+      <p class="hint">minibot 只读转发 minikb。写操作（上传文档、创建 KB）请跳 minikb UI。</p>
+      <h2 style="margin-top:18px">知识库</h2>
+      <div id="kbList" class="kb-list empty">—</div>
+    </div>
+    <div class="panel" id="rightPanel">
+      <h2 id="rightTitle">选择一个知识库</h2>
+      <div class="tabs" id="modeTabs" style="display:none">
+        <button class="tab active" data-mode="search">检索 chunks</button>
+        <button class="tab" data-mode="qa">RAG 问答</button>
+      </div>
+      <div class="form" id="queryForm" style="display:none">
+        <input type="text" id="queryInput" placeholder="输入问题或关键词…" />
+        <select id="modeSelect">
+          <option value="hybrid">hybrid</option>
+          <option value="vector">vector</option>
+          <option value="keyword">keyword</option>
+        </select>
+        <input type="number" id="topK" value="5" min="1" max="20" style="width:64px" />
+        <button type="button" id="btnRun">运行</button>
+      </div>
+      <div id="results" class="results empty">—</div>
+    </div>
+  </main>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const ui = window.MinibotDevUI;
+    let token = "";
+    let kbs = [];
+    let selectedKbId = "";
+    let currentMode = "search";
+
+    function syncThemeBtn() {
+      $("btnTheme").textContent = ui.currentTheme() === "light" ? "暗色" : "浅色";
+    }
+
+    async function bootstrap() {
+      const res = await fetch("/auth/bootstrap");
+      if (!res.ok) throw new Error(`bootstrap ${res.status}`);
+      token = (await res.json()).token || "";
+    }
+
+    async function api(path, opts) {
+      const headers = { ...(opts && opts.headers) };
+      if (token) headers.Authorization = `Bearer ${token}`;
+      const res = await fetch(path, { ...opts, headers });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.detail || res.statusText);
+      return data;
+    }
+
+    function statusHtml(data) {
+      if (!data.configured) {
+        return `<span class="badge err">未配置</span> 请设置 MINIBOT_SERVER_MINIKB_BASE_URL`;
+      }
+      const ok = data.ok;
+      const mask = data.api_key_masked ? `key: ${data.api_key_masked}` : "key: 无";
+      return `<span class="badge ${ok ? "ok" : "err"}">${ok ? "healthy" : "unhealthy"}</span> ` +
+        `base: <code>${data.base_url || "—"}</code> · ${mask}<br>` +
+        `<span style="color:var(--muted);font-size:12px">${data.detail || ""}</span>`;
+    }
+
+    function renderKbList() {
+      const el = $("kbList");
+      if (!kbs.length) {
+        el.innerHTML = "<span class='empty'>无知识库或 minikb 未连接</span>";
+        el.className = "kb-list empty";
+        return;
+      }
+      el.className = "kb-list";
+      el.innerHTML = kbs.map((kb) => {
+        const active = kb.id === selectedKbId ? " active" : "";
+        const stats = kb.stats || {};
+        const extra = stats.documents !== undefined ? ` · ${stats.documents} docs` : "";
+        return `
+          <div class="kb-item${active}" data-id="${kb.id}">
+            <span class="kind">${kb.kind || "general"}</span>
+            <div class="name">${kb.name || "(unnamed)"}</div>
+            <div class="slug">${kb.slug || kb.id || ""}${extra}</div>
+          </div>
+        `;
+      }).join("");
+      el.querySelectorAll(".kb-item").forEach((item) => {
+        item.onclick = () => {
+          selectedKbId = item.dataset.id;
+          renderKbList();
+          renderRight();
+        };
+      });
+    }
+
+    function renderRight() {
+      const kb = kbs.find((k) => k.id === selectedKbId);
+      $("rightTitle").textContent = kb ? `${kb.name || kb.id} · ${kb.id}` : "选择一个知识库";
+      const show = !!kb;
+      $("modeTabs").style.display = show ? "flex" : "none";
+      $("queryForm").style.display = show ? "flex" : "none";
+      $("results").innerHTML = show ? "<span class='empty'>输入 query 后点击运行</span>" : "—";
+      $("modeSelect").style.display = currentMode === "search" ? "inline" : "none";
+    }
+
+    function renderSearch(data) {
+      const hits = data.hits || [];
+      const el = $("results");
+      if (!hits.length) {
+        el.innerHTML = "<span class='empty'>无命中</span>";
+        return;
+      }
+      el.innerHTML = hits.map((h, idx) => `
+        <div class="card">
+          <div class="title">${idx + 1}. ${h.doc_title || "(untitled)"}</div>
+          <div class="score">score: ${(h.score ?? 0).toFixed(4)} · chunk: ${h.chunk_id || "—"}</div>
+          <div class="text">${h.text || ""}</div>
+          <div class="id">doc_id: ${h.document_id || "—"}${h.doc_uri ? ` · <a href="${h.doc_uri}" target="_blank">source</a>` : ""}</div>
+        </div>
+      `).join("");
+    }
+
+    function renderQa(data) {
+      const citations = data.citations || [];
+      const el = $("results");
+      el.innerHTML = [
+        `<div class="card">
+          <div class="title">Answer</div>
+          <div class="text">${data.answer || "(empty)"}</div>
+          <div class="score">model: ${data.model || "—"} · elapsed: ${Math.round(data.elapsed_ms || 0)}ms · retrieval_hits: ${data.retrieval_hits || 0}</div>
+        </div>`,
+        citations.length ? `<div class="card"><div class="title">Citations</div>` +
+          citations.map((c) => `
+            <div class="citation">
+              <div class="title">[${c.index ?? "?"}] ${c.doc_title || "(untitled)"}</div>
+              <div class="text">${c.text_snippet || ""}</div>
+              <div class="id">chunk: ${c.chunk_id || "—"}${c.doc_uri ? ` · <a href="${c.doc_uri}" target="_blank">source</a>` : ""}</div>
+            </div>
+          `).join("") + "</div>" : "",
+      ].join("");
+    }
+
+    async function load() {
+      $("meta").textContent = "loading status…";
+      const status = await api("/api/dev/knowledge/status");
+      $("status").innerHTML = statusHtml(status);
+      if (!status.ok) {
+        $("meta").textContent = "minikb unavailable";
+        kbs = [];
+        selectedKbId = "";
+        renderKbList();
+        renderRight();
+        return;
+      }
+      $("meta").textContent = "loading kbs…";
+      const data = await api("/api/dev/knowledge/kbs");
+      kbs = data.kbs || [];
+      if (selectedKbId && !kbs.find((k) => k.id === selectedKbId)) {
+        selectedKbId = "";
+      }
+      renderKbList();
+      renderRight();
+      $("meta").textContent = `${kbs.length} KBs · ${status.ok ? "connected" : "disconnected"}`;
+    }
+
+    async function run() {
+      const kb = kbs.find((k) => k.id === selectedKbId);
+      if (!kb) return;
+      const query = $("queryInput").value.trim();
+      if (!query) {
+        $("results").innerHTML = "<span class='error'>请输入 query</span>";
+        return;
+      }
+      $("results").innerHTML = "<span class='empty'>running…</span>";
+      $("btnRun").disabled = true;
+      try {
+        if (currentMode === "search") {
+          const data = await api(`/api/dev/knowledge/${encodeURIComponent(kb.id)}/search`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              query,
+              top_k: parseInt($("topK").value, 10) || 5,
+              mode: $("modeSelect").value,
+            }),
+          });
+          renderSearch(data);
+        } else {
+          const data = await api(`/api/dev/knowledge/${encodeURIComponent(kb.id)}/qa`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              query,
+              top_k: parseInt($("topK").value, 10) || 6,
+            }),
+          });
+          renderQa(data);
+        }
+      } catch (e) {
+        $("results").innerHTML = `<span class="error">${String(e)}</span>`;
+      } finally {
+        $("btnRun").disabled = false;
+      }
+    }
+
+    $("btnTheme").onclick = () => { ui.toggleTheme(); syncThemeBtn(); };
+    $("btnRefresh").onclick = () => load().catch((e) => { $("meta").textContent = String(e); });
+    $("btnRun").onclick = run;
+    $("queryInput").addEventListener("keydown", (e) => { if (e.key === "Enter") run(); });
+    $("modeTabs").querySelectorAll(".tab").forEach((tab) => {
+      tab.onclick = () => {
+        currentMode = tab.dataset.mode;
+        $("modeTabs").querySelectorAll(".tab").forEach((t) => t.classList.toggle("active", t === tab));
+        renderRight();
+      };
+    });
+
+    bootstrap().then(load).catch((e) => { $("meta").textContent = String(e); });
+    syncThemeBtn();
+  </script>
+</body>
+</html>

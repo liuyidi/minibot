@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>minibot MCP</title>
+  <script src="./common.js"></script>
+  <style>
+    :root, html[data-theme="dark"] {
+      --bg: #0f1115; --panel: #171a21; --border: #2a3140; --text: #e8ecf4;
+      --muted: #8b95a8; --accent: #5b8def; --ok: #3ecf8e; --warn: #e6b84d;
+      --err: #e35d6a; --btn: #222833; --hover: #1c2230; --input: #12161e;
+    }
+    html[data-theme="light"] {
+      --bg: #f4f6fa; --panel: #fff; --border: #d8dee8; --text: #1a2030;
+      --muted: #667085; --accent: #3b6fd8; --ok: #1a9f63; --warn: #b8860b;
+      --err: #c93c4a; --btn: #eef2f8; --hover: #eef2f8; --input: #f8fafc;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font: 14px/1.45 ui-sans-serif, system-ui, -apple-system, sans-serif;
+      background: var(--bg); color: var(--text);
+      min-height: 100vh; display: grid; grid-template-rows: auto 1fr;
+    }
+    header {
+      display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+      padding: 10px 16px; border-bottom: 1px solid var(--border); background: var(--panel);
+    }
+    header h1 { margin: 0; font-size: 16px; font-weight: 600; }
+    header a, button, select, input, textarea {
+      background: var(--btn); color: var(--text); border: 1px solid var(--border);
+      border-radius: 8px; padding: 6px 10px; cursor: pointer; font: inherit;
+    }
+    header a { text-decoration: none; }
+    button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .meta { color: var(--muted); font-size: 12px; margin-left: auto; }
+    main { padding: 16px 20px; display: grid; gap: 12px; }
+    .hint { color: var(--muted); font-size: 13px; margin: 0; }
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(280px, 1fr) minmax(300px, 1.15fr) minmax(280px, 1fr);
+      gap: 12px; align-items: start;
+    }
+    @media (max-width: 1100px) { .layout { grid-template-columns: 1fr; } }
+    .tpl-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+    .tpl-btn { font-size: 12px; }
+    .pipe-stage {
+      border-left: 3px solid var(--border);
+      padding: 6px 8px; margin-bottom: 6px;
+      font: 11px/1.45 ui-monospace, Menlo, Consolas, monospace;
+      background: var(--input); border-radius: 0 6px 6px 0;
+    }
+    .pipe-stage.ok { border-left-color: var(--ok); }
+    .pipe-stage.err { border-left-color: var(--err); }
+    .pipe-stage .payload {
+      margin-top: 4px; max-height: 140px; overflow: auto;
+      color: var(--muted); white-space: pre-wrap; word-break: break-word;
+    }
+    .invoke-box { border: 1px solid var(--border); border-radius: 8px; padding: 10px; margin-top: 10px; }
+    #fHeaders { min-height: 48px; }
+    section {
+      background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+      padding: 12px 14px; min-height: 120px;
+    }
+    section h2 {
+      margin: 0 0 10px; font-size: 12px; text-transform: uppercase;
+      letter-spacing: 0.06em; color: var(--muted);
+    }
+    .badge {
+      display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 999px;
+      border: 1px solid var(--border); margin-right: 4px;
+    }
+    .badge.ok { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 40%, var(--border)); }
+    .badge.warn { color: var(--warn); }
+    .badge.err { color: var(--err); border-color: color-mix(in srgb, var(--err) 40%, var(--border)); }
+    .preset {
+      border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; margin-bottom: 8px;
+      cursor: pointer;
+    }
+    .preset:hover { background: var(--hover); }
+    .preset.active { outline: 1px solid var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent); }
+    .preset .title { font-weight: 600; font-size: 13px; }
+    .preset .sub { font-size: 11px; color: var(--muted); margin-top: 3px; word-break: break-all; }
+    label.field { display: block; font-size: 12px; color: var(--muted); margin: 8px 0 4px; }
+    input[type="text"], input[type="number"], textarea, select {
+      width: 100%; background: var(--input); cursor: text;
+    }
+    textarea { min-height: 64px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; }
+    .row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th, td { text-align: left; padding: 6px 6px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    th { color: var(--muted); font-weight: 500; }
+    .case {
+      border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; margin-bottom: 8px;
+    }
+    .case.ok { border-color: color-mix(in srgb, var(--ok) 45%, var(--border)); }
+    .case.warn { border-color: color-mix(in srgb, var(--warn) 45%, var(--border)); }
+    .case.err { border-color: color-mix(in srgb, var(--err) 45%, var(--border)); }
+    .case h3 { margin: 0 0 4px; font-size: 13px; }
+    .case p { margin: 0 0 8px; font-size: 12px; color: var(--muted); }
+    .case .result {
+      font: 11px/1.4 ui-monospace, Menlo, Consolas, monospace;
+      white-space: pre-wrap; word-break: break-word;
+      background: var(--input); border-radius: 6px; padding: 6px 8px; min-height: 1.4em;
+    }
+    .timeline {
+      font: 11px/1.45 ui-monospace, Menlo, Consolas, monospace;
+      max-height: 220px; overflow: auto; color: var(--muted);
+    }
+    .timeline .e-ok { color: var(--ok); }
+    .timeline .e-err { color: var(--err); }
+    .empty { color: var(--muted); font-style: italic; font-size: 13px; }
+    .err-msg { color: var(--err); font-size: 12px; margin-top: 6px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>MCP</h1>
+    <a href="./">← Chat</a>
+    <a href="./tools.html">Tools</a>
+    <a href="./context.html">Context</a>
+    <button type="button" id="btnRefresh">刷新</button>
+    <button type="button" id="btnTheme">浅色</button>
+    <span class="meta" id="meta">loading…</span>
+  </header>
+  <main>
+    <p class="hint">
+      一键模板（Context7 / Filesystem）→ Enable → 下方 <b>Invoke</b> 试调 tool，中间看
+      <code>connect → list_tools → inject → call_tool</code> 完整流水（含 args / result / 耗时）。
+    </p>
+    <div class="layout">
+      <section>
+        <h2>Templates · 可配置入口</h2>
+        <label class="field" for="tplKey">API key（Context7 可选）</label>
+        <input id="tplKey" type="password" placeholder="CONTEXT7_API_KEY / --api-key" autocomplete="off" />
+        <div class="tpl-row" id="tplButtons"></div>
+        <p class="hint" id="tplHint" style="margin-bottom:10px">选一个模板写入 Presets（默认不自动 enable）。</p>
+
+        <h2>Presets</h2>
+        <div id="presetList" class="empty">暂无</div>
+        <div class="row">
+          <button type="button" id="btnNew">新建空白</button>
+        </div>
+        <div id="form" hidden>
+          <label class="field" for="fId">id</label>
+          <input id="fId" type="text" placeholder="context7" />
+          <label class="field" for="fLabel">label</label>
+          <input id="fLabel" type="text" placeholder="Context7" />
+          <label class="field" for="fType">type</label>
+          <select id="fType">
+            <option value="">auto</option>
+            <option value="stdio">stdio</option>
+            <option value="sse">sse</option>
+            <option value="streamableHttp">streamableHttp</option>
+          </select>
+          <label class="field" for="fCommand">command (stdio)</label>
+          <input id="fCommand" type="text" placeholder="npx" />
+          <label class="field" for="fArgs">args JSON array</label>
+          <textarea id="fArgs" placeholder='["-y","@upstash/context7-mcp@latest"]'></textarea>
+          <label class="field" for="fUrl">url (http)</label>
+          <input id="fUrl" type="text" placeholder="https://mcp.context7.com/mcp" />
+          <label class="field" for="fHeaders">headers JSON</label>
+          <textarea id="fHeaders" placeholder='{"CONTEXT7_API_KEY":""}'></textarea>
+          <label class="field" for="fTimeout">tool_timeout</label>
+          <input id="fTimeout" type="number" value="30" min="1" max="300" />
+          <div class="err-msg" id="formError"></div>
+          <div class="row">
+            <button type="button" class="primary" id="btnSave">保存</button>
+            <button type="button" id="btnTest">Test</button>
+            <button type="button" id="btnEnable">Enable</button>
+            <button type="button" id="btnDisable">Disable</button>
+            <button type="button" id="btnRemove">删除</button>
+          </div>
+        </div>
+
+        <div class="invoke-box">
+          <h2 style="margin-top:0">Invoke · 试调 tool</h2>
+          <p class="hint">需先 Enable 选中 preset。可直接填原始 tool 名（如 resolve-library-id）。</p>
+          <label class="field" for="invTool">tool</label>
+          <select id="invTool"></select>
+          <label class="field" for="invArgs">arguments JSON</label>
+          <textarea id="invArgs" placeholder='{"libraryName":"react"}'></textarea>
+          <div class="row">
+            <button type="button" class="primary" id="btnInvoke">Invoke</button>
+            <button type="button" id="btnSampleArgs">填入示例参数</button>
+          </div>
+          <div class="result" id="invokeOut" style="margin-top:8px">—</div>
+        </div>
+      </section>
+
+      <section>
+        <h2>调用流水 pipeline</h2>
+        <p class="hint">connect_start → transport_open → session_init → list_tools → inject → call_tool_*</p>
+        <div id="pipeline" class="empty">尚无流水</div>
+        <h2 style="margin-top:14px">Recent MCP calls</h2>
+        <div id="calls" class="empty">尚无 call_tool</div>
+        <h2 style="margin-top:14px">Runtime · injected</h2>
+        <div id="serverStatus" class="empty">—</div>
+        <table>
+          <thead><tr><th>tool</th><th>original</th></tr></thead>
+          <tbody id="toolRows"><tr><td colspan="2" class="empty">无 MCP tools</td></tr></tbody>
+        </table>
+      </section>
+
+      <section>
+        <h2>情景实验室</h2>
+        <div class="case ok">
+          <h3>✅ Test 当前表单</h3>
+          <p>临时连接并 list tools，不注入 Registry。</p>
+          <button type="button" id="caseTest">运行</button>
+          <div class="result" id="caseTestOut">—</div>
+        </div>
+        <div class="case ok">
+          <h3>✅ Enable → 注入</h3>
+          <p>保存 enabled 并连接；Runtime 应出现 tools。</p>
+          <button type="button" id="caseEnable">运行</button>
+          <div class="result" id="caseEnableOut">—</div>
+        </div>
+        <div class="case warn">
+          <h3>⚠️ Disable → 摘除</h3>
+          <p>断开后 Runtime / Tools 页应看不到该 server 的 mcp_*。</p>
+          <button type="button" id="caseDisable">运行</button>
+          <div class="result" id="caseDisableOut">—</div>
+        </div>
+        <div class="case err">
+          <h3>❌ 坏 command</h3>
+          <p>写入 <code>__bad_cmd</code> 并 Test，期望红错误、Loop 仍可用。</p>
+          <button type="button" id="caseBadCmd">运行</button>
+          <div class="result" id="caseBadCmdOut">—</div>
+        </div>
+        <div class="case err">
+          <h3>❌ 坏 / 不可达 URL</h3>
+          <p>用 TEST-NET <code>http://203.0.113.1:9</code>，期望 unreachable / blocked。</p>
+          <button type="button" id="caseBadUrl">运行</button>
+          <div class="result" id="caseBadUrlOut">—</div>
+        </div>
+      </section>
+    </div>
+  </main>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const ui = window.MinibotDevUI;
+
+    const state = {
+      token: "",
+      presets: [],
+      runtime: null,
+      templates: [],
+      selectedId: null,
+      sampleInvoke: null,
+    };
+
+    function syncTheme() {
+      $("btnTheme").textContent = ui.currentTheme() === "light" ? "暗色" : "浅色";
+    }
+
+    async function bootstrap() {
+      const res = await fetch("/auth/bootstrap");
+      if (!res.ok) throw new Error(`bootstrap ${res.status}`);
+      state.token = (await res.json()).token || "";
+    }
+
+    async function api(path, opts = {}) {
+      const headers = { ...(opts.headers || {}) };
+      if (state.token) headers.Authorization = `Bearer ${state.token}`;
+      if (opts.body && !headers["Content-Type"]) headers["Content-Type"] = "application/json";
+      const res = await fetch(path, { ...opts, headers });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const detail = data.detail;
+        throw new Error(typeof detail === "string" ? detail : (detail && JSON.stringify(detail)) || res.statusText);
+      }
+      return data;
+    }
+
+    function formPayload() {
+      let args = [];
+      const raw = ($("fArgs").value || "").trim();
+      if (raw) {
+        args = JSON.parse(raw);
+        if (!Array.isArray(args)) throw new Error("args must be JSON array");
+      }
+      let headers = {};
+      const hraw = ($("fHeaders").value || "").trim();
+      if (hraw) {
+        headers = JSON.parse(hraw);
+        if (!headers || typeof headers !== "object" || Array.isArray(headers)) {
+          throw new Error("headers must be JSON object");
+        }
+      }
+      return {
+        id: ($("fId").value || "").trim() || undefined,
+        label: ($("fLabel").value || "").trim() || undefined,
+        type: ($("fType").value || "").trim() || null,
+        command: ($("fCommand").value || "").trim(),
+        args,
+        url: ($("fUrl").value || "").trim(),
+        headers,
+        tool_timeout: Number($("fTimeout").value || 30),
+        enabled_tools: ["*"],
+      };
+    }
+
+    function fillForm(preset) {
+      $("form").hidden = false;
+      $("formError").textContent = "";
+      $("fId").value = preset?.id || "";
+      $("fId").disabled = !!preset?.id;
+      $("fLabel").value = preset?.label || "";
+      $("fType").value = preset?.type || "";
+      $("fCommand").value = preset?.command || "";
+      $("fArgs").value = preset?.args ? JSON.stringify(preset.args) : "";
+      $("fUrl").value = preset?.url || "";
+      $("fHeaders").value = preset?.headers ? JSON.stringify(preset.headers) : "";
+      $("fTimeout").value = String(preset?.tool_timeout || 30);
+      refreshInvokeTools();
+    }
+
+    function renderPresets() {
+      const box = $("presetList");
+      if (!state.presets.length) {
+        box.className = "empty";
+        box.textContent = "暂无 preset — 点「新建」";
+        return;
+      }
+      box.className = "";
+      box.innerHTML = state.presets.map((p) => {
+        const rt = (state.runtime?.servers || []).find((s) => s.id === p.id);
+        const connected = rt?.connected;
+        const err = rt?.last_error;
+        const lamp = err
+          ? `<span class="badge err">error</span>`
+          : connected
+            ? `<span class="badge ok">connected</span>`
+            : p.enabled
+              ? `<span class="badge warn">enabled</span>`
+              : `<span class="badge">off</span>`;
+        const transport = p.inferred_type || p.type || "?";
+        const tools = rt?.tool_count ?? 0;
+        return `<div class="preset ${p.id === state.selectedId ? "active" : ""}" data-id="${p.id}">
+          <div class="title">${escapeHtml(p.label || p.id)} ${lamp}</div>
+          <div class="sub">${escapeHtml(p.id)} · ${escapeHtml(transport)} · tools=${tools}
+            ${p.command ? ` · ${escapeHtml(p.command)}` : ""}
+            ${p.url ? ` · ${escapeHtml(p.url)}` : ""}
+            ${err ? `<br/><span style="color:var(--err)">${escapeHtml(err)}</span>` : ""}
+          </div>
+        </div>`;
+      }).join("");
+      box.querySelectorAll(".preset").forEach((el) => {
+        el.onclick = () => {
+          state.selectedId = el.dataset.id;
+          const preset = state.presets.find((p) => p.id === state.selectedId);
+          fillForm(preset);
+          renderPresets();
+        };
+      });
+    }
+
+    function renderRuntime() {
+      const servers = state.runtime?.servers || [];
+      const tools = state.runtime?.injected_tools || [];
+      $("serverStatus").className = "";
+      $("serverStatus").innerHTML = servers.length
+        ? servers.map((s) => {
+            const badge = s.connected
+              ? `<span class="badge ok">up</span>`
+              : s.last_error
+                ? `<span class="badge err">down</span>`
+                : `<span class="badge">idle</span>`;
+            return `${badge} <b>${escapeHtml(s.id)}</b> ${escapeHtml(s.transport || "")} · ${s.tool_count} tools
+              ${s.last_error ? `<div class="err-msg">${escapeHtml(s.last_error)}</div>` : ""}`;
+          }).join("<hr style='border:0;border-top:1px solid var(--border);margin:8px 0'/>")
+        : `<span class="empty">无已连接 server</span>`;
+
+      const tbody = $("toolRows");
+      const catalog = [];
+      for (const s of servers) {
+        for (const t of s.tool_catalog || []) catalog.push({ ...t, server: s.id });
+      }
+      if (!catalog.length && !tools.length) {
+        tbody.innerHTML = `<tr><td colspan="2" class="empty">无 MCP tools</td></tr>`;
+      } else if (catalog.length) {
+        tbody.innerHTML = catalog.map((t) =>
+          `<tr><td><code>${escapeHtml(t.name)}</code></td><td>${escapeHtml(t.original || "")}</td></tr>`
+        ).join("");
+      } else {
+        tbody.innerHTML = tools.map((t) =>
+          `<tr><td><code>${escapeHtml(t.name)}</code></td><td>${escapeHtml(t.server || "")}</td></tr>`
+        ).join("");
+      }
+
+      const pipe = state.runtime?.pipeline || [];
+      const pipeEl = $("pipeline");
+      if (!pipe.length) {
+        pipeEl.className = "empty";
+        pipeEl.textContent = "尚无流水";
+      } else {
+        pipeEl.className = "";
+        pipeEl.innerHTML = pipe.slice(0, 40).map((e) => {
+          const cls = e.ok === false ? "err" : e.ok ? "ok" : "";
+          const payload = e.payload && Object.keys(e.payload).length
+            ? `<div class="payload">${escapeHtml(JSON.stringify(e.payload, null, 2))}</div>`
+            : "";
+          return `<div class="pipe-stage ${cls}"><b>${escapeHtml(e.stage)}</b> · ${escapeHtml(e.server_id || "")} · ${escapeHtml(e.detail || "")}<div style="opacity:.6">${escapeHtml(e.ts || "")}</div>${payload}</div>`;
+        }).join("");
+      }
+
+      const calls = state.runtime?.calls || [];
+      const callsEl = $("calls");
+      if (!calls.length) {
+        callsEl.className = "empty";
+        callsEl.textContent = "尚无 call_tool";
+      } else {
+        callsEl.className = "";
+        callsEl.innerHTML = calls.slice(0, 12).map((c) => {
+          const cls = c.ok ? "ok" : "err";
+          return `<div class="pipe-stage ${cls}"><b>${escapeHtml(c.tool)}</b> · ${c.duration_ms}ms
+            <div class="payload">args: ${escapeHtml(JSON.stringify(c.arguments || {}))}
+result: ${escapeHtml(c.result || c.error || "")}</div></div>`;
+        }).join("");
+      }
+
+      refreshInvokeTools();
+    }
+
+    function escapeHtml(s) {
+      return String(s ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;");
+    }
+
+    function refreshInvokeTools() {
+      const sel = $("invTool");
+      if (!sel) return;
+      const sid = state.selectedId;
+      const server = (state.runtime?.servers || []).find((s) => s.id === sid);
+      const catalog = server?.tool_catalog || [];
+      const prev = sel.value;
+      if (!catalog.length) {
+        sel.innerHTML = `<option value="">(先 Enable 选中 preset)</option>`;
+        return;
+      }
+      sel.innerHTML = catalog.map((t) =>
+        `<option value="${escapeHtml(t.name)}">${escapeHtml(t.original || t.name)} · ${escapeHtml(t.name)}</option>`
+      ).join("");
+      if (prev && catalog.some((t) => t.name === prev)) sel.value = prev;
+    }
+
+    function renderTemplates() {
+      const box = $("tplButtons");
+      box.innerHTML = (state.templates || []).map((t) =>
+        `<button type="button" class="tpl-btn" data-tid="${escapeHtml(t.id)}" title="${escapeHtml(t.hint || "")}">${escapeHtml(t.label)}</button>`
+      ).join("");
+      box.querySelectorAll("button").forEach((btn) => {
+        btn.onclick = async () => {
+          const tid = btn.dataset.tid;
+          const tpl = state.templates.find((x) => x.id === tid);
+          $("tplHint").textContent = tpl?.hint || "";
+          try {
+            const res = await api("/api/settings/mcp-presets/from-template", {
+              method: "POST",
+              body: JSON.stringify({
+                template_id: tid,
+                api_key: ($("tplKey").value || "").trim() || null,
+                enable: false,
+              }),
+            });
+            state.selectedId = res.preset?.id;
+            state.sampleInvoke = res.sample_invoke || tpl?.sample_invoke || null;
+            await refresh();
+            const preset = state.presets.find((p) => p.id === state.selectedId);
+            if (preset) fillForm(preset);
+            if (state.sampleInvoke?.arguments) {
+              $("invArgs").value = JSON.stringify(state.sampleInvoke.arguments, null, 2);
+            }
+            $("tplHint").textContent = `已写入 preset「${res.preset?.id}」。填 key 后点 Enable，再 Invoke。`;
+          } catch (e) {
+            $("tplHint").textContent = String(e.message || e);
+          }
+        };
+      });
+    }
+
+    async function refresh() {
+      const data = await api("/api/dev/mcp");
+      state.presets = data.presets || [];
+      state.runtime = data;
+      state.templates = data.templates || state.templates || [];
+      $("meta").textContent = `presets=${state.presets.length} · injected=${(data.injected_tools || []).length} · calls=${(data.calls || []).length}`;
+      renderTemplates();
+      renderPresets();
+      renderRuntime();
+    }
+
+    async function savePreset(extra = {}) {
+      $("formError").textContent = "";
+      try {
+        const body = { ...formPayload(), ...extra };
+        const res = await api("/api/settings/mcp-presets", {
+          method: "POST",
+          body: JSON.stringify(body),
+        });
+        state.selectedId = res.preset?.id || body.id;
+        await refresh();
+        const preset = state.presets.find((p) => p.id === state.selectedId);
+        if (preset) fillForm(preset);
+        return res;
+      } catch (e) {
+        $("formError").textContent = String(e.message || e);
+        throw e;
+      }
+    }
+
+    $("btnNew").onclick = () => {
+      state.selectedId = null;
+      fillForm({
+        id: "",
+        label: "Filesystem",
+        type: "stdio",
+        command: "npx",
+        args: ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"],
+        tool_timeout: 30,
+      });
+      renderPresets();
+    };
+
+    $("btnSave").onclick = () => savePreset().catch(() => {});
+    $("btnTest").onclick = async () => {
+      try {
+        const body = formPayload();
+        const res = await api("/api/settings/mcp-presets/test", {
+          method: "POST",
+          body: JSON.stringify(body),
+        });
+        $("caseTestOut").textContent = JSON.stringify(res, null, 2);
+        await refresh();
+      } catch (e) {
+        $("caseTestOut").textContent = String(e.message || e);
+      }
+    };
+    $("btnEnable").onclick = async () => {
+      try {
+        await savePreset({ enabled: true });
+        if (!state.selectedId) return;
+        const res = await api(`/api/settings/mcp-presets/${encodeURIComponent(state.selectedId)}/enable`, {
+          method: "POST",
+        });
+        $("caseEnableOut").textContent = JSON.stringify(res.connect || res, null, 2);
+        await refresh();
+      } catch (e) {
+        $("caseEnableOut").textContent = String(e.message || e);
+      }
+    };
+    $("btnDisable").onclick = async () => {
+      if (!state.selectedId) return;
+      const res = await api(`/api/settings/mcp-presets/${encodeURIComponent(state.selectedId)}/disable`, {
+        method: "POST",
+      });
+      $("caseDisableOut").textContent = JSON.stringify(res, null, 2);
+      await refresh();
+    };
+    $("btnRemove").onclick = async () => {
+      if (!state.selectedId) return;
+      if (!confirm(`删除 ${state.selectedId}?`)) return;
+      await api(`/api/settings/mcp-presets/${encodeURIComponent(state.selectedId)}`, { method: "DELETE" });
+      state.selectedId = null;
+      $("form").hidden = true;
+      await refresh();
+    };
+
+    $("btnInvoke").onclick = async () => {
+      if (!state.selectedId) {
+        $("invokeOut").textContent = "先选中并 Enable 一个 preset";
+        return;
+      }
+      try {
+        const argsRaw = ($("invArgs").value || "").trim() || "{}";
+        const arguments_ = JSON.parse(argsRaw);
+        const tool = ($("invTool").value || "").trim();
+        if (!tool) throw new Error("选择 tool");
+        const res = await api(`/api/settings/mcp-presets/${encodeURIComponent(state.selectedId)}/invoke`, {
+          method: "POST",
+          body: JSON.stringify({ tool, arguments: arguments_ }),
+        });
+        $("invokeOut").textContent = JSON.stringify(res, null, 2);
+        await refresh();
+      } catch (e) {
+        $("invokeOut").textContent = String(e.message || e);
+      }
+    };
+    $("btnSampleArgs").onclick = () => {
+      const sample = state.sampleInvoke?.arguments || { libraryName: "react" };
+      $("invArgs").value = JSON.stringify(sample, null, 2);
+      const hint = state.sampleInvoke?.tool_hint;
+      if (hint) {
+        const sel = $("invTool");
+        for (const opt of sel.options) {
+          if (opt.value.includes(hint) || opt.textContent.includes(hint)) {
+            sel.value = opt.value;
+            break;
+          }
+        }
+      }
+    };
+
+    $("caseTest").onclick = () => $("btnTest").click();
+    $("caseEnable").onclick = () => $("btnEnable").click();
+    $("caseDisable").onclick = () => $("btnDisable").click();
+    $("caseBadCmd").onclick = async () => {
+      fillForm({
+        id: "__bad_cmd",
+        label: "Bad command",
+        type: "stdio",
+        command: "minibot-mcp-does-not-exist",
+        args: [],
+        tool_timeout: 10,
+      });
+      try {
+        const res = await api("/api/settings/mcp-presets/test", {
+          method: "POST",
+          body: JSON.stringify(formPayload()),
+        });
+        $("caseBadCmdOut").textContent = JSON.stringify(res, null, 2);
+      } catch (e) {
+        $("caseBadCmdOut").textContent = String(e.message || e);
+      }
+      await refresh();
+    };
+    $("caseBadUrl").onclick = async () => {
+      fillForm({
+        id: "__bad_url",
+        label: "Bad URL",
+        type: "streamableHttp",
+        url: "http://203.0.113.1:9",
+        command: "",
+        args: [],
+        tool_timeout: 5,
+      });
+      try {
+        const res = await api("/api/settings/mcp-presets/test", {
+          method: "POST",
+          body: JSON.stringify(formPayload()),
+        });
+        $("caseBadUrlOut").textContent = JSON.stringify(res, null, 2);
+      } catch (e) {
+        $("caseBadUrlOut").textContent = String(e.message || e);
+      }
+      await refresh();
+    };
+
+    $("btnRefresh").onclick = () => refresh().catch((e) => { $("meta").textContent = String(e); });
+    $("btnTheme").onclick = () => { ui.toggleTheme(); syncTheme(); };
+
+    (async () => {
+      syncTheme();
+      await bootstrap();
+      await refresh();
+    })().catch((e) => {
+      $("meta").textContent = String(e.message || e);
+    });
+  </script>
+</body>
+</html>

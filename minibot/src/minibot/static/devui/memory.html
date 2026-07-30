@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>minibot Memory</title>
+  <script src="./common.js"></script>
+  <style>
+    :root, html[data-theme="dark"] {
+      --bg: #0f1115; --panel: #171a21; --border: #2a3140; --text: #e8ecf4;
+      --muted: #8b95a8; --accent: #5b8def; --ok: #3ecf8e; --warn: #e6b84d;
+      --err: #e35d6a; --btn: #222833;
+    }
+    html[data-theme="light"] {
+      --bg: #f4f6fa; --panel: #fff; --border: #d8dee8; --text: #1a2030;
+      --muted: #667085; --accent: #3b6fd8; --ok: #1a9f63; --warn: #b8860b;
+      --err: #c93c4a; --btn: #eef2f8;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font: 14px/1.5 ui-sans-serif, system-ui, -apple-system, sans-serif;
+      background: var(--bg); color: var(--text);
+      min-height: 100vh; display: grid; grid-template-rows: auto 1fr;
+    }
+    header {
+      display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+      padding: 10px 16px; border-bottom: 1px solid var(--border); background: var(--panel);
+    }
+    header h1 { margin: 0; font-size: 16px; font-weight: 600; }
+    header a, button, select {
+      background: var(--btn); color: var(--text); border: 1px solid var(--border);
+      border-radius: 8px; padding: 6px 10px; cursor: pointer; font: inherit; text-decoration: none;
+    }
+    .meta { color: var(--muted); font-size: 12px; margin-left: auto; }
+    main { padding: 20px 24px; max-width: 1100px; }
+    .hint { color: var(--muted); font-size: 13px; margin: 0 0 16px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+    section {
+      background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px;
+    }
+    section h2 { margin: 0 0 10px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+    .badge {
+      display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 999px;
+      border: 1px solid var(--border); margin-right: 6px;
+    }
+    .badge.ok { color: var(--ok); }
+    .badge.warn { color: var(--warn); }
+    pre, textarea {
+      margin: 0; width: 100%; white-space: pre-wrap; word-break: break-word;
+      font: 12px/1.45 ui-monospace, Menlo, Consolas, monospace;
+      background: transparent; color: var(--text); border: 1px solid var(--border);
+      border-radius: 8px; padding: 10px; min-height: 220px; resize: vertical;
+    }
+    pre { max-height: 480px; overflow: auto; border: none; padding: 0; min-height: 0; }
+    .empty { color: var(--muted); font-style: italic; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 10px; }
+    label { color: var(--muted); font-size: 12px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Memory</h1>
+    <a href="./">← Chat</a>
+    <a href="./context.html">Context</a>
+    <a href="./skills.html">Skills</a>
+    <select id="sessionSelect" aria-label="session"></select>
+    <button type="button" id="btnRefresh">刷新</button>
+    <button type="button" id="btnTheme">浅色</button>
+    <span class="meta" id="meta">loading…</span>
+  </header>
+  <main>
+    <p class="hint">
+      调试 <code>memory/MEMORY.md</code>：查看落盘内容、是否注入 system，以及直接 replace/append 写盘（不经 LLM）。
+    </p>
+    <div class="grid">
+      <section>
+        <h2>状态</h2>
+        <div id="flags" class="empty">—</div>
+        <p id="stats" style="margin:10px 0 0"></p>
+      </section>
+      <section style="border-color:color-mix(in srgb, var(--warn) 45%, var(--border))">
+        <h2>异常 / 对照</h2>
+        <ul style="margin:0;padding-left:18px;color:var(--muted);font-size:13px">
+          <li>文件不存在 → <code>exists: no</code>，正文为空</li>
+          <li>点「清空并保存」→ 空文件仍存在但无内容，system 不注入 Memory 段</li>
+          <li>改错 workspace 的 session → 看到的是另一个目录下的 MEMORY</li>
+        </ul>
+        <pre id="abnormalLive" class="empty" style="margin-top:10px">—</pre>
+      </section>
+    </div>
+    <section style="margin-top:14px">
+      <h2>当前 MEMORY.md</h2>
+      <pre id="memText" class="empty">—</pre>
+    </section>
+    <section style="margin-top:14px">
+      <h2>直接写盘（调试）</h2>
+      <textarea id="editor" placeholder="写入 memory/MEMORY.md 的 Markdown…"></textarea>
+      <div class="row">
+        <label for="mode">mode</label>
+        <select id="mode">
+          <option value="replace">replace</option>
+          <option value="append">append</option>
+        </select>
+        <button type="button" id="btnSave">保存</button>
+        <button type="button" id="btnClear">清空并保存</button>
+        <span class="meta" id="writeMsg" style="margin-left:0"></span>
+      </div>
+    </section>
+  </main>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const ui = window.MinibotDevUI;
+    let token = "";
+    let currentSid = "";
+
+    function syncThemeBtn() {
+      $("btnTheme").textContent = ui.currentTheme() === "light" ? "暗色" : "浅色";
+    }
+
+    async function bootstrap() {
+      const res = await fetch("/auth/bootstrap");
+      if (!res.ok) throw new Error(`bootstrap ${res.status}`);
+      token = (await res.json()).token || "";
+    }
+
+    async function api(path, opts) {
+      const headers = { ...(opts && opts.headers) };
+      if (token) headers.Authorization = `Bearer ${token}`;
+      const res = await fetch(path, { ...opts, headers });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.detail || res.statusText);
+      return data;
+    }
+
+    function fillSessions(data) {
+      currentSid = data.session_id || "";
+      const sel = $("sessionSelect");
+      const sessions = data.sessions || [];
+      sel.innerHTML = [
+        `<option value="">(default workspace · 无 session)</option>`,
+        ...sessions.map((s) =>
+          `<option value="${s.id}" ${s.id === currentSid ? "selected" : ""}>${(s.id || "").slice(0, 8)}… · ${s.message_count ?? "?"} msgs</option>`
+        ),
+      ].join("");
+      if (!currentSid) sel.value = "";
+      else sel.value = currentSid;
+    }
+
+    function render(data) {
+      fillSessions(data);
+      const exists = !!data.exists;
+      $("flags").innerHTML =
+        `<span class="badge ${exists ? "ok" : "warn"}">exists: ${exists ? "yes" : "no"}</span>` +
+        `<span class="badge">${data.chars ?? 0} chars</span>`;
+      $("stats").innerHTML = [
+        `path: <code>${data.path || "—"}</code>`,
+        `workspace: <code>${data.workspace_path || "—"}</code>`,
+        `mtime: ${data.mtime || "—"}`,
+        `session: <code>${data.session_id || "(none)"}</code>`,
+      ].join("<br>");
+      $("memText").textContent = data.text || "(empty)";
+      $("memText").className = data.text ? "" : "empty";
+      if (!$("editor").dataset.touched) $("editor").value = data.text || "";
+      $("abnormalLive").textContent = exists
+        ? "正常：MEMORY 有内容，Context system 应含 # Memory"
+        : "异常对照：无 MEMORY 内容 → Context flags.memory=no";
+      $("abnormalLive").className = "";
+      $("meta").textContent = exists ? `MEMORY · ${data.chars} chars` : "MEMORY missing/empty";
+    }
+
+    async function load(sid) {
+      const q = sid ? `?session_id=${encodeURIComponent(sid)}` : "";
+      render(await api(`/api/dev/memory${q}`));
+    }
+
+    async function save(content) {
+      $("writeMsg").textContent = "saving…";
+      const data = await api("/api/dev/memory", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          session_id: $("sessionSelect").value || "",
+          mode: $("mode").value,
+          content,
+        }),
+      });
+      $("editor").dataset.touched = "";
+      $("writeMsg").textContent = data.message || "ok";
+      render(data);
+    }
+
+    $("editor").addEventListener("input", () => { $("editor").dataset.touched = "1"; });
+    $("btnTheme").onclick = () => { ui.toggleTheme(); syncThemeBtn(); };
+    $("btnRefresh").onclick = () => {
+      $("editor").dataset.touched = "";
+      load($("sessionSelect").value).catch((e) => { $("meta").textContent = String(e); });
+    };
+    $("sessionSelect").onchange = () => {
+      $("editor").dataset.touched = "";
+      load($("sessionSelect").value).catch((e) => { $("meta").textContent = String(e); });
+    };
+    $("btnSave").onclick = () => save($("editor").value).catch((e) => { $("writeMsg").textContent = String(e); });
+    $("btnClear").onclick = () => {
+      $("mode").value = "replace";
+      save("").catch((e) => { $("writeMsg").textContent = String(e); });
+    };
+    syncThemeBtn();
+    bootstrap().then(() => load("")).catch((e) => { $("meta").textContent = String(e); });
+  </script>
+</body>
+</html>

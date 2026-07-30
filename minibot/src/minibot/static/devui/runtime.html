@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>minibot Runtime</title>
+  <script src="./common.js"></script>
+  <style>
+    :root, html[data-theme="dark"] {
+      --bg: #0f1115;
+      --panel: #171a21;
+      --border: #2a3140;
+      --text: #e8ecf4;
+      --muted: #8b95a8;
+      --accent: #5b8def;
+      --ok: #3ecf8e;
+      --warn: #e6b84d;
+      --err: #e35d6a;
+      --btn: #222833;
+    }
+    html[data-theme="light"] {
+      --bg: #f4f6fa;
+      --panel: #ffffff;
+      --border: #d8dee8;
+      --text: #1a2030;
+      --muted: #667085;
+      --accent: #3b6fd8;
+      --ok: #1a9f63;
+      --warn: #b8860b;
+      --err: #c93c4a;
+      --btn: #eef2f8;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font: 14px/1.45 ui-sans-serif, system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+    header {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--panel);
+      flex-wrap: wrap;
+    }
+    header h1 { margin: 0; font-size: 16px; font-weight: 600; }
+    header a, button {
+      background: var(--btn);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 10px;
+      cursor: pointer;
+      font: inherit;
+      text-decoration: none;
+    }
+    header a:hover, button:hover { border-color: var(--accent); }
+    .meta { color: var(--muted); font-size: 12px; margin-left: auto; }
+    main { padding: 20px 24px; max-width: 900px; }
+    .hint { color: var(--muted); font-size: 13px; margin: 0 0 16px; }
+    .badge {
+      display: inline-block;
+      font-size: 12px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+    .badge.ok { color: var(--ok); border-color: var(--ok); }
+    .badge.warn { color: var(--warn); border-color: var(--warn); }
+    section {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      margin-bottom: 16px;
+    }
+    section h2 { margin: 0 0 10px; font-size: 13px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    th { color: var(--muted); font-weight: 500; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }
+    .err { color: var(--err); }
+    .empty { color: var(--muted); font-style: italic; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Runtime</h1>
+    <a href="./">← Chat</a>
+    <a href="./race.html">Race Demo</a>
+    <a href="./session-files.html">Session 文件</a>
+    <a href="./trace.html">Trace</a>
+    <button type="button" id="btnRefresh">刷新</button>
+    <button type="button" id="btnDemo">跑一次 Loop turn</button>
+    <button type="button" id="btnBusInject">Bus 注入 inbound</button>
+    <button type="button" id="btnBusPause">暂停消费者</button>
+    <button type="button" id="btnBusResume">恢复消费者</button>
+    <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)">
+      <input type="checkbox" id="auto" checked /> 自动刷新
+    </label>
+    <button type="button" id="btnTheme">浅色</button>
+    <span class="meta" id="meta">loading…</span>
+  </header>
+  <main>
+    <p class="hint">
+      Phase 0.5：每个 Session 有一等字段 <code>workspace_path</code>（默认 cwd）。
+      Chat 可切换；WS <code>set_workspace_scope</code> 生效后，下一 turn 的 Loop 记录使用新路径。
+      WS 仍走 Bus（0.4）；REST/CLI 同步 Loop。
+    </p>
+    <section>
+      <h2>Entry path</h2>
+      <div id="entry">—</div>
+    </section>
+    <section>
+      <h2>Entry counts（rest / ws / cli / dev）</h2>
+      <div id="counts" class="empty">尚无 turn</div>
+    </section>
+    <section>
+      <h2>Workspaces（sessions）</h2>
+      <div id="workspaces" class="empty">加载中…</div>
+    </section>
+    <section>
+      <h2>MessageBus</h2>
+      <div id="bus">—</div>
+    </section>
+    <section>
+      <h2>Bus timeline（最近事件）</h2>
+      <div id="busTimeline" class="empty">暂无</div>
+    </section>
+    <section>
+      <h2>Session locks</h2>
+      <div id="locks" class="empty">尚无 lock 记录（还没有人通过 Loop.handle_turn）</div>
+    </section>
+    <section>
+      <h2>Recent turns（via Loop）</h2>
+      <div id="turns" class="empty">暂无</div>
+    </section>
+    <section>
+      <h2>异常 / 对照（0.5 DoD）</h2>
+      <ul style="margin:0;padding-left:18px;font-size:13px;line-height:1.7;color:var(--muted)">
+        <li>正常：Chat 侧栏显示 workspace；切换后发消息，Recent turns 的 <code>workspace_path</code> 为新路径。</li>
+        <li>异常对照：切换到<strong>不存在的目录</strong> → API/WS 返回 400 / error（拒绝），旧 workspace 不变。</li>
+        <li>对照：旧 JSONL 无 <code>workspace_path</code> 字段时加载回退为 cwd。</li>
+      </ul>
+    </section>
+  </main>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const ui = window.MinibotDevUI;
+    let token = "";
+    let timer = null;
+
+    function syncThemeBtn() {
+      $("btnTheme").textContent = ui.currentTheme() === "light" ? "暗色" : "浅色";
+    }
+
+    function escapeHtml(s) {
+      return String(s)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;");
+    }
+
+    function fmtMs(ms) {
+      if (ms == null || !Number.isFinite(ms)) return "—";
+      if (ms < 1000) return `${Math.round(ms)}ms`;
+      return `${(ms / 1000).toFixed(2)}s`;
+    }
+
+    async function bootstrap() {
+      const res = await fetch("/auth/bootstrap");
+      if (!res.ok) throw new Error(`bootstrap ${res.status}`);
+      token = (await res.json()).token || "";
+    }
+
+    async function load() {
+      $("meta").textContent = "loading…";
+      const res = await fetch("/api/dev/runtime", {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) throw new Error(`runtime ${res.status}`);
+      const data = await res.json();
+      const entry = data.entry_path || "?";
+      const ok = entry === "loop";
+      $("entry").innerHTML =
+        `<span class="badge ${ok ? "ok" : "warn"}">${escapeHtml(entry)}</span>` +
+        (ok
+          ? ` <span style="color:var(--muted);font-size:12px">唯一合法入口</span>`
+          : ` <span class="err" style="font-size:12px">期望 entry_path=loop</span>`);
+
+      const counts = data.entry_counts || {};
+      const keys = ["rest", "ws", "cli", "dev", "unknown"];
+      const total = keys.reduce((n, k) => n + (counts[k] || 0), 0);
+      if (!total) {
+        $("counts").innerHTML = `<div class="empty">尚无 turn（发 Chat / 跑 demo / CLI 后会 +1）</div>`;
+      } else {
+        $("counts").innerHTML = `<div style="display:flex;flex-wrap:wrap;gap:8px">${keys
+          .map((k) => {
+            const n = counts[k] || 0;
+            if (!n && k === "unknown") return "";
+            return `<span class="badge ${n ? "ok" : ""}">${escapeHtml(k)}: <b>${n}</b></span>`;
+          })
+          .filter(Boolean)
+          .join("")}</div>`;
+      }
+
+      const bus = data.bus || {};
+      const worker = bus.worker || {};
+      const inDepth = bus.inbound_depth ?? 0;
+      const outDepth = bus.outbound_depth ?? 0;
+      const depthWarn = inDepth > 0 || outDepth > 0;
+      const paused = !!worker.paused;
+      $("bus").innerHTML = `
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px">
+          <span class="badge ${worker.running ? "ok" : "warn"}">worker: ${worker.running ? "running" : "stopped"}</span>
+          <span class="badge ${paused ? "warn" : "ok"}">paused: ${paused}</span>
+          <span class="badge ${inDepth ? "warn" : "ok"}">inbound_depth: <b>${inDepth}</b></span>
+          <span class="badge ${outDepth ? "warn" : "ok"}">outbound_depth: <b>${outDepth}</b></span>
+        </div>
+        <div style="color:var(--muted);font-size:12px">
+          stats: in ${bus.stats?.inbound_published ?? 0}/${bus.stats?.inbound_consumed ?? 0}
+          · out ${bus.stats?.outbound_published ?? 0}/${bus.stats?.outbound_consumed ?? 0}
+          ${worker.last_error ? ` · <span class="err">${escapeHtml(worker.last_error)}</span>` : ""}
+          ${depthWarn ? " · <span class=\"warn\">队列非空</span>" : ""}
+        </div>`;
+
+      // Workspaces from /api/workspaces (separate fetch keeps runtime lean if bus-only refresh)
+      try {
+        const wsRes = await fetch("/api/workspaces", {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (wsRes.ok) {
+          const wsData = await wsRes.json();
+          const list = wsData.workspaces || [];
+          if (!list.length) {
+            $("workspaces").innerHTML = `<div class="empty">无</div>`;
+          } else {
+            $("workspaces").innerHTML = `<table>
+              <thead><tr><th>name</th><th>path</th><th>default</th><th>exists</th></tr></thead>
+              <tbody>${list.map((w) => `<tr>
+                <td>${escapeHtml(w.name || "")}</td>
+                <td><code>${escapeHtml(w.path || "")}</code></td>
+                <td>${w.is_default ? "yes" : ""}</td>
+                <td><span class="badge ${w.exists === false ? "warn" : "ok"}">${w.exists === false ? "missing" : "ok"}</span></td>
+              </tr>`).join("")}</tbody>
+            </table>
+            <div style="color:var(--muted);font-size:12px;margin-top:6px">default: <code>${escapeHtml(wsData.default_workspace || "")}</code></div>`;
+          }
+        }
+      } catch (_) {
+        $("workspaces").innerHTML = `<div class="empty">workspaces 加载失败</div>`;
+      }
+
+      const timeline = bus.timeline || [];
+      if (!timeline.length) {
+        $("busTimeline").innerHTML = `<div class="empty">暂无（Chat WS 或「Bus 注入」后出现）</div>`;
+      } else {
+        const rows = timeline.slice(0, 30).map((e) => `<tr>
+          <td style="color:var(--muted);font-size:12px">${escapeHtml(e.ts || "—")}</td>
+          <td><span class="badge">${escapeHtml(e.direction || "?")}</span></td>
+          <td><code>${escapeHtml(e.kind || "")}</code></td>
+          <td><code>${escapeHtml(e.chat_id || "")}</code></td>
+          <td style="color:var(--muted);font-size:12px">${escapeHtml(e.detail || "")}</td>
+        </tr>`).join("");
+        $("busTimeline").innerHTML = `<table>
+          <thead><tr><th>ts</th><th>dir</th><th>kind</th><th>chat</th><th>detail</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>`;
+      }
+
+      const sessions = data.sessions || [];
+      if (!sessions.length) {
+        $("locks").innerHTML = `<div class="empty">尚无 lock 记录（还没有人通过 Loop.handle_turn）</div>`;
+      } else {
+        const rows = sessions.map((s) => {
+          const lockClass = s.lock === "held" ? "warn" : "ok";
+          return `<tr>
+            <td><code>${escapeHtml(s.session_id)}</code></td>
+            <td><span class="badge ${lockClass}">${escapeHtml(s.lock)}</span></td>
+            <td>${s.waiters ?? 0}</td>
+            <td>${fmtMs(s.last_duration_ms)}</td>
+            <td>${escapeHtml(s.last_stop_reason || "—")}</td>
+            <td style="font-size:11px"><code>${escapeHtml(s.workspace_path || s.last_workspace || "—")}</code></td>
+            <td style="color:var(--muted);font-size:12px">${escapeHtml(s.last_finished_at || "—")}</td>
+          </tr>`;
+        }).join("");
+        $("locks").innerHTML = `<table>
+          <thead><tr><th>session</th><th>lock</th><th>waiters</th><th>last duration</th><th>stop</th><th>workspace</th><th>finished</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>`;
+      }
+
+      const turns = data.last_turns || [];
+      if (!turns.length) {
+        $("turns").innerHTML = `<div class="empty">暂无</div>`;
+      } else {
+        const rows = turns.map((t) => `<tr>
+          <td><code>${escapeHtml(t.session_id)}</code></td>
+          <td><span class="badge">${escapeHtml(t.entry || "?")}</span></td>
+          <td style="font-size:11px"><code>${escapeHtml(t.workspace_path || "—")}</code></td>
+          <td>${fmtMs(t.duration_ms)}</td>
+          <td>${escapeHtml(t.stop_reason || "—")}</td>
+          <td style="color:var(--muted);font-size:12px">${escapeHtml(t.finished_at || "—")}</td>
+        </tr>`).join("");
+        $("turns").innerHTML = `<table>
+          <thead><tr><th>session</th><th>entry</th><th>workspace</th><th>duration</th><th>stop</th><th>finished</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>`;
+      }
+      $("meta").textContent =
+        `entry=${entry} · counts=${total} · bus in/out=${inDepth}/${outDepth}` +
+        ` · ${sessions.length} lock(s) · ${turns.length} turn(s)`;
+    }
+
+    function schedule() {
+      if (timer) clearInterval(timer);
+      timer = null;
+      if ($("auto").checked) {
+        timer = setInterval(() => load().catch(() => {}), 2000);
+      }
+    }
+
+    $("btnTheme").onclick = () => { ui.toggleTheme(); syncThemeBtn(); };
+    $("btnRefresh").onclick = () => load().catch((e) => {
+      $("locks").innerHTML = `<div class="err">${escapeHtml(String(e))}</div>`;
+      $("meta").textContent = "error";
+    });
+    $("btnDemo").onclick = async () => {
+      $("meta").textContent = "running demo turn…";
+      try {
+        const res = await fetch("/api/dev/runtime/demo-turn", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: "{}",
+        });
+        if (!res.ok) throw new Error(`demo-turn ${res.status}`);
+        await load();
+      } catch (e) {
+        $("locks").innerHTML = `<div class="err">${escapeHtml(String(e))}</div>`;
+        $("meta").textContent = "error";
+      }
+    };
+
+    async function busPost(path) {
+      $("meta").textContent = `bus ${path}…`;
+      const res = await fetch(path, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: "{}",
+      });
+      if (!res.ok) throw new Error(`${path} ${res.status}`);
+      await load();
+    }
+
+    $("btnBusInject").onclick = () => busPost("/api/dev/bus/inject").catch((e) => {
+      $("bus").innerHTML = `<div class="err">${escapeHtml(String(e))}</div>`;
+      $("meta").textContent = "error";
+    });
+    $("btnBusPause").onclick = () => busPost("/api/dev/bus/pause").catch((e) => {
+      $("bus").innerHTML = `<div class="err">${escapeHtml(String(e))}</div>`;
+      $("meta").textContent = "error";
+    });
+    $("btnBusResume").onclick = () => busPost("/api/dev/bus/resume").catch((e) => {
+      $("bus").innerHTML = `<div class="err">${escapeHtml(String(e))}</div>`;
+      $("meta").textContent = "error";
+    });
+    $("auto").onchange = schedule;
+
+    syncThemeBtn();
+    bootstrap()
+      .then(load)
+      .then(schedule)
+      .catch((e) => {
+        $("locks").innerHTML = `<div class="err">${escapeHtml(String(e))}</div>`;
+        $("meta").textContent = "error";
+      });
+  </script>
+</body>
+</html>

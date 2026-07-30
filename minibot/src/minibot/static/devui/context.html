@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>minibot Context</title>
+  <script src="./common.js"></script>
+  <style>
+    :root, html[data-theme="dark"] {
+      --bg: #0f1115; --panel: #171a21; --border: #2a3140; --text: #e8ecf4;
+      --muted: #8b95a8; --accent: #5b8def; --ok: #3ecf8e; --warn: #e6b84d;
+      --err: #e35d6a; --btn: #222833;
+    }
+    html[data-theme="light"] {
+      --bg: #f4f6fa; --panel: #fff; --border: #d8dee8; --text: #1a2030;
+      --muted: #667085; --accent: #3b6fd8; --ok: #1a9f63; --warn: #b8860b;
+      --err: #c93c4a; --btn: #eef2f8;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font: 14px/1.5 ui-sans-serif, system-ui, -apple-system, sans-serif;
+      background: var(--bg); color: var(--text);
+      min-height: 100vh; display: grid; grid-template-rows: auto 1fr;
+    }
+    header {
+      display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+      padding: 10px 16px; border-bottom: 1px solid var(--border); background: var(--panel);
+    }
+    header h1 { margin: 0; font-size: 16px; font-weight: 600; }
+    header a, button, select {
+      background: var(--btn); color: var(--text); border: 1px solid var(--border);
+      border-radius: 8px; padding: 6px 10px; cursor: pointer; font: inherit; text-decoration: none;
+    }
+    .meta { color: var(--muted); font-size: 12px; margin-left: auto; }
+    main { padding: 20px 24px; max-width: 1100px; }
+    .hint { color: var(--muted); font-size: 13px; margin: 0 0 16px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+    section {
+      background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px;
+    }
+    section h2 { margin: 0 0 10px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+    .badge {
+      display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 999px;
+      border: 1px solid var(--border); margin-right: 6px;
+    }
+    .badge.ok { color: var(--ok); }
+    .badge.warn { color: var(--warn); }
+    .badge.err { color: var(--err); }
+    pre {
+      margin: 0; white-space: pre-wrap; word-break: break-word;
+      font: 12px/1.45 ui-monospace, Menlo, Consolas, monospace;
+      max-height: 420px; overflow: auto;
+    }
+    .empty { color: var(--muted); font-style: italic; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    th { color: var(--muted); font-weight: 500; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Context</h1>
+    <a href="./">← Chat</a>
+    <a href="./tools.html">Tools</a>
+    <a href="./memory.html">Memory</a>
+    <a href="./skills.html">Skills</a>
+    <select id="sessionSelect" aria-label="session"></select>
+    <button type="button" id="btnRefresh">刷新</button>
+    <button type="button" id="btnTheme">浅色</button>
+    <span class="meta" id="meta">loading…</span>
+  </header>
+  <main>
+    <p class="hint">
+      <b>这页在看什么：</b>发给模型的 <code>system</code> 怎么拼（identity + AGENTS/SOUL/USER + Memory + Skills + archived summary），
+      以及 compaction 日志。MEMORY / Skills 细节请用独立调试页：
+      <a href="./memory.html">Memory</a> · <a href="./skills.html">Skills</a>。
+    </p>
+    <div class="grid">
+      <section>
+        <h2>Bootstrap / Memory flags</h2>
+        <div id="flags" class="empty">—</div>
+        <p id="missing" class="empty" style="margin:10px 0 0"></p>
+      </section>
+      <section>
+        <h2>Stats</h2>
+        <div id="stats" class="empty">—</div>
+      </section>
+    </div>
+    <section class="abnormal" style="margin-top:14px;border-color:color-mix(in srgb, var(--warn) 45%, var(--border))">
+      <h2>异常 / 对照</h2>
+      <ul id="abnormal" style="margin:0;padding-left:18px;color:var(--muted);font-size:13px">
+        <li>无 session → 顶栏提示去 Chat 先建对话</li>
+        <li>workspace 无 SOUL.md → <code>soul: no</code></li>
+        <li>无 MEMORY → <code>memory: no</code>（细节见 <a href="./memory.html">Memory</a>）</li>
+        <li>skills 覆盖 / body 见 <a href="./skills.html">Skills</a></li>
+        <li>消息少时 Compaction log 为空</li>
+      </ul>
+      <pre id="abnormalLive" class="empty" style="margin-top:10px">对照结果加载中…</pre>
+    </section>
+    <section style="margin-top:14px">
+      <h2>System preview</h2>
+      <pre id="preview" class="empty">—</pre>
+    </section>
+    <section style="margin-top:14px">
+      <h2>Compaction log</h2>
+      <div id="clog" class="empty">暂无</div>
+    </section>
+  </main>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const ui = window.MinibotDevUI;
+    let token = "";
+    let currentSid = "";
+
+    function syncThemeBtn() {
+      $("btnTheme").textContent = ui.currentTheme() === "light" ? "暗色" : "浅色";
+    }
+
+    async function bootstrap() {
+      const res = await fetch("/auth/bootstrap");
+      if (!res.ok) throw new Error(`bootstrap ${res.status}`);
+      token = (await res.json()).token || "";
+    }
+
+    async function api(path) {
+      const headers = {};
+      if (token) headers.Authorization = `Bearer ${token}`;
+      const res = await fetch(path, { headers });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.detail || res.statusText);
+      return data;
+    }
+
+    function render(data) {
+      if (data.ok === false) {
+        $("meta").textContent = data.detail || "no session";
+        $("preview").textContent = data.detail || "—";
+        $("abnormalLive").textContent = `异常态：${data.detail || "no sessions"}`;
+        $("abnormalLive").className = "";
+        return;
+      }
+      currentSid = data.session_id || "";
+      const flags = data.flags || {};
+      $("flags").innerHTML = ["agents", "soul", "user", "memory"].map((k) =>
+        `<span class="badge ${flags[k] ? "ok" : "warn"}">${k}: ${flags[k] ? "yes" : "no"}</span>`
+      ).join("");
+      const missing = data.missing_bootstrap || [];
+      $("missing").textContent = missing.length
+        ? `未命中: ${missing.join(", ")}（在 workspace 根目录放同名文件即可）`
+        : "bootstrap 文件均已命中（或 workspace 未设置）";
+      $("missing").className = missing.length ? "empty" : "";
+      $("stats").innerHTML = [
+        `messages: <b>${data.message_count ?? "?"}</b>`,
+        `system chars: <b>${data.system_chars ?? "?"}</b>`,
+        `skills: <b>${data.skills_count ?? 0}</b> → <a href="./skills.html">详情</a>`,
+        `memory chars: <b>${data.memory_chars ?? 0}</b> → <a href="./memory.html">详情</a>`,
+        `summary: <b>${data.has_summary ? "yes" : "no"}</b>`,
+        `threshold: ${data.compact_threshold} / keep ${data.compact_keep_recent}`,
+        `workspace: <code>${data.workspace_path || "—"}</code>`,
+      ].join("<br>");
+      $("preview").textContent = data.system_preview || "(empty)";
+      $("preview").className = "";
+      const live = [];
+      if (missing.length) live.push(`缺 bootstrap: ${missing.join(", ")}`);
+      else live.push("bootstrap 已加载");
+      live.push(flags.memory ? "MEMORY 已注入" : "无 MEMORY（见 Memory 页）");
+      live.push((data.skills_count || 0) > 0 ? `skills ${data.skills_count}` : "skills 为空（见 Skills 页）");
+      live.push(data.has_summary ? "有 archived summary" : "尚无 archived summary");
+      const bad = (data.compaction_log || []).filter((e) => e && e.ok === false);
+      if (bad.length) live.push(`压缩失败 ${bad.length} 次：${bad[0].error || "error"}`);
+      $("abnormalLive").textContent = live.join("\n");
+      $("abnormalLive").className = "";
+      const log = data.compaction_log || [];
+      if (!log.length) {
+        $("clog").innerHTML = `<div class="empty">暂无压缩（消息数未超 threshold=${data.compact_threshold}）</div>`;
+      } else {
+        $("clog").innerHTML = `<table>
+          <thead><tr><th>at</th><th>before→after</th><th>status</th><th>summary</th></tr></thead>
+          <tbody>${log.map((e) => `<tr>
+            <td style="font-size:11px;color:var(--muted)">${(e.finished_at || "").slice(11, 19)}</td>
+            <td>${e.before} → ${e.after}</td>
+            <td>${e.ok ? `<span class="badge ok">ok</span>` : `<span class="badge err">${e.error || "err"}</span>`}</td>
+            <td><code>${(e.summary_preview || "").replaceAll("<", "&lt;")}</code></td>
+          </tr>`).join("")}</tbody>
+        </table>`;
+      }
+      $("meta").textContent = `session ${currentSid}`;
+      const sel = $("sessionSelect");
+      const sessions = data.sessions || [];
+      sel.innerHTML = sessions.map((s) =>
+        `<option value="${s.id}" ${s.id === currentSid ? "selected" : ""}>${s.id.slice(0, 8)}… · ${s.message_count} msgs · ${(s.title || "").slice(0, 24)}</option>`
+      ).join("") || `<option value="">(no sessions)</option>`;
+    }
+
+    async function load(sid) {
+      const q = sid ? `?session_id=${encodeURIComponent(sid)}` : "";
+      const data = await api(`/api/dev/context${q}`);
+      render(data);
+    }
+
+    $("btnTheme").onclick = () => { ui.toggleTheme(); syncThemeBtn(); };
+    $("btnRefresh").onclick = () => load(currentSid || $("sessionSelect").value).catch((e) => { $("meta").textContent = String(e); });
+    $("sessionSelect").onchange = () => load($("sessionSelect").value).catch((e) => { $("meta").textContent = String(e); });
+    syncThemeBtn();
+    bootstrap().then(() => load("")).catch((e) => { $("meta").textContent = String(e); });
+  </script>
+</body>
+</html>

@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>minibot Session Files</title>
+  <script src="./common.js"></script>
+  <style>
+    :root, html[data-theme="dark"] {
+      --bg: #0f1115;
+      --panel: #171a21;
+      --border: #2a3140;
+      --text: #e8ecf4;
+      --muted: #8b95a8;
+      --accent: #5b8def;
+      --ok: #3ecf8e;
+      --err: #e35d6a;
+      --btn: #222833;
+      --folder: #e6b84d;
+      --file: #8b95a8;
+      --hover: #1c2230;
+    }
+    html[data-theme="light"] {
+      --bg: #f4f6fa;
+      --panel: #ffffff;
+      --border: #d8dee8;
+      --text: #1a2030;
+      --muted: #667085;
+      --accent: #3b6fd8;
+      --ok: #1a9f63;
+      --err: #c93c4a;
+      --btn: #eef2f8;
+      --folder: #b8860b;
+      --file: #667085;
+      --hover: #eef2f8;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font: 14px/1.45 ui-sans-serif, system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+    header {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--panel);
+      flex-wrap: wrap;
+    }
+    header h1 { margin: 0; font-size: 16px; font-weight: 600; }
+    header a, button {
+      background: var(--btn);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 10px;
+      cursor: pointer;
+      font: inherit;
+      text-decoration: none;
+    }
+    header a:hover, button:hover { border-color: var(--accent); }
+    button.danger { border-color: var(--err); color: var(--err); }
+    button:disabled { opacity: 0.45; cursor: not-allowed; }
+    .meta { color: var(--muted); font-size: 12px; margin-left: auto; }
+    main { padding: 20px 24px; max-width: 980px; }
+    .hint { color: var(--muted); font-size: 13px; margin: 0 0 16px; }
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .toolbar .sel { color: var(--muted); font-size: 12px; margin-left: 4px; }
+    .tree {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+      line-height: 1.5;
+      overflow-x: auto;
+    }
+    .dir-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 6px;
+      color: var(--folder);
+      font-weight: 600;
+      font-size: 13px;
+    }
+    .head-row, .file-row {
+      display: grid;
+      grid-template-columns: 1.6em 1.4em minmax(140px, 1.4fr) minmax(150px, 1fr) minmax(150px, 1fr) auto;
+      gap: 8px;
+      align-items: center;
+      padding: 5px 6px;
+      border-radius: 6px;
+    }
+    .head-row {
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 4px;
+      padding-bottom: 8px;
+    }
+    .head-row button.sort {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      padding: 0;
+      font: inherit;
+      text-transform: inherit;
+      letter-spacing: inherit;
+      cursor: pointer;
+      text-align: left;
+    }
+    .head-row button.sort:hover,
+    .head-row button.sort.active { color: var(--accent); }
+    .file-row { color: var(--file); }
+    .file-row:hover { background: var(--hover); }
+    .file-row.selected { background: var(--hover); outline: 1px solid var(--accent); }
+    .branch { color: var(--muted); user-select: none; }
+    .name { word-break: break-all; }
+    .time { color: var(--muted); white-space: nowrap; font-size: 11px; }
+    .file-row button.row-del {
+      padding: 2px 8px;
+      font-size: 11px;
+      border-color: var(--err);
+      color: var(--err);
+    }
+    .empty { color: var(--muted); padding: 8px 6px 8px 2.2em; font-style: italic; }
+    .err { color: var(--err); }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Session Files</h1>
+    <a href="./">← Chat</a>
+    <a href="./runtime.html">Runtime</a>
+    <a href="./race.html">Race Demo</a>
+    <a href="./trace.html">Trace</a>
+    <button type="button" id="btnRefresh">刷新</button>
+    <button type="button" id="btnTheme">浅色</button>
+    <span class="meta" id="meta">loading…</span>
+  </header>
+  <main>
+    <p class="hint">
+      磁盘 JSONL 会话（树形）。可按文件名 / 创建时间 / 最近修改排序；勾选批量删除或行内单删。
+      <b>临时 Dev 工具</b>，删除不可恢复。
+    </p>
+    <div class="toolbar">
+      <button type="button" id="btnSelectAll">全选</button>
+      <button type="button" id="btnSelectNone">取消全选</button>
+      <button type="button" class="danger" id="btnDelete" disabled>删除所选</button>
+      <span class="sel" id="selCount">已选 0</span>
+    </div>
+    <div class="tree" id="tree">加载中…</div>
+  </main>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const ui = window.MinibotDevUI;
+    let token = "";
+    let entries = [];
+    let sessionsDir = "";
+    let dataDir = "";
+    let sortKey = "updated_at";
+    let sortDir = "desc"; // asc | desc
+
+    function syncThemeBtn() {
+      $("btnTheme").textContent = ui.currentTheme() === "light" ? "暗色" : "浅色";
+    }
+
+    function escapeHtml(s) {
+      return String(s)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;");
+    }
+
+    function authHeaders(json) {
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      if (json) headers["Content-Type"] = "application/json";
+      return headers;
+    }
+
+    function fmtTime(iso) {
+      if (!iso) return "—";
+      const d = new Date(iso);
+      if (Number.isNaN(d.getTime())) return escapeHtml(String(iso).slice(0, 19));
+      const pad = (n) => String(n).padStart(2, "0");
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    }
+
+    function sortMarker(key) {
+      if (sortKey !== key) return "";
+      return sortDir === "asc" ? " ↑" : " ↓";
+    }
+
+    function sortedEntries() {
+      const list = [...entries];
+      const dir = sortDir === "asc" ? 1 : -1;
+      list.sort((a, b) => {
+        const av = a[sortKey] || "";
+        const bv = b[sortKey] || "";
+        if (av < bv) return -1 * dir;
+        if (av > bv) return 1 * dir;
+        return String(a.name).localeCompare(String(b.name));
+      });
+      return list;
+    }
+
+    function selectedNames() {
+      return [...$("tree").querySelectorAll("input.file-cb:checked")].map((el) => el.value);
+    }
+
+    function updateSelectionUi() {
+      const n = selectedNames().length;
+      $("selCount").textContent = `已选 ${n}`;
+      $("btnDelete").disabled = n === 0;
+      $("tree").querySelectorAll(".file-row").forEach((row) => {
+        const cb = row.querySelector("input.file-cb");
+        row.classList.toggle("selected", !!(cb && cb.checked));
+      });
+    }
+
+    function setSort(key) {
+      if (sortKey === key) {
+        sortDir = sortDir === "asc" ? "desc" : "asc";
+      } else {
+        sortKey = key;
+        sortDir = key === "name" ? "asc" : "desc";
+      }
+      renderTree();
+    }
+
+    function renderTree() {
+      const list = sortedEntries();
+      const lines = [
+        `<div class="dir-row"><span>📁 ${escapeHtml(sessionsDir || "(unknown)")}/</span></div>`,
+        `<div class="head-row">
+          <span></span><span></span>
+          <button type="button" class="sort ${sortKey === "name" ? "active" : ""}" data-sort="name">文件名${sortMarker("name")}</button>
+          <button type="button" class="sort ${sortKey === "created_at" ? "active" : ""}" data-sort="created_at">创建时间${sortMarker("created_at")}</button>
+          <button type="button" class="sort ${sortKey === "updated_at" ? "active" : ""}" data-sort="updated_at">最近修改${sortMarker("updated_at")}</button>
+          <span></span>
+        </div>`,
+      ];
+      if (!list.length) {
+        lines.push(`<div class="empty">└── (empty)</div>`);
+      } else {
+        list.forEach((entry, idx) => {
+          const name = entry.name || "";
+          const last = idx === list.length - 1;
+          const branch = last ? "└──" : "├──";
+          lines.push(`
+            <div class="file-row" data-name="${escapeHtml(name)}">
+              <span class="branch">${branch}</span>
+              <input type="checkbox" class="file-cb" value="${escapeHtml(name)}" />
+              <span class="name">${escapeHtml(name)}</span>
+              <span class="time" title="${escapeHtml(entry.created_at || "")}">${fmtTime(entry.created_at)}</span>
+              <span class="time" title="${escapeHtml(entry.updated_at || "")}">${fmtTime(entry.updated_at)}</span>
+              <button type="button" class="row-del" data-name="${escapeHtml(name)}">删</button>
+            </div>
+          `);
+        });
+      }
+      $("tree").innerHTML = lines.join("");
+      $("tree").querySelectorAll("button.sort").forEach((btn) => {
+        btn.addEventListener("click", () => setSort(btn.getAttribute("data-sort")));
+      });
+      $("tree").querySelectorAll("input.file-cb").forEach((cb) => {
+        cb.addEventListener("change", updateSelectionUi);
+      });
+      $("tree").querySelectorAll("button.row-del").forEach((btn) => {
+        btn.addEventListener("click", () => deleteFiles([btn.getAttribute("data-name")]));
+      });
+      $("tree").querySelectorAll(".file-row .name").forEach((el) => {
+        el.addEventListener("click", () => {
+          const row = el.closest(".file-row");
+          const cb = row && row.querySelector("input.file-cb");
+          if (cb) {
+            cb.checked = !cb.checked;
+            updateSelectionUi();
+          }
+        });
+      });
+      updateSelectionUi();
+      $("meta").textContent =
+        `${entries.length} file(s) · sort=${sortKey} ${sortDir} · data_dir=${dataDir || ""}`;
+    }
+
+    function normalizeEntries(raw) {
+      if (!Array.isArray(raw)) return [];
+      return raw.map((item) => {
+        if (typeof item === "string") {
+          return { name: item, created_at: "", updated_at: "" };
+        }
+        return {
+          name: item.name || "",
+          created_at: item.created_at || "",
+          updated_at: item.updated_at || "",
+        };
+      });
+    }
+
+    async function bootstrap() {
+      const res = await fetch("/auth/bootstrap");
+      if (!res.ok) throw new Error(`bootstrap ${res.status}`);
+      token = (await res.json()).token || "";
+    }
+
+    async function loadFiles() {
+      $("meta").textContent = "loading…";
+      const res = await fetch("/api/dev/session-files", { headers: authHeaders() });
+      if (!res.ok) throw new Error(`session-files ${res.status}`);
+      const data = await res.json();
+      entries = normalizeEntries(data.files);
+      sessionsDir = data.sessions_dir || "";
+      dataDir = data.data_dir || "";
+      renderTree();
+    }
+
+    async function deleteFiles(names) {
+      const list = (names || []).filter(Boolean);
+      if (!list.length) return;
+      const tip = list.length === 1
+        ? `删除 ${list[0]}？不可恢复。`
+        : `删除选中的 ${list.length} 个文件？不可恢复。`;
+      if (!window.confirm(tip)) return;
+      $("meta").textContent = "deleting…";
+      $("btnDelete").disabled = true;
+      try {
+        const res = await fetch("/api/dev/session-files/delete", {
+          method: "POST",
+          headers: authHeaders(true),
+          body: JSON.stringify({ files: list }),
+        });
+        if (!res.ok) throw new Error(`delete ${res.status}`);
+        const data = await res.json();
+        entries = normalizeEntries(data.files);
+        sessionsDir = data.sessions_dir || sessionsDir;
+        dataDir = data.data_dir || dataDir;
+        renderTree();
+        const skipped = (data.skipped || []).length;
+        $("meta").textContent =
+          `deleted ${(data.deleted || []).length}` +
+          (skipped ? ` · skipped ${skipped}` : "") +
+          ` · ${entries.length} left`;
+      } catch (e) {
+        $("tree").innerHTML = `<div class="err">${escapeHtml(String(e))}</div>`;
+        $("meta").textContent = "error";
+      }
+    }
+
+    $("btnTheme").onclick = () => {
+      ui.toggleTheme();
+      syncThemeBtn();
+    };
+    $("btnRefresh").onclick = () => loadFiles().catch((e) => {
+      $("tree").innerHTML = `<div class="err">${escapeHtml(String(e))}</div>`;
+      $("meta").textContent = "error";
+    });
+    $("btnSelectAll").onclick = () => {
+      $("tree").querySelectorAll("input.file-cb").forEach((cb) => { cb.checked = true; });
+      updateSelectionUi();
+    };
+    $("btnSelectNone").onclick = () => {
+      $("tree").querySelectorAll("input.file-cb").forEach((cb) => { cb.checked = false; });
+      updateSelectionUi();
+    };
+    $("btnDelete").onclick = () => deleteFiles(selectedNames());
+
+    syncThemeBtn();
+    bootstrap()
+      .then(loadFiles)
+      .catch((e) => {
+        $("tree").innerHTML = `<div class="err">${escapeHtml(String(e))}</div>`;
+        $("meta").textContent = "error";
+      });
+  </script>
+</body>
+</html>

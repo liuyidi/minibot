@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>minibot Skills</title>
+  <script src="./common.js"></script>
+  <style>
+    :root, html[data-theme="dark"] {
+      --bg: #0f1115; --panel: #171a21; --border: #2a3140; --text: #e8ecf4;
+      --muted: #8b95a8; --accent: #5b8def; --ok: #3ecf8e; --warn: #e6b84d;
+      --err: #e35d6a; --btn: #222833; --hover: #1c2230;
+    }
+    html[data-theme="light"] {
+      --bg: #f4f6fa; --panel: #fff; --border: #d8dee8; --text: #1a2030;
+      --muted: #667085; --accent: #3b6fd8; --ok: #1a9f63; --warn: #b8860b;
+      --err: #c93c4a; --btn: #eef2f8; --hover: #eef2f8;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font: 14px/1.5 ui-sans-serif, system-ui, -apple-system, sans-serif;
+      background: var(--bg); color: var(--text);
+      min-height: 100vh; display: grid; grid-template-rows: auto 1fr;
+    }
+    header {
+      display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+      padding: 10px 16px; border-bottom: 1px solid var(--border); background: var(--panel);
+    }
+    header h1 { margin: 0; font-size: 16px; font-weight: 600; }
+    header a, button, select {
+      background: var(--btn); color: var(--text); border: 1px solid var(--border);
+      border-radius: 8px; padding: 6px 10px; cursor: pointer; font: inherit; text-decoration: none;
+    }
+    .meta { color: var(--muted); font-size: 12px; margin-left: auto; }
+    main { padding: 20px 24px; max-width: 1200px; }
+    .hint { color: var(--muted); font-size: 13px; margin: 0 0 16px; }
+    .layout { display: grid; grid-template-columns: minmax(280px, 1fr) 1.4fr; gap: 14px; }
+    @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+    section {
+      background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px;
+    }
+    section h2 { margin: 0 0 10px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+    .badge {
+      display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 999px;
+      border: 1px solid var(--border); margin-right: 6px;
+    }
+    .badge.ok { color: var(--ok); }
+    .badge.warn { color: var(--warn); }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    th { color: var(--muted); font-weight: 500; }
+    tr.skill-row { cursor: pointer; }
+    tr.skill-row:hover { background: var(--hover); }
+    tr.skill-row.active { outline: 1px solid var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
+    pre {
+      margin: 0; white-space: pre-wrap; word-break: break-word;
+      font: 12px/1.45 ui-monospace, Menlo, Consolas, monospace;
+      max-height: 560px; overflow: auto;
+    }
+    .empty { color: var(--muted); font-style: italic; }
+    .paths { font-size: 12px; color: var(--muted); margin: 0 0 10px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Skills</h1>
+    <a href="./">← Chat</a>
+    <a href="./context.html">Context</a>
+    <a href="./memory.html">Memory</a>
+    <select id="sessionSelect" aria-label="session"></select>
+    <button type="button" id="btnRefresh">刷新</button>
+    <button type="button" id="btnTheme">浅色</button>
+    <span class="meta" id="meta">loading…</span>
+  </header>
+  <main>
+    <p class="hint">
+      调试 skills 发现与注入：builtin <code>minibot/skills/</code> + workspace <code>skills/</code>（同名覆盖）。
+      <code>always</code> 技能全文进 system <code># Active Skills</code>，其余只进目录摘要。
+    </p>
+    <section style="margin-bottom:14px;border-color:color-mix(in srgb, var(--warn) 45%, var(--border))">
+      <h2>异常 / 对照</h2>
+      <ul style="margin:0;padding-left:18px;color:var(--muted);font-size:13px">
+        <li>在 workspace 建 <code>skills/github/SKILL.md</code> → source 应变为 workspace</li>
+        <li>删掉某 builtin 目录（仅本地实验）→ 列表少一项</li>
+        <li>always=false 的技能不应出现在 Active Skills 全文段</li>
+      </ul>
+      <pre id="abnormalLive" class="empty" style="margin-top:10px">—</pre>
+    </section>
+    <div class="layout">
+      <section>
+        <h2>已发现</h2>
+        <p class="paths" id="paths">—</p>
+        <div id="list" class="empty">—</div>
+      </section>
+      <section>
+        <h2>Skill body</h2>
+        <div id="detailMeta" class="empty" style="margin-bottom:8px">点左侧一行查看</div>
+        <pre id="detailBody" class="empty">—</pre>
+      </section>
+    </div>
+  </main>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const ui = window.MinibotDevUI;
+    let token = "";
+    let currentSid = "";
+    let selectedName = "";
+
+    function syncThemeBtn() {
+      $("btnTheme").textContent = ui.currentTheme() === "light" ? "暗色" : "浅色";
+    }
+
+    async function bootstrap() {
+      const res = await fetch("/auth/bootstrap");
+      if (!res.ok) throw new Error(`bootstrap ${res.status}`);
+      token = (await res.json()).token || "";
+    }
+
+    async function api(path) {
+      const headers = {};
+      if (token) headers.Authorization = `Bearer ${token}`;
+      const res = await fetch(path, { headers });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.detail || res.statusText);
+      return data;
+    }
+
+    function fillSessions(data) {
+      currentSid = data.session_id || "";
+      const sel = $("sessionSelect");
+      const sessions = data.sessions || [];
+      sel.innerHTML = [
+        `<option value="">(default workspace)</option>`,
+        ...sessions.map((s) =>
+          `<option value="${s.id}" ${s.id === currentSid ? "selected" : ""}>${(s.id || "").slice(0, 8)}… · ${s.message_count ?? "?"} msgs</option>`
+        ),
+      ].join("");
+      sel.value = currentSid || "";
+    }
+
+    function renderList(data) {
+      fillSessions(data);
+      const skills = data.skills || [];
+      $("paths").innerHTML = [
+        `builtin: <code>${data.builtin_dir || "—"}</code>`,
+        `workspace skills: <code>${data.workspace_skills_dir || "—"}</code>`,
+        `workspace: <code>${data.workspace_path || "—"}</code>`,
+      ].join("<br>");
+      if (!skills.length) {
+        $("list").innerHTML = `<div class="empty">无 skills</div>`;
+      } else {
+        $("list").innerHTML = `<table>
+          <thead><tr><th>name</th><th>source</th><th>always</th><th>chars</th></tr></thead>
+          <tbody>${skills.map((s) => `<tr class="skill-row ${s.name === selectedName ? "active" : ""}" data-name="${s.name}">
+            <td><code>${s.name}</code></td>
+            <td>${s.source}</td>
+            <td>${s.always ? `<span class="badge ok">yes</span>` : "no"}</td>
+            <td>${s.body_chars ?? "—"}</td>
+          </tr>`).join("")}</tbody>
+        </table>`;
+        for (const row of $("list").querySelectorAll("tr.skill-row")) {
+          row.addEventListener("click", () => {
+            selectedName = row.getAttribute("data-name") || "";
+            load(currentSid || $("sessionSelect").value, selectedName).catch((e) => {
+              $("meta").textContent = String(e);
+            });
+          });
+        }
+      }
+      const always = data.always_count ?? skills.filter((s) => s.always).length;
+      $("abnormalLive").textContent = skills.length
+        ? `正常：${skills.length} skills · always=${always} · 点左侧看 body`
+        : "异常对照：skills 列表为空";
+      $("abnormalLive").className = "";
+      $("meta").textContent = `${skills.length} skills · always ${always}`;
+      const detail = data.detail;
+      if (detail) {
+        selectedName = detail.name;
+        $("detailMeta").innerHTML = [
+          `<span class="badge ok">${detail.name}</span>`,
+          `<span class="badge">${detail.source}</span>`,
+          detail.always ? `<span class="badge ok">always</span>` : "",
+          `<code>${detail.path}</code>`,
+        ].filter(Boolean).join(" ");
+        $("detailMeta").className = "";
+        $("detailBody").textContent = detail.body || "(empty body)";
+        $("detailBody").className = detail.body ? "" : "empty";
+      } else if (!selectedName) {
+        $("detailMeta").textContent = "点左侧一行查看";
+        $("detailMeta").className = "empty";
+        $("detailBody").textContent = "—";
+        $("detailBody").className = "empty";
+      }
+    }
+
+    async function load(sid, name) {
+      const qs = new URLSearchParams();
+      if (sid) qs.set("session_id", sid);
+      if (name) qs.set("name", name);
+      const q = qs.toString() ? `?${qs}` : "";
+      renderList(await api(`/api/dev/skills${q}`));
+    }
+
+    $("btnTheme").onclick = () => { ui.toggleTheme(); syncThemeBtn(); };
+    $("btnRefresh").onclick = () => load($("sessionSelect").value, selectedName).catch((e) => { $("meta").textContent = String(e); });
+    $("sessionSelect").onchange = () => {
+      selectedName = "";
+      load($("sessionSelect").value, "").catch((e) => { $("meta").textContent = String(e); });
+    };
+    syncThemeBtn();
+    bootstrap().then(() => load("", "")).catch((e) => { $("meta").textContent = String(e); });
+  </script>
+</body>
+</html>

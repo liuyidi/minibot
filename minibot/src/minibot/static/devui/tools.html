@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>minibot Tools</title>
+  <script src="./common.js?v=tools2"></script>
+  <style>
+    :root, html[data-theme="dark"] {
+      --bg: #0f1115; --panel: #171a21; --border: #2a3140; --text: #e8ecf4;
+      --muted: #8b95a8; --accent: #5b8def; --ok: #3ecf8e; --warn: #e6b84d;
+      --err: #e35d6a; --btn: #222833; --hover: #1c2230;
+    }
+    html[data-theme="light"] {
+      --bg: #f4f6fa; --panel: #fff; --border: #d8dee8; --text: #1a2030;
+      --muted: #667085; --accent: #3b6fd8; --ok: #1a9f63; --warn: #b8860b;
+      --err: #c93c4a; --btn: #eef2f8; --hover: #eef2f8;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font: 14px/1.5 ui-sans-serif, system-ui, -apple-system, sans-serif;
+      background: var(--bg); color: var(--text);
+      min-height: 100vh; display: grid; grid-template-rows: auto 1fr;
+    }
+    header {
+      display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+      padding: 10px 16px; border-bottom: 1px solid var(--border); background: var(--panel);
+    }
+    header h1 { margin: 0; font-size: 16px; font-weight: 600; }
+    header a, button {
+      background: var(--btn); color: var(--text); border: 1px solid var(--border);
+      border-radius: 8px; padding: 6px 10px; cursor: pointer; font: inherit; text-decoration: none;
+    }
+    header a:hover, button:hover { border-color: var(--accent); }
+    button.danger { border-color: var(--err); color: var(--err); }
+    .meta { color: var(--muted); font-size: 12px; margin-left: auto; }
+    main { padding: 20px 24px; max-width: 1100px; }
+    .hint { color: var(--muted); font-size: 13px; margin: 0 0 16px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+    section {
+      background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px;
+    }
+    section h2 { margin: 0 0 10px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+    .cat {
+      margin: 0 0 12px; border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+    }
+    .cat:last-child { margin-bottom: 0; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    th { color: var(--muted); font-weight: 500; }
+    .cat table tr:last-child td { border-bottom: none; }
+    .badge {
+      display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 999px;
+      border: 1px solid var(--border); color: var(--muted);
+    }
+    .badge.ok { color: var(--ok); }
+    .badge.err { color: var(--err); }
+    .badge.warn { color: var(--warn); }
+    code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; }
+    .empty { color: var(--muted); font-style: italic; }
+    .abnormal { margin-top: 14px; }
+    /* 分类标题：放在 .badge 之后，避免被通用 badge 规则盖掉 */
+    .cat-head {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 8px;
+      min-height: 36px;
+      padding: 0 12px;
+      background: color-mix(in srgb, var(--btn) 80%, transparent);
+      border-bottom: 1px solid var(--border);
+    }
+    .cat-head .cat-label,
+    .cat-head .cat-count {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 22px;
+      margin: 0;
+      line-height: 22px;
+      font-size: 12px;
+      vertical-align: middle;
+    }
+    .cat-head .cat-label {
+      padding: 0 8px;
+      border-radius: 999px;
+      border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--border));
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .cat-head .cat-count {
+      color: var(--muted);
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Tools</h1>
+    <a href="./">← Chat</a>
+    <a href="./trace.html">Trace</a>
+    <a href="./context.html">Context</a>
+    <a href="./memory.html">Memory</a>
+    <a href="./skills.html">Skills</a>
+    <a href="./mcp.html">MCP</a>
+    <button type="button" id="btnRefresh">刷新</button>
+    <button type="button" class="danger" id="btnDenyWs">异常：workspace 拒</button>
+    <button type="button" class="danger" id="btnDenySsrf">异常：SSRF 拒</button>
+    <button type="button" class="danger" id="btnDenyDepth">异常：spawn depth</button>
+    <button type="button" id="btnTheme">浅色</button>
+    <span class="meta" id="meta">loading…</span>
+  </header>
+  <main>
+    <p class="hint">
+      <b>正常：</b>左侧按能力分类：文件系统 / 搜索 / Shell / 网络 / 子 Agent / 其它。右侧最近调用；下方子 session。
+      <b>异常：</b>workspace / SSRF / spawn depth≥2 拒绝。
+    </p>
+    <div class="grid">
+      <section>
+        <h2>Registered tools</h2>
+        <div id="tools"><div class="empty">加载中…</div></div>
+      </section>
+      <section>
+        <h2>Recent calls</h2>
+        <div id="recent"><div class="empty">暂无</div></div>
+      </section>
+    </div>
+    <section class="abnormal" style="margin-top:14px">
+      <h2>Subagent sessions</h2>
+      <div id="subs"><div class="empty">暂无子 session</div></div>
+    </section>
+    <section class="abnormal">
+      <h2>最近一次拒绝演示</h2>
+      <pre id="denyOut" class="empty" style="margin:0;white-space:pre-wrap;font-size:12px">尚未触发</pre>
+    </section>
+  </main>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const ui = window.MinibotDevUI;
+    let token = "";
+
+    function syncThemeBtn() {
+      $("btnTheme").textContent = ui.currentTheme() === "light" ? "暗色" : "浅色";
+    }
+
+    async function bootstrap() {
+      const res = await fetch("/auth/bootstrap");
+      if (!res.ok) throw new Error(`bootstrap ${res.status}`);
+      token = (await res.json()).token || "";
+    }
+
+    async function api(path, opts = {}) {
+      const headers = { ...(opts.headers || {}) };
+      if (token) headers.Authorization = `Bearer ${token}`;
+      if (opts.body && !headers["Content-Type"]) headers["Content-Type"] = "application/json";
+      const res = await fetch(path, { ...opts, headers });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.detail || res.statusText);
+      return data;
+    }
+
+    function riskClass(risk) {
+      if (risk === "critical" || risk === "high") return "err";
+      if (risk === "medium") return "warn";
+      return "ok";
+    }
+
+    function toolRows(tools) {
+      return `<table>
+        <thead><tr><th>name</th><th>risk</th><th>source</th><th>description</th></tr></thead>
+        <tbody>${tools.map((t) => `<tr>
+          <td><code>${t.name}</code></td>
+          <td><span class="badge ${riskClass(t.risk)}">${t.risk || "?"}</span></td>
+          <td>${t.source || ""}</td>
+          <td style="color:var(--muted)">${(t.description || "").slice(0, 120)}</td>
+        </tr>`).join("")}</tbody>
+      </table>`;
+    }
+
+    function renderToolsGrouped(snap) {
+      const categories = snap.categories || [];
+      const tools = snap.tools || [];
+      if (!tools.length) {
+        $("tools").innerHTML = `<div class="empty">无工具</div>`;
+        return;
+      }
+      if (!categories.length) {
+        $("tools").innerHTML = toolRows(tools);
+        return;
+      }
+      $("tools").innerHTML = categories.map((c) => `
+        <div class="cat">
+          <div class="cat-head">
+            <span class="cat-label">${c.label || c.id}</span>
+            <span class="cat-count">${c.count} tools</span>
+          </div>
+          ${toolRows(c.tools || [])}
+        </div>`).join("");
+    }
+
+    function render(snap) {
+      const tools = snap.tools || [];
+      const subs = snap.subagents || [];
+      const catCount = (snap.categories || []).length;
+      $("meta").textContent = `${tools.length} tools · ${catCount} groups · recent ${(snap.recent || []).length} · sub ${subs.length}`;
+      renderToolsGrouped(snap);
+      const recent = snap.recent || [];
+      if (!recent.length) {
+        $("recent").innerHTML = `<div class="empty">暂无调用</div>`;
+      } else {
+        $("recent").innerHTML = `<table>
+          <thead><tr><th>ts</th><th>name</th><th>status</th><th>preview</th></tr></thead>
+          <tbody>${recent.map((c) => `<tr>
+            <td style="color:var(--muted);font-size:11px">${(c.ts || "").slice(11, 19)}</td>
+            <td><code>${c.name}</code></td>
+            <td>${c.denied
+              ? `<span class="badge err">denied:${c.denied_reason || "?"}</span>`
+              : (c.ok ? `<span class="badge ok">ok</span>` : `<span class="badge warn">err</span>`)}</td>
+            <td><code>${(c.result_preview || "").replaceAll("<", "&lt;")}</code></td>
+          </tr>`).join("")}</tbody>
+        </table>`;
+      }
+      if (!subs.length) {
+        $("subs").innerHTML = `<div class="empty">暂无子 session（Chat 里让模型 spawn 后会出现）</div>`;
+      } else {
+        $("subs").innerHTML = `<table>
+          <thead><tr><th>parent</th><th>child</th><th>title</th><th>msgs</th></tr></thead>
+          <tbody>${subs.map((s) => `<tr>
+            <td><code>${s.parent_id}</code></td>
+            <td><code>${s.id}</code></td>
+            <td>${(s.title || "").replaceAll("<", "&lt;")}</td>
+            <td>${s.message_count ?? "?"}</td>
+          </tr>`).join("")}</tbody>
+        </table>`;
+      }
+    }
+
+    async function load() {
+      const snap = await api("/api/dev/tools");
+      render(snap);
+    }
+
+    async function deny(kind) {
+      $("denyOut").textContent = "running…";
+      const res = await api("/api/dev/tools/deny-demo", {
+        method: "POST",
+        body: JSON.stringify({ kind }),
+      });
+      $("denyOut").textContent = JSON.stringify(res, null, 2);
+      render(res.tools || {});
+    }
+
+    $("btnTheme").onclick = () => { ui.toggleTheme(); syncThemeBtn(); };
+    $("btnRefresh").onclick = () => load().catch((e) => { $("meta").textContent = String(e); });
+    $("btnDenyWs").onclick = () => deny("workspace").catch((e) => { $("denyOut").textContent = String(e); });
+    $("btnDenySsrf").onclick = () => deny("ssrf").catch((e) => { $("denyOut").textContent = String(e); });
+    $("btnDenyDepth").onclick = () => deny("spawn_depth").catch((e) => { $("denyOut").textContent = String(e); });
+    syncThemeBtn();
+    bootstrap().then(load).catch((e) => { $("meta").textContent = String(e); });
+  </script>
+</body>
+</html>

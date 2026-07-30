@@ -1,0 +1,30 @@
+[project]
+name = "minibot"
+version = "0.1.0"
+description = "FastAPI agent runtime (minibot)"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    "httpx>=0.28.0",
+    "mcp>=1.26.0,<2.0.0",
+    "croniter>=2.0.0,<7.0.0",
+    "pydantic>=2.12.0",
+    "pydantic-settings>=2.12.0",
+]
+
+[project.scripts]
+minibot = "minibot.__main__:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/minibot"]
+# Do NOT force-include static/skills — they already live under src/minibot and
+# hatch would add them twice (ValueError: same path in wheel).
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src", "tests"]

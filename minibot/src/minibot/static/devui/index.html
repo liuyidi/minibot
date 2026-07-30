@@ -1,0 +1,1986 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>minibot Dev UI</title>
+  <script src="./common.js?v=lab1"></script>
+  <style>
+    :root, html[data-theme="dark"] {
+      --bg: #0f1115;
+      --panel: #171a21;
+      --border: #2a3140;
+      --text: #e8ecf4;
+      --muted: #8b95a8;
+      --accent: #5b8def;
+      --ok: #3ecf8e;
+      --warn: #e6b84d;
+      --err: #e35d6a;
+      --user: #243044;
+      --bot: #1c2433;
+      --input: #12161e;
+      --hover: #1c2230;
+      --divider: #1e2430;
+      --btn: #222833;
+    }
+    html[data-theme="light"] {
+      --bg: #f4f6fa;
+      --panel: #ffffff;
+      --border: #d8dee8;
+      --text: #1a2030;
+      --muted: #667085;
+      --accent: #3b6fd8;
+      --ok: #1a9f63;
+      --warn: #b8860b;
+      --err: #c93c4a;
+      --user: #dce8fb;
+      --bot: #eef1f6;
+      --input: #f8fafc;
+      --hover: #eef2f8;
+      --divider: #e8edf4;
+      --btn: #eef2f8;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font: 14px/1.45 ui-sans-serif, system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+    header {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--panel);
+      flex-wrap: wrap;
+    }
+    header h1 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: 0.02em; }
+    header a {
+      background: var(--btn);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 10px;
+      text-decoration: none;
+      font: inherit;
+    }
+    header a:hover { border-color: var(--accent); }
+    header a.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    header .header-right {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .rail {
+      width: 48px;
+      flex-shrink: 0;
+      border-right: 1px solid var(--border);
+      background: var(--panel);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 0;
+    }
+    .rail-btn {
+      width: 34px;
+      height: 34px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+    }
+    .rail-btn:hover {
+      color: var(--text);
+      background: var(--btn);
+      border-color: var(--border);
+    }
+    .rail-btn.active {
+      color: var(--accent);
+      background: color-mix(in srgb, var(--accent) 14%, var(--bg));
+      border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+    }
+    .rail-btn svg {
+      width: 17px;
+      height: 17px;
+      display: block;
+    }
+    .left-pane {
+      min-width: 0;
+      min-height: 0;
+      border-right: 1px solid var(--border);
+      background: var(--panel);
+      display: flex;
+      flex-direction: column;
+    }
+    .left-pane > .pane-panel { display: none; flex-direction: column; min-height: 0; flex: 1; }
+    .left-pane > .pane-panel.active { display: flex; }
+    .settings-body {
+      overflow: auto;
+      padding: 10px 12px 16px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .settings-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .settings-group h3 {
+      margin: 0;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .status-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+    .model-bar {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .model-bar-row {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .model-bar select {
+      flex: 1;
+      min-width: 0;
+      width: 100%;
+    }
+    .model-bar .icon-btn {
+      width: 30px;
+      height: 30px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--btn);
+      color: var(--muted);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .model-bar .icon-btn:hover {
+      border-color: var(--accent);
+      color: var(--text);
+    }
+    .model-bar .icon-btn.danger:hover {
+      color: var(--err);
+      border-color: color-mix(in srgb, var(--err) 40%, var(--border));
+    }
+    .model-bar .icon-btn svg {
+      width: 15px;
+      height: 15px;
+      display: block;
+    }
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 60;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal {
+      width: min(440px, 100%);
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+      padding: 16px 18px 18px;
+    }
+    .modal h2 {
+      margin: 0 0 4px;
+      font-size: 16px;
+    }
+    .modal .modal-sub {
+      margin: 0 0 14px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .modal label {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin: 10px 0 4px;
+    }
+    .modal input {
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 16px;
+    }
+    .modal-actions button.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .modal-error {
+      color: var(--err);
+      font-size: 12px;
+      min-height: 1.2em;
+      margin-top: 8px;
+    }
+    .badge {
+      font-size: 12px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+    .badge.ok { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 40%, var(--border)); }
+    .badge.err { color: var(--err); border-color: color-mix(in srgb, var(--err) 40%, var(--border)); }
+    .auth-lamp-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px 4px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--muted);
+      font: 11px/1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      cursor: default;
+      letter-spacing: 0.02em;
+    }
+    .auth-lamp-btn[data-state="ok"] {
+      color: var(--ok);
+      border-color: color-mix(in srgb, var(--ok) 40%, var(--border));
+    }
+    .auth-lamp-btn[data-state="warn"] {
+      color: var(--warn);
+      border-color: color-mix(in srgb, var(--warn) 40%, var(--border));
+    }
+    .auth-lamp-btn[data-state="err"] {
+      color: var(--err);
+      border-color: color-mix(in srgb, var(--err) 40%, var(--border));
+    }
+    .lamp {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: color-mix(in srgb, var(--muted) 45%, transparent);
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2);
+      flex-shrink: 0;
+    }
+    .auth-lamp-btn[data-state="ok"] .lamp {
+      background: var(--ok);
+      box-shadow: 0 0 8px color-mix(in srgb, var(--ok) 60%, transparent);
+    }
+    .auth-lamp-btn[data-state="warn"] .lamp {
+      background: var(--warn);
+      box-shadow: 0 0 8px color-mix(in srgb, var(--warn) 50%, transparent);
+    }
+    .auth-lamp-btn[data-state="err"] .lamp {
+      background: var(--err);
+      box-shadow: 0 0 8px color-mix(in srgb, var(--err) 50%, transparent);
+    }
+    .rt-chip {
+      font: 11px/1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      color: color-mix(in srgb, var(--accent) 85%, var(--text));
+      border: 1px dashed color-mix(in srgb, var(--accent) 40%, var(--border));
+      background: color-mix(in srgb, var(--accent) 8%, var(--bg));
+      border-radius: 4px;
+      padding: 5px 8px;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+    }
+    .rt-chip .rt-k { opacity: 0.55; }
+    .rt-chip .rt-v { color: var(--accent); font-weight: 600; }
+    main {
+      display: grid;
+      grid-template-columns: 48px 240px 1fr 260px;
+      min-height: 0;
+    }
+    @media (max-width: 1100px) {
+      main { grid-template-columns: 48px 220px 1fr; }
+      .side { display: none; }
+    }
+    @media (max-width: 720px) {
+      main { grid-template-columns: 48px 1fr; grid-template-rows: auto 1fr; }
+      .left-pane { grid-column: 2; grid-row: 1; max-height: 40vh; }
+      section { grid-column: 2; grid-row: 2; }
+      .rail { grid-row: 1 / span 2; }
+    }
+    section, .side {
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      background: var(--panel);
+    }
+    section { background: var(--bg); border-right: 1px solid var(--border); }
+    .side { border-left: 1px solid var(--border); }
+    .pane-title {
+      padding: 10px 12px;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    button, select {
+      background: var(--btn);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 10px;
+      cursor: pointer;
+      font: inherit;
+    }
+    button:hover { border-color: var(--accent); }
+    button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    #sessions { overflow: auto; padding: 8px; flex: 1; }
+    .session {
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      padding: 8px 8px;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      margin-bottom: 4px;
+    }
+    .session:hover { background: var(--hover); }
+    .session.active { border-color: var(--accent); background: var(--hover); }
+    .session .body { flex: 1; min-width: 0; cursor: pointer; }
+    .session .id { font-size: 11px; color: var(--muted); }
+    .session .ws-path {
+      font-size: 10px;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-top: 2px;
+      opacity: 0.9;
+    }
+    .session .preview { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    #wsPathBar {
+      font-size: 12px;
+      color: var(--muted);
+      padding: 0 12px 8px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    #wsPathBar code { font-size: 11px; color: var(--text); word-break: break-all; }
+    .session .del {
+      flex-shrink: 0;
+      padding: 2px 7px;
+      font-size: 11px;
+      line-height: 1.4;
+      border-color: color-mix(in srgb, var(--err) 50%, var(--border));
+      color: var(--err);
+      opacity: 0.75;
+    }
+    .session:hover .del { opacity: 1; }
+    .session .del:hover { border-color: var(--err); }
+    #chat {
+      flex: 1;
+      overflow: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .bubble {
+      max-width: 85%;
+      padding: 10px 12px;
+      border-radius: 12px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .bubble.user { align-self: flex-end; background: var(--user); }
+    .bubble.bot { align-self: flex-start; background: var(--bot); border: 1px solid var(--border); }
+    .bubble.aside {
+      align-self: flex-start;
+      max-width: 92%;
+      background: transparent;
+      border: 1px dashed var(--border);
+      color: var(--muted);
+      font-size: 13px;
+      padding: 8px 10px;
+    }
+    .bubble.aside .tag { color: var(--warn); }
+    .bubble.final .tag { color: var(--ok); }
+    .bubble .tag { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+    #scoreBar {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px 10px;
+      border-top: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--muted);
+    }
+    #scoreBar.visible { display: flex; flex-wrap: wrap; }
+    #scoreBar button {
+      padding: 2px 10px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    #scoreBar .tid { font-family: ui-monospace, monospace; font-size: 10px; opacity: 0.7; }
+    #lfBadge { font-size: 11px; color: var(--muted); margin-top: 6px; }
+    .tool-card {
+      align-self: stretch;
+      max-width: 92%;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--panel);
+      overflow: hidden;
+      font-size: 13px;
+    }
+    .tool-card.denied { border-color: color-mix(in srgb, var(--err) 50%, var(--border)); }
+    .tool-card summary {
+      cursor: pointer;
+      padding: 8px 10px;
+      list-style: none;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .tool-card summary::-webkit-details-marker { display: none; }
+    .tool-card .tname { font-weight: 600; font-family: ui-monospace, Menlo, Consolas, monospace; }
+    .tool-card .tbody {
+      border-top: 1px solid var(--border);
+      padding: 8px 10px;
+      display: grid;
+      gap: 8px;
+      background: var(--bg);
+    }
+    .tool-card pre {
+      margin: 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font: 12px/1.4 ui-monospace, Menlo, Consolas, monospace;
+      color: var(--muted);
+      max-height: 180px;
+      overflow: auto;
+    }
+    .composer {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding: 0;
+      border-top: 1px solid var(--border);
+      background: var(--panel);
+      position: relative;
+    }
+    .composer-row {
+      display: flex;
+      gap: 8px;
+      padding: 12px 12px 8px;
+      align-items: flex-end;
+    }
+    .composer-row .stream-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .bubble.streaming .body::after {
+      content: "▍";
+      animation: blink 1s step-end infinite;
+      margin-left: 2px;
+      opacity: 0.7;
+    }
+    @keyframes blink { 50% { opacity: 0; } }
+    details.reasoning-stream {
+      margin: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    details.reasoning-stream summary { cursor: pointer; font-weight: 600; }
+    #btnStop { display: none; }
+    #btnStop.visible { display: inline-block; }
+    .composer textarea {
+      flex: 1;
+      resize: none;
+      min-height: 56px;
+      background: var(--input);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px;
+      font: inherit;
+    }
+    .composer-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 12px 10px;
+      min-height: 28px;
+    }
+    .ctx-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 999px;
+      padding: 2px 8px 2px 2px;
+      cursor: pointer;
+      color: var(--muted);
+      font: inherit;
+      font-size: 12px;
+    }
+    .ctx-btn:hover {
+      border-color: var(--border);
+      color: var(--text);
+      background: var(--hover);
+    }
+    .ctx-btn[aria-expanded="true"] {
+      border-color: var(--accent);
+      color: var(--text);
+    }
+    .ctx-ring {
+      width: 22px;
+      height: 22px;
+      flex-shrink: 0;
+    }
+    .ctx-ring circle.track {
+      fill: none;
+      stroke: var(--border);
+      stroke-width: 3.2;
+    }
+    .ctx-ring circle.used {
+      fill: none;
+      stroke: var(--accent);
+      stroke-width: 3.2;
+      stroke-linecap: round;
+      transform: rotate(-90deg);
+      transform-origin: 50% 50%;
+      transition: stroke-dashoffset 0.35s ease, stroke 0.2s ease;
+    }
+    .ctx-ring.warn circle.used { stroke: var(--warn); }
+    .ctx-ring.hot circle.used { stroke: var(--err); }
+    .ctx-pct { font-variant-numeric: tabular-nums; font-size: 11px; }
+    .ctx-popover {
+      display: none;
+      position: absolute;
+      left: 12px;
+      bottom: calc(100% + 8px);
+      width: min(360px, calc(100% - 24px));
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+      z-index: 30;
+      padding: 14px 14px 12px;
+    }
+    .ctx-popover.open { display: block; }
+    .ctx-popover h3 {
+      margin: 0 0 4px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .ctx-popover .sub {
+      margin: 0 0 12px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .ctx-bar {
+      display: flex;
+      height: 10px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: color-mix(in srgb, var(--border) 70%, transparent);
+      margin-bottom: 14px;
+    }
+    .ctx-bar span {
+      display: block;
+      height: 100%;
+      min-width: 0;
+      transition: width 0.3s ease;
+    }
+    .ctx-list { display: flex; flex-direction: column; gap: 8px; }
+    .ctx-row {
+      display: grid;
+      grid-template-columns: 10px 1fr auto auto;
+      gap: 8px;
+      align-items: center;
+      font-size: 12.5px;
+    }
+    .ctx-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .ctx-row .label { color: var(--text); min-width: 0; }
+    .ctx-row .tok {
+      font-variant-numeric: tabular-nums;
+      color: var(--text);
+      font-weight: 560;
+    }
+    .ctx-row .pct {
+      font-variant-numeric: tabular-nums;
+      color: var(--muted);
+      min-width: 3.2em;
+      text-align: right;
+    }
+    .ctx-row.free .label { color: var(--muted); }
+    .ctx-details {
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 14px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .ctx-details b { color: var(--text); font-weight: 560; }
+    .checks, .settings, .log {
+      padding: 10px 12px;
+      overflow: auto;
+      font-size: 12px;
+    }
+    .check {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--divider);
+    }
+    .check code { color: var(--muted); }
+    .status-ok { color: var(--ok); }
+    .status-stub { color: var(--warn); }
+    .status-err { color: var(--err); }
+    label.row { display: flex; gap: 8px; align-items: center; margin: 6px 0; color: var(--muted); }
+    input[type="text"], input[type="password"] {
+      width: 100%;
+      background: var(--input);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 7px 9px;
+      font: inherit;
+      margin-bottom: 8px;
+    }
+    #log {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      color: var(--muted);
+      white-space: pre-wrap;
+      max-height: 140px;
+      overflow: auto;
+      background: var(--input);
+      border-radius: 8px;
+      padding: 8px;
+      border: 1px solid var(--border);
+    }
+    .hint {
+      margin: 8px 12px;
+      padding: 10px;
+      border: 1px dashed var(--border);
+      border-radius: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    .drawer-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.45);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+      z-index: 40;
+    }
+    .drawer-backdrop.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .drawer {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: min(360px, 92vw);
+      height: 100vh;
+      background: var(--panel);
+      border-left: 1px solid var(--border);
+      box-shadow: -12px 0 40px rgba(0, 0, 0, 0.25);
+      transform: translateX(105%);
+      transition: transform 0.22s ease;
+      z-index: 50;
+      display: flex;
+      flex-direction: column;
+    }
+    .drawer.open { transform: translateX(0); }
+    .drawer-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .drawer-head h2 { margin: 0; font-size: 15px; }
+    .drawer-body {
+      flex: 1;
+      overflow: auto;
+      padding: 12px 14px 24px;
+    }
+    .dev-nav-group { margin-bottom: 18px; }
+    .dev-nav-cat {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      margin: 0 0 8px;
+      padding: 0 4px;
+    }
+    .dev-nav-item {
+      display: block;
+      text-decoration: none;
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      background: var(--bg);
+    }
+    .dev-nav-item:hover { border-color: var(--accent); }
+    .dev-nav-title { display: block; font-weight: 600; font-size: 13px; }
+    .dev-nav-desc { display: block; font-size: 12px; color: var(--muted); margin-top: 3px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>minibot Dev UI</h1>
+    <div class="header-right">
+      <button type="button" class="primary" id="btnLab" title="打开实验室页面目录">实验室</button>
+    </div>
+  </header>
+  <main>
+    <nav class="rail" aria-label="左侧导航">
+      <button type="button" class="rail-btn active" id="tabSessions" data-pane="sessions" title="Sessions" aria-label="Sessions" aria-pressed="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+        </svg>
+      </button>
+      <button type="button" class="rail-btn" id="tabSettings" data-pane="settings" title="Settings" aria-label="Settings" aria-pressed="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V19a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H5a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V5a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9c.3.6.9 1 1.5 1H19a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"></path>
+        </svg>
+      </button>
+      <a href="./knowledge.html" class="rail-btn" title="Knowledge" aria-label="Knowledge" style="display:inline-flex">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+          <path d="M6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5V4.5A2.5 2.5 0 0 1 6.5 2z"></path>
+          <path d="M12 6v7"></path>
+          <path d="M9 9h6"></path>
+        </svg>
+      </a>
+    </nav>
+    <div class="left-pane">
+      <div class="pane-panel active" id="paneSessions" data-pane="sessions">
+        <div class="pane-title">
+          Sessions
+          <button type="button" id="btnNew" title="New session">+</button>
+        </div>
+        <div id="sessions"></div>
+      </div>
+      <div class="pane-panel" id="paneSettings" data-pane="settings">
+        <div class="pane-title">Settings</div>
+        <div class="settings-body">
+          <div class="settings-group">
+            <h3>Status</h3>
+            <div class="status-row">
+              <span id="health" class="badge">health…</span>
+              <span id="wsBadge" class="badge">ws: idle</span>
+            </div>
+            <div class="status-row">
+              <span class="auth-lamp-btn" id="authStatus" data-state="warn" title="auth token">
+                <span class="lamp" aria-hidden="true"></span>
+                <span id="authLabel">auth…</span>
+              </span>
+              <span class="rt-chip" id="rtChip" title="runtime surface"><span class="rt-k">rt:</span><span class="rt-v">?</span></span>
+            </div>
+          </div>
+          <div class="settings-group">
+            <h3>Connection</h3>
+            <label class="row" style="margin:0">
+              <input type="checkbox" id="useWs" />
+              用 WebSocket 发消息
+            </label>
+          </div>
+          <div class="settings-group">
+            <h3>Appearance</h3>
+            <button type="button" id="btnTheme" title="切换浅色/暗色">浅色</button>
+          </div>
+          <div class="settings-group">
+            <h3>Model</h3>
+            <div class="model-bar" title="当前模型 preset">
+              <select id="cfgPreset" aria-label="当前模型"></select>
+              <div class="model-bar-row">
+                <button type="button" class="icon-btn" id="btnEditPreset" title="编辑当前模型">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M12 20h9"></path>
+                    <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
+                  </svg>
+                </button>
+                <button type="button" class="icon-btn" id="btnNewPreset" title="新增模型">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M12 5v14"></path>
+                    <path d="M5 12h14"></path>
+                  </svg>
+                </button>
+                <button type="button" class="icon-btn danger" id="btnDelPreset" title="删除当前模型">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M3 6h18"></path>
+                    <path d="M8 6V4h8v2"></path>
+                    <path d="M19 6l-1 14H6L5 6"></path>
+                    <path d="M10 11v6"></path>
+                    <path d="M14 11v6"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <section>
+      <div class="pane-title">Chat <span id="sidLabel"></span></div>
+      <div id="wsPathBar">
+        <span>workspace</span>
+        <code id="wsPath">—</code>
+        <button type="button" id="btnWs" title="切换当前 session 的 workspace">切换…</button>
+      </div>
+      <div id="chat"></div>
+      <div id="scoreBar">
+        <span>对本轮评分</span>
+        <button type="button" id="btnScoreUp" title="有用">👍</button>
+        <button type="button" id="btnScoreDown" title="无用">👎</button>
+        <span class="tid" id="scoreTraceId"></span>
+      </div>
+      <div class="composer">
+        <div class="ctx-popover" id="ctxPopover" role="dialog" aria-label="Context usage">
+          <h3>Context window</h3>
+          <p class="sub" id="ctxSub">估计值 · chars/4</p>
+          <div class="ctx-bar" id="ctxBar" aria-hidden="true"></div>
+          <div class="ctx-list" id="ctxList"></div>
+          <div class="ctx-details" id="ctxDetails"></div>
+        </div>
+        <div class="composer-row">
+          <textarea id="input" placeholder="输入消息，Enter 发送，Shift+Enter 换行"></textarea>
+          <div class="stream-actions">
+            <button type="button" class="primary" id="btnSend">发送</button>
+            <button type="button" id="btnStop" title="停止生成">Stop</button>
+          </div>
+        </div>
+        <div class="composer-toolbar">
+          <button type="button" class="ctx-btn" id="btnCtx" aria-expanded="false" title="Show context usage">
+            <svg class="ctx-ring" id="ctxRing" viewBox="0 0 24 24" aria-hidden="true">
+              <circle class="track" cx="12" cy="12" r="9"></circle>
+              <circle class="used" id="ctxRingUsed" cx="12" cy="12" r="9"
+                stroke-dasharray="56.55" stroke-dashoffset="56.55"></circle>
+            </svg>
+            <span class="ctx-pct" id="ctxPct">0%</span>
+          </button>
+        </div>
+      </div>
+    </section>
+    <div class="side">
+      <div class="hint">
+        观测 / 调试页请点右上角 <b>实验室</b> 抽屉（按模块分类）。<br />
+        发消息后 Trace 会自动同步；左侧图标切换 Sessions / Settings。
+      </div>
+      <div class="pane-title">
+        Feature checks
+        <button type="button" id="btnRecheck">刷新</button>
+      </div>
+      <div class="checks" id="checks"></div>
+      <div class="pane-title">Observability</div>
+      <div class="settings">
+        <div id="lfBadge">langfuse: —</div>
+      </div>
+      <div class="pane-title">Event log</div>
+      <div class="log"><div id="log"></div></div>
+    </div>
+  </main>
+  <div class="drawer-backdrop" id="labBackdrop" aria-hidden="true"></div>
+  <div class="drawer" id="labDrawer" aria-hidden="true" aria-label="实验室页面">
+    <div class="drawer-head">
+      <h2>实验室</h2>
+      <button type="button" id="btnLabClose">关闭</button>
+    </div>
+    <div class="drawer-body" id="labNav"></div>
+  </div>
+  <div class="modal-backdrop" id="presetModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="presetModalTitle">
+      <h2 id="presetModalTitle">新增模型</h2>
+      <p class="modal-sub" id="presetModalSub">OpenAI-compatible endpoint</p>
+      <input type="hidden" id="dlgPresetId" value="" />
+      <label for="dlgLabel">显示名称</label>
+      <input id="dlgLabel" type="text" placeholder="DeepSeek / OpenAI …" autocomplete="off" />
+      <label for="dlgModel">model</label>
+      <input id="dlgModel" type="text" placeholder="deepseek-v4-flash" autocomplete="off" />
+      <label for="dlgBase">api_base</label>
+      <input id="dlgBase" type="text" placeholder="https://api.deepseek.com/v1" autocomplete="off" />
+      <label for="dlgKey">api_key <span id="dlgKeyHint" style="font-weight:400">（新建必填）</span></label>
+      <input id="dlgKey" type="password" placeholder="••••" autocomplete="off" />
+      <div class="modal-error" id="dlgError"></div>
+      <div class="modal-actions">
+        <button type="button" id="dlgCancel">取消</button>
+        <button type="button" class="primary" id="dlgSave">保存</button>
+      </div>
+    </div>
+  </div>
+  <script>
+    const { publishTrace, toggleTheme, currentTheme } = MinibotDevUI;
+
+    const state = {
+      token: null,
+      sessionId: null,
+      model: "",
+      ws: null,
+      lastUserText: "",
+      contextUsage: null,
+      ctxTimer: null,
+      lastLangfuseTraceId: "",
+      langfuseEnabled: false,
+      activePresetId: "",
+      activePresetLabel: "",
+      presets: [],
+      presetModalMode: "create",
+      stream: {
+        active: false,
+        bubble: null,
+        bodyEl: null,
+        reasoningDetails: null,
+        reasoningBody: null,
+      },
+    };
+
+    const SESSION_KEY = "minibot-devui-session-id";
+    const DEMO_SESSION_PREFIX = "__";
+    const DEMO_TITLE_MARKERS = ["tools-deny-demo", "runtime-demo", "bus-inject"];
+
+    const $ = (id) => document.getElementById(id);
+
+    function rememberSession(id) {
+      if (!id) return;
+      try { localStorage.setItem(SESSION_KEY, id); } catch (_) {}
+    }
+
+    function recalledSession() {
+      try { return localStorage.getItem(SESSION_KEY) || ""; } catch (_) { return ""; }
+    }
+
+    function isDemoSession(s) {
+      const id = String(s?.id || "");
+      const title = String(s?.title || "");
+      if (id.startsWith(DEMO_SESSION_PREFIX)) return true;
+      return DEMO_TITLE_MARKERS.some((m) => title.includes(m));
+    }
+
+    function clearActiveSession() {
+      state.sessionId = null;
+      $("sidLabel").textContent = "";
+      $("chat").innerHTML = "";
+      $("wsPath").textContent = "—";
+      try { localStorage.removeItem(SESSION_KEY); } catch (_) {}
+      const empty = document.createElement("div");
+      empty.className = "bubble bot aside";
+      empty.innerHTML = `<div class="tag">idle</div><div>暂无选中会话。点「新建」或直接发消息开始。</div>`;
+      $("chat").appendChild(empty);
+    }
+
+    function pickSessionToRestore(list) {
+      const real = (list || []).filter((s) => !isDemoSession(s));
+      const saved = recalledSession();
+      if (saved) {
+        const hit = real.find((s) => s.id === saved);
+        if (hit) return hit;
+      }
+      // Prefer a session that already has content; do not auto-create empties.
+      const withContent = real.find((s) => String(s.preview || s.title || "").trim());
+      return withContent || real[0] || null;
+    }
+
+    function log(msg) {
+      const el = $("log");
+      const line = `[${new Date().toLocaleTimeString()}] ${msg}`;
+      el.textContent = `${line}\n${el.textContent}`.slice(0, 4000);
+    }
+
+    function pushTrace(payload) {
+      const rec = publishTrace({
+        sessionId: state.sessionId,
+        userText: state.lastUserText,
+        content: payload.content || "",
+        stopReason: payload.stop_reason || payload.stopReason || "",
+        toolsUsed: payload.tools_used || payload.toolsUsed || [],
+        source: payload.source || "rest",
+        trace: payload.trace || [],
+      });
+      log(`trace published · ${rec.trace.length} steps → /ui/trace.html`);
+      if (payload.langfuse_trace_id) {
+        setLangfuseTrace(payload.langfuse_trace_id);
+      }
+    }
+
+    function setLangfuseTrace(traceId) {
+      state.lastLangfuseTraceId = traceId || "";
+      const bar = $("scoreBar");
+      const tid = $("scoreTraceId");
+      if (!bar || !tid) return;
+      if (state.lastLangfuseTraceId && state.langfuseEnabled) {
+        tid.textContent = state.lastLangfuseTraceId.slice(0, 18) + "…";
+        bar.classList.add("visible");
+      } else {
+        bar.classList.remove("visible");
+        tid.textContent = "";
+      }
+    }
+
+    async function postScore(thumbsUp) {
+      if (!state.sessionId || !state.lastLangfuseTraceId) {
+        log("score: no session/trace");
+        return;
+      }
+      try {
+        await api(`/api/sessions/${encodeURIComponent(state.sessionId)}/score`, {
+          method: "POST",
+          body: JSON.stringify({
+            name: "user-feedback",
+            data_type: "BOOLEAN",
+            value: thumbsUp ? 1 : 0,
+            string_value: thumbsUp ? "true" : "false",
+            trace_id: state.lastLangfuseTraceId,
+          }),
+        });
+        log(`score ${thumbsUp ? "👍" : "👎"} → ${state.lastLangfuseTraceId.slice(0, 12)}…`);
+        $("scoreBar")?.classList.remove("visible");
+      } catch (e) {
+        log(`score failed: ${e.message || e}`);
+      }
+    }
+
+    async function api(path, opts = {}) {
+      const headers = { ...(opts.headers || {}) };
+      if (state.token) headers.Authorization = `Bearer ${state.token}`;
+      if (opts.body && !headers["Content-Type"]) headers["Content-Type"] = "application/json";
+      const res = await fetch(path, { ...opts, headers });
+      const text = await res.text();
+      let data = null;
+      try { data = text ? JSON.parse(text) : null; } catch { data = text; }
+      if (!res.ok) {
+        const detail = data?.detail || text || res.statusText;
+        throw new Error(`${opts.method || "GET"} ${path} → ${res.status}: ${detail}`);
+      }
+      return data;
+    }
+
+    function addBubble(role, content, tag = "", extraClass = "") {
+      const div = document.createElement("div");
+      const kind = role === "user" ? "user" : "bot";
+      div.className = `bubble ${kind}${extraClass ? ` ${extraClass}` : ""}`;
+      if (tag) {
+        const t = document.createElement("div");
+        t.className = "tag";
+        t.textContent = tag;
+        div.appendChild(t);
+      }
+      const body = document.createElement("div");
+      body.className = "body";
+      body.textContent = content;
+      div.appendChild(body);
+      $("chat").appendChild(div);
+      $("chat").scrollTop = $("chat").scrollHeight;
+      return div;
+    }
+
+    function setStreamingUi(running) {
+      $("btnSend").disabled = !!running;
+      $("btnStop").classList.toggle("visible", !!running);
+    }
+
+    function resetStreamUi() {
+      state.stream.active = false;
+      state.stream.bubble = null;
+      state.stream.bodyEl = null;
+      state.stream.reasoningDetails = null;
+      state.stream.reasoningBody = null;
+      setStreamingUi(false);
+    }
+
+    function ensureStreamBubble() {
+      if (state.stream.bubble && state.stream.bodyEl) return;
+      const div = document.createElement("div");
+      div.className = "bubble bot streaming";
+      const body = document.createElement("div");
+      body.className = "body";
+      body.textContent = "";
+      div.appendChild(body);
+      $("chat").appendChild(div);
+      state.stream.bubble = div;
+      state.stream.bodyEl = body;
+      state.stream.active = true;
+      $("chat").scrollTop = $("chat").scrollHeight;
+    }
+
+    function ensureReasoningBlock() {
+      if (state.stream.reasoningDetails) return;
+      const details = document.createElement("details");
+      details.className = "reasoning-stream";
+      details.open = false;
+      const summary = document.createElement("summary");
+      summary.textContent = "Thinking…";
+      const body = document.createElement("div");
+      body.className = "body";
+      body.textContent = "";
+      details.append(summary, body);
+      $("chat").appendChild(details);
+      state.stream.reasoningDetails = details;
+      state.stream.reasoningBody = body;
+    }
+
+    function appendStreamDelta(text) {
+      if (!text) return;
+      ensureStreamBubble();
+      state.stream.bodyEl.textContent += text;
+      $("chat").scrollTop = $("chat").scrollHeight;
+    }
+
+    function appendReasoningDelta(text) {
+      if (!text) return;
+      ensureReasoningBlock();
+      state.stream.reasoningBody.textContent += text;
+      $("chat").scrollTop = $("chat").scrollHeight;
+    }
+
+    function finalizeStreamBubble() {
+      if (state.stream.bubble) {
+        state.stream.bubble.classList.remove("streaming");
+      }
+      if (state.stream.reasoningDetails) {
+        const summary = state.stream.reasoningDetails.querySelector("summary");
+        if (summary) summary.textContent = "Thinking";
+      }
+    }
+
+    function parseToolArgs(raw) {
+      if (raw == null) return {};
+      if (typeof raw === "object") return raw;
+      try {
+        return JSON.parse(String(raw));
+      } catch {
+        return { raw: String(raw) };
+      }
+    }
+
+    function argsForToolCallId(messages, toolCallId) {
+      for (let i = messages.length - 1; i >= 0; i--) {
+        const m = messages[i];
+        if (m.role !== "assistant" || !Array.isArray(m.tool_calls)) continue;
+        for (const tc of m.tool_calls) {
+          if (tc.id === toolCallId) {
+            return parseToolArgs(tc.function?.arguments ?? tc.arguments);
+          }
+        }
+      }
+      return {};
+    }
+
+    function addToolCard(step) {
+      const name = step.name || "tool";
+      const result = String(step.result || step.result_preview || step.content || "");
+      const denied = /^Error:\s*(WorkspaceBoundaryError|NetworkDeniedError)/.test(result)
+        || /outside allowed directory/i.test(result)
+        || /Blocked:.*private\/internal/i.test(result);
+      const details = document.createElement("details");
+      details.className = `tool-card${denied ? " denied" : ""}`;
+      const summary = document.createElement("summary");
+      const badge = document.createElement("span");
+      badge.className = `badge ${denied ? "err" : "ok"}`;
+      badge.textContent = denied ? "denied" : "done";
+      const tname = document.createElement("span");
+      tname.className = "tname";
+      tname.textContent = name;
+      const meta = document.createElement("span");
+      meta.className = "meta";
+      meta.textContent = denied ? "安全拒绝" : "工具调用";
+      summary.append(badge, tname, meta);
+      const body = document.createElement("div");
+      body.className = "tbody";
+      const argsPre = document.createElement("pre");
+      argsPre.textContent = `args: ${typeof step.arguments === "string" ? step.arguments : JSON.stringify(step.arguments || {}, null, 2)}`;
+      const resPre = document.createElement("pre");
+      resPre.textContent = result || "(empty)";
+      body.append(argsPre, resPre);
+      details.append(summary, body);
+      $("chat").appendChild(details);
+      $("chat").scrollTop = $("chat").scrollHeight;
+    }
+
+    /** Replay session messages as Chat timeline: user → 过程旁白 → tool cards → 最终答复. */
+    function renderMessagesTimeline(messages) {
+      const list = Array.isArray(messages) ? messages : [];
+      for (let i = 0; i < list.length; i++) {
+        const m = list[i];
+        if (!m || typeof m !== "object") continue;
+        const role = m.role;
+        if (role === "system") continue;
+        if (role === "user") {
+          addBubble("user", m.content || "");
+          continue;
+        }
+        if (role === "assistant") {
+          const hasTools = Array.isArray(m.tool_calls) && m.tool_calls.length > 0;
+          const text = typeof m.content === "string" ? m.content.trim() : "";
+          if (hasTools) {
+            if (text) addBubble("bot", text, "过程", "aside");
+            continue;
+          }
+          if (text) addBubble("bot", text, "答复", "final");
+          continue;
+        }
+        if (role === "tool") {
+          const args = argsForToolCallId(list, m.tool_call_id);
+          addToolCard({
+            name: m.name || "tool",
+            arguments: args,
+            result: m.content || "",
+          });
+        }
+      }
+    }
+
+    async function refreshChatTimeline() {
+      if (!state.sessionId) return;
+      const data = await api(`/api/sessions/${encodeURIComponent(state.sessionId)}/messages`);
+      $("chat").innerHTML = "";
+      renderMessagesTimeline(data.messages || []);
+    }
+
+    const CTX_RING_C = 2 * Math.PI * 9; // r=9
+
+    function setCtxOpen(open) {
+      $("ctxPopover").classList.toggle("open", open);
+      $("btnCtx").setAttribute("aria-expanded", open ? "true" : "false");
+    }
+
+    function renderContextUsage(data) {
+      state.contextUsage = data;
+      const usedPct = Math.min(100, Math.max(0, Number(data.used_pct) || 0));
+      $("ctxPct").textContent = `${usedPct}%`;
+      const ring = $("ctxRing");
+      ring.classList.toggle("warn", usedPct >= 70 && usedPct < 90);
+      ring.classList.toggle("hot", usedPct >= 90);
+      const usedCircle = $("ctxRingUsed");
+      const offset = CTX_RING_C * (1 - usedPct / 100);
+      usedCircle.setAttribute("stroke-dasharray", String(CTX_RING_C));
+      usedCircle.setAttribute("stroke-dashoffset", String(offset));
+
+      $("ctxSub").textContent =
+        `${data.model || state.model || "model"} · window ${data.window_label || "—"} · 估计 ${data.estimate_method || "chars/4"}`;
+
+      const cats = data.categories || [];
+      const bar = $("ctxBar");
+      bar.innerHTML = "";
+      for (const c of cats) {
+        if (!c.tokens && c.id !== "free") continue;
+        const seg = document.createElement("span");
+        seg.style.width = `${Math.max(c.pct || 0, c.tokens ? 0.4 : 0)}%`;
+        seg.style.background = c.color || "var(--muted)";
+        seg.title = `${c.label}: ${c.tokens_label || c.tokens} (${c.pct}%)`;
+        bar.appendChild(seg);
+      }
+
+      const list = $("ctxList");
+      list.innerHTML = "";
+      for (const c of cats) {
+        const row = document.createElement("div");
+        row.className = "ctx-row" + (c.id === "free" ? " free" : "");
+        row.innerHTML =
+          `<span class="ctx-dot" style="background:${escapeHtml(c.color || "#888")}"></span>` +
+          `<span class="label">${escapeHtml(c.label)}</span>` +
+          `<span class="tok">${escapeHtml(c.tokens_label || String(c.tokens || 0))}</span>` +
+          `<span class="pct">${escapeHtml(String(c.pct ?? 0))}%</span>`;
+        list.appendChild(row);
+      }
+
+      const details = $("ctxDetails");
+      const withCount = cats.filter((c) => c.count > 0 && c.id !== "free" && c.id !== "system_prompt");
+      details.innerHTML = withCount
+        .map(
+          (c) =>
+            `<span><b>${escapeHtml(c.label)}</b> ${escapeHtml(c.tokens_label || "0")} · ${escapeHtml(String(c.count))}</span>`
+        )
+        .join("");
+      if (!details.innerHTML) {
+        details.innerHTML = `<span>used <b>${escapeHtml(data.used_label || "0")}</b> / free <b>${escapeHtml(data.free_label || "0")}</b></span>`;
+      }
+    }
+
+    async function refreshContextUsage() {
+      if (!state.sessionId || !state.token) {
+        renderContextUsage({
+          used_pct: 0,
+          used_label: "0",
+          free_label: "128k",
+          window_label: "128k",
+          estimate_method: "chars/4",
+          model: state.model,
+          categories: [
+            { id: "free", label: "Free space", tokens: 128000, tokens_label: "128k", pct: 100, color: "#6b7280", count: 0 },
+          ],
+        });
+        return;
+      }
+      const draft = ($("input").value || "").trim();
+      const q = draft ? `?draft=${encodeURIComponent(draft)}` : "";
+      try {
+        const data = await api(`/api/sessions/${encodeURIComponent(state.sessionId)}/context-usage${q}`);
+        renderContextUsage(data);
+      } catch (e) {
+        log(`context-usage: ${e.message || e}`);
+      }
+    }
+
+    function scheduleContextUsage() {
+      if (state.ctxTimer) clearTimeout(state.ctxTimer);
+      state.ctxTimer = setTimeout(() => {
+        refreshContextUsage().catch(() => {});
+      }, 280);
+    }
+
+    async function refreshHealth() {
+      try {
+        const h = await api("/health");
+        $("health").textContent = `health: ${h.status}`;
+        $("health").className = "badge ok";
+      } catch (e) {
+        $("health").textContent = "health: down";
+        $("health").className = "badge err";
+        log(String(e.message || e));
+      }
+    }
+
+    function setAuthStatus(stateName, label, title) {
+      const el = $("authStatus");
+      if (!el) return;
+      el.dataset.state = stateName;
+      $("authLabel").textContent = label;
+      el.title = title || label;
+    }
+
+    function setRuntime(surface) {
+      const chip = $("rtChip");
+      if (!chip) return;
+      const name = surface || "minibot";
+      chip.innerHTML = `<span class="rt-k">rt:</span><span class="rt-v">${escapeHtml(name)}</span>`;
+      chip.title = `runtime=${name}`;
+    }
+
+    async function bootstrap() {
+      const boot = await api("/auth/bootstrap");
+      state.token = boot.token;
+      state.model = boot.model_name;
+      setAuthStatus("ok", "token", "auth token ready");
+      setRuntime(boot.runtime_surface || "minibot");
+      log("bootstrap ok");
+    }
+
+    function fillPresetSelect(presets, activeId) {
+      const sel = $("cfgPreset");
+      if (!sel) return;
+      const list = presets || [];
+      state.presets = list;
+      // Show current model prominently: "Label · model"
+      sel.innerHTML = list.map((p) =>
+        `<option value="${escapeHtml(p.id)}" ${p.id === activeId ? "selected" : ""}>${escapeHtml(p.label || p.id)} · ${escapeHtml(p.model || "")}</option>`
+      ).join("") || `<option value="">(no model)</option>`;
+    }
+
+    function closePresetModal() {
+      const modal = $("presetModal");
+      if (!modal) return;
+      modal.classList.remove("open");
+      modal.setAttribute("aria-hidden", "true");
+      $("dlgError").textContent = "";
+    }
+
+    function openPresetModal(mode, preset) {
+      const modal = $("presetModal");
+      if (!modal) return;
+      state.presetModalMode = mode; // "create" | "edit"
+      $("presetModalTitle").textContent = mode === "edit" ? "编辑模型" : "新增模型";
+      $("presetModalSub").textContent = mode === "edit"
+        ? "修改后保存并保持为当前激活模型"
+        : "填写 OpenAI-compatible 端点，保存后可在 Settings 切换";
+      $("dlgPresetId").value = mode === "edit" ? (preset?.id || "") : "";
+      $("dlgLabel").value = mode === "edit" ? (preset?.label || preset?.id || "") : "";
+      $("dlgModel").value = mode === "edit" ? (preset?.model || "") : "";
+      $("dlgBase").value = mode === "edit" ? (preset?.api_base || "") : "https://api.openai.com/v1";
+      $("dlgKey").value = "";
+      $("dlgKey").placeholder = mode === "edit" ? (preset?.api_key_masked || "留空则不修改") : "必填";
+      $("dlgKeyHint").textContent = mode === "edit" ? "（留空不改）" : "（新建必填）";
+      $("dlgError").textContent = "";
+      modal.classList.add("open");
+      modal.setAttribute("aria-hidden", "false");
+      setTimeout(() => $("dlgLabel").focus(), 30);
+    }
+
+    async function loadSessions() {
+      const data = await api("/api/sessions");
+      const list = data.sessions || [];
+      const box = $("sessions");
+      box.innerHTML = "";
+      for (const s of list) {
+        const el = document.createElement("div");
+        el.className = "session" + (s.id === state.sessionId ? " active" : "");
+        const body = document.createElement("div");
+        body.className = "body";
+        const demo = isDemoSession(s);
+        body.innerHTML =
+          `<div class="preview">${escapeHtml(s.title || s.preview || "(empty)")}${demo ? " · demo" : ""}</div>` +
+          `<div class="id">${escapeHtml(s.id)}</div>` +
+          (s.workspace_path
+            ? `<div class="ws-path" title="${escapeHtml(s.workspace_path)}">${escapeHtml(s.workspace_path)}</div>`
+            : "");
+        body.onclick = () => selectSession(s.id);
+        if (s.id === state.sessionId) {
+          $("wsPath").textContent = s.workspace_path || "—";
+        }
+        const del = document.createElement("button");
+        del.type = "button";
+        del.className = "del";
+        del.title = "删除会话（含磁盘 JSONL）";
+        del.textContent = "删";
+        del.onclick = (ev) => {
+          ev.stopPropagation();
+          deleteSession(s.id);
+        };
+        el.append(body, del);
+        box.appendChild(el);
+      }
+      return list;
+    }
+
+    async function deleteSession(id) {
+      if (!id) return;
+      if (!window.confirm(`删除会话 ${id}？\n将同时删除磁盘 ~/.minibot/sessions/${id}.jsonl，不可恢复。`)) {
+        return;
+      }
+      try {
+        await api(`/api/sessions/${encodeURIComponent(id)}`, { method: "DELETE" });
+        log(`session deleted ${id}`);
+        const wasCurrent = state.sessionId === id;
+        if (wasCurrent) {
+          state.sessionId = "";
+          $("sidLabel").textContent = "";
+          $("chat").innerHTML = "";
+          try { localStorage.removeItem(SESSION_KEY); } catch (_) {}
+        }
+        const list = await loadSessions();
+        if (wasCurrent) {
+          const pick = pickSessionToRestore(list);
+          if (pick) await selectSession(pick.id);
+          else clearActiveSession();
+        }
+      } catch (e) {
+        log(`delete failed: ${e.message || e}`);
+      }
+    }
+
+    function escapeHtml(s) {
+      return String(s)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;");
+    }
+
+    async function selectSession(id) {
+      state.sessionId = id;
+      rememberSession(id);
+      $("sidLabel").textContent = id ? `· ${id}` : "";
+      await loadSessions();
+      $("chat").innerHTML = "";
+      if (!id) {
+        $("wsPath").textContent = "—";
+        return;
+      }
+      const data = await api(`/api/sessions/${id}/messages`);
+      renderMessagesTimeline(data.messages || []);
+      ensureWs();
+      refreshContextUsage().catch(() => {});
+    }
+
+    async function changeWorkspace() {
+      if (!state.sessionId) {
+        log("no session selected");
+        return;
+      }
+      const current = $("wsPath").textContent || "";
+      const next = window.prompt("新的 workspace 绝对路径（须已存在的目录）", current === "—" ? "" : current);
+      if (next == null) return;
+      const path = next.trim();
+      if (!path) return;
+      try {
+        const res = await api(`/api/sessions/${encodeURIComponent(state.sessionId)}/workspace`, {
+          method: "POST",
+          body: JSON.stringify({ workspace_path: path }),
+        });
+        $("wsPath").textContent = res.workspace_path || path;
+        log(`workspace → ${res.workspace_path}`);
+        await loadSessions();
+      } catch (e) {
+        log(`workspace failed: ${e.message || e}`);
+        window.alert(String(e.message || e));
+      }
+    }
+
+    async function newSession() {
+      const s = await api("/api/sessions", { method: "POST", body: "{}" });
+      log(`session created ${s.id}`);
+      await selectSession(s.id);
+    }
+
+    function wsUrl() {
+      const proto = location.protocol === "https:" ? "wss" : "ws";
+      return `${proto}://${location.host}/ws?token=${encodeURIComponent(state.token || "")}`;
+    }
+
+    function ensureWs() {
+      if (!$("useWs").checked) {
+        if (state.ws) { state.ws.close(); state.ws = null; }
+        $("wsBadge").textContent = "ws: off";
+        $("wsBadge").className = "badge";
+        return;
+      }
+      if (state.ws && state.ws.readyState <= 1) return;
+      const ws = new WebSocket(wsUrl());
+      state.ws = ws;
+      $("wsBadge").textContent = "ws: connecting";
+      ws.onopen = () => {
+        $("wsBadge").textContent = "ws: open";
+        $("wsBadge").className = "badge ok";
+        log("ws open");
+        if (state.sessionId) {
+          ws.send(JSON.stringify({ type: "attach", chat_id: state.sessionId }));
+        }
+      };
+      ws.onclose = () => {
+        $("wsBadge").textContent = "ws: closed";
+        $("wsBadge").className = "badge";
+        log("ws closed");
+      };
+      ws.onerror = () => {
+        $("wsBadge").textContent = "ws: error";
+        $("wsBadge").className = "badge err";
+      };
+      ws.onmessage = (ev) => {
+        let msg;
+        try { msg = JSON.parse(ev.data); } catch { log(`ws raw ${ev.data}`); return; }
+        const event = msg.event || msg.type || "?";
+        log(`ws ← ${event}`);
+        if (event === "delta") {
+          appendStreamDelta(msg.text || "");
+        } else if (event === "reasoning_delta") {
+          appendReasoningDelta(msg.text || "");
+        } else if (event === "reasoning_end") {
+          finalizeStreamBubble();
+        } else if (event === "stream_end") {
+          finalizeStreamBubble();
+        } else if (event === "goal_status" && msg.status === "running") {
+          setStreamingUi(true);
+        } else if (event === "turn_end") {
+          finalizeStreamBubble();
+          resetStreamUi();
+          refreshContextUsage().catch(() => {});
+        } else if (event === "message") {
+          // Final text may arrive here; full timeline refresh on agent_trace.
+          if (msg.kind === "tool_hint") {
+            addBubble("bot", msg.text || msg.content || "", "过程", "aside");
+          }
+        } else if (event === "agent_trace") {
+          finalizeStreamBubble();
+          pushTrace({
+            content: "",
+            stop_reason: msg.stop_reason,
+            tools_used: msg.tools_used,
+            trace: msg.trace || [],
+            langfuse_trace_id: msg.langfuse_trace_id || "",
+            source: "ws",
+          });
+          refreshChatTimeline().catch((e) => log(String(e.message || e)));
+          resetStreamUi();
+        } else if (event === "error") {
+          finalizeStreamBubble();
+          resetStreamUi();
+          addBubble("bot", msg.detail || msg.error || msg.message || "error", "error");
+        } else if ((event === "attached" || event === "ready") && msg.chat_id) {
+          state.sessionId = msg.chat_id;
+          $("sidLabel").textContent = `· ${msg.chat_id}`;
+          loadSessions();
+        }
+      };
+    }
+
+    async function sendMessage() {
+      const text = $("input").value.trim();
+      if (!text) return;
+      if (!state.sessionId) await newSession();
+      state.lastUserText = text;
+      $("input").value = "";
+      addBubble("user", text);
+      setStreamingUi(true);
+      try {
+        if ($("useWs").checked) {
+          ensureWs();
+          const send = () => state.ws.send(JSON.stringify({
+            type: "message",
+            chat_id: state.sessionId,
+            content: text,
+          }));
+          if (state.ws?.readyState === 1) send();
+          else {
+            await new Promise((resolve, reject) => {
+              const t = setTimeout(() => reject(new Error("ws timeout")), 5000);
+              const prev = state.ws.onopen;
+              state.ws.onopen = (ev) => {
+                clearTimeout(t);
+                if (prev) prev(ev);
+                send();
+                resolve();
+              };
+            });
+          }
+        } else {
+          const res = await api(`/api/sessions/${state.sessionId}/turns`, {
+            method: "POST",
+            body: JSON.stringify({ content: text }),
+          });
+          pushTrace({ ...res, source: "rest" });
+          // 回放完整时间线：过程旁白 → tool 卡片 → 最终答复
+          await refreshChatTimeline();
+          await loadSessions();
+        }
+      } catch (e) {
+        addBubble("bot", String(e.message || e), "error");
+        log(String(e.message || e));
+        resetStreamUi();
+      } finally {
+        if (!$("useWs").checked) {
+          $("btnSend").disabled = false;
+        }
+        $("input").focus();
+        refreshContextUsage().catch(() => {});
+      }
+    }
+
+    function abortStream() {
+      if (!state.sessionId || !state.ws || state.ws.readyState !== 1) return;
+      state.ws.send(JSON.stringify({ type: "abort", chat_id: state.sessionId }));
+      log("ws → abort");
+    }
+
+    async function loadSettings() {
+      const s = await api("/api/settings");
+      const presets = s.model_presets || [];
+      const activeId = s.active_preset || s.agent?.model_preset || "";
+      state.activePresetId = activeId;
+      const active = presets.find((p) => p.id === activeId) || presets.find((p) => p.active) || presets[0];
+      state.activePresetLabel = active?.label || activeId || "";
+      state.model = active?.model || s.agent?.model || state.model;
+      fillPresetSelect(presets, activeId);
+      const obs = s.observability || {};
+      state.langfuseEnabled = !!obs.langfuse_enabled;
+      const badge = $("lfBadge");
+      if (badge) {
+        if (obs.langfuse_enabled) {
+          badge.textContent = `langfuse: on · ${obs.langfuse_host || ""}`;
+          badge.style.color = "var(--ok)";
+        } else if (obs.langfuse_configured) {
+          badge.textContent = "langfuse: configured but inactive";
+          badge.style.color = "var(--warn)";
+        } else {
+          badge.textContent = "langfuse: off (set MINIBOT_SERVER_LANGFUSE_ENABLED)";
+          badge.style.color = "var(--muted)";
+        }
+      }
+      setAuthStatus("ok", "token", "auth token ready");
+    }
+
+    async function activateSelectedPreset() {
+      const pid = $("cfgPreset").value;
+      if (!pid || pid === state.activePresetId) return;
+      await api(`/api/settings/model-configurations/${encodeURIComponent(pid)}/activate`, {
+        method: "POST",
+        body: "{}",
+      });
+      log(`switched model → ${pid}`);
+      await loadSettings();
+      await bootstrap();
+    }
+
+    async function savePresetFromModal() {
+      const mode = state.presetModalMode || "create";
+      const label = $("dlgLabel").value.trim();
+      const model = $("dlgModel").value.trim();
+      const api_base = $("dlgBase").value.trim();
+      const api_key = $("dlgKey").value.trim();
+      const id = ($("dlgPresetId").value || label).trim();
+      if (!label || !model || !api_base) {
+        $("dlgError").textContent = "显示名称、model、api_base 均为必填";
+        return;
+      }
+      if (mode === "create" && !api_key) {
+        $("dlgError").textContent = "新建时 api_key 必填";
+        return;
+      }
+      const body = {
+        id: id || undefined,
+        label,
+        model,
+        api_base,
+        activate: true,
+      };
+      if (api_key) body.api_key = api_key;
+      try {
+        await api("/api/settings/model-configurations", {
+          method: "POST",
+          body: JSON.stringify(body),
+        });
+        closePresetModal();
+        log(mode === "edit" ? `updated model ${label}` : `created model ${label}`);
+        await loadSettings();
+        await bootstrap();
+      } catch (e) {
+        $("dlgError").textContent = String(e.message || e);
+      }
+    }
+
+    async function deleteSelectedPreset() {
+      const pid = $("cfgPreset").value;
+      if (!pid) return;
+      const p = (state.presets || []).find((x) => x.id === pid);
+      const name = p ? `${p.label || p.id} · ${p.model}` : pid;
+      if (!window.confirm(`删除模型「${name}」？`)) return;
+      await api(`/api/settings/model-configurations/${encodeURIComponent(pid)}`, { method: "DELETE" });
+      log(`deleted model ${pid}`);
+      await loadSettings();
+      await bootstrap();
+    }
+
+    async function runFeatureChecks() {
+      const items = [
+        { name: "GET /health", path: "/health", expect: (d) => d.status === "ok" },
+        { name: "GET /auth/bootstrap", path: "/auth/bootstrap", expect: (d) => !!d.token },
+        { name: "GET /api/sessions", path: "/api/sessions", expect: (d) => Array.isArray(d.sessions) },
+        { name: "GET /api/settings", path: "/api/settings", expect: (d) => !!d.agent },
+        { name: "GET /api/commands (stub)", path: "/api/commands", stub: true },
+        { name: "GET /api/webui/skills", path: "/api/webui/skills", stub: false },
+        { name: "GET /api/webui/automations", path: "/api/webui/automations", stub: false },
+        { name: "GET /api/workspaces", path: "/api/workspaces", expect: (d) => Array.isArray(d.workspaces) && !!d.default_workspace },
+        { name: "GET /api/dev/tools", path: "/api/dev/tools", expect: (d) => Array.isArray(d.tools) && d.tools.some((t) => t.name === "read_file") },
+      ];
+      const box = $("checks");
+      box.innerHTML = "";
+      for (const item of items) {
+        const row = document.createElement("div");
+        row.className = "check";
+        const left = document.createElement("code");
+        left.textContent = item.name;
+        const right = document.createElement("span");
+        try {
+          const data = await api(item.path);
+          const ok = item.expect ? item.expect(data) : true;
+          right.textContent = item.stub ? "stub" : (ok ? "ok" : "unexpected");
+          right.className = item.stub ? "status-stub" : (ok ? "status-ok" : "status-err");
+        } catch (e) {
+          right.textContent = "err";
+          right.className = "status-err";
+          right.title = String(e.message || e);
+        }
+        row.append(left, right);
+        box.appendChild(row);
+      }
+      // Security deny 对照只在 /ui/tools.html 手动点，不在每次进 Chat 时创建/碰 session。
+    }
+
+    function setLeftPane(name) {
+      const panes = document.querySelectorAll(".left-pane > .pane-panel");
+      for (const pane of panes) {
+        pane.classList.toggle("active", pane.dataset.pane === name);
+      }
+      const tabs = document.querySelectorAll(".rail-btn");
+      for (const tab of tabs) {
+        const on = tab.dataset.pane === name;
+        tab.classList.toggle("active", on);
+        tab.setAttribute("aria-pressed", on ? "true" : "false");
+      }
+    }
+
+    function syncThemeButton() {
+      const light = currentTheme() === "light";
+      $("btnTheme").textContent = light ? "暗色" : "浅色";
+      $("btnTheme").title = light ? "切换到暗色" : "切换到浅色";
+    }
+
+    $("tabSessions").onclick = () => setLeftPane("sessions");
+    $("tabSettings").onclick = () => setLeftPane("settings");
+    $("btnNew").onclick = () => newSession();
+    $("btnWs").onclick = () => changeWorkspace();
+    $("btnSend").onclick = () => sendMessage();
+    $("btnStop").onclick = () => abortStream();
+    $("btnCtx").onclick = (ev) => {
+      ev.stopPropagation();
+      const open = $("btnCtx").getAttribute("aria-expanded") !== "true";
+      setCtxOpen(open);
+      if (open) refreshContextUsage().catch(() => {});
+    };
+    $("input").addEventListener("input", () => scheduleContextUsage());
+    document.addEventListener("click", (ev) => {
+      const pop = $("ctxPopover");
+      const btn = $("btnCtx");
+      if (!pop.classList.contains("open")) return;
+      if (pop.contains(ev.target) || btn.contains(ev.target)) return;
+      setCtxOpen(false);
+    });
+    document.addEventListener("keydown", (ev) => {
+      if (ev.key === "Escape") {
+        if ($("presetModal")?.classList.contains("open")) {
+          closePresetModal();
+          return;
+        }
+        setCtxOpen(false);
+      }
+    });
+    $("btnRecheck").onclick = () => runFeatureChecks();
+    $("btnNewPreset").onclick = () => openPresetModal("create");
+    $("btnEditPreset").onclick = () => {
+      const pid = $("cfgPreset").value;
+      const p = (state.presets || []).find((x) => x.id === pid);
+      openPresetModal("edit", p || { id: pid });
+    };
+    $("btnDelPreset").onclick = () => deleteSelectedPreset().catch((e) => log(String(e.message || e)));
+    $("dlgCancel").onclick = () => closePresetModal();
+    $("dlgSave").onclick = () => savePresetFromModal();
+    $("presetModal").addEventListener("click", (ev) => {
+      if (ev.target === $("presetModal")) closePresetModal();
+    });
+    $("cfgPreset").onchange = () => {
+      activateSelectedPreset().catch((e) => {
+        log(String(e.message || e));
+        loadSettings().catch(() => {});
+      });
+    };
+    $("btnScoreUp").onclick = () => postScore(true);
+    $("btnScoreDown").onclick = () => postScore(false);
+    $("useWs").onchange = () => ensureWs();
+    $("btnTheme").onclick = () => { toggleTheme(); syncThemeButton(); };
+    syncThemeButton();
+
+    (function wireLabDrawer() {
+      const openBtn = $("btnLab");
+      const closeBtn = $("btnLabClose");
+      const drawer = $("labDrawer");
+      const backdrop = $("labBackdrop");
+      const list = $("labNav");
+      if (!openBtn || !drawer) return;
+
+      if (window.MinibotDevUI && typeof window.MinibotDevUI.renderDevNav === "function") {
+        window.MinibotDevUI.renderDevNav(list);
+      } else if (list) {
+        list.innerHTML = "<p style='color:var(--muted);font-size:13px'>导航加载失败，请硬刷新页面（Cmd+Shift+R）。</p>";
+      }
+
+      const open = () => {
+        drawer.classList.add("open");
+        if (backdrop) backdrop.classList.add("open");
+        drawer.setAttribute("aria-hidden", "false");
+      };
+      const close = () => {
+        drawer.classList.remove("open");
+        if (backdrop) backdrop.classList.remove("open");
+        drawer.setAttribute("aria-hidden", "true");
+      };
+      openBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        open();
+      });
+      if (closeBtn) closeBtn.addEventListener("click", close);
+      if (backdrop) backdrop.addEventListener("click", close);
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") close();
+      });
+    })();
+
+    let inputComposing = false;
+    $("input").addEventListener("compositionstart", () => { inputComposing = true; });
+    $("input").addEventListener("compositionend", () => { inputComposing = false; });
+    $("input").addEventListener("keydown", (e) => {
+      // IME 组字中（中英切换 / 选词确认）的 Enter 不应发送，对齐常见 Chat UI。
+      if (e.isComposing || e.keyCode === 229 || inputComposing) return;
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    (async function init() {
+      try {
+        await refreshHealth();
+        await bootstrap();
+        await loadSessions();
+        await loadSettings();
+        await runFeatureChecks();
+        const list = (await api("/api/sessions")).sessions || [];
+        const pick = pickSessionToRestore(list);
+        if (pick) await selectSession(pick.id);
+        else clearActiveSession();
+        await loadSessions();
+      } catch (e) {
+        log(String(e.message || e));
+        setAuthStatus("err", "auth×", "bootstrap failed — check AUTH_SECRET / server");
+      }
+    })();
+  </script>
+</body>
+</html>

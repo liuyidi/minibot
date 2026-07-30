@@ -1,0 +1,9 @@
+node_modules/
+dist/
+dist-bundle/
+src-tauri/target/
+src-tauri/resources/__pycache__/
+.DS_Store
+*.log
+.vscode/
+.idea/

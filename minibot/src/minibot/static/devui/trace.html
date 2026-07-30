@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>minibot Agent Trace</title>
+  <script src="./common.js?v=ctx1"></script>
+  <style>
+    :root, html[data-theme="dark"] {
+      --bg: #0f1115;
+      --panel: #171a21;
+      --border: #2a3140;
+      --text: #e8ecf4;
+      --muted: #8b95a8;
+      --accent: #5b8def;
+      --ok: #3ecf8e;
+      --warn: #e6b84d;
+      --err: #e35d6a;
+      --input: #12161e;
+      --hover: #1c2230;
+      --btn: #222833;
+    }
+    html[data-theme="light"] {
+      --bg: #f4f6fa;
+      --panel: #ffffff;
+      --border: #d8dee8;
+      --text: #1a2030;
+      --muted: #667085;
+      --accent: #3b6fd8;
+      --ok: #1a9f63;
+      --warn: #b8860b;
+      --err: #c93c4a;
+      --input: #f8fafc;
+      --hover: #eef2f8;
+      --btn: #eef2f8;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+    }
+    body {
+      font: 14px/1.45 ui-sans-serif, system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+    }
+    header {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--panel);
+      flex-wrap: wrap;
+      flex-shrink: 0;
+      z-index: 1;
+    }
+    header h1 { margin: 0; font-size: 16px; font-weight: 600; }
+    header a, button {
+      background: var(--btn);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 10px;
+      cursor: pointer;
+      font: inherit;
+      text-decoration: none;
+    }
+    header a:hover, button:hover { border-color: var(--accent); }
+    .meta { color: var(--muted); font-size: 12px; margin-left: auto; }
+    main {
+      display: grid;
+      grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
+      min-height: 0;
+      height: 100%;
+      overflow: hidden;
+    }
+    @media (max-width: 860px) {
+      main {
+        grid-template-columns: 1fr;
+        grid-template-rows: minmax(140px, 28vh) minmax(0, 1fr);
+      }
+    }
+    .list, .detail {
+      min-height: 0;
+      min-width: 0;
+      height: 100%;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      background: var(--panel);
+    }
+    .list { border-right: 1px solid var(--border); }
+    .detail { background: var(--bg); }
+    .pane-title {
+      padding: 10px 14px;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    #turns {
+      overflow-x: hidden;
+      overflow-y: auto;
+      padding: 8px;
+      flex: 1 1 auto;
+      min-height: 0;
+      -webkit-overflow-scrolling: touch;
+    }
+    .turn {
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      margin-bottom: 6px;
+    }
+    .turn:hover { background: var(--hover); }
+    .turn.active { border-color: var(--accent); background: var(--hover); }
+    .turn .when { font-size: 11px; color: var(--muted); }
+    .turn .preview { margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .turn .tags { margin-top: 6px; font-size: 11px; color: var(--muted); }
+    .hero {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--panel);
+      flex-shrink: 0;
+      max-height: 28vh;
+      overflow: auto;
+      min-height: 0;
+    }
+    .hero h2 {
+      margin: 0 0 6px;
+      font-size: 15px;
+      overflow-wrap: anywhere;
+    }
+    .hero p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+    #steps {
+      overflow-x: hidden;
+      overflow-y: auto;
+      padding: 16px;
+      flex: 1 1 auto;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      -webkit-overflow-scrolling: touch;
+    }
+    #steps.empty {
+      color: var(--muted);
+      display: block;
+    }
+    .empty { color: var(--muted); padding: 24px; }
+    .step {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--panel);
+      overflow: hidden;
+      flex: 0 0 auto;
+    }
+    .step summary {
+      cursor: pointer;
+      padding: 12px 14px;
+      list-style: none;
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+    .step summary::-webkit-details-marker { display: none; }
+    .btn-copy-step {
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      margin: -2px 0 0;
+      padding: 0;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--btn);
+      color: var(--muted);
+      cursor: pointer;
+    }
+    .btn-copy-step:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    .btn-copy-step:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 1px;
+    }
+    .btn-copy-step svg {
+      width: 14px;
+      height: 14px;
+      display: block;
+    }
+    .btn-copy-step.copied {
+      color: var(--ok);
+      border-color: color-mix(in srgb, var(--ok) 45%, var(--border));
+    }
+    .kind {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .kind-prepare .kind, .kind-llm_request .kind { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 40%, var(--border)); }
+    .kind-llm_tool_calls .kind, .kind-tool_result .kind { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 40%, var(--border)); }
+    .kind-llm_final .kind, .kind-done .kind { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 40%, var(--border)); }
+    .kind-llm_error .kind { color: var(--err); border-color: color-mix(in srgb, var(--err) 40%, var(--border)); }
+    .ctx-panel {
+      margin: 0 0 12px;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--panel);
+    }
+    .ctx-panel h3 {
+      margin: 0 0 8px;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .ctx-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 900px) {
+      .ctx-grid { grid-template-columns: 1fr; }
+    }
+    .ctx-card {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px;
+      background: color-mix(in srgb, var(--bg) 55%, var(--panel));
+    }
+    .ctx-card .label { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+    .ctx-card .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+    .chip {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+    .chip.ok { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 40%, var(--border)); }
+    .chip.warn { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 40%, var(--border)); }
+    .ctx-preview {
+      margin: 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font: 11px/1.45 ui-monospace, Menlo, Consolas, monospace;
+      color: var(--text);
+      max-height: 140px;
+      overflow: auto;
+    }
+    .ctx-empty { color: var(--muted); font-style: italic; font-size: 12px; }
+    .summary-text {
+      font-weight: 600;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+      min-width: 0;
+      flex: 1;
+    }
+    .dur {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      font-variant-numeric: tabular-nums;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 2px 8px;
+      flex-shrink: 0;
+      margin-left: auto;
+    }
+    .dur svg {
+      width: 12px;
+      height: 12px;
+      flex-shrink: 0;
+    }
+    .dur-final {
+      color: var(--err);
+      font-weight: 700;
+      font-size: 12px;
+      border-color: color-mix(in srgb, var(--err) 55%, var(--border));
+      background: color-mix(in srgb, var(--err) 14%, transparent);
+      box-shadow: 0 0 0 1px color-mix(in srgb, var(--err) 25%, transparent);
+    }
+    .dur-final svg {
+      stroke: var(--err);
+    }
+    .step pre {
+      margin: 0;
+      padding: 12px 14px 14px;
+      overflow: auto;
+      max-height: min(40vh, 420px);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 12px;
+      line-height: 1.45;
+      color: var(--muted);
+      white-space: pre-wrap;
+      word-break: break-word;
+      background: var(--input);
+      border-top: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Agent Trace</h1>
+    <a href="./">← 返回聊天</a>
+    <button type="button" id="btnExpand">全部展开</button>
+    <button type="button" id="btnCollapse">全部折叠</button>
+    <button type="button" id="btnCopyTurn" title="复制当前轮：可读摘要 + JSON">复制本轮</button>
+    <button type="button" id="btnCopyAll" title="复制全部 turns JSON">复制全部</button>
+    <button type="button" id="btnDownload" title="下载当前轮为 .md">下载本轮</button>
+    <button type="button" id="btnClear">清空历史</button>
+    <button type="button" id="btnTheme">浅色</button>
+    <span class="meta" id="meta">等待聊天页产生 trace…</span>
+    <span class="meta" id="copyHint" style="display:none;color:var(--ok)"></span>
+  </header>
+  <main>
+    <div class="list">
+      <div class="pane-title">Turns <span id="count"></span></div>
+      <p class="hint-inline" style="margin:0 12px 8px;font-size:12px;color:var(--muted);line-height:1.5">
+        Phase 3b：每轮顶部展示注入的 <b>Memory</b> / <b>Skills</b>（来自 prepare/llm_request.context）；
+        工具步仍单独列出 <code>read_memory</code>/<code>write_memory</code>。
+        Phase 0.6：每步含 <code>t_start</code>/<code>t_end</code>；LLM 步展示 duration 与 usage。
+        无 usage 时显示 <b>—</b>。可用顶栏 <b>复制本轮</b> / <b>下载本轮</b> 把完整 trace 贴给协作者。
+      </p>
+      <div id="turns"></div>
+    </div>
+    <div class="detail">
+      <div class="hero" id="hero">
+        <h2>选择左侧一轮对话</h2>
+        <p>在聊天页发送消息后，本页会自动刷新（可并排开两个标签页）。</p>
+      </div>
+      <div id="steps" class="empty">暂无步骤</div>
+    </div>
+  </main>
+  <script>
+    const { loadTraces, clearTraces, onTraceEvent, toggleTheme, currentTheme, traceTitle, usageLabel, formatDurationMs, llmDurationMs, findContextMeta, memoryToolsUsed } = MinibotDevUI;
+    let selectedId = null;
+    let expandAll = false;
+
+    function syncThemeBtn() {
+      const light = currentTheme() === "light";
+      btnTheme.textContent = light ? "暗色" : "浅色";
+    }
+
+    function escapeHtml(s) {
+      return String(s)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;");
+    }
+
+    function renderList() {
+      const list = loadTraces();
+      count.textContent = `(${list.length})`;
+      meta.textContent = list.length
+        ? `共 ${list.length} 轮 · 最新 ${new Date(list[0].at).toLocaleString()}`
+        : "等待聊天页产生 trace…";
+      turns.innerHTML = "";
+      if (!list.length) {
+        turns.innerHTML = '<div class="empty">还没有记录。去聊天页发一条消息。</div>';
+        return;
+      }
+      if (!selectedId || !list.some((t) => t.id === selectedId)) {
+        selectedId = list[0].id;
+      }
+      for (const t of list) {
+        const el = document.createElement("div");
+        el.className = "turn" + (t.id === selectedId ? " active" : "");
+        const preview = t.userText || t.content || "(empty)";
+        const ctx = findContextMeta(t.trace || []);
+        const mem = ctx && ctx.memory;
+        const skills = ctx && ctx.skills;
+        const memTag = mem
+          ? (mem.injected ? ` · mem=${mem.chars ?? "?"}c` : " · mem=no")
+          : "";
+        const skillTag = skills
+          ? ` · skills=${skills.count ?? 0}`
+          : "";
+        const memTools = memoryToolsUsed(t.toolsUsed);
+        const memToolTag = memTools.length ? ` · mem-tools=${memTools.join(",")}` : "";
+        el.innerHTML = `
+          <div class="when">${escapeHtml(new Date(t.at).toLocaleString())} · ${escapeHtml(t.source || "")}</div>
+          <div class="preview">${escapeHtml(preview)}</div>
+          <div class="tags">${escapeHtml(t.stopReason || "")}${(t.toolsUsed || []).length ? " · tools=" + escapeHtml(t.toolsUsed.join(",")) : ""}${escapeHtml(memTag)}${escapeHtml(skillTag)}${escapeHtml(memToolTag)} · ${(t.trace || []).length} steps</div>
+        `;
+        el.onclick = () => {
+          selectedId = t.id;
+          renderList();
+          renderDetail();
+        };
+        turns.appendChild(el);
+      }
+    }
+
+    function renderContextPanel(rec) {
+      const ctx = findContextMeta(rec.trace || []);
+      const memTools = memoryToolsUsed(rec.toolsUsed);
+      if (!ctx) {
+        return `
+          <h3>Context injection · Memory / Skills</h3>
+          <div class="ctx-empty">本轮无 context 元数据（旧 trace 或未走 build_system_prompt）。发一条新消息即可。</div>
+          ${memTools.length ? `<p style="margin:8px 0 0;font-size:12px">本轮 memory 工具: <code>${escapeHtml(memTools.join(", "))}</code></p>` : ""}
+        `;
+      }
+      const mem = ctx.memory || {};
+      const skills = ctx.skills || {};
+      const items = Array.isArray(skills.items) ? skills.items : [];
+      const skillChips = items.length
+        ? items.map((s) => {
+            const cls = s.always ? "chip ok" : "chip";
+            const label = `${s.name}${s.always ? " · always" : ""} · ${s.source || "?"}`;
+            return `<span class="${cls}">${escapeHtml(label)}</span>`;
+          }).join("")
+        : `<span class="ctx-empty">无 skills</span>`;
+      const memChip = mem.injected
+        ? `<span class="chip ok">injected · ${mem.chars ?? 0} chars</span>`
+        : `<span class="chip warn">not injected</span>`;
+      const preview = mem.preview
+        ? `<pre class="ctx-preview">${escapeHtml(mem.preview)}</pre>`
+        : `<div class="ctx-empty">无 MEMORY 内容</div>`;
+      return `
+        <h3>Context injection · Memory / Skills</h3>
+        <div class="ctx-grid">
+          <div class="ctx-card">
+            <div class="label">Memory（system 注入）</div>
+            <div class="chips">${memChip}</div>
+            <div style="font-size:11px;color:var(--muted);margin-bottom:6px"><code>${escapeHtml(mem.path || "memory/MEMORY.md")}</code></div>
+            ${preview}
+          </div>
+          <div class="ctx-card">
+            <div class="label">Skills（always 全文 + 目录）</div>
+            <div class="chips">
+              <span class="chip">count ${skills.count ?? items.length}</span>
+              <span class="chip ${skills.always_injected ? "ok" : "warn"}">always ${Array.isArray(skills.always) ? skills.always.length : 0}</span>
+            </div>
+            <div class="chips">${skillChips}</div>
+            ${memTools.length ? `<div style="margin-top:8px;font-size:12px">本轮 memory 工具调用: <code>${escapeHtml(memTools.join(", "))}</code></div>` : `<div class="ctx-empty" style="margin-top:8px">本轮未调用 read_memory / write_memory</div>`}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderDetail() {
+      const list = loadTraces();
+      const rec = list.find((t) => t.id === selectedId);
+      const stepsBox = document.getElementById("steps");
+      if (!rec) {
+        hero.innerHTML = "<h2>选择左侧一轮对话</h2><p>在聊天页发送消息后，本页会自动刷新。</p>";
+        stepsBox.className = "empty";
+        stepsBox.textContent = "暂无步骤";
+        return;
+      }
+      hero.innerHTML = `
+        <h2>${escapeHtml(rec.userText || "(no user text)")}</h2>
+        <p>session=${escapeHtml(rec.sessionId || "—")} · ${escapeHtml(rec.stopReason || "")} · ${escapeHtml((rec.toolsUsed || []).join(", ") || "no tools")}<br/>reply: ${escapeHtml(rec.content || "")}</p>
+      `;
+      stepsBox.className = "";
+      stepsBox.innerHTML = "";
+      const steps = rec.trace || [];
+      const ctxPanel = document.createElement("div");
+      ctxPanel.className = "ctx-panel";
+      ctxPanel.innerHTML = renderContextPanel(rec);
+      stepsBox.appendChild(ctxPanel);
+      if (!steps.length) {
+        const empty = document.createElement("div");
+        empty.className = "empty";
+        empty.textContent = "本轮无 trace 步骤";
+        stepsBox.appendChild(empty);
+        return;
+      }
+      steps.forEach((step, idx) => {
+        const details = document.createElement("details");
+        details.className = `step kind-${step.type || "unknown"}`;
+        details.open = expandAll || idx < 2 || step.type === "tool_result" || step.type === "done" || (idx === 0 && !!step.context);
+        const summary = document.createElement("summary");
+        const kind = document.createElement("span");
+        kind.className = "kind";
+        kind.textContent = step.type || "?";
+        const text = document.createElement("span");
+        text.className = "summary-text";
+        text.textContent = `${idx + 1}. ${traceTitle(step, steps)}`;
+        summary.append(kind, text);
+        const metaBits = document.createElement("span");
+        metaBits.style.cssText = "display:inline-flex;flex-wrap:wrap;gap:6px;margin-left:auto;flex-shrink:0;align-items:center";
+        const ms = llmDurationMs(step, steps);
+        if (ms != null && Number.isFinite(ms) && ms >= 0 && step.type !== "prepare" && step.type !== "done" && step.type !== "llm_request") {
+          const badge = document.createElement("span");
+          const isFinal = step.type === "llm_final";
+          badge.className = isFinal ? "dur dur-final" : "dur";
+          badge.title = "duration (t_end − t_start / duration_ms)";
+          if (isFinal) {
+            badge.innerHTML = `
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="9"></circle>
+                <polyline points="12 7 12 12 15.5 14"></polyline>
+              </svg>
+            `;
+          }
+          const label = document.createElement("span");
+          label.textContent = formatDurationMs(ms);
+          badge.append(label);
+          metaBits.append(badge);
+        }
+        if (step.type === "llm_final" || step.type === "llm_tool_calls" || step.type === "llm_error") {
+          const ub = document.createElement("span");
+          ub.className = "dur";
+          ub.title = "prompt_tokens / completion_tokens";
+          ub.textContent = usageLabel(step);
+          if (!step.usage) ub.style.opacity = "0.65";
+          metaBits.append(ub);
+        }
+        if (typeof step.t_start === "number" && typeof step.t_end === "number") {
+          const tb = document.createElement("span");
+          tb.className = "dur";
+          tb.title = `t_start=${step.t_start} t_end=${step.t_end}`;
+          tb.style.opacity = "0.75";
+          tb.textContent = `Δ${Math.max(0, step.t_end - step.t_start)}ms`;
+          metaBits.append(tb);
+        }
+
+        const copyBtn = document.createElement("button");
+        copyBtn.type = "button";
+        copyBtn.className = "btn-copy-step";
+        copyBtn.title = `复制本步 JSON（${step.type || "step"} #${idx + 1}）`;
+        copyBtn.setAttribute("aria-label", copyBtn.title);
+        copyBtn.innerHTML = `
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="9" y="9" width="13" height="13" rx="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+          </svg>
+        `;
+        copyBtn.addEventListener("click", (ev) => {
+          ev.preventDefault();
+          ev.stopPropagation();
+          const payload = JSON.stringify(step, null, 2);
+          copyText(payload, `已复制 #${idx + 1} ${step.type || "step"}`);
+          copyBtn.classList.add("copied");
+          clearTimeout(copyBtn._t);
+          copyBtn._t = setTimeout(() => copyBtn.classList.remove("copied"), 1200);
+        });
+        metaBits.append(copyBtn);
+
+        summary.append(metaBits);
+        const pre = document.createElement("pre");
+        pre.textContent = JSON.stringify(step, null, 2);
+        details.append(summary, pre);
+        stepsBox.appendChild(details);
+      });
+    }
+
+    function flashCopy(msg) {
+      const el = document.getElementById("copyHint");
+      el.style.display = "";
+      el.textContent = msg;
+      clearTimeout(flashCopy._t);
+      flashCopy._t = setTimeout(() => {
+        el.style.display = "none";
+      }, 2200);
+    }
+
+    async function copyText(text, okMsg) {
+      try {
+        await navigator.clipboard.writeText(text);
+        flashCopy(okMsg || "已复制");
+      } catch (_) {
+        // Fallback for older / insecure contexts
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.left = "-9999px";
+        document.body.appendChild(ta);
+        ta.select();
+        try {
+          document.execCommand("copy");
+          flashCopy(okMsg || "已复制");
+        } catch (e) {
+          flashCopy("复制失败，请手动选中");
+          console.error(e);
+        }
+        ta.remove();
+      }
+    }
+
+    function selectedRecord() {
+      return loadTraces().find((t) => t.id === selectedId) || null;
+    }
+
+    /** Human-readable dump for pasting into chat / issues. */
+    function formatTurnMarkdown(rec) {
+      const steps = rec.trace || [];
+      const llmN = steps.filter((s) =>
+        ["llm_request", "llm_tool_calls", "llm_final", "llm_error"].includes(s.type)
+      ).length;
+      const toolSteps = steps.filter((s) => s.type === "tool_result");
+      const lines = [
+        `# minibot Agent Trace`,
+        ``,
+        `- at: ${rec.at || ""}`,
+        `- session: ${rec.sessionId || ""}`,
+        `- source: ${rec.source || ""}`,
+        `- stop_reason: ${rec.stopReason || ""}`,
+        `- tools_used: ${(rec.toolsUsed || []).join(", ") || "—"}`,
+        `- steps: ${steps.length} · llm-ish: ${llmN} · tool_result: ${toolSteps.length}`,
+        ``,
+      ];
+      const ctx = findContextMeta(steps);
+      if (ctx) {
+        lines.push(`## Context injection`);
+        lines.push(``);
+        lines.push("```json");
+        lines.push(JSON.stringify(ctx, null, 2));
+        lines.push("```");
+        lines.push(``);
+      }
+      lines.push(
+        `## User`,
+        ``,
+        rec.userText || "(empty)",
+        ``,
+        `## Assistant reply`,
+        ``,
+        rec.content || "(empty)",
+        ``,
+        `## Timeline`,
+        ``,
+      );
+      steps.forEach((step, idx) => {
+        lines.push(`### ${idx + 1}. ${traceTitle(step, steps)}`);
+        lines.push(``);
+        lines.push("```json");
+        lines.push(JSON.stringify(step, null, 2));
+        lines.push("```");
+        lines.push(``);
+      });
+      lines.push(`## Raw turn JSON`);
+      lines.push(``);
+      lines.push("```json");
+      lines.push(JSON.stringify(rec, null, 2));
+      lines.push("```");
+      lines.push(``);
+      return lines.join("\n");
+    }
+
+    function downloadText(filename, text) {
+      const blob = new Blob([text], { type: "text/markdown;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function refresh() {
+      renderList();
+      renderDetail();
+    }
+
+    btnTheme.onclick = () => { toggleTheme(); syncThemeBtn(); };
+    btnClear.onclick = () => {
+      if (confirm("清空本地 Trace 历史？")) {
+        clearTraces();
+        selectedId = null;
+        refresh();
+      }
+    };
+    btnExpand.onclick = () => {
+      expandAll = true;
+      document.querySelectorAll("#steps details").forEach((d) => { d.open = true; });
+    };
+    btnCollapse.onclick = () => {
+      expandAll = false;
+      document.querySelectorAll("#steps details").forEach((d) => { d.open = false; });
+    };
+    btnCopyTurn.onclick = () => {
+      const rec = selectedRecord();
+      if (!rec) {
+        flashCopy("请先选一轮");
+        return;
+      }
+      copyText(formatTurnMarkdown(rec), "本轮已复制（Markdown）");
+    };
+    btnCopyAll.onclick = () => {
+      const list = loadTraces();
+      if (!list.length) {
+        flashCopy("暂无记录");
+        return;
+      }
+      copyText(JSON.stringify(list, null, 2), `已复制全部 ${list.length} 轮 JSON`);
+    };
+    btnDownload.onclick = () => {
+      const rec = selectedRecord();
+      if (!rec) {
+        flashCopy("请先选一轮");
+        return;
+      }
+      const stamp = (rec.at || new Date().toISOString()).replace(/[:.]/g, "-").slice(0, 19);
+      downloadText(`minibot-trace-${stamp}.md`, formatTurnMarkdown(rec));
+      flashCopy("已开始下载 .md");
+    };
+
+    onTraceEvent((msg) => {
+      if (msg.type === "trace" && msg.record) {
+        selectedId = msg.record.id;
+        refresh();
+      } else if (msg.type === "clear") {
+        selectedId = null;
+        refresh();
+      }
+    });
+
+    window.addEventListener("storage", (e) => {
+      if (e.key === "minibot-devui-traces" || e.key === "minibot-devui-theme") {
+        syncThemeBtn();
+        refresh();
+      }
+    });
+
+    syncThemeBtn();
+    refresh();
+  </script>
+</body>
+</html>

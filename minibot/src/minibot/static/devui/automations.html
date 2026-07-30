@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>minibot Automations</title>
+  <script src="./common.js"></script>
+  <style>
+    :root, html[data-theme="dark"] {
+      --bg: #0f1115; --panel: #171a21; --border: #2a3140; --text: #e8ecf4;
+      --muted: #8b95a8; --accent: #5b8def; --ok: #3ecf8e; --warn: #e6b84d;
+      --err: #e35d6a; --btn: #222833; --hover: #1c2230; --input: #12161e;
+    }
+    html[data-theme="light"] {
+      --bg: #f4f6fa; --panel: #fff; --border: #d8dee8; --text: #1a2030;
+      --muted: #667085; --accent: #3b6fd8; --ok: #1a9f63; --warn: #b8860b;
+      --err: #c93c4a; --btn: #eef2f8; --hover: #eef2f8; --input: #f8fafc;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font: 14px/1.45 ui-sans-serif, system-ui, -apple-system, sans-serif;
+      background: var(--bg); color: var(--text);
+      min-height: 100vh; display: grid; grid-template-rows: auto 1fr;
+    }
+    header {
+      display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+      padding: 10px 16px; border-bottom: 1px solid var(--border); background: var(--panel);
+    }
+    header h1 { margin: 0; font-size: 16px; font-weight: 600; }
+    header a, button, select, input, textarea {
+      background: var(--btn); color: var(--text); border: 1px solid var(--border);
+      border-radius: 8px; padding: 6px 10px; cursor: pointer; font: inherit;
+    }
+    header a { text-decoration: none; }
+    button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .meta { color: var(--muted); font-size: 12px; margin-left: auto; }
+    main { padding: 16px 20px; display: grid; gap: 12px; }
+    .hint { color: var(--muted); font-size: 13px; margin: 0; }
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(280px, 1fr) minmax(320px, 1.2fr);
+      gap: 12px; align-items: start;
+    }
+    @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+    section {
+      background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+      padding: 12px 14px; min-height: 120px;
+    }
+    section h2 {
+      margin: 0 0 10px; font-size: 12px; text-transform: uppercase;
+      letter-spacing: 0.06em; color: var(--muted);
+    }
+    label.field { display: block; font-size: 12px; color: var(--muted); margin: 8px 0 4px; }
+    input, select, textarea { width: 100%; background: var(--input); cursor: text; }
+    textarea { min-height: 72px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; }
+    .row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+    .job {
+      border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; margin-bottom: 8px;
+    }
+    .job .title { font-weight: 600; font-size: 13px; }
+    .job .sub { font-size: 11px; color: var(--muted); margin-top: 3px; word-break: break-all; }
+    .badge {
+      display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 999px;
+      border: 1px solid var(--border); margin-right: 4px;
+    }
+    .badge.ok { color: var(--ok); }
+    .badge.warn { color: var(--warn); }
+    .badge.err { color: var(--err); }
+    .case {
+      border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; margin-bottom: 8px;
+    }
+    .case.ok { border-color: color-mix(in srgb, var(--ok) 45%, var(--border)); }
+    .case.err { border-color: color-mix(in srgb, var(--err) 45%, var(--border)); }
+    .case h3 { margin: 0 0 4px; font-size: 13px; }
+    pre.log {
+      margin: 0; max-height: 220px; overflow: auto; font: 11px/1.4 ui-monospace, Menlo, Consolas, monospace;
+      white-space: pre-wrap; word-break: break-word; color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="./">← Chat</a>
+    <h1>Automations / Cron</h1>
+    <button type="button" id="btnRefresh">Refresh</button>
+    <span class="meta" id="meta">—</span>
+  </header>
+  <main>
+    <p class="hint">创建 at / every / cron → 落盘 <code>~/.minibot/cron/jobs.json</code> → Bus → Loop（entry=cron）。</p>
+    <div class="layout">
+      <section>
+        <h2>Create</h2>
+        <label class="field" for="fName">name</label>
+        <input id="fName" type="text" value="ping" />
+        <label class="field" for="fSession">session_id</label>
+        <select id="fSession"></select>
+        <label class="field" for="fKind">schedule.kind</label>
+        <select id="fKind">
+          <option value="every">every</option>
+          <option value="at">at</option>
+          <option value="cron">cron</option>
+        </select>
+        <label class="field" for="fEvery">every_ms（every）</label>
+        <input id="fEvery" type="number" value="15000" min="1000" />
+        <label class="field" for="fAt">at_ms（at，epoch ms）</label>
+        <input id="fAt" type="number" value="" placeholder="留空则用 now+30s" />
+        <label class="field" for="fExpr">expr（cron）</label>
+        <input id="fExpr" type="text" value="*/1 * * * *" placeholder="*/5 * * * *" />
+        <label class="field" for="fMsg">message</label>
+        <textarea id="fMsg">Reply with exactly: cron-ok</textarea>
+        <div class="row">
+          <button type="button" class="primary" id="btnCreate">Create</button>
+          <button type="button" id="btnCreateAt">Create at(+30s)</button>
+        </div>
+      </section>
+      <section>
+        <h2>Jobs</h2>
+        <div id="jobs">加载中…</div>
+      </section>
+    </div>
+    <section>
+      <h2>Insight cases</h2>
+      <div class="row">
+        <button type="button" id="caseEvery">正向：every + run now</button>
+        <button type="button" id="caseBadCron">异常：坏 cron 表达式</button>
+        <button type="button" id="caseMissingSession">异常：不存在的 session</button>
+      </div>
+      <div id="cases"></div>
+      <pre class="log" id="log"></pre>
+    </section>
+  </main>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const logEl = $("log");
+    let token = "";
+
+    function log(line) {
+      logEl.textContent = `[${new Date().toISOString().slice(11, 19)}] ${line}\n` + logEl.textContent;
+    }
+    function escapeHtml(s) {
+      return String(s ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+    async function bootstrap() {
+      const res = await fetch("/auth/bootstrap");
+      if (!res.ok) throw new Error(`bootstrap ${res.status}`);
+      token = (await res.json()).token || "";
+    }
+    async function api(path, opts = {}) {
+      const headers = { ...(opts.headers || {}) };
+      if (token) headers.Authorization = `Bearer ${token}`;
+      if (opts.body && !headers["Content-Type"]) headers["Content-Type"] = "application/json";
+      const res = await fetch(path, { ...opts, headers });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const detail = data.detail;
+        throw new Error(typeof detail === "string" ? detail : (detail && JSON.stringify(detail)) || res.statusText);
+      }
+      return data;
+    }
+    function fmtMs(ms) {
+      if (ms == null) return "—";
+      try { return new Date(ms).toLocaleString(); } catch { return String(ms); }
+    }
+    function scheduleFromForm() {
+      const kind = $("fKind").value;
+      if (kind === "every") return { kind, every_ms: Number($("fEvery").value) || 15000 };
+      if (kind === "at") {
+        let at = Number($("fAt").value);
+        if (!at) at = Date.now() + 30_000;
+        return { kind, at_ms: at };
+      }
+      return { kind: "cron", expr: ($("fExpr").value || "").trim() };
+    }
+    async function loadSessions() {
+      const data = await api("/api/sessions");
+      const list = data.sessions || [];
+      const sel = $("fSession");
+      sel.innerHTML = "";
+      if (!list.length) {
+        sel.innerHTML = `<option value="">（无 session — 先去 Chat 建一个）</option>`;
+        return;
+      }
+      for (const s of list) {
+        const id = s.id || s.session_id;
+        const opt = document.createElement("option");
+        opt.value = id;
+        opt.textContent = `${s.title || id.slice(0, 8)} · ${id.slice(0, 8)}`;
+        sel.appendChild(opt);
+      }
+    }
+    function renderJobs(jobs) {
+      const box = $("jobs");
+      if (!jobs.length) {
+        box.innerHTML = `<p class="hint">暂无 jobs</p>`;
+        return;
+      }
+      box.innerHTML = jobs.map((j) => {
+        const st = j.state || {};
+        const sch = j.schedule || {};
+        const status = st.last_status
+          ? `<span class="badge ${st.last_status === "ok" ? "ok" : "err"}">${st.last_status}</span>`
+          : `<span class="badge">idle</span>`;
+        const en = j.enabled
+          ? `<span class="badge ok">enabled</span>`
+          : `<span class="badge warn">disabled</span>`;
+        return `<div class="job" data-id="${escapeHtml(j.id)}">
+          <div class="title">${escapeHtml(j.name)} ${en} ${status}</div>
+          <div class="sub">id=${escapeHtml(j.id)} · session=${escapeHtml(j.session_id)} · ${escapeHtml(sch.kind)}
+            ${sch.every_ms ? " every=" + sch.every_ms : ""}
+            ${sch.expr ? " expr=" + escapeHtml(sch.expr) : ""}
+            ${sch.at_ms ? " at=" + fmtMs(sch.at_ms) : ""}</div>
+          <div class="sub">next=${fmtMs(st.next_run_at_ms)} · last=${fmtMs(st.last_run_at_ms)}
+            ${st.last_error ? " · err=" + escapeHtml(st.last_error) : ""}</div>
+          <div class="sub">${escapeHtml((j.payload && j.payload.message) || "")}</div>
+          <div class="row">
+            <button type="button" data-act="run">Run now</button>
+            <button type="button" data-act="enable">Enable</button>
+            <button type="button" data-act="disable">Disable</button>
+            <button type="button" data-act="del">Delete</button>
+          </div>
+        </div>`;
+      }).join("");
+      box.querySelectorAll("button[data-act]").forEach((btn) => {
+        btn.addEventListener("click", () => onJobAct(btn.closest(".job").dataset.id, btn.dataset.act));
+      });
+    }
+    async function refresh() {
+      const data = await api("/api/webui/automations");
+      const st = data.status || {};
+      $("meta").textContent = `running=${st.running} · jobs=${st.job_count} · fires=${st.fires || 0} · ${st.store_path || ""}`;
+      renderJobs(data.jobs || []);
+    }
+    async function onJobAct(id, act) {
+      try {
+        if (act === "del") {
+          await api(`/api/webui/automations/${id}`, { method: "DELETE" });
+          log(`deleted ${id}`);
+        } else if (act === "run") {
+          const r = await api(`/api/webui/automations/${id}/run`, { method: "POST" });
+          log(`ran ${id} status=${r.job?.state?.last_status}`);
+        } else if (act === "enable") {
+          await api(`/api/webui/automations/${id}/enable`, { method: "POST" });
+          log(`enabled ${id}`);
+        } else if (act === "disable") {
+          await api(`/api/webui/automations/${id}/disable`, { method: "POST" });
+          log(`disabled ${id}`);
+        }
+        await refresh();
+      } catch (e) {
+        log(`error: ${e.message || e}`);
+      }
+    }
+    async function createJob(extra = {}) {
+      const body = {
+        name: $("fName").value.trim() || "automation",
+        session_id: $("fSession").value,
+        schedule: scheduleFromForm(),
+        message: $("fMsg").value,
+        ...extra,
+      };
+      const r = await api("/api/webui/automations", { method: "POST", body: JSON.stringify(body) });
+      log(`created ${r.job?.id}`);
+      await refresh();
+      return r;
+    }
+    function pushCase(cls, title, detail) {
+      const el = document.createElement("div");
+      el.className = `case ${cls}`;
+      el.innerHTML = `<h3>${escapeHtml(title)}</h3><div class="sub">${escapeHtml(detail)}</div>`;
+      $("cases").prepend(el);
+    }
+    $("btnRefresh").addEventListener("click", () => refresh().catch((e) => log(String(e))));
+    $("btnCreate").addEventListener("click", () => createJob().catch((e) => log(String(e))));
+    $("btnCreateAt").addEventListener("click", () => {
+      $("fKind").value = "at";
+      $("fAt").value = String(Date.now() + 30_000);
+      createJob().catch((e) => log(String(e)));
+    });
+    $("caseEvery").addEventListener("click", async () => {
+      try {
+        const r = await createJob({ name: "case-every", schedule: { kind: "every", every_ms: 60000 }, enabled: false });
+        const id = r.job.id;
+        const run = await api(`/api/webui/automations/${id}/run`, { method: "POST" });
+        pushCase("ok", "every + run now", `status=${run.job?.state?.last_status}`);
+        await refresh();
+      } catch (e) {
+        pushCase("err", "every + run now", String(e.message || e));
+      }
+    });
+    $("caseBadCron").addEventListener("click", async () => {
+      try {
+        await api("/api/webui/automations", {
+          method: "POST",
+          body: JSON.stringify({
+            name: "bad",
+            session_id: $("fSession").value,
+            schedule: { kind: "cron", expr: "not a cron" },
+            message: "x",
+          }),
+        });
+        pushCase("err", "坏 cron（应 400）", "unexpectedly succeeded");
+      } catch (e) {
+        pushCase("ok", "坏 cron 被拒", String(e.message || e));
+      }
+    });
+    $("caseMissingSession").addEventListener("click", async () => {
+      try {
+        await api("/api/webui/automations", {
+          method: "POST",
+          body: JSON.stringify({
+            name: "nosess",
+            session_id: "does-not-exist",
+            schedule: { kind: "every", every_ms: 15000 },
+            message: "x",
+          }),
+        });
+        pushCase("err", "missing session（应 404）", "unexpectedly succeeded");
+      } catch (e) {
+        pushCase("ok", "missing session 被拒", String(e.message || e));
+      }
+    });
+    (async () => {
+      try {
+        await bootstrap();
+        await loadSessions();
+        await refresh();
+      } catch (e) {
+        log(String(e));
+      }
+    })();
+  </script>
+</body>
+</html>

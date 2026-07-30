@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>minibot Race Demo — 为什么需要 Session Lock</title>
+  <script src="./common.js"></script>
+  <style>
+    :root, html[data-theme="dark"] {
+      --bg: #0f1115; --panel: #171a21; --border: #2a3140; --text: #e8ecf4;
+      --muted: #8b95a8; --accent: #5b8def; --ok: #3ecf8e; --warn: #e6b84d;
+      --err: #e35d6a; --btn: #222833; --bad: #3a1a1f; --good: #143028;
+    }
+    html[data-theme="light"] {
+      --bg: #f4f6fa; --panel: #fff; --border: #d8dee8; --text: #1a2030;
+      --muted: #667085; --accent: #3b6fd8; --ok: #1a9f63; --warn: #b8860b;
+      --err: #c93c4a; --btn: #eef2f8; --bad: #fde8ea; --good: #e6f7ef;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font: 14px/1.5 ui-sans-serif, system-ui, -apple-system, sans-serif;
+      background: var(--bg); color: var(--text);
+      min-height: 100vh; display: grid; grid-template-rows: auto 1fr;
+    }
+    header {
+      display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+      padding: 10px 16px; border-bottom: 1px solid var(--border); background: var(--panel);
+    }
+    header h1 { margin: 0; font-size: 16px; font-weight: 600; }
+    header a, button {
+      background: var(--btn); color: var(--text); border: 1px solid var(--border);
+      border-radius: 8px; padding: 6px 10px; cursor: pointer; font: inherit; text-decoration: none;
+    }
+    header a:hover, button:hover { border-color: var(--accent); }
+    button.danger { border-color: var(--err); color: var(--err); }
+    button.safe { border-color: var(--ok); color: var(--ok); }
+    button:disabled { opacity: 0.5; cursor: wait; }
+    .meta { color: var(--muted); font-size: 12px; margin-left: auto; }
+    main { padding: 20px 24px; max-width: 960px; }
+    .story {
+      background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+      padding: 14px 16px; margin-bottom: 16px; font-size: 13px; color: var(--muted);
+    }
+    .story b { color: var(--text); }
+    .story code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    @media (max-width: 800px) { .grid { grid-template-columns: 1fr; } }
+    .card {
+      background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+      padding: 12px 14px; min-height: 200px;
+    }
+    .card h2 { margin: 0 0 8px; font-size: 14px; }
+    .verdict {
+      display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: 0.04em;
+      padding: 3px 10px; border-radius: 999px; border: 1px solid;
+      margin-bottom: 10px;
+    }
+    .verdict.ok { color: var(--ok); border-color: var(--ok); background: var(--good); }
+    .verdict.bad { color: var(--err); border-color: var(--err); background: var(--bad); }
+    .problems { margin: 0 0 10px; padding-left: 18px; color: var(--err); font-size: 12px; }
+    .msg {
+      font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px;
+      padding: 6px 8px; border-radius: 6px; margin-bottom: 6px; border: 1px solid var(--border);
+    }
+    .msg.user { border-left: 3px solid var(--accent); }
+    .msg.assistant { border-left: 3px solid var(--ok); }
+    .empty { color: var(--muted); font-style: italic; font-size: 13px; }
+    .stats { color: var(--muted); font-size: 12px; margin-bottom: 8px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Race Demo</h1>
+    <a href="./">← Chat</a>
+    <a href="./runtime.html">Runtime</a>
+    <button type="button" class="danger" id="btnUnsafe">① 无锁并发（破坏）</button>
+    <button type="button" class="safe" id="btnSafe">② 有锁并发（安全）</button>
+    <button type="button" id="btnBoth">先破坏再对比</button>
+    <button type="button" id="btnTheme">浅色</button>
+    <span class="meta" id="meta">idle</span>
+  </header>
+  <main>
+    <div class="story">
+      <b>Phase 0.2 要解决什么？</b>
+      同一 session 上两条 turn（例如你连点两下，或「人工 + 定时任务」）若同时跑：
+      各自先读历史快照 → 做「agent 工作」（这里用 sleep 模拟 LLM 延迟）→ 再写回。
+      <b>无锁</b>时后写会用旧快照覆盖先写 → <b>消息丢失 / 历史错乱</b>。
+      <b>有锁</b>时同一 session 串行，每人读到最新历史再追加。
+      <br /><br />
+      本页不调真实 LLM（离线可复现）。真实系统里 LLM 的几百毫秒延迟，就是那个竞态窗口。
+    </div>
+    <div class="grid">
+      <div class="card" id="cardUnsafe">
+        <h2>无锁结果</h2>
+        <div class="empty">点「无锁并发」查看破坏效果</div>
+      </div>
+      <div class="card" id="cardSafe">
+        <h2>有锁结果</h2>
+        <div class="empty">点「有锁并发」查看正确效果</div>
+      </div>
+    </div>
+  </main>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const ui = window.MinibotDevUI;
+    let token = "";
+
+    function syncThemeBtn() {
+      $("btnTheme").textContent = ui.currentTheme() === "light" ? "暗色" : "浅色";
+    }
+    function escapeHtml(s) {
+      return String(s)
+        .replaceAll("&", "&amp;").replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;").replaceAll('"', "&quot;");
+    }
+
+    function renderCard(el, data) {
+      if (!data) {
+        el.innerHTML = `<h2>${el.id === "cardUnsafe" ? "无锁结果" : "有锁结果"}</h2><div class="empty">尚未运行</div>`;
+        return;
+      }
+      const bad = data.verdict === "CORRUPTED";
+      const problems = (data.problems || []).map((p) => `<li>${escapeHtml(p)}</li>`).join("");
+      const msgs = (data.messages || []).map((m) => {
+        const role = m.role || "?";
+        return `<div class="msg ${role}"><b>${escapeHtml(role)}</b>: ${escapeHtml(m.content || "")}</div>`;
+      }).join("") || `<div class="empty">（空）</div>`;
+      el.innerHTML = `
+        <h2>${data.mode === "unsafe" ? "无锁结果" : "有锁结果"}
+          <span class="verdict ${bad ? "bad" : "ok"}">${escapeHtml(data.verdict)}</span>
+        </h2>
+        <div class="stats">
+          session <code>${escapeHtml(data.session_id)}</code> ·
+          期望 ${data.expected_user_turns} 条 user ·
+          实际 user=${data.actual_user_turns} assistant=${data.actual_assistant_turns}
+        </div>
+        ${problems ? `<ul class="problems">${problems}</ul>` : ""}
+        <div style="color:var(--muted);font-size:12px;margin-bottom:8px">${escapeHtml(data.explain || "")}</div>
+        ${msgs}
+      `;
+    }
+
+    async function bootstrap() {
+      const res = await fetch("/auth/bootstrap");
+      if (!res.ok) throw new Error(`bootstrap ${res.status}`);
+      token = (await res.json()).token || "";
+    }
+
+    async function runRace(mode) {
+      const res = await fetch("/api/dev/race", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ mode, concurrency: 2 }),
+      });
+      if (!res.ok) throw new Error(`race ${res.status}`);
+      return res.json();
+    }
+
+    function setBusy(busy) {
+      ["btnUnsafe", "btnSafe", "btnBoth"].forEach((id) => { $(id).disabled = busy; });
+      $("meta").textContent = busy ? "running…" : "idle";
+    }
+
+    $("btnTheme").onclick = () => { ui.toggleTheme(); syncThemeBtn(); };
+    $("btnUnsafe").onclick = async () => {
+      setBusy(true);
+      try {
+        renderCard($("cardUnsafe"), await runRace("unsafe"));
+      } catch (e) {
+        $("cardUnsafe").innerHTML = `<div style="color:var(--err)">${escapeHtml(String(e))}</div>`;
+      } finally { setBusy(false); }
+    };
+    $("btnSafe").onclick = async () => {
+      setBusy(true);
+      try {
+        renderCard($("cardSafe"), await runRace("safe"));
+      } catch (e) {
+        $("cardSafe").innerHTML = `<div style="color:var(--err)">${escapeHtml(String(e))}</div>`;
+      } finally { setBusy(false); }
+    };
+    $("btnBoth").onclick = async () => {
+      setBusy(true);
+      try {
+        renderCard($("cardUnsafe"), await runRace("unsafe"));
+        renderCard($("cardSafe"), await runRace("safe"));
+      } catch (e) {
+        $("meta").textContent = String(e);
+      } finally { setBusy(false); }
+    };
+
+    syncThemeBtn();
+    bootstrap().catch((e) => { $("meta").textContent = String(e); });
+  </script>
+</body>
+</html>
