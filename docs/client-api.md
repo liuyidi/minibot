@@ -166,7 +166,7 @@ M8 删除旧散落实现
 
 ### M1 — `packages/minibot-client` 骨架（零业务切换） ✅
 
-- 包路径：`packages/minibot-client`（npm name `@minibot/client`）
+- 包路径：`packages/minibot-client`（发布名 `@liuyidi/minibot-client`；业务 import 用 alias `@minibot/client`）
 - 已实现：`bootstrap`、`http`/`ApiError`、`sessions` 子集、`ws` 核心（connect/send/delta/abort）
 - 单测：包内 vitest 绿；**尚未**改 webui import
 - RN：`file:../minibot/packages/minibot-client`（见 `minibot-react-native`）

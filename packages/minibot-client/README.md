@@ -1,14 +1,19 @@
-# @minibot/client
+# @liuyidi/minibot-client
 
 Shared **minibot Client API** for WebUI, React Native, Desktop, and scripts.
 
 Contract: [`docs/client-api.md`](../../docs/client-api.md) (L0 bootstrap · L1 REST · L2 WS).
 
-npm name: **`@minibot/client`** · registry: **GitHub Packages（私有）**
+| | |
+|--|--|
+| **Published name** | `@liuyidi/minibot-client`（GitHub Packages，scope=仓库主人） |
+| **Import alias** | `@minibot/client`（业务代码统一用这个） |
 
 ## Install
 
 ### Dev（sibling monorepo）
+
+依赖左边写 alias，右边指本地目录（代码仍 `from "@minibot/client"`）：
 
 ```json
 {
@@ -23,40 +28,35 @@ cd packages/minibot-client && npm install && npm run build
 cd /path/to/minibot-react-native && npm install
 ```
 
-### Production / EAS（GitHub Packages）
+### Production / EAS（GitHub Packages + alias）
 
-1. 创建 GitHub Organization **`minibot`**（scope 必须与包名前缀一致）：https://github.com/organizations/plan  
-2. 在 org 下发 PAT（classic）勾选 `read:packages` / `write:packages`（发布用）；或把本仓库转到 org `minibot` 后用 `GITHUB_TOKEN`。  
-3. 消费方根目录 `.npmrc`：
+消费方根目录 `.npmrc`（scope 跟**发布名**走）：
 
 ```ini
-@minibot:registry=https://npm.pkg.github.com
+@liuyidi:registry=https://npm.pkg.github.com
 //npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}
 ```
 
-4. 依赖：
+依赖用 npm alias，保住 `@minibot/client` import：
 
 ```json
 {
   "dependencies": {
-    "@minibot/client": "0.1.0"
+    "@minibot/client": "npm:@liuyidi/minibot-client@0.1.0"
   }
 }
 ```
 
 ```bash
-export NODE_AUTH_TOKEN=ghp_xxx   # 有 read:packages 的 PAT
-npm install @minibot/client
+export NODE_AUTH_TOKEN=ghp_xxx   # read:packages PAT（或登录过的 gh）
+npm install
 ```
 
-发布（维护者）：
+发布（维护者，仓库 `liuyidi/minibot` 即可，`GITHUB_TOKEN`）：
 
 ```bash
-# 方式 A：打 tag 触发 Actions
 git tag client-v0.1.0 && git push origin client-v0.1.0
-
-# 方式 B：Actions → Publish @minibot/client → Run workflow
-# 若仓库在用户 liuyidi 下，请在 repo Secrets 配置 PKG_TOKEN（org minibot 的 write:packages PAT）
+# 或 Actions → Publish @liuyidi/minibot-client → Run workflow
 ```
 
 ## Usage (React Native)

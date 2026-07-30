@@ -1,5 +1,5 @@
 {
-  "name": "@minibot/client",
+  "name": "@liuyidi/minibot-client",
   "version": "0.1.0",
   "description": "Shared minibot Client API (bootstrap + REST + WS) for webui, React Native, and desktop",
   "type": "module",

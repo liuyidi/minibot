@@ -62,7 +62,7 @@ Current baseline and migration plan live in:
 - [`docs/status.md`](./docs/status.md)
 - [`docs/migration.md`](./docs/migration.md)
 - [`docs/client-api.md`](./docs/client-api.md) — unified client contract + OpenAPI plan
-- [`packages/minibot-client`](./packages/minibot-client) — `@minibot/client` (RN / webui / desktop)
+- [`packages/minibot-client`](./packages/minibot-client) — published `@liuyidi/minibot-client`, import alias `@minibot/client` (RN / webui / desktop)
 
 Next milestone: **Phase 6 余量** — provider registry + nanobot config import, so Settings can stand alone from legacy.
 
