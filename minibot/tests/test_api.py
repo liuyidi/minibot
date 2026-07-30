@@ -94,6 +94,35 @@ def test_settings_includes_observability(client: TestClient, auth_headers: dict[
     assert "langfuse_enabled" in body["observability"]
 
 
+def test_status_page_served(client: TestClient) -> None:
+    res = client.get("/status")
+    assert res.status_code == 200
+    assert res.headers["cache-control"] == "no-store, max-age=0"
+    assert "bot.liuyidi.me" in res.text
+    assert "status-bootstrap" in res.text
+    assert "订阅更新" in res.text
+    assert "/status.json" in res.text
+
+
+def test_status_json_payload(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    from minibot.observability import langfuse as lf
+
+    monkeypatch.setattr(lf, "is_enabled", lambda: False)
+
+    res = client.get("/status.json")
+    assert res.status_code == 200
+    assert res.headers["cache-control"] == "no-store, max-age=0"
+
+    body = res.json()
+    assert body["runtime"]["name"] == "minibot"
+    assert body["overall"]["status"] == "operational"
+    assert body["links"]["status_json"] == "/status.json"
+    assert isinstance(body["components"], list)
+    assert any(item["key"] == "core_runtime" for item in body["components"])
+    assert any(item["key"] == "observability" for item in body["components"])
+    assert body["generated_at"]
+
+
 def test_dev_session_files_api(client: TestClient, auth_headers: dict[str, str]) -> None:
     created = client.post("/api/sessions", headers=auth_headers, json={})
     assert created.status_code == 200
