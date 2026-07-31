@@ -1,10 +1,16 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Default capabilities for the nanobot desktop engine host",
+  "description": "Default capabilities for the minibot desktop thin shell",
   "windows": ["main"],
   "remote": {
-    "urls": ["http://127.0.0.1:*", "http://localhost:*"]
+    "urls": [
+      "http://127.0.0.1:*",
+      "http://localhost:*",
+      "http://116.62.35.76:*",
+      "https://bot.liuyidi.me",
+      "https://*.liuyidi.me"
+    ]
   },
   "permissions": [
     "core:default",

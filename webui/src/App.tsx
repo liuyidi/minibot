@@ -9,6 +9,7 @@ import {
 import { Moon, PanelLeft, Sun } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { DeleteConfirm } from "@/components/DeleteConfirm";
+import { DownloadPage } from "@/components/DownloadPage";
 import { RenameChatDialog } from "@/components/RenameChatDialog";
 import { Sidebar } from "@/components/Sidebar";
 import { SessionSearchDialog } from "@/components/SessionSearchDialog";
@@ -74,7 +75,7 @@ const SIDEBAR_RAIL_WIDTH = 56;
 const MOBILE_SIDEBAR_WIDTH = `min(${SIDEBAR_WIDTH}px, calc(100vw - 0.75rem))`;
 const TOKEN_REFRESH_MARGIN_MS = 30_000;
 const TOKEN_REFRESH_MIN_DELAY_MS = 5_000;
-type ShellView = "chat" | "settings" | "apps" | "automations" | "skills";
+type ShellView = "chat" | "settings" | "apps" | "automations" | "skills" | "download";
 type ShellRoute = {
   view: ShellView;
   activeKey: string | null;
@@ -146,6 +147,9 @@ function readShellRoute(): ShellRoute {
   if (path === "/skills") {
     return { view: "skills", activeKey, settingsSection: "skills" };
   }
+  if (path === "/download" || path === "/download/") {
+    return { view: "download", activeKey: null, settingsSection: "overview" };
+  }
   if (path.startsWith("/chat/")) {
     const encoded = path.slice("/chat/".length);
     try {
@@ -161,6 +165,9 @@ function readShellRoute(): ShellRoute {
 }
 
 function shellRouteHash(route: ShellRoute): string {
+  if (route.view === "download") {
+    return "#/download/";
+  }
   if (route.view === "chat") {
     return route.activeKey
       ? `#/chat/${encodeURIComponent(route.activeKey)}`
@@ -600,7 +607,7 @@ function Shell({
   const effectiveRuntimeSurface =
     settingsSnapshot?.surface ?? settingsSnapshot?.runtime_surface ?? runtimeSurface;
   const showHostChrome = effectiveRuntimeSurface === "native";
-  const showMainSidebar = view !== "settings";
+  const showMainSidebar = view !== "settings" && view !== "download";
 
   const navigate = useCallback(
     (route: ShellRoute, options?: { replace?: boolean }) => {
@@ -1361,6 +1368,9 @@ function Shell({
       activeSession.title ||
       deriveTitle(activeSession.preview, t("chat.newChat"))
     : t("app.brand");
+  const downloadTitle = i18n.resolvedLanguage?.startsWith("zh")
+    ? "下载应用"
+    : "Download app";
 
   useEffect(() => {
     if (view === "settings") {
@@ -1387,10 +1397,16 @@ function Shell({
       });
       return;
     }
+    if (view === "download") {
+      document.title = t("app.documentTitle.chat", {
+        title: downloadTitle,
+      });
+      return;
+    }
     document.title = activeSession
       ? t("app.documentTitle.chat", { title: headerTitle })
       : t("app.documentTitle.base");
-  }, [activeSession, headerTitle, i18n.resolvedLanguage, t, view]);
+  }, [activeSession, downloadTitle, headerTitle, i18n.resolvedLanguage, t, view]);
 
   const sidebarProps = {
     sessions,
@@ -1596,7 +1612,11 @@ function Shell({
                 onOpenModelSettings={onOpenModelSettings}
               />
             </div>
-            {view !== "chat" && (
+            {view === "download" ? (
+              <div className="absolute inset-0 flex flex-col">
+                <DownloadPage onOpenApp={() => navigate(defaultShellRoute(), { replace: true })} />
+              </div>
+            ) : view !== "chat" ? (
               <div className="absolute inset-0 flex flex-col">
                 <SettingsView
                   theme={theme}
@@ -1617,7 +1637,7 @@ function Shell({
                   hostChromeInset={showHostChrome}
                 />
               </div>
-            )}
+            ) : null}
           </main>
         </div>
 

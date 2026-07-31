@@ -1,23 +1,20 @@
-# nanobot Desktop（方案 A：引擎宿主）
+# minibot Desktop（远程薄壳）
 
-Tauri 2 桌面应用会**自动拉起**本机 `nanobot gateway`，注入 `window.nanobotHost`，再打开 gateway 内置 WebUI（`runtime_surface=native`）。
+Tauri 2 桌面应用直接连接远程 minibot 服务（默认 `http://116.62.35.76:8766`），注入 `window.minibotHost`，并打开服务端 WebUI。
+
+> 说明：大陆网络访问未备案域名的 `https://bot.liuyidi.me` 常在 TLS 握手阶段被重置；演示默认改走 ECS 开放的 `:8766` HTTP。若 HTTPS 探测失败会自动回退到该地址。
 
 ## 架构
 
 ```text
 Tauri App
-  ├─ EngineService: spawn / probe / restart / exit-kill
-  ├─ 注入 window.nanobotHost
-  └─ navigate → http://127.0.0.1:18765
-         ↓
-nanobot gateway --runtime-surface native --websocket-port 18765
+  ├─ 读取 api_base（MINIBOT_API_BASE → server.json → 默认）
+  ├─ 探测 /webui/bootstrap（HTTPS 失败时可回退 HTTP IP）
+  ├─ 注入 window.minibotHost
+  └─ navigate → http://116.62.35.76:8766/
 ```
 
-## 前置条件
-
-1. [Rust](https://rustup.rs/)（`cargo` 可用）
-2. Node.js + npm
-3. 本机已安装 `nanobot`（`command -v nanobot`），或设置 `NANOBOT_BIN` / `NANOBOT_PYTHON`
+不拉起本机 Python / minibot 进程。
 
 ## 使用
 
@@ -27,23 +24,22 @@ npm install
 npm run dev
 ```
 
-首次启动会：
+本地调试可指向本机服务：
 
-1. 解析 `nanobot` 可执行文件及其 shebang Python
-2. 用内置 `engine_launcher.py` 调用 `_run_gateway(..., runtime_surface=native)`，并启用 websocket `:18765`
-3. 轮询 `/webui/bootstrap` 直到就绪
-4. 注入 `nanobotHost` 并打开 WebUI
+```bash
+MINIBOT_API_BASE=http://127.0.0.1:8766 npm run dev
+```
 
-日志写在应用 data 目录下的 `logs/engine.log`。
+连接失败时可在启动页修改服务地址；配置写入应用 data 目录下的 `server.json`。
 
 ## Host API（已注入）
 
 | 方法 | 作用 |
 |---|---|
-| `getRuntimeInfo` | 引擎状态 / 路径 / api_base |
-| `restartEngine` | 重启 gateway 并重新打开 WebUI |
+| `getRuntimeInfo` | 连接状态 / api_base |
+| `reconnect` / `restartEngine` | 重新探测并刷新 WebUI |
 | `pickFolder` | 原生目录选择 |
-| `openLogs` | 打开日志目录 |
+| `openLogs` | 打开桌面端日志目录 |
 | `exportDiagnostics` | 导出诊断文本 |
 
 ## 打包（macOS）
@@ -53,29 +49,13 @@ cd desktop
 npm run build          # 产出 .app + .dmg
 ```
 
-产物默认在 `src-tauri/target/release/bundle/`（本环境也会复制到 `desktop/dist-bundle/`）：
+产物默认在 `src-tauri/target/release/bundle/`（或环境 `CARGO_TARGET_DIR`）：
 
-- `macos/nanobot.app` — 可直接双击运行
-- `dmg/nanobot_0.1.0_aarch64.dmg` — 安装盘
+- `macos/minibot.app`
+- `dmg/minibot_0.1.0_aarch64.dmg`
 
-未签名分享时，若 macOS 提示「已损坏 / 无法验证开发者」：右键打开，或执行：
+未签名分享时：
 
 ```bash
-xattr -dr com.apple.quarantine /Applications/nanobot.app
+xattr -dr com.apple.quarantine /Applications/minibot.app
 ```
-
-> App 仍依赖本机已安装的 `nanobot`（PATH / `NANOBOT_BIN`）。这不是离线一体包。
-
-## 与方案 B 的区别
-
-| | B 薄壳 | A 引擎宿主（当前） |
-|---|---|---|
-| gateway | 用户自己启动 | App 自动拉起 |
-| 端口 | 默认连 8765 | 独立 18765 |
-| `nanobotHost` | 无 | 有 |
-| `runtime_surface` | browser | native |
-
-## V2 未做
-
-- 打包内置 Python / 离线分发
-- Unix socket + `nanobot-host://` WebSocket 桥

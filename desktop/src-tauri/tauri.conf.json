@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "nanobot",
+  "productName": "minibot",
   "version": "0.1.0",
-  "identifier": "ai.nanobot.desktop",
+  "identifier": "me.liuyidi.minibot.desktop",
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://127.0.0.1:1420",
@@ -14,7 +14,8 @@
     "windows": [
       {
         "label": "main",
-        "title": "",
+        "create": false,
+        "title": "minibot",
         "titleBarStyle": "Overlay",
         "trafficLightPosition": { "x": 12, "y": 10 },
         "width": 1180,
@@ -33,9 +34,7 @@
   "bundle": {
     "active": true,
     "targets": "all",
-    "resources": [
-      "resources/engine_launcher.py"
-    ],
+    "resources": [],
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -44,7 +43,8 @@
       "icons/icon.ico"
     ],
     "macOS": {
-      "minimumSystemVersion": "12.0"
+      "minimumSystemVersion": "12.0",
+      "infoPlist": "Info.plist"
     }
   },
   "plugins": {}

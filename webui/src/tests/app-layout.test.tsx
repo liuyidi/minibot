@@ -347,6 +347,24 @@ describe("App layout", () => {
     expect(screen.getByText(/Use GitHub CLI/)).toBeInTheDocument();
   });
 
+  it("opens the download page in a new tab from the sidebar and renders the download route", async () => {
+    render(<App />);
+
+    await waitFor(() => expect(connectSpy).toHaveBeenCalled());
+
+    const sidebar = screen.getByRole("navigation", { name: "Sidebar navigation" });
+    const downloadLink = within(sidebar).getByRole("link", { name: "Download app" });
+    expect(downloadLink).toHaveAttribute("href", "/#/download/");
+    expect(downloadLink).toHaveAttribute("target", "_blank");
+
+    window.history.replaceState(null, "", "/#/download");
+    window.dispatchEvent(new HashChangeEvent("hashchange"));
+
+    expect(await screen.findByRole("heading", { name: "Keep minibot with you on every device" })).toBeInTheDocument();
+    expect(screen.queryByRole("navigation", { name: "Sidebar navigation" })).not.toBeInTheDocument();
+    expect(document.title).toBe("Download app · minibot");
+  });
+
   it("opens Automations from the main sidebar", async () => {
     mockFetchRoutes({
       "/api/settings": baseSettingsPayload(),

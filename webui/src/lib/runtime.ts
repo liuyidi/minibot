@@ -23,9 +23,10 @@ export interface HostRuntimeInfo {
   engine_transport?: "unix_socket";
 }
 
-export interface NanobotHostApi {
+export interface MinibotHostApi {
   getRuntimeInfo(): Promise<HostRuntimeInfo>;
   restartEngine(): Promise<void>;
+  reconnect?(): Promise<void>;
   pickFolder(): Promise<string | null>;
   openLogs(): Promise<void>;
   exportDiagnostics(): Promise<string>;
@@ -47,7 +48,7 @@ export type HostSocketEvent =
   | { code?: number; id: string; reason?: string; type: "close" };
 
 type HostSocketBridge = Required<Pick<
-  NanobotHostApi,
+  MinibotHostApi,
   "closeSocket" | "onSocketEvent" | "openSocket" | "sendSocket"
 >>;
 
@@ -58,13 +59,13 @@ const HOST_WS_CLOSED = 3;
 
 declare global {
   interface Window {
-    nanobotHost?: NanobotHostApi;
+    minibotHost?: MinibotHostApi;
   }
 }
 
-export function getHostApi(): NanobotHostApi | null {
+export function getHostApi(): MinibotHostApi | null {
   if (typeof window === "undefined") return null;
-  return window.nanobotHost ?? null;
+  return window.minibotHost ?? null;
 }
 
 export function toRuntimeSurface(surface: string | null | undefined): RuntimeSurface {
@@ -89,7 +90,7 @@ export function createRuntimeHost(
     capabilities: mergedCapabilities,
     socketFactory: bridge ? createHostWebSocket : undefined,
     pickFolder: api?.pickFolder,
-    restartEngine: api?.restartEngine,
+    restartEngine: api?.reconnect ?? api?.restartEngine,
     openLogs: api?.openLogs,
     exportDiagnostics: api?.exportDiagnostics,
   };

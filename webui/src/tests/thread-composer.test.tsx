@@ -159,7 +159,7 @@ function stubVisualViewport({
 afterEach(() => {
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
-  Reflect.deleteProperty(window, "nanobotHost");
+  Reflect.deleteProperty(window, "minibotHost");
   if (ORIGINAL_MEDIA_DEVICES) {
     Object.defineProperty(navigator, "mediaDevices", {
       configurable: true,
@@ -648,7 +648,7 @@ describe("ThreadComposer", () => {
       access_mode: "full" as const,
       restrict_to_workspace: false,
     };
-    Object.defineProperty(window, "nanobotHost", {
+    Object.defineProperty(window, "minibotHost", {
       configurable: true,
       value: {
         getRuntimeInfo: vi.fn(),

@@ -3,6 +3,7 @@ import {
   Archive,
   Brain,
   CalendarClock,
+  Download,
   ExternalLink,
   FlaskConical,
   Home,
@@ -83,12 +84,15 @@ function newChatShortcutLabel(): string {
 }
 
 export function Sidebar(props: SidebarProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [menuPortalContainer, setMenuPortalContainer] =
     useState<HTMLElement | null>(null);
   const collapsed = Boolean(props.collapsed);
   const toggleLabel = t("thread.header.toggleSidebar");
   const newChatShortcut = newChatShortcutLabel();
+  const downloadAppLabel = t("sidebar.downloadApp", {
+    defaultValue: i18n.resolvedLanguage?.startsWith("zh") ? "下载应用" : "Download app",
+  });
 
   return (
     <nav
@@ -250,6 +254,13 @@ export function Sidebar(props: SidebarProps) {
       >
         <SidebarExternalLink
           collapsed={collapsed}
+          label={downloadAppLabel}
+          href="/#/download/"
+          icon={<Download className="h-4 w-4" />}
+          newTab
+        />
+        <SidebarExternalLink
+          collapsed={collapsed}
           label={t("sidebar.portalHome")}
           href={PORTAL.home}
           icon={<Home className="h-4 w-4" />}
@@ -300,17 +311,19 @@ function SidebarExternalLink({
   label,
   href,
   icon,
+  newTab = false,
 }: {
   collapsed: boolean;
   label: string;
   href: string;
   icon: ReactNode;
+  newTab?: boolean;
 }) {
   return (
     <a
       href={href}
-      target={href.startsWith("/") ? undefined : "_blank"}
-      rel={href.startsWith("/") ? undefined : "noopener noreferrer"}
+      target={newTab || !href.startsWith("/") ? "_blank" : undefined}
+      rel={newTab || !href.startsWith("/") ? "noopener noreferrer" : undefined}
       aria-label={label}
       title={collapsed ? label : undefined}
       className={cn(

@@ -65,7 +65,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  Reflect.deleteProperty(window, "nanobotHost");
+  Reflect.deleteProperty(window, "minibotHost");
   vi.useRealTimers();
 });
 
@@ -118,7 +118,7 @@ describe("NanobotClient", () => {
       | ((event: { id: string; type: "open" | "close" | "error"; message?: string }) => void)
       | null = null;
     const openSocket = vi.fn(async () => "host-socket-1");
-    Object.defineProperty(window, "nanobotHost", {
+    Object.defineProperty(window, "minibotHost", {
       configurable: true,
       value: {
         openSocket,

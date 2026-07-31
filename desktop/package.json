@@ -1,17 +1,17 @@
 {
-  "name": "nanobot-desktop",
+  "name": "minibot-desktop",
   "private": true,
   "version": "0.1.0",
-  "description": "Tauri engine host for nanobot WebUI",
+  "description": "Tauri thin shell for minibot WebUI",
   "type": "module",
   "scripts": {
-    "dev": "PATH=\"$HOME/.cargo/bin:$PATH\" tauri dev",
+    "dev": "PATH=\"$HOME/.cargo/bin:/opt/homebrew/bin:$PATH\" tauri dev",
     "dev:renderer": "vite",
-    "build": "PATH=\"$HOME/.cargo/bin:$PATH\" tauri build --bundles app,dmg",
-    "build:app": "PATH=\"$HOME/.cargo/bin:$PATH\" tauri build --bundles app",
+    "build": "PATH=\"$HOME/.cargo/bin:/opt/homebrew/bin:$PATH\" tauri build --bundles app,dmg",
+    "build:app": "PATH=\"$HOME/.cargo/bin:/opt/homebrew/bin:$PATH\" tauri build --bundles app",
     "build:renderer": "tsc -p tsconfig.json --noEmit && vite build",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "tauri": "PATH=\"$HOME/.cargo/bin:$PATH\" tauri"
+    "tauri": "PATH=\"$HOME/.cargo/bin:/opt/homebrew/bin:$PATH\" tauri"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.8.0",
