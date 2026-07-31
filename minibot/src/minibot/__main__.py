@@ -14,6 +14,9 @@ def main() -> None:
         host=settings.host,
         port=settings.port,
         reload=False,
+        # iOS / Expo Go URLSessionWebSocketTask mishandles permessage-deflate
+        # extension negotiation and closes the socket with 1006. Disable it.
+        ws_per_message_deflate=False,
     )
 
 
