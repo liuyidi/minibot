@@ -494,6 +494,29 @@
       max-height: 180px;
       overflow: auto;
     }
+    .approval-card {
+      align-self: stretch;
+      max-width: 92%;
+      border: 1px solid color-mix(in srgb, var(--warn) 65%, var(--border));
+      border-radius: 10px;
+      background: color-mix(in srgb, var(--warn) 7%, var(--panel));
+      overflow: hidden;
+      font-size: 13px;
+    }
+    .approval-card .ahead {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .approval-card .ahead strong { font-family: ui-monospace, Menlo, Consolas, monospace; }
+    .approval-card .approval-reason { padding: 8px 10px 0; color: var(--muted); }
+    .approval-card pre { margin: 8px 10px; white-space: pre-wrap; word-break: break-word; font: 12px/1.4 ui-monospace, Menlo, Consolas, monospace; }
+    .approval-card .approval-actions { display: flex; gap: 8px; padding: 0 10px 10px; }
+    .approval-card .approve { border-color: var(--ok); color: var(--ok); }
+    .approval-card .reject { border-color: var(--err); color: var(--err); }
+    .approval-card.resolving { opacity: .62; pointer-events: none; }
     .composer {
       display: flex;
       flex-direction: column;
@@ -1280,6 +1303,89 @@
       $("chat").scrollTop = $("chat").scrollHeight;
     }
 
+    function approvalCardId(approvalId) {
+      return `approval-${String(approvalId || "").replace(/[^a-zA-Z0-9_-]/g, "_")}`;
+    }
+
+    function addApprovalCard(approval) {
+      if (!approval?.id || approval.status && approval.status !== "pending") return;
+      const existing = document.getElementById(approvalCardId(approval.id));
+      if (existing) return existing;
+      const calls = Array.isArray(approval.tool_calls) ? approval.tool_calls : [];
+      const card = document.createElement("section");
+      card.id = approvalCardId(approval.id);
+      card.className = "approval-card";
+      const head = document.createElement("div");
+      head.className = "ahead";
+      const badge = document.createElement("span");
+      badge.className = "badge warn";
+      badge.textContent = "需要审批";
+      const name = document.createElement("strong");
+      name.textContent = calls.map((call) => call.name || "tool").join(", ") || "tool";
+      const risk = document.createElement("span");
+      risk.className = "meta";
+      risk.textContent = `risk: ${approval.risk || "unknown"}`;
+      head.append(badge, name, risk);
+      const reason = document.createElement("div");
+      reason.className = "approval-reason";
+      reason.textContent = approval.reason || "此操作需要你的明确确认。";
+      const args = document.createElement("pre");
+      args.textContent = JSON.stringify(calls, null, 2);
+      const actions = document.createElement("div");
+      actions.className = "approval-actions";
+      const approve = document.createElement("button");
+      approve.className = "approve";
+      approve.textContent = "允许并继续";
+      approve.onclick = () => resolveApproval(approval.id, "approve", card);
+      const reject = document.createElement("button");
+      reject.className = "reject";
+      reject.textContent = "拒绝";
+      reject.onclick = () => resolveApproval(approval.id, "reject", card);
+      actions.append(approve, reject);
+      card.append(head, reason, args, actions);
+      $("chat").appendChild(card);
+      $("chat").scrollTop = $("chat").scrollHeight;
+      return card;
+    }
+
+    async function resolveApproval(approvalId, decision, card) {
+      if (!approvalId) return;
+      card?.classList.add("resolving");
+      setStreamingUi(true);
+      log(`approval → ${decision}: ${approvalId}`);
+      try {
+        if (state.ws?.readyState === WebSocket.OPEN) {
+          state.ws.send(JSON.stringify({ type: "approval_response", approval_id: approvalId, decision }));
+          card?.remove();
+          return;
+        }
+        const result = await api(`/api/approvals/${encodeURIComponent(approvalId)}/resolve`, {
+          method: "POST",
+          body: JSON.stringify({ decision }),
+        });
+        card?.remove();
+        pushTrace({ ...result, source: "rest" });
+        await refreshChatTimeline();
+        await loadSessions();
+        if (result.stop_reason === "paused_for_approval") await loadPendingApprovals();
+        resetStreamUi();
+      } catch (e) {
+        card?.classList.remove("resolving");
+        resetStreamUi();
+        addBubble("bot", String(e.message || e), "审批错误");
+      }
+    }
+
+    async function loadPendingApprovals() {
+      if (!state.sessionId) return;
+      try {
+        const data = await api(`/api/approvals?session_id=${encodeURIComponent(state.sessionId)}&pending_only=true`);
+        for (const approval of data.approvals || []) addApprovalCard(approval);
+      } catch (e) {
+        log(`approvals load failed: ${e.message || e}`);
+      }
+    }
+
     /** Replay session messages as Chat timeline: user → 过程旁白 → tool cards → 最终答复. */
     function renderMessagesTimeline(messages) {
       const list = Array.isArray(messages) ? messages : [];
@@ -1318,6 +1424,7 @@
       const data = await api(`/api/sessions/${encodeURIComponent(state.sessionId)}/messages`);
       $("chat").innerHTML = "";
       renderMessagesTimeline(data.messages || []);
+      await loadPendingApprovals();
     }
 
     const CTX_RING_C = 2 * Math.PI * 9; // r=9
@@ -1670,6 +1777,14 @@
           log(`fallback ${fromL} → ${toL} (${msg.reason || ""})`);
         } else if (event === "goal_status" && msg.status === "running") {
           setStreamingUi(true);
+        } else if (event === "goal_status" && msg.status === "waiting_approval") {
+          finalizeStreamBubble();
+          resetStreamUi();
+        } else if (event === "approval_required") {
+          finalizeStreamBubble();
+          resetStreamUi();
+          addApprovalCard(msg.approval || {});
+          showToast("Agent 正在等待你的审批");
         } else if (event === "turn_end") {
           finalizeStreamBubble();
           resetStreamUi();

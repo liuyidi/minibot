@@ -84,6 +84,8 @@
 
 ## Architecture
 
+补充阅读：[`roadmap/minibot-cursor-style-architecture.md`](./roadmap/minibot-cursor-style-architecture.md)。
+
 ```mermaid
 flowchart LR
   WebUI["webui SPA"] --> HTTP["FastAPI REST"]
@@ -344,18 +346,18 @@ flowchart TB
   Phase 2 流式 + reasoning + Stop（Chat UX-11/12）
   Phase 6 余量 registry + Anthropic + nanobot 导入
   Phase 6.5 Fallback / Retry（toast + runtime stats）
+  Phase 11 核心：HITL 审批（持久化 + REST / WS + Dev UI / WebUI）
 
 【未完成 · 推荐优先级 ↓】
   ① Phase 10余量 observability.html + 完整 DoD  ← 下一刀
   ② Phase 7     /v1 chat completions
   ③ Composer P0 小插队（复制 / 重试…，可穿插）
   ④ Phase 8     media / commands / /model…
-  ⑤ Phase 11    工具权限确认（需短计划）
-  ⑥ Phase 12    Long task / goal（需短计划）
-  ⑦ Phase 13    Session 导出/导入
-  ⑧ Phase 2.5   async subagent（依赖 Phase 2）
-  ⑨ Phase 9     正式切换 / legacy deprecated
-  ⑩ Phase 14+ / Next.js / 对标 15–20        （最低）
+  ⑤ Phase 12    Long task / goal（需短计划）
+  ⑥ Phase 13    Session 导出/导入
+  ⑦ Phase 2.5   async subagent（依赖 Phase 2）
+  ⑧ Phase 9     正式切换 / legacy deprecated
+  ⑨ Phase 14+ / Next.js / 对标 15–20        （最低）
 ```
 
 **决策依据：** 先补「自动化 + 多后端」能力面；流式是切换门槛但体感后置过久，提到 6 余量之后；Langfuse 旁路已通，完整页可穿插；正式切换（9）放到能力齐后再做。
@@ -901,27 +903,23 @@ WS/REST/CLI → (Bus?) → AgentLoop(with session lock) → AgentRunner → Prov
 
 ---
 
-### Phase 11 — 工具权限确认（❗需要短计划）
+### Phase 11 — 工具权限确认（核心已落地）
 
-**目标：** 高危工具执行前需要用户点确认。
-**MSV=11**（可选，生产安全强化）
-**⚠️ 独立短计划：** `phase-11-tool-confirmation.md`（待写）
+**目标：** 高危工具执行前暂停，等待用户作出一次性批准或拒绝。
+**MSV=11**（生产安全强化）
 
-| 子步骤 | 改什么 | 模块影响 |
-|--------|--------|----------|
-| **11.1** 工具元数据 | tool 加 `risk: safe\|ask\|dangerous` | M-Tools ⚠️ 改合同 |
-| **11.2** Loop 暂停/恢复 | 遇到 ask/dangerous → WS `tool_confirm_request`，等回执 | M-Loop ⚠️ 改合同（暂停语义）、M-API ⚠️ 新事件 |
-| **11.3** 前端确认对话框 | WS `tool_confirm_resolve` 回传 | M-API 🔌 |
-| **11.4** 策略配置 | always / ask / never per 工具 | M-Cfg 🔧 |
+| 子步骤 | 实现 | 模块影响 |
+|--------|------|----------|
+| **11.1** 工具元数据 | `risk`、`approval_mode`；默认拦截 `exec`、写入工具及 MCP | M-Tools ⚠️ 改合同 |
+| **11.2** Loop 暂停/恢复 | `ApprovalStore` 持久化 continuation；`resolve_approval()` 恢复 | M-Loop ⚠️ 暂停语义 |
+| **11.3** 客户端确认卡 | WS `approval_required` / `approval_response`；REST 队列与 resolve | M-API 🔌 |
+| **11.4** 策略配置 | 工具级 `always` 已支持；全局/per-tool 的 always/ask/never 策略待后续 | M-Cfg ⏳ |
 
-**热路径影响：** 🟠 中（Loop 需要暂停/恢复的执行模型；非高危工具不受影响）
+**热路径影响：** 🟠 中（高风险调用停在安全点；不需确认的工具路径不变）。
 
-**验收：** shell `exec` 默认 ask，第一次调用弹确认；勾"总是允许"后不再问
+**验收：** `exec`、写入工具或 MCP 调用在执行前进入 `paused_for_approval`；批准后从持久化上下文恢复，拒绝后返回工具拒绝结果；刷新或重连后仍可从 REST 查询 pending 项。详见 [`human-in-the-loop.md`](./human-in-the-loop.md)。
 
-**Dev UI：** Chat 内嵌确认对话框（非新页）
-- 收到 `tool_confirm_request` → 展示工具名 / 参数摘要 / risk
-- 按钮：允许一次 / 总是允许 / 拒绝 → 发 `tool_confirm_resolve`
-- `tools.html` 显示各工具当前策略（always / ask / never）
+**Dev UI：** Chat 内嵌审批卡与 `/ui/approvals.html` 队列/模拟器；正式 WebUI 在 Composer 上方展示同一审批状态。
 
 ---
 
@@ -1100,7 +1098,7 @@ minibot/src/minibot/
 | [`phase-10-langfuse.md`](./phases/phase-10-langfuse.md) | ✅ 已有（旁路子集已落地） | 补 observability.html 前再对一下 |
 | `phase-2-streaming.md` | ✅ | 流式 + reasoning + Stop；Bus 中心 |
 | `phase-4-cron.md` | ✅ | Cron + Automations MVP |
-| `phase-11-tool-confirmation.md` | ❗ 待写 | 开工 Phase 11 前必须 |
+| [`human-in-the-loop.md`](./human-in-the-loop.md) | ✅ Phase 11 核心实现与合同 | 后续策略配置扩展时更新 |
 | `phase-12-long-goal.md` | ❗ 待写 | 开工 Phase 12 前必须 |
 | `phase-14-multi-user.md` | ⏳ 独立评估 | Phase 13 完成后决策是否启动 |
 
@@ -1168,7 +1166,7 @@ minibot/src/minibot/
 #### B3. 能力收尾 → 正式切换
 
 - [ ] **⑧ Phase 8**：media / file-preview / commands / workspaces / sidebar / transcribe / `/model` 【MSV=8】
-- [ ] **⑨ Phase 11**：工具权限确认 【MSV=11】❗需短计划
+- [x] **⑨ Phase 11（核心）**：工具权限确认 【MSV=11】；全局策略配置待补
 - [ ] **⑩ Phase 12**：Long task / Sustained goal 【MSV=12】❗需短计划
 - [ ] **⑪ Phase 13**：Session 导出/导入 【MSV=13】
 - [ ] **⑫ Phase 2.5**：async subagent（方案 B）【MSV=2.5】（依赖 Phase 2）

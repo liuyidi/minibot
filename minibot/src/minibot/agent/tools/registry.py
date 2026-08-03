@@ -6,6 +6,7 @@ from collections import deque
 from datetime import datetime, timezone
 from typing import Any
 
+from minibot.agent.approval import ApprovalPolicy
 from minibot.agent.tools.base import Tool
 from minibot.security.network import NetworkDeniedError
 from minibot.security.workspace_access import WorkspaceBoundaryError
@@ -74,6 +75,7 @@ class ToolRegistry:
     def __init__(self) -> None:
         self._tools: dict[str, Tool] = {}
         self._recent: deque[dict[str, Any]] = deque(maxlen=_RECENT_MAX)
+        self.approval_policy = ApprovalPolicy()
 
     def register(self, tool: Tool) -> None:
         self._tools[tool.name] = tool
@@ -89,6 +91,12 @@ class ToolRegistry:
 
     def get(self, name: str) -> Tool | None:
         return self._tools.get(name)
+
+    def approval_required(self, name: str, arguments: dict[str, Any]) -> tuple[bool, str, str]:
+        tool = self._tools.get(name)
+        if tool is None:
+            return False, "", "unknown"
+        return self.approval_policy.check(tool, arguments)
 
     def get_definitions(self) -> list[dict[str, Any]]:
         return [tool.to_openai_schema() for tool in self._tools.values()]
@@ -108,6 +116,7 @@ class ToolRegistry:
                     "name": tool.name,
                     "description": tool.description,
                     "risk": getattr(tool, "risk", "unknown"),
+                    "approval_mode": getattr(tool, "approval_mode", "policy"),
                     "source": source,
                     "category": cat,
                     "category_label": TOOL_CATEGORY_LABELS.get(cat, cat),

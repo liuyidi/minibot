@@ -772,6 +772,24 @@ export interface InboundTurnMetadata {
   turn_seq?: number;
 }
 
+export interface ApprovalToolCall {
+  id: string;
+  name: string;
+  arguments: Record<string, unknown>;
+}
+
+/** A durable human decision requested before minibot runs risky tools. */
+export interface PendingApproval {
+  id: string;
+  session_id: string;
+  tool_calls: ApprovalToolCall[];
+  reason: string;
+  risk: string;
+  created_at_ms: number;
+  expires_at_ms: number;
+  status: "pending" | "approved" | "rejected" | "expired" | string;
+}
+
 export type InboundEvent =
   | { event: "ready"; chat_id: string; client_id: string }
   | { event: "attached"; chat_id: string }
@@ -837,7 +855,7 @@ export type InboundEvent =
       event: "goal_status";
       chat_id: string;
       /** Turn executing (user message through agent loop). */
-      status: "running" | "idle";
+      status: "running" | "idle" | "waiting_approval";
       /** Server ``time.time()`` when ``status`` is ``running``. */
       started_at?: number;
     }
@@ -846,6 +864,7 @@ export type InboundEvent =
       chat_id: string;
       goal_state: GoalStateWsPayload;
     }
+  | { event: "approval_required"; chat_id: string; approval: PendingApproval }
   | {
       event: "session_updated";
       chat_id: string;
@@ -933,6 +952,7 @@ export type Outbound =
   | { type: "new_chat"; workspace_scope?: WorkspaceScopePayload }
   | { type: "fork_chat"; source_chat_id: string; before_user_index: number; title?: string }
   | { type: "attach"; chat_id: string }
+  | { type: "approval_response"; approval_id: string; decision: "approve" | "reject" }
   | { type: "set_workspace_scope"; chat_id: string; workspace_scope: WorkspaceScopePayload }
   | { type: "transcribe_audio"; request_id: string; data_url: string; duration_ms?: number }
   | {

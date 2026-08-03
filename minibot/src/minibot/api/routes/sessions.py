@@ -40,6 +40,8 @@ class TurnResponse(BaseModel):
     messages: list[dict[str, Any]]
     trace: list[dict[str, Any]] = Field(default_factory=list)
     langfuse_trace_id: str = ""
+    approval_id: str = ""
+    approval: dict[str, Any] | None = None
 
 
 class ScoreRequest(BaseModel):
@@ -215,6 +217,7 @@ async def run_turn(
     except RuntimeError as exc:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)) from exc
 
+    approval = state.approvals.get(result.approval_id) if result.approval_id else None
     return TurnResponse(
         content=result.content,
         tools_used=result.tools_used,
@@ -222,6 +225,8 @@ async def run_turn(
         messages=result.messages,
         trace=result.trace,
         langfuse_trace_id=result.langfuse_trace_id or "",
+        approval_id=result.approval_id,
+        approval=approval.public() if approval else None,
     )
 
 

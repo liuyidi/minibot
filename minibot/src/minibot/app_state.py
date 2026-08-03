@@ -8,6 +8,7 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from minibot.agent.approval import ApprovalStore
 from minibot.agent.loop import AgentLoop
 from minibot.agent.runner import AgentRunner
 from minibot.agent.tools.builtin import SYSTEM_PROMPT, register_default_tools
@@ -41,6 +42,7 @@ class AppState:
     loop: AgentLoop
     config: AppConfig
     mcp: McpManager
+    approvals: ApprovalStore
     cron: CronService | None = None
     bus_worker: BusWorker | None = None
     tokens: dict[str, TokenRecord] = field(default_factory=dict)
@@ -113,11 +115,13 @@ def build_app_state() -> AppState:
     )
     runner = AgentRunner(provider)
     sessions = SessionStore(data_dir=settings.data_dir)
+    approvals = ApprovalStore(data_dir=settings.data_dir)
     loop = AgentLoop(
         sessions=sessions,
         tools=tools,
         runner=runner,
         config=config,
+        approvals=approvals,
         system_prompt=SYSTEM_PROMPT,
     )
     from minibot.agent.tools.spawn import attach_spawn_tool
@@ -132,6 +136,7 @@ def build_app_state() -> AppState:
         loop=loop,
         config=config,
         mcp=mcp,
+        approvals=approvals,
         fallback_stats=fallback_stats,
         fault_controller=fault_controller,
     )

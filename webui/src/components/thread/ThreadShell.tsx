@@ -8,6 +8,7 @@ import { SessionInfoPopover } from "@/components/thread/SessionInfoPopover";
 import { ThreadComposer } from "@/components/thread/ThreadComposer";
 import { ThreadHeader } from "@/components/thread/ThreadHeader";
 import { StreamErrorNotice } from "@/components/thread/StreamErrorNotice";
+import { ApprovalCard } from "@/components/thread/ApprovalCard";
 import { ThreadViewport, type ThreadViewportHandle } from "@/components/thread/ThreadViewport";
 import { useNanobotStream, type SendImage, type SendOptions } from "@/hooks/useNanobotStream";
 import { useSessionHistory } from "@/hooks/useSessions";
@@ -313,6 +314,9 @@ export function ThreadShell({
     isStreaming,
     runStartedAt,
     goalState,
+    pendingApproval,
+    approvalResolving,
+    resolveApproval,
     send,
     transcribeAudio,
     stop,
@@ -653,6 +657,13 @@ export function ThreadShell({
         <StreamErrorNotice
           error={streamError}
           onDismiss={dismissStreamError}
+        />
+      ) : null}
+      {pendingApproval ? (
+        <ApprovalCard
+          approval={pendingApproval}
+          resolving={approvalResolving}
+          onDecision={resolveApproval}
         />
       ) : null}
       {session ? (

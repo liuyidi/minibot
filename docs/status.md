@@ -16,6 +16,7 @@ minibot 已是可本地跑通的 **FastAPI agent 运行时 + 内嵌 Dev UI**：
 - **流式** delta / reasoning / Stop；真实 coding 工具 + MCP + cron + memory/skills + compaction
 - **多 provider**：registry、OpenAI-compat、Anthropic Messages、model presets、**Fallback 链（6.5）**
 - mini-langfuse **软依赖旁路**（默认关）；minikb 只读转发 + Knowledge Dev UI
+- **已实现的安全暂停**：高风险工具 HITL 审批（持久化、REST / WS、Dev UI / WebUI 卡片）
 - **未做 / 待做主线**：`observability.html`（Phase 10 余量）、OpenAI `/v1`（Phase 7）、正式切换 WebUI 默认后端（Phase 9）
 
 默认监听：`http://127.0.0.1:8766` · Dev UI：`/ui/`
@@ -43,7 +44,7 @@ minibot 已是可本地跑通的 **FastAPI agent 运行时 + 内嵌 Dev UI**：
 【下一刀】
   ① Phase 10 余量  observability.html
   ② Phase 7        /v1 chat completions
-  ③ Composer P0 小插队 / Phase 8 media / Phase 11–12（短计划）…
+  ③ Composer P0 小插队 / Phase 8 media / Phase 12（短计划）…
 ```
 
 阶段笔记：[`phases/`](./phases/)。统一客户端合同：[`client-api.md`](./client-api.md)。
@@ -138,6 +139,7 @@ AppState.config + rebuild_provider() / MCP reconnect
 |------|------|
 | `new_chat` / `attach` / `message` | ✅ |
 | 流式 `delta` / `reasoning_*` / `stream_end` / `abort` | ✅ Phase 2 |
+| `approval_required` / `approval_response` | ✅ HITL；页面刷新可由 REST 恢复 |
 | `provider_switched` toast | ✅ Phase 6.5 |
 | `fork_chat` / media / transcription | ❌ Phase 8 |
 
@@ -153,7 +155,7 @@ AppState.config + rebuild_provider() / MCP reconnect
 | Memory / skills / compaction / context-usage | ✅ 3a/3b |
 | Cron + Automations REST + UI | ✅ Phase 4 |
 | MCP presets + Invoke + pipeline UI | ✅ Phase 5 |
-| 工具权限确认弹窗 | ❌ Phase 11 |
+| 工具权限确认 / 执行恢复 | ✅ HITL（`exec`、写入工具、MCP） |
 | Long task / goal | ❌ Phase 12 |
 
 ### 4.5 Provider

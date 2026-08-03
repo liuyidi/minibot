@@ -86,6 +86,8 @@ Sessions live under `~/.minibot/sessions/`.
 [`http://127.0.0.1:8766/ui/`](http://127.0.0.1:8766/ui/) after starting `minibot`.
 Chat lives there; LLM/tool execution traces open in a dedicated page
 [`/ui/trace.html`](http://127.0.0.1:8766/ui/trace.html) (auto-syncs when you send messages).
+High-risk tool calls pause for review; inspect and resolve them from
+[`/ui/approvals.html`](http://127.0.0.1:8766/ui/approvals.html).
 
 Baseline of what is already implemented and where config files live:
 [`docs/status.md`](../docs/status.md).
@@ -113,4 +115,5 @@ cd minibot && python -m minibot.cli_chat
 | `REQUIRE_AUTH` | `false` | Force token checks |
 
 See [docs/client-api.md](../docs/client-api.md) for the unified REST + WebSocket contract outline.
+See [docs/human-in-the-loop.md](../docs/human-in-the-loop.md) for the HITL approval contract and UI flow.
 See [docs/server.md](../docs/server.md) for migration notes vs legacy `nanobot gateway`.

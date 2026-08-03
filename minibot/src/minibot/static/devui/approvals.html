@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>minibot · Human-in-the-loop</title>
+  <script src="./common.js?v=hitl1"></script>
+  <style>
+    :root, html[data-theme="dark"] { --bg:#0f1115;--panel:#171a21;--border:#2a3140;--text:#e8ecf4;--muted:#8b95a8;--accent:#5b8def;--ok:#3ecf8e;--warn:#e6b84d;--err:#e35d6a;--btn:#222833; }
+    html[data-theme="light"] { --bg:#f4f6fa;--panel:#fff;--border:#d8dee8;--text:#1a2030;--muted:#667085;--accent:#3b6fd8;--ok:#1a9f63;--warn:#b8860b;--err:#c93c4a;--btn:#eef2f8; }
+    *{box-sizing:border-box} body{margin:0;font:14px/1.5 system-ui,sans-serif;background:var(--bg);color:var(--text)} header{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border);background:var(--panel);flex-wrap:wrap} h1{margin:0;font-size:16px} a,button{font:inherit;color:var(--text);background:var(--btn);border:1px solid var(--border);border-radius:8px;padding:6px 10px;text-decoration:none;cursor:pointer} button.ok{border-color:var(--ok);color:var(--ok)} button.no{border-color:var(--err);color:var(--err)} main{max-width:1200px;padding:20px 24px} .hint{color:var(--muted)} .grid{display:grid;grid-template-columns:1.2fr .8fr;gap:14px}@media(max-width:850px){.grid{grid-template-columns:1fr}} section{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px}h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 10px}.card{border:1px solid var(--border);border-radius:8px;padding:12px;margin:10px 0}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.badge{font-size:11px;padding:2px 7px;border:1px solid var(--border);border-radius:999px;color:var(--warn)}pre{margin:9px 0;max-height:180px;overflow:auto;background:color-mix(in srgb,var(--bg) 65%,transparent);padding:9px;border-radius:7px;font-size:12px}.empty{color:var(--muted);font-style:italic}.step{display:flex;align-items:center;gap:8px;padding:9px;border:1px solid var(--border);border-radius:8px;margin:7px 0;color:var(--muted)}.step.active{border-color:var(--accent);color:var(--text);background:color-mix(in srgb,var(--accent) 13%,transparent)}.step.done{border-color:var(--ok);color:var(--ok)}.dot{width:10px;height:10px;border-radius:50%;background:currentColor}.meta{margin-left:auto;color:var(--muted);font-size:12px}
+  </style>
+</head>
+<body>
+  <header><h1>Human-in-the-loop</h1><a href="./">← Chat</a><a href="./tools.html">Tools</a><button id="refresh">刷新队列</button><button id="theme">浅色</button><span class="meta" id="meta">loading…</span></header>
+  <main>
+    <p class="hint">高风险工具会暂停 Agent，而不是占用会话锁等待点击。批准/拒绝决定和恢复上下文保存在 <code>~/.minibot/approvals/</code>。此页左侧为真实队列，右侧可模拟状态流转。</p>
+    <div class="grid">
+      <section><h2>待审批队列（真实 API）</h2><div id="queue" class="empty">加载中…</div></section>
+      <section><h2>状态机模拟器（本地）</h2><p class="hint">用模拟操作理解暂停、审批和恢复；不执行任何工具。</p><div id="sim"></div><div class="row"><button id="next">下一步</button><button id="reset">重置</button></div><pre id="simDetail"></pre></section>
+    </div>
+  </main>
+  <script>
+    const $=id=>document.getElementById(id); const ui=window.MinibotDevUI; let token="";
+    async function api(path,opts={}){const h={...(opts.headers||{})};if(token)h.Authorization=`Bearer ${token}`;if(opts.body)h['Content-Type']='application/json';const r=await fetch(path,{...opts,headers:h});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.detail||r.statusText);return d}
+    async function init(){const b=await fetch('/auth/bootstrap').then(r=>r.json());token=b.token||''; await load()}
+    function esc(x){return String(x??'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}
+    async function load(){try{const data=await api('/api/approvals?pending_only=true');const rows=data.approvals||[];$('meta').textContent=`${rows.length} pending`; $('queue').innerHTML=rows.length?rows.map(a=>`<div class="card"><div class="row"><b>${esc(a.tool_calls.map(c=>c.name).join(', '))}</b><span class="badge">${esc(a.risk)}</span><span class="meta">${new Date(a.expires_at_ms).toLocaleTimeString()}</span></div><div>${esc(a.reason)}</div><pre>${esc(JSON.stringify(a.tool_calls,null,2))}</pre><div class="row"><button class="ok" onclick="decide('${a.id}','approve')">允许并继续</button><button class="no" onclick="decide('${a.id}','reject')">拒绝</button></div></div>`).join(''):'<div class="empty">暂无待审批操作。让 Agent 尝试 exec、write_file 或 edit_file 后会出现在这里。</div>'}catch(e){$('queue').textContent=`加载失败：${e.message}`}}
+    window.decide=async(id,decision)=>{try{await api(`/api/approvals/${id}/resolve`,{method:'POST',body:JSON.stringify({decision})});await load()}catch(e){alert(e.message)}};
+    const steps=[['LLM 生成 tool call','模型请求执行 exec 或编辑文件'],['策略拦截','识别为 high / critical 风险'],['持久化 pending approval','保存工具参数与可恢复上下文'],['用户批准或拒绝','决定写入审批记录'],['执行或返回拒绝结果','继续下一轮 LLM']];let pos=0;
+    function renderSim(){ $('sim').innerHTML=steps.map((s,i)=>`<div class="step ${i<pos?'done':i===pos?'active':''}"><i class="dot"></i><div><b>${s[0]}</b><br><small>${s[1]}</small></div></div>`).join('');const s=steps[Math.min(pos,steps.length-1)];$('simDetail').textContent=JSON.stringify({state:['llm_tool_call','policy_check','pending','human_decision','resumed'][Math.min(pos,4)],example:{tool:'exec',arguments:{command:'git commit -m release'},risk:'critical'}},null,2)}
+    $('next').onclick=()=>{pos=(pos+1)%steps.length;renderSim()};$('reset').onclick=()=>{pos=0;renderSim()};$('refresh').onclick=load;$('theme').onclick=()=>{$('theme').textContent=ui.toggleTheme()==='light'?'暗色':'浅色'};ui.earlyTheme();renderSim();init().catch(e=>$('queue').textContent=e.message);
+  </script>
+</body>
+</html>

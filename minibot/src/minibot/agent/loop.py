@@ -16,6 +16,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, AsyncIterator
 
+from minibot.agent.approval import ApprovalStore
 from minibot.agent.runner import AgentRunResult, AgentRunner, RunnerEvent
 from minibot.agent.stream_coalesce import StreamCoalescer
 from minibot.agent.tools.registry import ToolRegistry
@@ -54,12 +55,14 @@ class AgentLoop:
         tools: ToolRegistry,
         runner: AgentRunner,
         config: AppConfig,
+        approvals: ApprovalStore | None = None,
         system_prompt: str = "",
     ) -> None:
         self.sessions = sessions
         self.tools = tools
         self.runner = runner
         self.config = config
+        self.approvals = approvals or ApprovalStore(sessions.data_dir)
         self.system_prompt = system_prompt
         self._locks: dict[str, _LockSlot] = {}
         self._last_turns: list[dict[str, Any]] = []
@@ -206,6 +209,16 @@ class AgentLoop:
                         },
                     )
                     if use_stream and bus is not None:
+                        if result.stop_reason == "paused_for_approval":
+                            approval = self.approvals.get(result.approval_id)
+                            await self._publish_stream(
+                                bus,
+                                channel=channel,
+                                chat_id=session_id,
+                                kind="approval_required",
+                                extra={"approval": approval.public() if approval else {}},
+                            )
+                            return result
                         await self._publish_stream(
                             bus,
                             channel=channel,
@@ -243,6 +256,111 @@ class AgentLoop:
                 reset_parent_session(parent_token)
             reset_workspace(ws_token)
             abort_ev.clear()
+
+    def _save_pending_approval(self, session_id: str, result: AgentRunResult) -> None:
+        if result.stop_reason != "paused_for_approval" or result.approval_id:
+            return
+        calls = list(result.pending_tool_calls or [])
+        if not calls:
+            return
+        checks = [
+            self.tools.approval_required(str(call.get("name") or ""), dict(call.get("arguments") or {}))
+            for call in calls
+        ]
+        reason = next((item[1] for item in checks if item[0]), "A human decision is required.")
+        risks = [item[2] for item in checks if item[0]]
+        risk = "critical" if "critical" in risks else "high" if "high" in risks else "unknown"
+        approval = self.approvals.create(
+            session_id=session_id,
+            tool_calls=calls,
+            continuation_messages=list(result.messages),
+            reason=reason,
+            risk=risk,
+        )
+        result.approval_id = approval.id
+        result.trace.append({"type": "approval_pending", "approval_id": approval.id, "risk": risk})
+
+    async def resolve_approval(
+        self,
+        approval_id: str,
+        decision: str,
+        *,
+        bus: MessageBus | None = None,
+        channel: str = "websocket",
+    ) -> AgentRunResult:
+        """Execute or reject a paused tool batch, then continue the ReAct loop."""
+        if decision not in {"approve", "reject"}:
+            raise ValueError("decision must be approve or reject")
+        approval = self.approvals.get(approval_id)
+        if approval is None:
+            raise KeyError("approval not found")
+        if approval.status != "pending":
+            raise ValueError(f"approval is {approval.status}")
+        session = self.sessions.get(approval.session_id)
+        if session is None:
+            raise KeyError("session not found")
+
+        async with self.session_lock(approval.session_id):
+            ws_token = bind_workspace(session.workspace_path)
+            try:
+                approval = self.approvals.decide(approval_id, decision)
+                assert approval is not None
+                tool_messages: list[dict[str, Any]] = []
+                direct_tools: list[str] = []
+                for call in approval.tool_calls:
+                    name = str(call.get("name") or "")
+                    if decision == "approve":
+                        output = await self.tools.execute(name, dict(call.get("arguments") or {}))
+                        direct_tools.append(name)
+                    else:
+                        output = "Denied by user: this tool operation was not approved."
+                    tool_messages.append(
+                        {
+                            "role": "tool",
+                            "tool_call_id": str(call.get("id") or ""),
+                            "name": name,
+                            "content": output,
+                        }
+                    )
+                base = [*approval.continuation_messages, *tool_messages]
+                result = await self.runner.run(
+                    messages=base,
+                    tools=self.tools,
+                    model=self.config.model,
+                    max_iterations=self.config.max_iterations,
+                    temperature=self.config.temperature,
+                )
+                result.tools_used = [*direct_tools, *result.tools_used]
+                self._save_pending_approval(approval.session_id, result)
+                tail = result.messages[len(approval.continuation_messages) :]
+                self.sessions.append_messages(approval.session_id, tail or tool_messages)
+                await self.compact_if_needed(approval.session_id)
+            finally:
+                reset_workspace(ws_token)
+
+        if bus is not None:
+            if result.stop_reason == "paused_for_approval":
+                next_approval = self.approvals.get(result.approval_id)
+                await self._publish_stream(
+                    bus,
+                    channel=channel,
+                    chat_id=approval.session_id,
+                    kind="approval_required",
+                    extra={"approval": next_approval.public() if next_approval else {}},
+                )
+            else:
+                await self._publish_stream(
+                    bus,
+                    channel=channel,
+                    chat_id=approval.session_id,
+                    kind="turn_ok",
+                    text=result.content,
+                    extra={"tools_used": result.tools_used, "trace": result.trace, "stop_reason": result.stop_reason},
+                )
+                await bus.publish_outbound(
+                    OutboundMessage(channel=channel, chat_id=approval.session_id, content="", metadata={"kind": "turn_end"})
+                )
+        return result
 
     async def _publish_stream(
         self,
@@ -433,6 +551,7 @@ class AgentLoop:
             if result is None:
                 result = AgentRunResult(content="(empty)", messages=[*history, user_msg], stop_reason="error")
 
+            self._save_pending_approval(session_id, result)
             new_tail = result.messages[len(history) :]
             if new_tail and new_tail[0].get("role") == "system":
                 new_tail = new_tail[1:]
@@ -454,6 +573,7 @@ class AgentLoop:
             prompt_version_id=prompt_version_id,
             should_abort=should_abort,
         )
+        self._save_pending_approval(session_id, result)
         new_tail = result.messages[len(history) :]
         if new_tail and new_tail[0].get("role") == "system":
             new_tail = new_tail[1:]

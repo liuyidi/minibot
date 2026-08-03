@@ -89,6 +89,8 @@ class AgentRunResult:
     aborted: bool = False
     used_provider: str = ""
     used_preset: str = ""
+    approval_id: str = ""
+    pending_tool_calls: list[dict[str, Any]] = field(default_factory=list)
 
 
 @dataclass(slots=True)
@@ -434,6 +436,50 @@ class AgentRunner:
                         "usage": usage,
                     }
                 )
+                approvals: list[dict[str, Any]] = []
+                all_calls = [
+                    {"id": tc.id, "name": tc.name, "arguments": tc.arguments}
+                    for tc in response.tool_calls
+                ]
+                approval_reason = ""
+                approval_risk = "unknown"
+                for tc in response.tool_calls:
+                    required, reason, risk = tools.approval_required(tc.name, tc.arguments)
+                    if required:
+                        approvals.append({"id": tc.id, "name": tc.name, "arguments": tc.arguments})
+                        approval_reason = approval_reason or reason
+                        approval_risk = risk if risk in {"critical", "high"} else approval_risk
+                if approvals:
+                    trace.append(
+                        {
+                            "type": "approval_required",
+                            "t_start": _now_ms(),
+                            "tool_calls": _preview(approvals),
+                            "reason": approval_reason,
+                            "risk": approval_risk,
+                        }
+                    )
+                    yield RunnerEvent(
+                        kind="approval_required",
+                        data={
+                            "tool_calls": all_calls,
+                            "reason": approval_reason,
+                            "risk": approval_risk,
+                        },
+                    )
+                    result = attach_used(
+                        AgentRunResult(
+                            content="",
+                            messages=working,
+                            tools_used=tools_used,
+                            stop_reason="paused_for_approval",
+                            trace=trace,
+                            reasoning=last_reasoning,
+                            pending_tool_calls=all_calls,
+                        )
+                    )
+                    yield RunnerEvent(kind="done", data={"result": result})
+                    return
                 for tc in response.tool_calls:
                     yield RunnerEvent(
                         kind="tool_call_start",

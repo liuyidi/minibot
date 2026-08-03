@@ -10,6 +10,11 @@
 | [`status.md`](./status.md) | **现状快照**：已实现能力、配置位置、下一刀 |
 | [`migration.md`](./migration.md) | **主路线图**（Phase / MSV / checklist） |
 | [`client-api.md`](./client-api.md) | **统一客户端合同** + 渐进迁移 + OpenAPI；实现包 [`packages/minibot-client`](../packages/minibot-client) |
+| [`human-in-the-loop.md`](./human-in-the-loop.md) | **HITL 审批**：策略、持久化、REST / WS 合同与 UI 渲染 |
+
+## 架构补充
+
+- [`roadmap/minibot-cursor-style-architecture.md`](./roadmap/minibot-cursor-style-architecture.md) | Cursor-style 架构对比、minibot v2 目标架构、durable execution / harness / worker pool、迁移路线
 
 ## 分册
 

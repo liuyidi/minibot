@@ -109,10 +109,18 @@ webui · Dev UI/Insight · CLI · Desktop · RN
 
 ### 4.3 L2 — WebSocket
 
-客户端 → `new_chat` / `attach` / `message` / `abort` / `set_workspace_scope`…  
-服务端 → `delta` / `reasoning_*` / `stream_end` / `provider_switched` / turn 帧…
+客户端 → `new_chat` / `attach` / `message` / `abort` / `set_workspace_scope` / `approval_response`…
+服务端 → `delta` / `reasoning_*` / `stream_end` / `provider_switched` / `approval_required` / turn 帧…
 
 参考：`webui/src/lib/nanobot-client.ts` → 迁入包后称 `MinibotClient`。
+
+### 4.4 HITL 审批
+
+高风险工具调用会暂停而非执行。WS 收到 `approval_required` 后展示本地组件，客户端用
+`approval_response` 回传 `approve` 或 `reject`；断线恢复时可通过
+`GET /api/approvals?session_id=&pending_only=true` 获取待办项。REST 同步 turns 的暂停响应也包含
+`approval_id` 与 `approval`。完整状态机、字段和安全边界见
+[`human-in-the-loop.md`](./human-in-the-loop.md)。
 
 ### 4.4 L3 — `/v1`（可选）
 

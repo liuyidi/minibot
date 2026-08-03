@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useClient } from "@/providers/ClientProvider";
+import { fetchPendingApprovals } from "@/lib/api";
 import { toMediaAttachment } from "@/lib/media";
 import {
   mergeToolProgressEvents,
@@ -17,6 +18,7 @@ import type {
   OutboundMcpPresetMention,
   OutboundMedia,
   GoalStateWsPayload,
+  PendingApproval,
   ToolProgressEvent,
   UIImage,
   UIFileEdit,
@@ -438,6 +440,10 @@ export function useNanobotStream(
   runStartedAt: number | null;
   /** Latest sustained goal for this ``chatId`` (``goal_state`` WS events). */
   goalState: GoalStateWsPayload | undefined;
+  /** A risky tool batch awaiting a human decision, if any. */
+  pendingApproval: PendingApproval | null;
+  approvalResolving: boolean;
+  resolveApproval: (decision: "approve" | "reject") => void;
   send: (content: string, images?: SendImage[], options?: SendOptions) => void;
   transcribeAudio: (dataUrl: string, options?: { durationMs?: number }) => Promise<string>;
   stop: () => void;
@@ -449,7 +455,7 @@ export function useNanobotStream(
    * notification or starts a fresh action). */
   dismissStreamError: () => void;
 } {
-  const { client } = useClient();
+  const { client, token } = useClient();
   const [messages, setMessages] = useState<UIMessage[]>(initialMessages);
   /** If history ends in unfinished agent activity, keep the loading spinner alive. */
   const initialStreaming = hasPendingAgentActivity(initialMessages);
@@ -457,6 +463,8 @@ export function useNanobotStream(
   /** Unix epoch seconds when the current user turn started; cleared on ``idle``. */
   const [runStartedAt, setRunStartedAt] = useState<number | null>(null);
   const [goalState, setGoalState] = useState<GoalStateWsPayload | undefined>(undefined);
+  const [pendingApproval, setPendingApproval] = useState<PendingApproval | null>(null);
+  const [approvalResolving, setApprovalResolving] = useState(false);
   const [streamError, setStreamError] = useState<StreamError | null>(null);
   const buffer = useRef<StreamBuffer | null>(null);
   const activeAssistantRef = useRef<ActiveAssistantCursor | null>(null);
@@ -713,6 +721,33 @@ export function useNanobotStream(
     if (hasPendingToolCalls) setIsStreaming(true);
   }, [hasPendingToolCalls]);
 
+  // ``approval_required`` is a live WS event, but a page reload / reconnect can
+  // happen while the agent is paused. Hydrate the durable server-side pending row.
+  useEffect(() => {
+    let cancelled = false;
+    // Unit tests exercise the live WS reducer with an in-memory socket; do not
+    // start an unrelated localhost fetch for every mounted test hook.
+    if (import.meta.env.MODE === "test") return () => { cancelled = true; };
+    setPendingApproval(null);
+    setApprovalResolving(false);
+    if (!chatId) return () => { cancelled = true; };
+    void fetchPendingApprovals(token, chatId)
+      .then((rows) => {
+        if (!cancelled) setPendingApproval(rows[0] ?? null);
+      })
+      .catch(() => {
+        // HITL remains available for live WS frames even if this optional hydrate fails.
+      });
+    return () => { cancelled = true; };
+  }, [chatId, token]);
+
+  const resolveApproval = useCallback((decision: "approve" | "reject") => {
+    if (!pendingApproval || approvalResolving) return;
+    setApprovalResolving(true);
+    setIsStreaming(true);
+    client.respondToApproval(pendingApproval.id, decision);
+  }, [approvalResolving, client, pendingApproval]);
+
   useEffect(() => {
     if (!chatId) return;
 
@@ -796,6 +831,14 @@ export function useNanobotStream(
         return;
       }
 
+      if (ev.event === "approval_required") {
+        setPendingApproval(ev.approval);
+        setApprovalResolving(false);
+        setIsStreaming(false);
+        setRunStartedAt(null);
+        return;
+      }
+
       if (ev.event === "turn_end") {
         if ("goal_state" in ev && ev.goal_state != null && typeof ev.goal_state === "object") {
           setGoalState(ev.goal_state);
@@ -808,6 +851,8 @@ export function useNanobotStream(
           streamEndTimerRef.current = null;
         }
         setIsStreaming(false);
+        setPendingApproval(null);
+        setApprovalResolving(false);
         setMessages((prev) => {
           let finalized = prev.map((m) => (m.isStreaming ? { ...m, isStreaming: false } : m));
           finalized = pruneReasoningOnlyPlaceholders(finalized);
@@ -1096,6 +1141,9 @@ export function useNanobotStream(
     isStreaming,
     runStartedAt,
     goalState,
+    pendingApproval,
+    approvalResolving,
+    resolveApproval,
     send,
     transcribeAudio,
     stop,

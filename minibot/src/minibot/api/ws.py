@@ -152,6 +152,18 @@ async def deliver_outbound(msg: OutboundMessage) -> None:
         )
         return
 
+    if kind == "approval_required":
+        await hub.send(
+            chat_id,
+            {
+                "event": "approval_required",
+                "chat_id": chat_id,
+                "approval": dict(meta.get("approval") or {}),
+            },
+        )
+        await hub.send(chat_id, {"event": "goal_status", "chat_id": chat_id, "status": "waiting_approval"})
+        return
+
     if kind == "turn_end":
         await hub.send(chat_id, {"event": "turn_end", "chat_id": chat_id})
         await hub.send(chat_id, {"event": "goal_status", "chat_id": chat_id, "status": "idle"})
@@ -281,6 +293,20 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
                 chat_id = _session_id(str(frame.get("chat_id") or default_chat or ""))
                 if chat_id:
                     state.loop.request_abort(chat_id)
+                continue
+
+            if msg_type == "approval_response":
+                approval_id = str(frame.get("approval_id") or "")
+                decision = str(frame.get("decision") or "")
+                if decision not in {"approve", "reject"} or not approval_id:
+                    await websocket.send_json({"event": "error", "detail": "invalid_approval_response"})
+                    continue
+                try:
+                    await state.loop.resolve_approval(
+                        approval_id, decision, bus=state.bus, channel="websocket"
+                    )
+                except (KeyError, ValueError) as exc:
+                    await websocket.send_json({"event": "error", "detail": str(exc)})
                 continue
 
             if msg_type == "new_chat":

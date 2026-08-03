@@ -1,6 +1,7 @@
 import type {
   AutomationsPayload,
   AutomationUpdatePayload,
+  PendingApproval,
   ChatSummary,
   CliAppsPayload,
   FilePreviewPayload,
@@ -133,6 +134,22 @@ export async function listSessions(
       workspaceScope: s.workspace_scope ?? null,
     };
   });
+}
+
+/** Pending human-in-the-loop approvals for one chat. */
+export async function fetchPendingApprovals(
+  token: string,
+  chatId: string,
+  base: string = "",
+): Promise<PendingApproval[]> {
+  const query = new URLSearchParams({ session_id: chatId, pending_only: "true" });
+  const payload = await request<{ approvals?: PendingApproval[] }>(
+    `${base}/api/approvals?${query}`,
+    token,
+    undefined,
+    API_READ_TIMEOUT_MS,
+  );
+  return Array.isArray(payload.approvals) ? payload.approvals : [];
 }
 
 /** Disk-backed WebUI display thread snapshot (separate from agent session). */

@@ -10,7 +10,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from minibot.api.routes import auth, automations, misc, sessions, settings, status, workspaces
+from minibot.api.routes import approvals, auth, automations, misc, sessions, settings, status, workspaces
 from minibot.api.ws import router as ws_router
 from minibot.app_state import build_app_state
 from minibot.webui_static import mount_webui, root_redirect_to_devui
@@ -64,6 +64,7 @@ def create_app() -> FastAPI:
         return {"status": "ok", "runtime": "minibot"}
 
     app.include_router(auth.router)
+    app.include_router(approvals.router)
     app.include_router(sessions.router)
     app.include_router(workspaces.router)
     app.include_router(settings.router)

@@ -417,6 +417,11 @@ export class NanobotClient {
     });
   }
 
+  /** Resume a human-in-the-loop tool batch after an explicit user decision. */
+  respondToApproval(approvalId: string, decision: "approve" | "reject"): void {
+    this.queueSend({ type: "approval_response", approval_id: approvalId, decision });
+  }
+
   // -- internals ---------------------------------------------------------
 
   private setStatus(status: ConnectionStatus): void {

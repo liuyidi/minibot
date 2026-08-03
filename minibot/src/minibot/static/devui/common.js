@@ -224,6 +224,7 @@
         { href: "./", title: "Chat", desc: "会话列表、发消息、Settings" },
         { href: "./trace.html", title: "Agent Trace", desc: "LLM / 工具逐步轨迹" },
         { href: "./tools.html", title: "Tools", desc: "已注册工具、最近调用、安全拒绝" },
+        { href: "./approvals.html", title: "Human-in-the-loop", desc: "高风险操作审批队列与状态机模拟" },
         { href: "./context.html", title: "Context", desc: "system 组装预览、compaction 日志" },
         { href: "./memory.html", title: "Memory", desc: "MEMORY.md 读写与注入对照" },
         { href: "./skills.html", title: "Skills", desc: "技能发现、覆盖、body 预览" },

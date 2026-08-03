@@ -11,6 +11,8 @@ class Tool(ABC):
     description: str = ""
     risk: str = "unknown"
     source: str = "builtin"
+    # "policy" delegates to ApprovalPolicy; tools may opt into "always" / "never".
+    approval_mode: str = "policy"
 
     def parameters_schema(self) -> dict[str, Any]:
         return {"type": "object", "properties": {}, "additionalProperties": False}
