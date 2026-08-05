@@ -24,6 +24,7 @@ def test_feishu_public_payload_masks_secret() -> None:
     )
     pub = feishu_public_payload(cfg)
     assert pub["connected"] is True
+    assert pub["configured"] is True
     assert pub["app_id"] == "cli_x"
     assert "supersecret" not in str(pub)
     assert pub["has_app_secret"] is True

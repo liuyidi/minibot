@@ -162,9 +162,31 @@ async def setup_save(_auth: AuthDep, state: StateDep, body: SetupSaveBody) -> di
     return weixin_public_payload(state.config.weixin)
 
 
+@router.post("/enable")
+async def weixin_enable(_auth: AuthDep, state: StateDep) -> dict[str, Any]:
+    if not state.config.weixin.token.strip():
+        raise HTTPException(status_code=400, detail="weixin is not configured")
+    state.config.weixin.enabled = True
+    state.save_config(rebuild_provider=False)
+    from minibot.channels.factory import reload_weixin_channel
+
+    await reload_weixin_channel(state)
+    return weixin_public_payload(state.config.weixin)
+
+
 @router.post("/disable")
 async def weixin_disable(_auth: AuthDep, state: StateDep) -> dict[str, Any]:
     state.config.weixin.enabled = False
+    state.save_config(rebuild_provider=False)
+    from minibot.channels.factory import reload_weixin_channel
+
+    await reload_weixin_channel(state)
+    return weixin_public_payload(state.config.weixin)
+
+
+@router.post("/remove")
+async def weixin_remove(_auth: AuthDep, state: StateDep) -> dict[str, Any]:
+    state.config.weixin = WeixinPersistedConfig()
     state.save_config(rebuild_provider=False)
     from minibot.channels.factory import reload_weixin_channel
 

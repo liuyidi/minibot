@@ -170,9 +170,31 @@ async def setup_save(_auth: AuthDep, state: StateDep, body: SetupSaveBody) -> di
     return feishu_public_payload(state.config.feishu)
 
 
+@router.post("/enable")
+async def feishu_enable(_auth: AuthDep, state: StateDep) -> dict[str, Any]:
+    if not state.config.feishu.app_id or not state.config.feishu.app_secret:
+        raise HTTPException(status_code=400, detail="feishu is not configured")
+    state.config.feishu.enabled = True
+    state.save_config(rebuild_provider=False)
+    from minibot.channels.factory import reload_feishu_channel
+
+    await reload_feishu_channel(state)
+    return feishu_public_payload(state.config.feishu)
+
+
 @router.post("/disable")
 async def feishu_disable(_auth: AuthDep, state: StateDep) -> dict[str, Any]:
     state.config.feishu.enabled = False
+    state.save_config(rebuild_provider=False)
+    from minibot.channels.factory import reload_feishu_channel
+
+    await reload_feishu_channel(state)
+    return feishu_public_payload(state.config.feishu)
+
+
+@router.post("/remove")
+async def feishu_remove(_auth: AuthDep, state: StateDep) -> dict[str, Any]:
+    state.config.feishu = FeishuPersistedConfig()
     state.save_config(rebuild_provider=False)
     from minibot.channels.factory import reload_feishu_channel
 

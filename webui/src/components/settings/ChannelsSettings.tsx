@@ -1,10 +1,19 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link2, RefreshCw, X } from "lucide-react";
+import { Link2, MoreHorizontal, Pencil, RefreshCw, Trash2, X } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { ApiError } from "@/lib/api";
+import { cn } from "@/lib/utils";
 
 type FeishuStatus = {
   enabled: boolean;
+  configured?: boolean;
   connected: boolean;
   app_id: string;
   has_app_secret: boolean;
@@ -21,6 +30,7 @@ type FeishuStatus = {
 
 type WeixinStatus = {
   enabled: boolean;
+  configured?: boolean;
   connected: boolean;
   has_token: boolean;
   token_masked: string;
@@ -106,12 +116,96 @@ function resolveQrSrc(
     }
   }
   if (setup.qr_url) {
-    if (setup.qr_url.startsWith("http://") || setup.qr_url.startsWith("https://")) {
-      return qrImageUrl(setup.qr_url);
-    }
     return qrImageUrl(setup.qr_url);
   }
   return null;
+}
+
+function isConfigured(channel: ChannelKind, status: FeishuStatus | WeixinStatus | null): boolean {
+  if (!status) return false;
+  if (typeof status.configured === "boolean") return status.configured;
+  if (channel === "feishu") {
+    const fs = status as FeishuStatus;
+    return Boolean(fs.app_id && fs.has_app_secret);
+  }
+  return Boolean((status as WeixinStatus).has_token);
+}
+
+function FeishuLogo({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 48 48" className={className} aria-hidden>
+      <path
+        fill="#00D6B9"
+        d="M14.2 8.4c2.6-3.8 7.8-4.8 11.6-2.2l9.6 6.6c3.8 2.6 4.8 7.8 2.2 11.6L28.2 38.6c-2.6 3.8-7.8 4.8-11.6 2.2l-9.6-6.6c-3.8-2.6-4.8-7.8-2.2-11.6L14.2 8.4z"
+      />
+      <path
+        fill="#1456F0"
+        d="M22.8 12.2c1.5-2.1 4.4-2.7 6.5-1.2l7.4 5.1c2.1 1.5 2.7 4.4 1.2 6.5l-7.4 10.8c-1.5 2.1-4.4 2.7-6.5 1.2l-7.4-5.1c-2.1-1.5-2.7-4.4-1.2-6.5l7.4-10.8z"
+      />
+      <path fill="#fff" d="M26.2 18.8h4.2v12.4h-4.2z" />
+      <path fill="#fff" d="M21.4 23.6h13.8v4.2H21.4z" />
+    </svg>
+  );
+}
+
+function WeChatLogo({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 48 48" className={className} aria-hidden>
+      <path
+        fill="#07C160"
+        d="M18.4 10.2c-7.6 0-13.8 5.2-13.8 11.6 0 3.7 2.1 7 5.4 9.1l-1.4 4.2 4.9-2.5c1.5.4 3.1.7 4.9.7.5 0 1-.1 1.5-.1-.3-.9-.5-1.9-.5-2.9 0-6.5 6.3-11.7 14-11.7.4 0 .8 0 1.2.1-1.7-5.1-7.4-8.9-14.2-8.9-1.1 0-2.1.1-3.1.4z"
+      />
+      <circle cx="13.2" cy="20.4" r="1.7" fill="#fff" />
+      <circle cx="21.6" cy="20.4" r="1.7" fill="#fff" />
+      <path
+        fill="#07C160"
+        d="M39.2 23.1c-6.5 0-11.8 4.4-11.8 9.9 0 2.1.9 4.1 2.4 5.7l-1 3.1 3.7-1.9c1.2.3 2.5.5 3.9.5 6.5 0 11.8-4.4 11.8-9.9s-5.3-7.4-11.8-7.4h-1.2z"
+      />
+      <circle cx="35.1" cy="32.2" r="1.5" fill="#fff" />
+      <circle cx="42.2" cy="32.2" r="1.5" fill="#fff" />
+    </svg>
+  );
+}
+
+function ChannelSwitch({
+  checked,
+  disabled,
+  onChange,
+  label,
+}: {
+  checked: boolean;
+  disabled?: boolean;
+  onChange: (checked: boolean) => void;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      disabled={disabled}
+      onClick={() => onChange(!checked)}
+      className={cn(
+        "relative inline-flex h-[22px] w-[38px] shrink-0 items-center rounded-full p-[2px]",
+        "transition-colors duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+        "disabled:cursor-not-allowed disabled:opacity-50",
+        checked
+          ? "bg-emerald-500 shadow-[inset_0_0_0_1px_rgba(0,0,0,0.035)]"
+          : "bg-muted shadow-[inset_0_0_0_1px_rgba(0,0,0,0.035)] hover:bg-muted/80",
+      )}
+    >
+      <span
+        aria-hidden
+        className={cn(
+          "h-[18px] w-[18px] rounded-full bg-background shadow-[0_1px_2px_rgba(0,0,0,0.18),0_2px_7px_rgba(0,0,0,0.11)]",
+          "transition-transform duration-200 ease-out",
+          checked ? "translate-x-[16px]" : "translate-x-0",
+        )}
+      />
+      <span className="sr-only">{label}</span>
+    </button>
+  );
 }
 
 export function ChannelsSettings({ token }: { token: string }) {
@@ -121,6 +215,7 @@ export function ChannelsSettings({ token }: { token: string }) {
   const [busy, setBusy] = useState(false);
   const [setupOpen, setSetupOpen] = useState(false);
   const [setupChannel, setSetupChannel] = useState<ChannelKind>("feishu");
+  const [setupIsEdit, setSetupIsEdit] = useState(false);
   const [pairingOpen, setPairingOpen] = useState(false);
   const [pairingChannel, setPairingChannel] = useState<ChannelKind>("feishu");
   const [feishuSetup, setFeishuSetup] = useState<FeishuSetupSession | null>(null);
@@ -143,10 +238,11 @@ export function ChannelsSettings({ token }: { token: string }) {
   }, [refreshStatus]);
 
   const startSetup = useCallback(
-    async (channel: ChannelKind) => {
+    async (channel: ChannelKind, options?: { isEdit?: boolean }) => {
       setBusy(true);
       setError(null);
       setSetupChannel(channel);
+      setSetupIsEdit(Boolean(options?.isEdit));
       try {
         if (channel === "feishu") {
           const session = await api<FeishuSetupSession>(token, "/api/channels/feishu/setup/start", {
@@ -253,6 +349,7 @@ export function ChannelsSettings({ token }: { token: string }) {
         setWeixinSetup(null);
       }
       setSetupOpen(false);
+      setSetupIsEdit(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -287,8 +384,47 @@ export function ChannelsSettings({ token }: { token: string }) {
     [pairingChannel, token, refreshStatus],
   );
 
-  const feishuConnected = Boolean(feishu?.connected);
-  const weixinConnected = Boolean(weixin?.connected);
+  const setEnabled = useCallback(
+    async (channel: ChannelKind, enabled: boolean) => {
+      setBusy(true);
+      setError(null);
+      try {
+        const base = channel === "feishu" ? "/api/channels/feishu" : "/api/channels/weixin";
+        const path = enabled ? `${base}/enable` : `${base}/disable`;
+        const saved = await api<FeishuStatus | WeixinStatus>(token, path, { method: "POST" });
+        if (channel === "feishu") setFeishu(saved as FeishuStatus);
+        else setWeixin(saved as WeixinStatus);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : String(err));
+      } finally {
+        setBusy(false);
+      }
+    },
+    [token],
+  );
+
+  const removeChannel = useCallback(
+    async (channel: ChannelKind) => {
+      const label = channel === "feishu" ? "飞书" : "微信";
+      if (!window.confirm(`确定移除${label}配置？凭证将被清除。`)) return;
+      setBusy(true);
+      setError(null);
+      try {
+        const base = channel === "feishu" ? "/api/channels/feishu" : "/api/channels/weixin";
+        const saved = await api<FeishuStatus | WeixinStatus>(token, `${base}/remove`, {
+          method: "POST",
+        });
+        if (channel === "feishu") setFeishu(saved as FeishuStatus);
+        else setWeixin(saved as WeixinStatus);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : String(err));
+      } finally {
+        setBusy(false);
+      }
+    },
+    [token],
+  );
+
   const setupSuccess = activeSetup?.status === "success";
   const qrSrc = useMemo(
     () => resolveQrSrc(activeSetup, setupChannel),
@@ -297,10 +433,120 @@ export function ChannelsSettings({ token }: { token: string }) {
 
   const cancelSetup = useCallback(() => {
     setSetupOpen(false);
+    setSetupIsEdit(false);
     if (!activeSetup?.id) return;
     const base = setupChannel === "feishu" ? "/api/channels/feishu" : "/api/channels/weixin";
     void api(token, `${base}/setup/${activeSetup.id}/cancel`, { method: "POST" });
   }, [activeSetup?.id, setupChannel, token]);
+
+  const feishuConfigured = isConfigured("feishu", feishu);
+  const weixinConfigured = isConfigured("weixin", weixin);
+
+  const renderCard = (
+    channel: ChannelKind,
+    status: FeishuStatus | WeixinStatus | null,
+    configured: boolean,
+  ) => {
+    const title = channel === "feishu" ? "飞书" : "微信";
+    const desc =
+      channel === "feishu"
+        ? "通过飞书机器人接收并回复用户消息"
+        : "扫码登录个人微信，接收并回复文本消息";
+    const enabled = Boolean(status?.enabled);
+    const pendingCount = status?.pending_pairing ?? 0;
+
+    return (
+      <div
+        key={channel}
+        className="flex items-center gap-3 rounded-xl border border-border/60 bg-card px-4 py-3"
+      >
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted/40">
+          {channel === "feishu" ? (
+            <FeishuLogo className="h-8 w-8" />
+          ) : (
+            <WeChatLogo className="h-8 w-8" />
+          )}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <span className="font-medium">{title}</span>
+            {configured && enabled ? (
+              <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs text-emerald-600">
+                已连接
+              </span>
+            ) : null}
+          </div>
+          <p className="truncate text-xs text-muted-foreground">{desc}</p>
+        </div>
+        {configured ? (
+          <div className="flex shrink-0 items-center gap-3">
+            <button
+              type="button"
+              className="relative text-sm text-primary hover:underline"
+              onClick={() => void openPairing(channel)}
+            >
+              配对管理
+              {pendingCount > 0 ? (
+                <span className="absolute -right-3 -top-2 rounded-full bg-red-500 px-1.5 text-[10px] text-white">
+                  {pendingCount}
+                </span>
+              ) : null}
+            </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  aria-label={`${title}更多操作`}
+                  disabled={busy}
+                >
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onSelect={() => {
+                    void startSetup(channel, { isEdit: true });
+                  }}
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                  编辑配置
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-destructive focus:text-destructive"
+                  onSelect={() => {
+                    void removeChannel(channel);
+                  }}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  移除配置
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <ChannelSwitch
+              checked={enabled}
+              disabled={busy}
+              label={`启用${title}`}
+              onChange={(next) => {
+                void setEnabled(channel, next);
+              }}
+            />
+          </div>
+        ) : (
+          <button
+            type="button"
+            className="rounded-md bg-foreground px-3 py-1.5 text-sm text-background"
+            disabled={busy}
+            onClick={() => void startSetup(channel)}
+          >
+            配置
+          </button>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-4">
@@ -313,107 +559,8 @@ export function ChannelsSettings({ token }: { token: string }) {
 
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
 
-      <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-card px-4 py-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#00d6b9]/15 text-sm font-bold text-[#00a894]">
-          飞
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <span className="font-medium">飞书</span>
-            {feishuConnected ? (
-              <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs text-emerald-600">
-                已连接
-              </span>
-            ) : null}
-          </div>
-          <p className="truncate text-xs text-muted-foreground">通过飞书机器人接收并回复用户消息</p>
-        </div>
-        {feishuConnected ? (
-          <>
-            <button
-              type="button"
-              className="relative text-sm text-primary hover:underline"
-              onClick={() => void openPairing("feishu")}
-            >
-              配对管理
-              {(feishu?.pending_pairing ?? 0) > 0 ? (
-                <span className="absolute -right-3 -top-2 rounded-full bg-red-500 px-1.5 text-[10px] text-white">
-                  {feishu?.pending_pairing}
-                </span>
-              ) : null}
-            </button>
-            <button
-              type="button"
-              className="rounded-md border px-3 py-1.5 text-sm"
-              disabled={busy}
-              onClick={() => void startSetup("feishu")}
-            >
-              重新配置
-            </button>
-          </>
-        ) : (
-          <button
-            type="button"
-            className="rounded-md bg-foreground px-3 py-1.5 text-sm text-background"
-            disabled={busy}
-            onClick={() => void startSetup("feishu")}
-          >
-            配置
-          </button>
-        )}
-      </div>
-
-      <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-card px-4 py-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#07c160]/15 text-sm font-bold text-[#07c160]">
-          微
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <span className="font-medium">微信</span>
-            {weixinConnected ? (
-              <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs text-emerald-600">
-                已连接
-              </span>
-            ) : null}
-          </div>
-          <p className="truncate text-xs text-muted-foreground">
-            扫码登录个人微信，接收并回复文本消息
-          </p>
-        </div>
-        {weixinConnected ? (
-          <>
-            <button
-              type="button"
-              className="relative text-sm text-primary hover:underline"
-              onClick={() => void openPairing("weixin")}
-            >
-              配对管理
-              {(weixin?.pending_pairing ?? 0) > 0 ? (
-                <span className="absolute -right-3 -top-2 rounded-full bg-red-500 px-1.5 text-[10px] text-white">
-                  {weixin?.pending_pairing}
-                </span>
-              ) : null}
-            </button>
-            <button
-              type="button"
-              className="rounded-md border px-3 py-1.5 text-sm"
-              disabled={busy}
-              onClick={() => void startSetup("weixin")}
-            >
-              重新配置
-            </button>
-          </>
-        ) : (
-          <button
-            type="button"
-            className="rounded-md bg-foreground px-3 py-1.5 text-sm text-background"
-            disabled={busy}
-            onClick={() => void startSetup("weixin")}
-          >
-            配置
-          </button>
-        )}
-      </div>
+      {renderCard("feishu", feishu, feishuConfigured)}
+      {renderCard("weixin", weixin, weixinConfigured)}
 
       {setupOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
@@ -426,18 +573,17 @@ export function ChannelsSettings({ token }: { token: string }) {
               <X className="h-4 w-4" />
             </button>
             <div className="mb-2 flex justify-center">
-              <div
-                className={`flex h-12 w-12 items-center justify-center rounded-full text-lg font-bold ${
-                  setupChannel === "feishu"
-                    ? "bg-[#00d6b9]/20 text-[#00a894]"
-                    : "bg-[#07c160]/20 text-[#07c160]"
-                }`}
-              >
-                {setupChannel === "feishu" ? "飞" : "微"}
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted/50">
+                {setupChannel === "feishu" ? (
+                  <FeishuLogo className="h-10 w-10" />
+                ) : (
+                  <WeChatLogo className="h-10 w-10" />
+                )}
               </div>
             </div>
             <h3 className="text-center text-lg font-semibold">
-              配置{setupChannel === "feishu" ? "飞书" : "微信"}
+              {setupIsEdit ? "重新配置" : "配置"}
+              {setupChannel === "feishu" ? "飞书" : "微信"}
             </h3>
             <p className="mt-1 text-center text-sm text-muted-foreground">
               {setupChannel === "feishu"
@@ -463,7 +609,20 @@ export function ChannelsSettings({ token }: { token: string }) {
                   </div>
                   {setupChannel === "feishu" ? (
                     <div className="rounded-lg border px-3 py-2 text-sm">
-                      <div className="font-medium">当前机器人</div>
+                      <div className="flex items-center justify-between">
+                        <div className="font-medium">当前机器人</div>
+                        <button
+                          type="button"
+                          className="text-xs text-primary hover:underline"
+                          disabled={busy}
+                          onClick={() => void refreshQr()}
+                        >
+                          重新扫码可更换
+                        </button>
+                      </div>
+                      <div className="mt-1 font-medium">
+                        {feishuSetup?.bot_name || "minibot"}
+                      </div>
                       <div className="mt-1 text-muted-foreground">App ID：{feishuSetup?.app_id}</div>
                       <div className="text-muted-foreground">
                         App Secret：
@@ -472,7 +631,17 @@ export function ChannelsSettings({ token }: { token: string }) {
                     </div>
                   ) : (
                     <div className="rounded-lg border px-3 py-2 text-sm">
-                      <div className="font-medium">登录信息</div>
+                      <div className="flex items-center justify-between">
+                        <div className="font-medium">登录信息</div>
+                        <button
+                          type="button"
+                          className="text-xs text-primary hover:underline"
+                          disabled={busy}
+                          onClick={() => void refreshQr()}
+                        >
+                          重新扫码可更换
+                        </button>
+                      </div>
                       <div className="mt-1 text-muted-foreground">
                         Token：{weixinSetup?.bot_token ? "••••••••" : weixinSetup?.bot_token_masked}
                       </div>
@@ -483,14 +652,25 @@ export function ChannelsSettings({ token }: { token: string }) {
                       ) : null}
                     </div>
                   )}
-                  <button
-                    type="button"
-                    className="w-full rounded-md bg-foreground py-2 text-sm text-background"
-                    disabled={busy}
-                    onClick={() => void saveSetup()}
-                  >
-                    保存
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      className="flex flex-1 items-center justify-center gap-2 rounded-md border px-4 py-2 text-sm"
+                      disabled={busy}
+                      onClick={() => void refreshQr()}
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                      刷新二维码
+                    </button>
+                    <button
+                      type="button"
+                      className="flex-1 rounded-md bg-foreground py-2 text-sm text-background"
+                      disabled={busy}
+                      onClick={() => void saveSetup()}
+                    >
+                      保存
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <button

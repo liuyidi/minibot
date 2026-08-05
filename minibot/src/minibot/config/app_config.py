@@ -134,12 +134,13 @@ def apply_settings_update(config: AppConfig, update: SettingsUpdate) -> AppConfi
 
 
 def weixin_public_payload(weixin: WeixinPersistedConfig) -> dict[str, Any]:
-    connected = bool(weixin.token.strip() and weixin.enabled)
+    configured = bool(weixin.token.strip())
     return {
         "enabled": weixin.enabled,
-        "connected": connected,
-        "has_token": bool(weixin.token.strip()),
-        "token_masked": "••••••••" if weixin.token.strip() else "",
+        "configured": configured,
+        "connected": configured and weixin.enabled,
+        "has_token": configured,
+        "token_masked": "••••••••" if configured else "",
         "bot_name": weixin.bot_name,
         "dm_policy": weixin.dm_policy,
         "allow_from_count": len(weixin.allow_from),
@@ -149,10 +150,11 @@ def weixin_public_payload(weixin: WeixinPersistedConfig) -> dict[str, Any]:
 
 
 def feishu_public_payload(feishu: FeishuPersistedConfig) -> dict[str, Any]:
-    connected = bool(feishu.app_id and feishu.app_secret and feishu.enabled)
+    configured = bool(feishu.app_id and feishu.app_secret)
     return {
         "enabled": feishu.enabled,
-        "connected": connected,
+        "configured": configured,
+        "connected": configured and feishu.enabled,
         "app_id": feishu.app_id,
         "has_app_secret": bool(feishu.app_secret),
         "app_secret_masked": "••••••••" if feishu.app_secret else "",

@@ -23,9 +23,18 @@ def test_weixin_public_payload_masks_token() -> None:
     )
     pub = weixin_public_payload(cfg)
     assert pub["connected"] is True
+    assert pub["configured"] is True
     assert pub["has_token"] is True
     assert "supersecret" not in str(pub)
     assert pub["token_masked"] == "••••••••"
+
+
+def test_weixin_public_payload_disabled_still_configured() -> None:
+    cfg = WeixinPersistedConfig(enabled=False, token="tok")
+    pub = weixin_public_payload(cfg)
+    assert pub["configured"] is True
+    assert pub["enabled"] is False
+    assert pub["connected"] is False
 
 
 def test_resolve_weixin_prefers_persisted() -> None:
