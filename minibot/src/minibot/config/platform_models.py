@@ -265,6 +265,42 @@ def any_platform_model_available() -> bool:
     )
 
 
+def first_available_platform_runtime() -> PlatformRuntime | None:
+    for item in PLATFORM_MODELS:
+        runtime = resolve_platform_runtime(item.id)
+        if runtime is not None and runtime.available:
+            return runtime
+    return None
+
+
+def apply_auto_model(config: Any) -> Any:
+    """Select Auto mode and sync live model/base to the first available platform slot."""
+    config.provider = "auto"
+    config.active_platform_model = ""
+    runtime = first_available_platform_runtime()
+    if runtime is None:
+        return config
+    config.model = runtime.model
+    config.openai_base_url = runtime.api_base or ""
+    if hasattr(config, "context_window_tokens"):
+        config.context_window_tokens = runtime.context_window_tokens
+    return config
+
+
+def effective_chat_model(config: Any) -> str:
+    """Model id for LLM calls — honor platform / Auto over stale config.model."""
+    platform_id = (getattr(config, "active_platform_model", None) or "").strip()
+    if platform_id:
+        runtime = resolve_platform_runtime(platform_id)
+        if runtime is not None and runtime.available and runtime.model:
+            return runtime.model
+    if (getattr(config, "provider", "") or "").strip() == "auto":
+        runtime = first_available_platform_runtime()
+        if runtime is not None and runtime.model:
+            return runtime.model
+    return (getattr(config, "model", None) or "").strip()
+
+
 def apply_platform_model(config: Any, model_id: str) -> Any:
     """Set live model/provider/base from catalog+env; do not write platform keys."""
     runtime = resolve_platform_runtime(model_id)

@@ -6,10 +6,12 @@ from functools import lru_cache
 
 import pytest
 
-from minibot.config.app_config import AppConfig, settings_public_payload
+from minibot.config.app_config import AppConfig, apply_settings_update, SettingsUpdate, settings_public_payload
 from minibot.config.platform_models import (
     PLATFORM_MODELS,
+    apply_auto_model,
     apply_platform_model,
+    effective_chat_model,
     find_platform_model,
     platform_models_public,
     resolve_platform_runtime,
@@ -117,3 +119,36 @@ def test_apply_unavailable_platform_model_raises() -> None:
 
 def test_find_platform_model_unknown() -> None:
     assert find_platform_model("nope") is None
+
+
+def test_auto_mode_ignores_stale_config_model(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("MINIBOT_SERVER_OPENAI_API_KEY", "sk-oa")
+    monkeypatch.setenv("MINIBOT_SERVER_OPENAI_BASE_URL", "https://api.deepseek.com/v1")
+    monkeypatch.setenv("MINIBOT_SERVER_OPENAI_MODEL", "deepseek-v4-flash")
+    monkeypatch.setenv("MINIBOT_SERVER_MINIMAX_API_KEY", "sk-mm")
+    monkeypatch.setenv("MINIBOT_SERVER_MINIMAX_BASE_URL", "https://ark.example/v3")
+    monkeypatch.setenv("MINIBOT_SERVER_MINIMAX_MODEL", "minimax-m3")
+
+    config = AppConfig(
+        provider="custom",
+        model="minimax-m3",
+        openai_base_url="https://ark.example/v3",
+        openai_api_key="",
+        active_platform_model="platform-minimax-m3",
+    )
+    apply_auto_model(config)
+    assert config.provider == "auto"
+    assert config.active_platform_model == ""
+    assert config.model == "deepseek-v4-flash"
+    assert config.openai_base_url == "https://api.deepseek.com/v1"
+    assert effective_chat_model(config) == "deepseek-v4-flash"
+
+    # Stale model left behind must not win while provider stays auto.
+    config.model = "minimax-m3"
+    config.openai_base_url = "https://api.deepseek.com/v1"
+    assert effective_chat_model(config) == "deepseek-v4-flash"
+
+    updated = apply_settings_update(config, SettingsUpdate(provider="auto"))
+    assert updated.provider == "auto"
+    assert updated.model == "deepseek-v4-flash"
+    assert updated.openai_base_url == "https://api.deepseek.com/v1"

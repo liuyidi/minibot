@@ -87,6 +87,11 @@ class AgentLoop:
             self._abort[session_id] = ev
         return ev
 
+    def _chat_model(self) -> str:
+        from minibot.config.platform_models import effective_chat_model
+
+        return effective_chat_model(self.config) or self.config.model
+
     @property
     def compaction_log(self) -> list[dict[str, Any]]:
         return list(self._compaction_log)
@@ -348,7 +353,7 @@ class AgentLoop:
                 result = await self.runner.run(
                     messages=base,
                     tools=self.tools,
-                    model=self.config.model,
+                    model=self._chat_model(),
                     max_iterations=self.config.max_iterations,
                     temperature=self.config.temperature,
                 )
@@ -464,7 +469,7 @@ class AgentLoop:
             async for ev in self.runner.run_stream(
                 messages=[*history, user_msg],
                 tools=self.tools,
-                model=model or self.config.model,
+                model=model or self._chat_model(),
                 max_iterations=max_iterations if max_iterations is not None else self.config.max_iterations,
                 temperature=temperature if temperature is not None else self.config.temperature,
                 system=system_text,
@@ -599,7 +604,7 @@ class AgentLoop:
         result = await self.runner.run(
             messages=[*history, user_msg],
             tools=self.tools,
-            model=model or self.config.model,
+            model=model or self._chat_model(),
             max_iterations=max_iterations if max_iterations is not None else self.config.max_iterations,
             temperature=temperature if temperature is not None else self.config.temperature,
             system=system_text,
@@ -666,14 +671,14 @@ class AgentLoop:
             with lf.observation(
                 as_type="generation",
                 name="compaction",
-                model=self.config.model,
+                model=self._chat_model(),
                 input={"message_count": len(old), "before": before, "keep": keep},
                 model_parameters={"temperature": 0.0},
             ) as gen:
                 response = await self.runner.provider.chat(
                     compact_messages,
                     tools=None,
-                    model=self.config.model,
+                    model=self._chat_model(),
                     temperature=0.0,
                 )
                 piece = (response.content or "").strip() or "(empty summary)"

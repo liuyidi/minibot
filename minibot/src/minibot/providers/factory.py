@@ -67,7 +67,10 @@ def build_provider_chain(
     ``FaultInjectingProvider`` so Dev UI can arm soft_error / 429 / 5xx / timeout.
     """
     from minibot.config.keys import resolve_api_key
-    from minibot.config.platform_models import resolve_platform_runtime
+    from minibot.config.platform_models import (
+        first_available_platform_runtime,
+        resolve_platform_runtime,
+    )
     from minibot.config.presets import ensure_presets, find_preset
     from minibot.providers.fault_inject import FaultInjectingProvider
 
@@ -92,22 +95,16 @@ def build_provider_chain(
             primary_provider_name = runtime.provider
             primary_model = runtime.model
             primary_key = runtime.api_key
-            primary_base = runtime.api_base or primary_base
+            primary_base = runtime.api_base
     elif (primary_provider_name or "").strip() == "auto":
-        # Auto: first available platform builtin (operator-funded).
-        from minibot.config.platform_models import PLATFORM_MODELS
-
-        for item in PLATFORM_MODELS:
-            runtime = resolve_platform_runtime(item.id)
-            if runtime is None or not runtime.available:
-                continue
+        runtime = first_available_platform_runtime()
+        if runtime is not None:
             primary_id = runtime.id
             primary_label = runtime.label
             primary_provider_name = runtime.provider
             primary_model = runtime.model
             primary_key = runtime.api_key
-            primary_base = runtime.api_base or primary_base
-            break
+            primary_base = runtime.api_base
 
     primary_impl = build_provider(
         provider=primary_provider_name,

@@ -140,7 +140,11 @@ def apply_settings_update(config: AppConfig, update: SettingsUpdate) -> AppConfi
     # Auto / concrete BYOK providers leave platform selection; keep ``custom`` so
     # saving a platform-backed model form does not wipe ``active_platform_model``.
     provider = (update.provider or "").strip()
-    if provider == "auto" or (provider and provider != "custom"):
+    if provider == "auto":
+        from minibot.config.platform_models import apply_auto_model
+
+        apply_auto_model(next_config)
+    elif provider and provider != "custom":
         next_config.active_platform_model = ""
     if update.active_preset is None:
         apply_live_to_active_preset(next_config)
@@ -183,7 +187,12 @@ def feishu_public_payload(feishu: FeishuPersistedConfig) -> dict[str, Any]:
 def settings_public_payload(config: AppConfig) -> dict[str, Any]:
     """Shape compatible enough for the existing WebUI SettingsView."""
     from minibot.config.keys import resolve_api_key
-    from minibot.config.platform_models import platform_models_public
+    from minibot.config.platform_models import (
+        any_platform_model_available,
+        effective_chat_model,
+        platform_models_public,
+        resolve_platform_runtime,
+    )
     from minibot.config.settings import get_settings
     from minibot.workspace import default_workspace
 
@@ -193,14 +202,11 @@ def settings_public_payload(config: AppConfig) -> dict[str, Any]:
     presets = presets_public_list(config)
     settings = get_settings()
     provider_name = (config.provider or "openai").strip() or "openai"
+    platform_rt = None
     if provider_name == "auto":
-        from minibot.config.platform_models import any_platform_model_available
-
         has_key = bool(user_key) or any_platform_model_available()
         resolved_provider = config.provider
     elif getattr(config, "active_platform_model", ""):
-        from minibot.config.platform_models import resolve_platform_runtime
-
         platform_rt = resolve_platform_runtime(config.active_platform_model)
         has_key = bool(platform_rt and platform_rt.available) or bool(
             resolve_api_key(provider_name, user_key=user_key)
@@ -220,7 +226,7 @@ def settings_public_payload(config: AppConfig) -> dict[str, Any]:
         "active_preset": config.active_preset,
         "active_platform_model": getattr(config, "active_platform_model", "") or "",
         "agent": {
-            "model": config.model,
+            "model": effective_chat_model(config) or config.model,
             "provider": config.provider,
             "resolved_provider": resolved_provider,
             "has_api_key": has_key,
