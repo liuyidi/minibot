@@ -37,7 +37,7 @@ COPY --from=webui /nanobot/web/dist /app/webui-dist
 COPY --from=langfuse_sdk . /tmp/sdk-python
 
 RUN pip install --no-cache-dir -i https://mirrors.aliyun.com/pypi/simple/ --trusted-host mirrors.aliyun.com --upgrade pip \
-    && pip install --no-cache-dir -i https://mirrors.aliyun.com/pypi/simple/ --trusted-host mirrors.aliyun.com . /tmp/sdk-python \
+    && pip install --no-cache-dir -i https://mirrors.aliyun.com/pypi/simple/ --trusted-host mirrors.aliyun.com '.[e2b]' /tmp/sdk-python \
     && rm -rf /tmp/sdk-python /root/.cache/pip
 
 ENV MINIBOT_SERVER_HOST=0.0.0.0 \
