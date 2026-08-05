@@ -62,7 +62,8 @@
     "portalHome": "Accueil",
     "portalLangfuse": "Observabilité",
     "portalKnowledge": "Connaissances",
-    "portalDevui": "Notes de développement"
+    "portalDevui": "Notes de développement",
+    "channels": "Canaux IM"
   },
   "settings": {
     "backToChat": "Retour au chat",
@@ -86,7 +87,8 @@
       "mcp": "MCP",
       "apps": "Applications",
       "automations": "Automatisations",
-      "skills": "Compétences"
+      "skills": "Compétences",
+      "channels": "Canaux IM"
     },
     "sections": {
       "interface": "Interface utilisateur",

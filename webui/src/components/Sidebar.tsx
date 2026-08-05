@@ -9,6 +9,7 @@ import {
   Home,
   Library,
   Menu,
+  MessageSquare,
   Search,
   Settings,
   SquarePen,
@@ -46,8 +47,9 @@ interface SidebarProps {
   onOpenApps: () => void;
   onOpenSkills: () => void;
   onOpenAutomations: () => void;
+  onOpenChannels: () => void;
   onOpenSearch: () => void;
-  activeUtility?: "apps" | "skills" | "automations" | null;
+  activeUtility?: "apps" | "skills" | "automations" | "channels" | null;
   onToggleArchived: () => void;
   onCollapse: () => void;
   onExpand?: () => void;
@@ -179,6 +181,24 @@ export function Sidebar(props: SidebarProps) {
             icon={<Blocks className="h-4 w-4" />}
           />
         ) : null}
+        {UI_ENTRY.channels ? (
+          <SidebarActionButton
+            collapsed={collapsed}
+            label={t("sidebar.channels", { defaultValue: "IM channels" })}
+            onClick={props.onOpenChannels}
+            active={props.activeUtility === "channels"}
+            icon={<MessageSquare className="h-4 w-4" />}
+          />
+        ) : null}
+        {UI_ENTRY.automations ? (
+          <SidebarActionButton
+            collapsed={collapsed}
+            label={t("sidebar.automations", { defaultValue: "Scheduled tasks" })}
+            onClick={props.onOpenAutomations}
+            active={props.activeUtility === "automations"}
+            icon={<CalendarClock className="h-4 w-4" />}
+          />
+        ) : null}
         {UI_ENTRY.skills ? (
           <SidebarActionButton
             collapsed={collapsed}
@@ -188,13 +208,12 @@ export function Sidebar(props: SidebarProps) {
             icon={<Brain className="h-4 w-4" />}
           />
         ) : null}
-        {UI_ENTRY.automations ? (
-          <SidebarActionButton
+        {UI_ENTRY.knowledge ? (
+          <SidebarExternalLink
             collapsed={collapsed}
-            label={t("sidebar.automations", { defaultValue: "Automations" })}
-            onClick={props.onOpenAutomations}
-            active={props.activeUtility === "automations"}
-            icon={<CalendarClock className="h-4 w-4" />}
+            label={t("sidebar.portalKnowledge")}
+            href={PORTAL.knowledge}
+            icon={<Library className="h-4 w-4" />}
           />
         ) : null}
         {props.archivedCount ? (
@@ -270,12 +289,6 @@ export function Sidebar(props: SidebarProps) {
           label={t("sidebar.portalLangfuse")}
           href={PORTAL.langfuse}
           icon={<Activity className="h-4 w-4" />}
-        />
-        <SidebarExternalLink
-          collapsed={collapsed}
-          label={t("sidebar.portalKnowledge")}
-          href={PORTAL.knowledge}
-          icon={<Library className="h-4 w-4" />}
         />
         <SidebarExternalLink
           collapsed={collapsed}

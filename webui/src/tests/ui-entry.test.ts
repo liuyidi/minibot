@@ -8,11 +8,13 @@ import {
 } from "@/lib/ui-entry";
 
 describe("ui-entry gates", () => {
-  it("enables settings and keeps other sidebar utilities hidden", () => {
+  it("enables primary sidebar utilities and keeps apps hidden", () => {
     expect(UI_ENTRY.settings).toBe(true);
     expect(UI_ENTRY.apps).toBe(false);
-    expect(UI_ENTRY.skills).toBe(false);
-    expect(UI_ENTRY.automations).toBe(false);
+    expect(UI_ENTRY.skills).toBe(true);
+    expect(UI_ENTRY.automations).toBe(true);
+    expect(UI_ENTRY.channels).toBe(true);
+    expect(UI_ENTRY.knowledge).toBe(true);
   });
 
   it("exposes only the slim settings section set", () => {
@@ -20,7 +22,6 @@ describe("ui-entry gates", () => {
       "overview",
       "appearance",
       "models",
-      "channels",
       "runtime",
     ]);
     expect(SETTINGS_SHOW_PROVIDERS_PANEL).toBe(false);
@@ -31,6 +32,7 @@ describe("ui-entry gates", () => {
     expect(isEnabledSettingsSection("models")).toBe(true);
     expect(isEnabledSettingsSection("browser")).toBe(false);
     expect(isEnabledSettingsSection("apps")).toBe(false);
+    expect(isEnabledSettingsSection("channels")).toBe(false);
     expect(isEnabledSettingsSection(null)).toBe(false);
   });
 });

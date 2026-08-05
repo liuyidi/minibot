@@ -62,7 +62,8 @@
     "portalHome": "Trang chủ",
     "portalLangfuse": "Quan sát",
     "portalKnowledge": "Kho kiến thức",
-    "portalDevui": "Ghi chú dev"
+    "portalDevui": "Ghi chú dev",
+    "channels": "Kênh IM"
   },
   "settings": {
     "backToChat": "Quay lại chat",
@@ -86,7 +87,8 @@
       "mcp": "MCP",
       "apps": "Ứng dụng",
       "automations": "Tự động hóa",
-      "skills": "Kỹ năng"
+      "skills": "Kỹ năng",
+      "channels": "Kênh IM"
     },
     "sections": {
       "interface": "Giao diện",

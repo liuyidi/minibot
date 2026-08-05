@@ -1815,7 +1815,15 @@ function visibleWebuiDefaultAccessMode(mode: string | null | undefined): WebuiDe
 }
 
 function titleForSection(section: SettingsSectionKey): string {
-  return SETTINGS_NAV_ITEMS.find((item) => item.key === section)?.fallback ?? "Settings";
+  const fromNav = SETTINGS_NAV_ITEMS.find((item) => item.key === section)?.fallback;
+  if (fromNav) return fromNav;
+  const utilityFallbacks: Partial<Record<SettingsSectionKey, string>> = {
+    apps: "Apps",
+    automations: "Scheduled tasks",
+    skills: "Skills",
+    channels: "IM channels",
+  };
+  return utilityFallbacks[section] ?? "Settings";
 }
 
 function SettingsSidebar({

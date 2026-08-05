@@ -75,7 +75,14 @@ const SIDEBAR_RAIL_WIDTH = 56;
 const MOBILE_SIDEBAR_WIDTH = `min(${SIDEBAR_WIDTH}px, calc(100vw - 0.75rem))`;
 const TOKEN_REFRESH_MARGIN_MS = 30_000;
 const TOKEN_REFRESH_MIN_DELAY_MS = 5_000;
-type ShellView = "chat" | "settings" | "apps" | "automations" | "skills" | "download";
+type ShellView =
+  | "chat"
+  | "settings"
+  | "apps"
+  | "automations"
+  | "skills"
+  | "channels"
+  | "download";
 type ShellRoute = {
   view: ShellView;
   activeKey: string | null;
@@ -92,6 +99,7 @@ const SETTINGS_SECTION_KEYS: SettingsSectionKey[] = [
   "apps",
   "automations",
   "skills",
+  "channels",
   "runtime",
   "advanced",
 ];
@@ -105,7 +113,14 @@ function defaultShellRoute(): ShellRoute {
 }
 
 function shellViewForSettingsSection(section: SettingsSectionKey): ShellView {
-  if (section === "apps" || section === "automations" || section === "skills") return section;
+  if (
+    section === "apps" ||
+    section === "automations" ||
+    section === "skills" ||
+    section === "channels"
+  ) {
+    return section;
+  }
   return "settings";
 }
 
@@ -146,6 +161,9 @@ function readShellRoute(): ShellRoute {
   }
   if (path === "/skills") {
     return { view: "skills", activeKey, settingsSection: "skills" };
+  }
+  if (path === "/channels") {
+    return { view: "channels", activeKey, settingsSection: "channels" };
   }
   if (path === "/download" || path === "/download/") {
     return { view: "download", activeKey: null, settingsSection: "overview" };
@@ -1213,6 +1231,12 @@ function Shell({
     setMobileSidebarOpen(false);
   }, [activeKey, navigate]);
 
+  const onOpenChannels = useCallback(() => {
+    setSessionSearchOpen(false);
+    navigate({ view: "channels", activeKey, settingsSection: "channels" });
+    setMobileSidebarOpen(false);
+  }, [activeKey, navigate]);
+
   const onSettingsSectionChange = useCallback(
     (section: SettingsSectionKey) => {
       navigate({
@@ -1397,6 +1421,12 @@ function Shell({
       });
       return;
     }
+    if (view === "channels") {
+      document.title = t("app.documentTitle.chat", {
+        title: t("settings.nav.channels", { defaultValue: "IM channels" }),
+      });
+      return;
+    }
     if (view === "download") {
       document.title = t("app.documentTitle.chat", {
         title: downloadTitle,
@@ -1425,8 +1455,15 @@ function Shell({
     onOpenApps,
     onOpenAutomations,
     onOpenSkills,
+    onOpenChannels,
     onOpenSearch: onOpenSessionSearch,
-    activeUtility: view === "apps" || view === "automations" || view === "skills" ? view : null,
+    activeUtility:
+      view === "apps" ||
+      view === "automations" ||
+      view === "skills" ||
+      view === "channels"
+        ? view
+        : null,
     onToggleArchived,
     pinnedKeys: sidebarState.pinned_keys,
     archivedKeys: sidebarState.archived_keys,

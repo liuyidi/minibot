@@ -62,7 +62,8 @@
     "portalHome": "入口首頁",
     "portalLangfuse": "可觀測 (Langfuse)",
     "portalKnowledge": "知識庫",
-    "portalDevui": "開發筆記"
+    "portalDevui": "開發筆記",
+    "channels": "IM 頻道"
   },
   "settings": {
     "backToChat": "返回聊天",
@@ -86,7 +87,8 @@
       "mcp": "MCP",
       "apps": "應用",
       "automations": "自動任務",
-      "skills": "技能"
+      "skills": "技能",
+      "channels": "IM 頻道"
     },
     "sections": {
       "interface": "介面",

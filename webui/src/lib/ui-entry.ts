@@ -4,8 +4,10 @@
  */
 export const UI_ENTRY = {
   apps: false,
-  skills: false,
-  automations: false,
+  skills: true,
+  automations: true,
+  channels: true,
+  knowledge: true,
   settings: true,
 } as const;
 
@@ -14,7 +16,6 @@ export const SETTINGS_SECTIONS = [
   "overview",
   "appearance",
   "models",
-  "channels",
   "runtime",
 ] as const;
 

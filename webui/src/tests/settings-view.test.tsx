@@ -203,7 +203,7 @@ describe("SettingsView Apps catalog", () => {
       showSidebar: false,
     });
 
-    expect(screen.getByRole("heading", { name: "Automations" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Scheduled tasks" })).toBeInTheDocument();
     expect(await screen.findByText("No automations yet.")).toBeInTheDocument();
     expect(screen.queryByText("Settings")).not.toBeInTheDocument();
   });

@@ -55,7 +55,8 @@
       "ariaLabel": "Change language"
     },
     "apps": "Apps",
-    "automations": "Automations",
+    "channels": "IM channels",
+    "automations": "Scheduled tasks",
     "skills": {
       "title": "Skills"
     },
@@ -85,8 +86,9 @@
       "runtime": "System",
       "advanced": "Security",
       "apps": "Apps",
-      "automations": "Automations",
-      "skills": "Skills"
+      "automations": "Scheduled tasks",
+      "skills": "Skills",
+      "channels": "IM channels"
     },
     "sections": {
       "interface": "Interface",
@@ -1012,7 +1014,13 @@
       "title": "What could be improved?",
       "description": "Your feedback helps improve future responses.",
       "reasonLabel": "Reason",
-      "reasons": { "incorrect": "Incorrect", "incomplete": "Incomplete", "style": "Style or format", "tool": "Tool execution", "other": "Other" },
+      "reasons": {
+        "incorrect": "Incorrect",
+        "incomplete": "Incomplete",
+        "style": "Style or format",
+        "tool": "Tool execution",
+        "other": "Other"
+      },
       "commentPlaceholder": "Optional details",
       "skip": "Skip",
       "submit": "Submit feedback"

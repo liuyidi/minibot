@@ -62,7 +62,8 @@
     "portalHome": "홈",
     "portalLangfuse": "관찰성",
     "portalKnowledge": "지식 베이스",
-    "portalDevui": "개발 노트"
+    "portalDevui": "개발 노트",
+    "channels": "IM 채널"
   },
   "settings": {
     "backToChat": "채팅으로 돌아가기",
@@ -86,7 +87,8 @@
       "mcp": "MCP",
       "apps": "앱",
       "automations": "자동화",
-      "skills": "스킬"
+      "skills": "스킬",
+      "channels": "IM 채널"
     },
     "sections": {
       "interface": "인터페이스",

@@ -271,18 +271,20 @@ describe("App layout", () => {
     expect(asideClassNames.some((cls) => cls.includes("lg:block"))).toBe(true);
   });
 
-  it("keeps Apps, Skills, and Automations hidden from the main sidebar", async () => {
+  it("shows IM channels, scheduled tasks, skills, and knowledge in the main sidebar", async () => {
     render(<App />);
 
     await waitFor(() => expect(connectSpy).toHaveBeenCalled());
     const sidebar = screen.getByRole("navigation", { name: "Sidebar navigation" });
     expect(within(sidebar).queryByRole("button", { name: "Apps" })).not.toBeInTheDocument();
-    expect(within(sidebar).queryByRole("button", { name: "Skills" })).not.toBeInTheDocument();
-    expect(within(sidebar).queryByRole("button", { name: "Automations" })).not.toBeInTheDocument();
+    expect(within(sidebar).getByRole("button", { name: "IM channels" })).toBeInTheDocument();
+    expect(within(sidebar).getByRole("button", { name: "Scheduled tasks" })).toBeInTheDocument();
+    expect(within(sidebar).getByRole("button", { name: "Skills" })).toBeInTheDocument();
+    expect(within(sidebar).getByRole("link", { name: "Knowledge" })).toBeInTheDocument();
     expect(within(sidebar).getByRole("button", { name: "Settings" })).toBeInTheDocument();
   });
 
-  it("opens Skills via direct route while the sidebar entry stays hidden", async () => {
+  it("opens Skills from the main sidebar", async () => {
     mockFetchRoutes({
       "/api/settings": baseSettingsPayload(),
       "/api/settings/cli-apps": { apps: [], installed_count: 0, catalog_updated_at: "2026-04-18" },
@@ -314,13 +316,12 @@ describe("App layout", () => {
         raw_markdown: "---\nname: github\n---\nUse GitHub CLI.",
       },
     });
-    window.history.replaceState(null, "", "/#/skills");
 
     render(<App />);
 
     await waitFor(() => expect(connectSpy).toHaveBeenCalled());
     const sidebar = screen.getByRole("navigation", { name: "Sidebar navigation" });
-    expect(within(sidebar).queryByRole("button", { name: "Skills" })).not.toBeInTheDocument();
+    fireEvent.click(within(sidebar).getByRole("button", { name: "Skills" }));
 
     expect(await screen.findByRole("heading", { name: "Skills" })).toBeInTheDocument();
     expect(screen.getByText("cron")).toBeInTheDocument();
@@ -328,6 +329,7 @@ describe("App layout", () => {
     expect(screen.getByText("Missing: CLI: gh")).toBeInTheDocument();
     expect(screen.getByRole("navigation", { name: "Sidebar navigation" })).toBeInTheDocument();
     expect(screen.queryByRole("navigation", { name: "Settings sections" })).not.toBeInTheDocument();
+    expect(window.location.hash).toBe("#/skills");
     expect(document.title).toBe("Skills · minibot");
 
     fireEvent.click(screen.getByRole("button", { name: "Back to chat" }));
@@ -438,9 +440,9 @@ describe("App layout", () => {
 
     await waitFor(() => expect(connectSpy).toHaveBeenCalled());
     const sidebar = screen.getByRole("navigation", { name: "Sidebar navigation" });
-    expect(within(sidebar).queryByRole("button", { name: "Automations" })).not.toBeInTheDocument();
+    expect(within(sidebar).getByRole("button", { name: "Scheduled tasks" })).toBeInTheDocument();
 
-    const heading = await screen.findByRole("heading", { name: "Automations" });
+    const heading = await screen.findByRole("heading", { name: "Scheduled tasks" });
     expect(heading).toBeInTheDocument();
     const automationsMain = heading.closest("main");
     expect(automationsMain).not.toBeNull();
@@ -453,7 +455,7 @@ describe("App layout", () => {
     expect(screen.queryByText("weixin:wx-chat")).not.toBeInTheDocument();
     expect(screen.queryByText("memory with dream state")).not.toBeInTheDocument();
     expect(screen.getByText("heartbeat")).toBeInTheDocument();
-    expect(document.title).toBe("Automations · minibot");
+    expect(document.title).toBe("Scheduled tasks · minibot");
 
     const searchInput = within(automationsMain as HTMLElement).getByPlaceholderText(
       "Search task, message, linked chat, or schedule",
@@ -668,7 +670,7 @@ describe("App layout", () => {
 
     await waitFor(() => expect(connectSpy).toHaveBeenCalled());
 
-    const heading = await screen.findByRole("heading", { name: "自动任务" });
+    const heading = await screen.findByRole("heading", { name: "定时任务" });
     expect(heading).toBeInTheDocument();
     const automationsMain = heading.closest("main");
     expect(automationsMain).not.toBeNull();
@@ -681,7 +683,7 @@ describe("App layout", () => {
     expect(screen.queryByText("近期无问题")).not.toBeInTheDocument();
     expect(screen.queryByText("Workspace automations")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "刷新" })).not.toBeInTheDocument();
-    expect(document.title).toBe("自动任务 · minibot");
+    expect(document.title).toBe("定时任务 · minibot");
   });
 
   it("fully collapses the native host sidebar and previews it on hover", async () => {
@@ -1507,8 +1509,8 @@ describe("App layout", () => {
     const sidebar = screen.getByRole("navigation", { name: "Sidebar navigation" });
     expect(within(sidebar).getByRole("button", { name: "Search" })).toBeInTheDocument();
     expect(within(sidebar).queryByRole("button", { name: "Apps" })).not.toBeInTheDocument();
-    expect(within(sidebar).queryByRole("button", { name: "Skills" })).not.toBeInTheDocument();
-    expect(within(sidebar).queryByRole("button", { name: "Automations" })).not.toBeInTheDocument();
+    expect(within(sidebar).getByRole("button", { name: "Skills" })).toBeInTheDocument();
+    expect(within(sidebar).getByRole("button", { name: "Scheduled tasks" })).toBeInTheDocument();
     fireEvent.click(within(sidebar).getByRole("button", { name: "Settings" }));
 
     expect(await screen.findByRole("heading", { name: "Overview" })).toBeInTheDocument();
@@ -1534,6 +1536,7 @@ describe("App layout", () => {
     expect(within(settingsNav).queryByRole("button", { name: "Web" })).not.toBeInTheDocument();
     expect(within(settingsNav).queryByRole("button", { name: "Security" })).not.toBeInTheDocument();
     expect(within(settingsNav).queryByRole("button", { name: "Apps" })).not.toBeInTheDocument();
+    expect(within(settingsNav).queryByRole("button", { name: "IM channels" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Sign out" })).toBeInTheDocument();
     fireEvent.click(within(settingsNav).getByRole("button", { name: "Appearance" }));
     expect(screen.getByText("Brand logos")).toBeInTheDocument();

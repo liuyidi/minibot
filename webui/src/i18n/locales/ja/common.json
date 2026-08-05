@@ -62,7 +62,8 @@
     "portalHome": "ホーム",
     "portalLangfuse": "オブザーバビリティ",
     "portalKnowledge": "ナレッジ",
-    "portalDevui": "開発メモ"
+    "portalDevui": "開発メモ",
+    "channels": "IMチャンネル"
   },
   "settings": {
     "backToChat": "チャットに戻る",
@@ -86,7 +87,8 @@
       "mcp": "MCP",
       "apps": "アプリ",
       "automations": "自動タスク",
-      "skills": "スキル"
+      "skills": "スキル",
+      "channels": "IMチャンネル"
     },
     "sections": {
       "interface": "インターフェース",

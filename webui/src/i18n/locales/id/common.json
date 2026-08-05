@@ -62,7 +62,8 @@
     "portalHome": "Beranda",
     "portalLangfuse": "Observabilitas",
     "portalKnowledge": "Pengetahuan",
-    "portalDevui": "Catatan dev"
+    "portalDevui": "Catatan dev",
+    "channels": "Saluran IM"
   },
   "settings": {
     "backToChat": "Kembali ke chat",
@@ -86,7 +87,8 @@
       "mcp": "MCP",
       "apps": "Aplikasi",
       "automations": "Otomasi",
-      "skills": "Skill"
+      "skills": "Skill",
+      "channels": "Saluran IM"
     },
     "sections": {
       "interface": "Antarmuka",
