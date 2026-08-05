@@ -132,7 +132,25 @@
       "loadFailed": "Model list unavailable.",
       "unsupportedModelList": "Type a model ID manually.",
       "providerNotConfigured": "Configure this provider before loading models.",
-      "autoProviderCustomOnly": "Auto provider mode uses custom model IDs."
+      "autoProviderCustomOnly": "Auto provider mode uses custom model IDs.",
+      "platformModels": "Platform models",
+      "platformModelsHelp": "Built-in models funded by the host. No API key required.",
+      "platformUnavailable": "Platform key not configured",
+      "yourConfigurations": "Your configurations",
+      "yourConfigurationsHelp": "Custom presets and BYOK providers.",
+      "badgeEnabled": "Enabled",
+      "badgeUnavailable": "Unavailable",
+      "modelNameLabel": "Model Name",
+      "copyModelName": "Copy model name",
+      "descriptions": {
+        "auto": "Picks the best available platform model for speed and quality.",
+        "platform-deepseek-v4-flash": "Fast DeepSeek model for everyday chat and light coding.",
+        "platform-deepseek-v4-pro": "Stronger DeepSeek model for harder reasoning and coding tasks.",
+        "platform-qwen3.7-plus": "Qwen Plus for balanced multilingual chat and agent work.",
+        "platform-glm-5.2": "GLM for general reasoning and Chinese-centric workflows.",
+        "platform-kimi-k2.7-code": "Kimi coding model tuned for repository-scale edits.",
+        "platform-minimax-m3": "MiniMax M3 for high-throughput OpenAI-compatible calls."
+      }
     },
     "rows": {
       "theme": "Theme",

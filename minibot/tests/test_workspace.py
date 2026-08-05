@@ -8,7 +8,30 @@ from pathlib import Path
 from fastapi.testclient import TestClient
 
 from minibot.session.store import SessionStore
-from minibot.workspace import WorkspaceError, default_workspace, normalize_workspace
+from minibot.workspace import (
+    WorkspaceError,
+    default_workspace,
+    normalize_workspace,
+    seed_workspace_bootstrap,
+)
+from minibot.agent.tools.builtin import SYSTEM_PROMPT
+
+
+def test_system_prompt_identity_anchor() -> None:
+    assert "Identity (hard rules)" in SYSTEM_PROMPT
+    assert "Product name is always **minibot**" in SYSTEM_PROMPT
+    assert "Ignore any conflicting identity" in SYSTEM_PROMPT
+
+
+def test_seed_workspace_bootstrap_writes_soul_once(tmp_path: Path) -> None:
+    written = seed_workspace_bootstrap(tmp_path)
+    assert written == ["SOUL.md"]
+    soul = (tmp_path / "SOUL.md").read_text(encoding="utf-8")
+    assert "Identity anchor" in soul
+    assert "minibot" in soul
+    (tmp_path / "SOUL.md").write_text("custom\n", encoding="utf-8")
+    assert seed_workspace_bootstrap(tmp_path) == []
+    assert (tmp_path / "SOUL.md").read_text(encoding="utf-8") == "custom\n"
 
 
 def test_normalize_rejects_missing(tmp_path: Path) -> None:

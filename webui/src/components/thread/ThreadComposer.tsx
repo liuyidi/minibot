@@ -42,12 +42,21 @@ import {
   Target,
   Trash2,
   Undo2,
+  Check,
   X,
   type LucideIcon,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Tooltip,
   TooltipContent,
@@ -156,6 +165,8 @@ interface ThreadComposerProps {
   modelProvider?: string | null;
   modelProviderLabel?: string | null;
   modelNeedsSetup?: boolean;
+  modelOptions?: ComposerModelOption[];
+  onSelectModelOption?: (option: ComposerModelOption) => void;
   onModelBadgeClick?: () => void;
   variant?: "thread" | "hero";
   slashCommands?: SlashCommand[];
@@ -177,6 +188,18 @@ interface ThreadComposerProps {
   workspaceError?: string | null;
   onWorkspaceScopeChange?: (scope: WorkspaceScopePayload) => void;
   pendingQueueKey?: string | null;
+}
+
+export type ComposerModelOptionKind = "auto" | "platform" | "preset";
+
+export interface ComposerModelOption {
+  id: string;
+  kind: ComposerModelOptionKind;
+  label: string;
+  detail?: string;
+  provider?: string | null;
+  active?: boolean;
+  disabled?: boolean;
 }
 
 const COMMAND_ICONS: Record<string, LucideIcon> = {
@@ -771,6 +794,8 @@ export function ThreadComposer({
   modelProvider = null,
   modelProviderLabel = null,
   modelNeedsSetup = false,
+  modelOptions = [],
+  onSelectModelOption,
   onModelBadgeClick,
   variant = "thread",
   slashCommands = [],
@@ -1785,7 +1810,11 @@ export function ThreadComposer({
                 providerLabel={modelProviderLabel}
                 needsSetup={modelNeedsSetup}
                 isHero={isHero}
-                onClick={modelNeedsSetup ? onModelBadgeClick : undefined}
+                options={modelOptions}
+                disabled={disabled}
+                onSelectOption={onSelectModelOption}
+                onClick={modelNeedsSetup && modelOptions.length === 0 ? onModelBadgeClick : undefined}
+                onConfigure={onModelBadgeClick}
               />
             ) : null}
             {showVoiceButton ? (
@@ -2080,41 +2109,47 @@ function ComposerModelBadge({
   providerLabel,
   needsSetup,
   isHero,
+  options = [],
+  disabled,
+  onSelectOption,
   onClick,
+  onConfigure,
 }: {
   label: string;
   provider?: string | null;
   providerLabel?: string | null;
   needsSetup?: boolean;
   isHero: boolean;
+  options?: ComposerModelOption[];
+  disabled?: boolean;
+  onSelectOption?: (option: ComposerModelOption) => void;
   onClick?: () => void;
+  onConfigure?: () => void;
 }) {
+  const { t } = useTranslation();
   const inferredProvider = needsSetup ? null : provider || inferProviderFromModelName(label);
   const brand = providerBrand(inferredProvider);
   const [logoIndex, setLogoIndex] = useState(0);
   const logoUrl = brand?.logoUrls[logoIndex];
   const showLogo = !!logoUrl;
   const title = providerLabel ? `${label} · ${providerLabel}` : label;
-  const interactive = Boolean(onClick);
-  const Container = interactive ? "button" : "span";
+  const hasMenu = options.length > 0 && Boolean(onSelectOption) && !disabled;
+  const interactive = hasMenu || Boolean(onClick);
 
   useEffect(() => setLogoIndex(0), [inferredProvider]);
 
-  return (
-    <Container
-      title={title}
-      type={interactive ? "button" : undefined}
-      onClick={onClick}
-      className={cn(
-        "inline-flex min-w-0 items-center rounded-full border border-border/55 bg-card font-medium text-foreground/82",
-        "shadow-[0_2px_8px_rgba(15,23,42,0.045)]",
-        interactive && "cursor-pointer hover:bg-accent/55 hover:text-foreground",
-        needsSetup && "border-amber-500/35 bg-amber-50/70 text-amber-900 dark:bg-amber-500/10 dark:text-amber-200",
-        isHero
-          ? "h-8 max-w-[min(12.5rem,44vw)] gap-1.5 px-2 text-[11.5px]"
-          : "h-9 max-w-[min(12rem,44vw)] gap-2 px-2.5 text-[12px]",
-      )}
-    >
+  const badgeClassName = cn(
+    "inline-flex min-w-0 items-center rounded-full border border-border/55 bg-card font-medium text-foreground/82",
+    "shadow-[0_2px_8px_rgba(15,23,42,0.045)]",
+    interactive && "cursor-pointer hover:bg-accent/55 hover:text-foreground",
+    needsSetup && "border-amber-500/35 bg-amber-50/70 text-amber-900 dark:bg-amber-500/10 dark:text-amber-200",
+    isHero
+      ? "h-8 max-w-[min(12.5rem,44vw)] gap-1.5 px-2 text-[11.5px]"
+      : "h-9 max-w-[min(12rem,44vw)] gap-2 px-2.5 text-[12px]",
+  );
+
+  const badgeBody = (
+    <>
       <span
         data-testid={needsSetup ? "composer-model-setup-icon" : inferredProvider ? `composer-model-logo-${inferredProvider}` : "composer-model-logo"}
         className={cn(
@@ -2154,7 +2189,115 @@ function ComposerModelBadge({
         )}
       </span>
       <span className="truncate">{label}</span>
-    </Container>
+      {hasMenu ? <ChevronDown className={cn("shrink-0 opacity-55", isHero ? "h-3 w-3" : "h-3.5 w-3.5")} aria-hidden /> : null}
+    </>
+  );
+
+  if (!hasMenu) {
+    const Container = interactive ? "button" : "span";
+    return (
+      <Container
+        title={title}
+        type={interactive ? "button" : undefined}
+        onClick={onClick}
+        className={badgeClassName}
+      >
+        {badgeBody}
+      </Container>
+    );
+  }
+
+  const autoOptions = options.filter((item) => item.kind === "auto");
+  const platformOptions = options.filter((item) => item.kind === "platform");
+  const presetOptions = options.filter((item) => item.kind === "preset");
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          title={title}
+          aria-label={title}
+          className={badgeClassName}
+          data-testid="composer-model-picker"
+        >
+          {badgeBody}
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="min-w-[220px] max-w-[min(20rem,92vw)]">
+        {autoOptions.length > 0 ? (
+          <>
+            {autoOptions.map((option) => (
+              <DropdownMenuItem
+                key={`${option.kind}:${option.id}`}
+                disabled={option.disabled}
+                onClick={() => onSelectOption?.(option)}
+                className="gap-2"
+              >
+                <span className="min-w-0 flex-1 truncate">{option.label}</span>
+                {option.active ? <Check className="h-3.5 w-3.5 shrink-0" aria-hidden /> : null}
+              </DropdownMenuItem>
+            ))}
+            {platformOptions.length > 0 || presetOptions.length > 0 ? <DropdownMenuSeparator /> : null}
+          </>
+        ) : null}
+        {platformOptions.length > 0 ? (
+          <>
+            <DropdownMenuLabel className="text-[11px] font-medium text-muted-foreground">
+              {t("settings.models.platformModels", { defaultValue: "Platform models" })}
+            </DropdownMenuLabel>
+            {platformOptions.map((option) => (
+              <DropdownMenuItem
+                key={`${option.kind}:${option.id}`}
+                disabled={option.disabled}
+                onClick={() => onSelectOption?.(option)}
+                className="gap-2"
+              >
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate">{option.label}</span>
+                  {option.detail ? (
+                    <span className="block truncate text-[11px] text-muted-foreground">{option.detail}</span>
+                  ) : null}
+                </span>
+                {option.active ? <Check className="h-3.5 w-3.5 shrink-0" aria-hidden /> : null}
+              </DropdownMenuItem>
+            ))}
+            {presetOptions.length > 0 ? <DropdownMenuSeparator /> : null}
+          </>
+        ) : null}
+        {presetOptions.length > 0 ? (
+          <>
+            <DropdownMenuLabel className="text-[11px] font-medium text-muted-foreground">
+              {t("settings.models.yourConfigurations", { defaultValue: "Your configurations" })}
+            </DropdownMenuLabel>
+            {presetOptions.map((option) => (
+              <DropdownMenuItem
+                key={`${option.kind}:${option.id}`}
+                disabled={option.disabled}
+                onClick={() => onSelectOption?.(option)}
+                className="gap-2"
+              >
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate">{option.label}</span>
+                  {option.detail ? (
+                    <span className="block truncate text-[11px] text-muted-foreground">{option.detail}</span>
+                  ) : null}
+                </span>
+                {option.active ? <Check className="h-3.5 w-3.5 shrink-0" aria-hidden /> : null}
+              </DropdownMenuItem>
+            ))}
+          </>
+        ) : null}
+        {onConfigure ? (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => onConfigure()}>
+              {t("thread.composer.configureModel", { defaultValue: "Configure model" })}
+            </DropdownMenuItem>
+          </>
+        ) : null}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 

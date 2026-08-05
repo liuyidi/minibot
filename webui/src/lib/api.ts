@@ -646,6 +646,30 @@ export async function updateModelConfiguration(
   );
 }
 
+export async function activatePlatformModel(
+  token: string,
+  modelId: string,
+  base: string = "",
+): Promise<SettingsPayload> {
+  return request<SettingsPayload>(
+    `${base}/api/settings/platform-models/${encodeURIComponent(modelId)}/activate`,
+    token,
+    { method: "POST" },
+  );
+}
+
+export async function activateModelConfiguration(
+  token: string,
+  presetId: string,
+  base: string = "",
+): Promise<SettingsPayload> {
+  return request<SettingsPayload>(
+    `${base}/api/settings/model-configurations/${encodeURIComponent(presetId)}/activate`,
+    token,
+    { method: "POST" },
+  );
+}
+
 export async function updateProviderSettings(
   token: string,
   update: ProviderSettingsUpdate,

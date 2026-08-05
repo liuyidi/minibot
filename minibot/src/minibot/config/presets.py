@@ -154,9 +154,13 @@ def activate_preset(config: Any, preset_id: str) -> Any:
         )
     api_base = _default_base_for(provider, preset.api_base or "")
     api_key = (preset.api_key or "").strip()
-    # Ollama / local may allow empty key
+    # Ollama / local may allow empty key; platform env can also fund the provider.
+    # The seeded ``default`` preset may be empty until the user adds BYOK.
     if not api_key and not (spec.is_local or provider == "ollama"):
-        raise PresetError("preset api_key is required")
+        from minibot.config.keys import resolve_api_key
+
+        if not resolve_api_key(provider, user_key="") and preset.id != "default":
+            raise PresetError("preset api_key is required")
     if not api_base and provider != "custom":
         raise PresetError("preset api_base is required")
     config.model = (preset.model or "").strip() or config.model

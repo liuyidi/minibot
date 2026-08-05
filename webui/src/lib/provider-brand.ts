@@ -92,6 +92,9 @@ export function logoFallbackUrls(logoUrl: string | null | undefined): string[] {
 export const PROVIDER_BRAND_ALIASES: Record<string, string> = {
   brave_search: "brave",
   byteplus_coding_plan: "byteplus",
+  doubao: "volcengine",
+  glm: "zhipu",
+  kimi: "moonshot",
   mimo: "xiaomi_mimo",
   minimaxAnthropic: "minimax",
   minimax_anthropic: "minimax",
@@ -103,9 +106,13 @@ export const PROVIDER_BRAND_ALIASES: Record<string, string> = {
 export const PROVIDER_LABEL_ALIASES: Record<string, string> = {
   brave_search: "Brave Search",
   byteplus_coding_plan: "BytePlus",
+  doubao: "Doubao",
+  glm: "GLM",
+  kimi: "Kimi",
   minimaxAnthropic: "MiniMax",
   minimax_anthropic: "MiniMax",
   openai_codex: "OpenAI",
+  qwen: "Qwen",
   volcengine_coding_plan: "Volcengine",
 };
 
@@ -134,9 +141,11 @@ const PROVIDER_BRANDS: Record<string, ProviderBrand> = {
   longcat: brand("longcatai.org", "#4F8CFF", "LC", [
     "https://www.longcatai.org/favicon.svg",
   ]),
-  minimax: brand("minimax.io", "#111827", "MM"),
+  minimax: brand("minimax.io", "#E11D48", "MM"),
   mistral: brand("mistral.ai", "#FA520F", "M"),
-  moonshot: brand("moonshot.ai", "#111827", "MS"),
+  moonshot: brand("moonshot.ai", "#1F2937", "K", [
+    "https://kimi.moonshot.cn/favicon.ico",
+  ]),
   novita: brand("novita.ai", "#7C3AED", "N"),
   olostep: brand("olostep.com", "#111827", "O"),
   nvidia: brand("nvidia.com", "#76B900", "NV"),
@@ -145,6 +154,9 @@ const PROVIDER_BRANDS: Record<string, ProviderBrand> = {
   openrouter: brand("openrouter.ai", "#111827", "OR"),
   ovms: brand("openvino.ai", "#0071C5", "OV"),
   qianfan: brand("cloud.baidu.com", "#2932E1", "QF"),
+  qwen: brand("qwen.ai", "#6D44E8", "QW", [
+    "/brand/qwen.svg",
+  ]),
   searxng: brand("searxng.org", "#3050FF", "SX"),
   siliconflow: brand("siliconflow.cn", "#111827", "SF"),
   skywork: brand("skywork.ai", "#5B5BF6", "SW"),
@@ -188,7 +200,8 @@ export function inferProviderFromModelName(modelName: string | null | undefined)
   if (/gpt-|^o\d|chatgpt|openai/.test(normalized)) return "openai";
   if (/deepseek/.test(normalized)) return "deepseek";
   if (/gemini/.test(normalized)) return "gemini";
-  if (/qwen|dashscope/.test(normalized)) return "dashscope";
+  if (/qwen/.test(normalized)) return "qwen";
+  if (/dashscope/.test(normalized)) return "dashscope";
   if (/kimi|moonshot/.test(normalized)) return "moonshot";
   if (/minimax/.test(normalized)) return "minimax";
   if (/mistral|mixtral/.test(normalized)) return "mistral";

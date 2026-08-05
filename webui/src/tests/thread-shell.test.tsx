@@ -325,6 +325,57 @@ describe("ThreadShell", () => {
     expect(client.sendMessage).not.toHaveBeenCalled();
   });
 
+  it("shows the active platform model instead of not configured", async () => {
+    const client = makeClient();
+    const settings = modelSettings("deepseek-v4-flash", "deepseek");
+    settings.agent.has_api_key = true;
+    settings.agent.provider = "custom";
+    settings.agent.model = "minimax-m3";
+    settings.active_platform_model = "platform-minimax-m3";
+    settings.platform_models = [
+      {
+        id: "platform-minimax-m3",
+        label: "MiniMax M3",
+        provider: "minimax",
+        model: "minimax-m3",
+        api_base: "https://example.com/v1",
+        source: "platform",
+        available: true,
+      },
+      {
+        id: "platform-deepseek-v4-flash",
+        label: "DeepSeek V4 Flash",
+        provider: "deepseek",
+        model: "deepseek-v4-flash",
+        api_base: "https://api.deepseek.com/v1",
+        source: "platform",
+        available: true,
+      },
+    ];
+    // Stale BYOK preset provider must not force "not configured".
+    settings.model_presets[0].provider = "deepseek";
+    settings.providers = settings.providers.map((provider) =>
+      provider.name === "deepseek" ? { ...provider, configured: false } : provider,
+    );
+
+    render(
+      wrap(
+        client,
+        <ThreadShell
+          session={session("platform-model")}
+          title="Platform model"
+          onToggleSidebar={() => {}}
+          settingsSnapshot={settings}
+        />,
+        "minimax-m3",
+      ),
+    );
+
+    expect(await screen.findByTestId("composer-model-picker")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /minimax-m3/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Model not configured" })).not.toBeInTheDocument();
+  });
+
   it("keeps image generation controls out of the composer", async () => {
     const client = makeClient();
     const disabledSettings = modelSettings("deepseek-v4-pro", "deepseek");

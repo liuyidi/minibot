@@ -66,6 +66,8 @@ def build_provider_chain(
     When ``fault`` (FaultController) is provided, the primary slot is wrapped with
     ``FaultInjectingProvider`` so Dev UI can arm soft_error / 429 / 5xx / timeout.
     """
+    from minibot.config.keys import resolve_api_key
+    from minibot.config.platform_models import resolve_platform_runtime
     from minibot.config.presets import ensure_presets, find_preset
     from minibot.providers.fault_inject import FaultInjectingProvider
 
@@ -75,8 +77,37 @@ def build_provider_chain(
     primary_label = (active.label if active else "") or primary_id
     primary_provider_name = config.provider or "openai"
     primary_model = config.model
-    primary_key = config.openai_api_key or ""
+    primary_key = resolve_api_key(
+        primary_provider_name,
+        user_key=getattr(config, "openai_api_key", None) or "",
+    )
     primary_base = config.openai_base_url or ""
+
+    platform_id = (getattr(config, "active_platform_model", None) or "").strip()
+    if platform_id:
+        runtime = resolve_platform_runtime(platform_id)
+        if runtime is not None and runtime.available:
+            primary_id = runtime.id
+            primary_label = runtime.label
+            primary_provider_name = runtime.provider
+            primary_model = runtime.model
+            primary_key = runtime.api_key
+            primary_base = runtime.api_base or primary_base
+    elif (primary_provider_name or "").strip() == "auto":
+        # Auto: first available platform builtin (operator-funded).
+        from minibot.config.platform_models import PLATFORM_MODELS
+
+        for item in PLATFORM_MODELS:
+            runtime = resolve_platform_runtime(item.id)
+            if runtime is None or not runtime.available:
+                continue
+            primary_id = runtime.id
+            primary_label = runtime.label
+            primary_provider_name = runtime.provider
+            primary_model = runtime.model
+            primary_key = runtime.api_key
+            primary_base = runtime.api_base or primary_base
+            break
 
     primary_impl = build_provider(
         provider=primary_provider_name,
@@ -116,7 +147,7 @@ def build_provider_chain(
             impl = build_provider(
                 provider=preset.provider,
                 model=preset.model,
-                api_key=preset.api_key,
+                api_key=resolve_api_key(preset.provider, user_key=preset.api_key or ""),
                 api_base=preset.api_base,
             )
         except ProviderError:

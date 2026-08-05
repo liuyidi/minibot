@@ -189,6 +189,23 @@ async def activate_model_configuration(
         activate_preset(state.config, preset_id)
     except PresetError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    state.config.active_platform_model = ""
+    state.save_config()
+    return settings_public_payload(state.config)
+
+
+@router.post("/platform-models/{model_id}/activate")
+async def activate_platform_model(
+    _auth: AuthDep,
+    state: StateDep,
+    model_id: str,
+) -> dict[str, Any]:
+    from minibot.config.platform_models import apply_platform_model
+
+    try:
+        apply_platform_model(state.config, model_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
     state.save_config()
     return settings_public_payload(state.config)
 

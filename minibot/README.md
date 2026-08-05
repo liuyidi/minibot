@@ -38,9 +38,24 @@ docker run --rm -p 8766:8766 \
   minibot
 ```
 
-### 多 LLM（OpenAI-compat presets）
+### 平台内置模型（`.env.models`）
 
-仍统一走 OpenAI Compatible 协议。在 Chat → Settings 里可新建多套 preset（DeepSeek / OpenAI / 内网网关等），切换后下一轮对话生效。
+运营方密钥按 slot 写在 env（见 `.env.models.example`），Settings 里显示为 platform models。  
+多数槽位走 **OpenAI-compat**；`doubao` 走 **Anthropic Messages**。
+
+推荐拆分后合并：
+
+```bash
+cp .env.runtime.example .env.runtime
+cp .env.models.example .env.models   # 填入各 SLOT 的 KEY/BASE/MODEL
+./scripts/merge-env.sh               # → .env（gitignore）
+```
+
+部署到 ECS 时把合并结果写入 compose `.env`，或把 `.env.models` 挂到 `MINIBOT_SERVER_DATA_DIR`。
+
+### 多 LLM（用户 preset）
+
+仍可在 Chat → Settings 新建 BYOK preset（OpenAI-compat / Anthropic），切换后下一轮生效。
 
 ```bash
 # 或用 API
@@ -51,7 +66,7 @@ curl -X POST http://127.0.0.1:8766/api/settings/model-configurations/openai/acti
   -H "Authorization: Bearer $TOKEN"
 ```
 
-配置落在 `~/.minibot/config.json` 的 `model_presets` / `active_preset`。
+用户 preset 落在 `~/.minibot/config.json` 的 `model_presets` / `active_preset`。
 
 ### MCP presets（Phase 5）
 

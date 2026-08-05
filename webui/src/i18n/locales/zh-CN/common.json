@@ -132,7 +132,25 @@
       "loadFailed": "模型列表不可用。",
       "unsupportedModelList": "手动输入模型 ID。",
       "providerNotConfigured": "加载模型前请先配置此提供商。",
-      "autoProviderCustomOnly": "自动提供商模式使用自定义模型 ID。"
+      "autoProviderCustomOnly": "自动提供商模式使用自定义模型 ID。",
+      "platformModels": "平台模型",
+      "platformModelsHelp": "由主机提供的内置模型，无需填写 API Key。",
+      "platformUnavailable": "平台密钥未配置",
+      "yourConfigurations": "你的配置",
+      "yourConfigurationsHelp": "自定义预设与自带密钥（BYOK）。",
+      "badgeEnabled": "已启用",
+      "badgeUnavailable": "不可用",
+      "modelNameLabel": "Model Name",
+      "copyModelName": "复制模型名称",
+      "descriptions": {
+        "auto": "按效果与速度智能调度，自动匹配可用的平台模型。",
+        "platform-deepseek-v4-flash": "面向日常对话与轻量编码的快速 DeepSeek 模型。",
+        "platform-deepseek-v4-pro": "面向复杂推理与编码任务的更强 DeepSeek 模型。",
+        "platform-qwen3.7-plus": "均衡的通义千问 Plus，适合多语言对话与 Agent。",
+        "platform-glm-5.2": "通用推理与中文工作流友好的 GLM 模型。",
+        "platform-kimi-k2.7-code": "面向仓库级改动的 Kimi 编程模型。",
+        "platform-minimax-m3": "高吞吐 OpenAI 兼容调用的 MiniMax M3。"
+      }
     },
     "rows": {
       "theme": "主题",

@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   SETTINGS_SECTIONS,
   SETTINGS_SHOW_PROVIDERS_PANEL,
+  SETTINGS_SHOW_USER_MODEL_CONFIGS,
   UI_ENTRY,
   isEnabledSettingsSection,
 } from "@/lib/ui-entry";
@@ -26,6 +27,7 @@ describe("ui-entry gates", () => {
       "runtime",
     ]);
     expect(SETTINGS_SHOW_PROVIDERS_PANEL).toBe(false);
+    expect(SETTINGS_SHOW_USER_MODEL_CONFIGS).toBe(false);
   });
 
   it("recognizes enabled settings sections", () => {

@@ -1,6 +1,15 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("@/lib/ui-entry", async () => {
+  const actual = await vi.importActual<typeof import("@/lib/ui-entry")>("@/lib/ui-entry");
+  return {
+    ...actual,
+    // Keep BYOK settings tests covering the still-wired implementation.
+    SETTINGS_SHOW_USER_MODEL_CONFIGS: true,
+  };
+});
+
 import { SettingsView } from "@/components/settings/SettingsView";
 import { ClientProvider } from "@/providers/ClientProvider";
 import type { SettingsPayload } from "@/lib/types";

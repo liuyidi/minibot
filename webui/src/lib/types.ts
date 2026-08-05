@@ -367,7 +367,19 @@ export interface SettingsPayload {
     bot_name: string;
     bot_icon: string;
     tool_hint_max_length: number;
+    exec_sandbox?: string;
   };
+  active_platform_model?: string;
+  platform_models?: Array<{
+    id: string;
+    label: string;
+    provider: string;
+    model: string;
+    api_base: string;
+    source: "platform";
+    available: boolean;
+    context_window_tokens?: number;
+  }>;
   model_presets: Array<{
     name: string;
     label: string;
@@ -384,6 +396,7 @@ export interface SettingsPayload {
     name: string;
     label: string;
     configured: boolean;
+    configured_via?: "user" | "platform" | "both" | null;
     auth_type?: "api_key" | "oauth";
     api_key_required?: boolean;
     api_key_hint?: string | null;

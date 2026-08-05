@@ -9,16 +9,44 @@ class WorkspaceError(ValueError):
     """Invalid workspace path."""
 
 
+_BOOTSTRAP_SEED_FILES = ("SOUL.md",)
+
+
+def _template_dir() -> Path:
+    return Path(__file__).resolve().parent / "templates"
+
+
+def seed_workspace_bootstrap(workspace: Path) -> list[str]:
+    """Copy packaged bootstrap templates when missing. Never overwrite existing files."""
+    templates = _template_dir()
+    written: list[str] = []
+    for name in _BOOTSTRAP_SEED_FILES:
+        dest = workspace / name
+        if dest.exists():
+            continue
+        src = templates / name
+        if not src.is_file():
+            continue
+        try:
+            dest.write_text(src.read_text(encoding="utf-8"), encoding="utf-8")
+        except OSError:
+            continue
+        written.append(name)
+    return written
+
+
 def default_workspace() -> Path:
     """Return the default agent workspace, aligned with minibot's home layout.
 
     Default: ``{data_dir}/workspace`` → usually ``~/.minibot/workspace``.
     Creates the directory if missing (same idea as minibot ``get_workspace_path``).
+    Seeds ``SOUL.md`` from package templates when absent.
     """
     from minibot.config.settings import get_settings
 
     path = get_settings().data_dir.expanduser() / "workspace"
     path.mkdir(parents=True, exist_ok=True)
+    seed_workspace_bootstrap(path)
     return path.resolve()
 
 

@@ -26,6 +26,9 @@ export type EnabledSettingsSection = (typeof SETTINGS_SECTIONS)[number];
 /** Multi-provider / OAuth panel under Models — hidden until backend parity. */
 export const SETTINGS_SHOW_PROVIDERS_PANEL = false;
 
+/** BYOK / personal model configurations under Models — temporarily hidden. */
+export const SETTINGS_SHOW_USER_MODEL_CONFIGS = false;
+
 export function isEnabledSettingsSection(
   section: string | null | undefined,
 ): section is EnabledSettingsSection {

@@ -5,7 +5,10 @@ import { useTranslation } from "react-i18next";
 import { FilePreviewPanel } from "@/components/FilePreviewPanel";
 import { PromptNavigator } from "@/components/thread/PromptNavigator";
 import { SessionInfoPopover } from "@/components/thread/SessionInfoPopover";
-import { ThreadComposer } from "@/components/thread/ThreadComposer";
+import {
+  ThreadComposer,
+  type ComposerModelOption,
+} from "@/components/thread/ThreadComposer";
 import { ThreadHeader } from "@/components/thread/ThreadHeader";
 import { StreamErrorNotice } from "@/components/thread/StreamErrorNotice";
 import { ApprovalCard } from "@/components/thread/ApprovalCard";
@@ -23,12 +26,15 @@ import { ThreadViewport, type ThreadViewportHandle } from "@/components/thread/T
 import { useMinibotStream, type SendImage, type SendOptions } from "@/hooks/useMinibotStream";
 import { useSessionHistory } from "@/hooks/useSessions";
 import {
+  activateModelConfiguration,
+  activatePlatformModel,
   fetchInstalledCliApps,
   fetchMcpPresets,
   fetchSettings,
   listSlashCommands,
   submitSessionFeedbackDetail,
   submitSessionScore,
+  updateSettings,
 } from "@/lib/api";
 import {
   CLI_APPS_CHANGED_EVENT,
@@ -41,6 +47,7 @@ import {
   isMcpPresetsPayload,
 } from "@/lib/mcp-preset-events";
 import { inferProviderFromModelName, providerDisplayLabel } from "@/lib/provider-brand";
+import { SETTINGS_SHOW_USER_MODEL_CONFIGS } from "@/lib/ui-entry";
 import type {
   ChatSummary,
   SettingsPayload,
@@ -164,19 +171,61 @@ function resolvedModelProvider(settings: SettingsPayload | null, modelName: stri
 }
 
 function toModelBadgeInfo(modelName: string | null, settings: SettingsPayload | null): ModelBadgeInfo {
-  const model = modelName || settings?.agent.model || null;
+  if (!settings) {
+    return {
+      label: toModelBadgeLabel(modelName),
+      provider: null,
+      providerLabel: null,
+      needsSetup: false,
+    };
+  }
+
+  const activePlatformId = (settings.active_platform_model || "").trim();
+  const platform = activePlatformId
+    ? (settings.platform_models ?? []).find((item) => item.id === activePlatformId)
+    : null;
+  if (platform) {
+    const brand = platform.provider || "custom";
+    return {
+      label: toModelBadgeLabel(platform.model || modelName || settings.agent.model),
+      provider: brand,
+      providerLabel: platform.label || brand,
+      needsSetup: !settings.agent.has_api_key && !platform.available,
+    };
+  }
+
+  const agentProvider = (settings.agent.provider || "").trim();
+  if (agentProvider === "auto") {
+    const resolved = settings.agent.resolved_provider || inferProviderFromModelName(modelName || settings.agent.model);
+    return {
+      label: "Auto",
+      provider: resolved || "auto",
+      providerLabel: "Auto",
+      needsSetup: !settings.agent.has_api_key,
+    };
+  }
+
+  const model = modelName || settings.agent.model || null;
   const label = toModelBadgeLabel(model);
   const provider = resolvedModelProvider(settings, model);
+  // Platform/BYOK credentials are summarized by has_api_key; do not require the
+  // active preset's provider row when the live agent already has a key.
+  if (settings.agent.has_api_key) {
+    return {
+      label,
+      provider,
+      providerLabel: provider ? providerDisplayLabel(settings.providers ?? [], provider) : null,
+      needsSetup: false,
+    };
+  }
   const providerRow = provider
-    ? settings?.providers.find((item) => item.name === provider)
+    ? settings.providers.find((item) => item.name === provider)
     : null;
-  const needsSetup = Boolean(
-    settings && (!model || !provider || !providerRow || !providerRow.configured),
-  );
+  const needsSetup = Boolean(!model || !provider || !providerRow || !providerRow.configured);
   return {
     label,
     provider,
-    providerLabel: provider ? providerDisplayLabel(settings?.providers ?? [], provider) : null,
+    providerLabel: provider ? providerDisplayLabel(settings.providers ?? [], provider) : null,
     needsSetup,
   };
 }
@@ -399,6 +448,72 @@ export function ThreadShell({
   const modelBadgeLabel = modelBadge.needsSetup
     ? t("thread.composer.modelNotConfigured", { defaultValue: "Model not configured" })
     : modelBadge.label;
+  const modelOptions = useMemo((): ComposerModelOption[] => {
+    if (!settings) return [];
+    const activePlatform = (settings.active_platform_model || "").trim();
+    const agentProvider = (settings.agent.provider || "").trim();
+    const platformModels = settings.platform_models ?? [];
+    const anyPlatform = platformModels.some((item) => item.available);
+    // Without platform/Auto keys, keep the old “configure in settings” path.
+    if (!anyPlatform && !settings.agent.has_api_key && agentProvider !== "auto") {
+      return [];
+    }
+    const options: ComposerModelOption[] = [];
+    if (anyPlatform || agentProvider === "auto" || settings.agent.has_api_key) {
+      options.push({
+        id: "auto",
+        kind: "auto",
+        label: "Auto",
+        active: agentProvider === "auto" && !activePlatform,
+      });
+    }
+    for (const item of platformModels) {
+      options.push({
+        id: item.id,
+        kind: "platform",
+        label: item.label,
+        detail: item.model,
+        provider: item.provider,
+        active: activePlatform === item.id,
+        disabled: !item.available,
+      });
+    }
+    if (SETTINGS_SHOW_USER_MODEL_CONFIGS) {
+      for (const preset of settings.model_presets) {
+        if (preset.is_default && anyPlatform && !(preset.model || "").trim()) continue;
+        options.push({
+          id: preset.name,
+          kind: "preset",
+          label: preset.label || preset.name,
+          detail: preset.model,
+          provider: preset.provider,
+          active: !activePlatform && agentProvider !== "auto" && (
+            preset.active || preset.name === (settings.agent.model_preset || "default")
+          ),
+        });
+      }
+    }
+    return options;
+  }, [settings]);
+
+  const handleSelectModelOption = useCallback(
+    async (option: ComposerModelOption) => {
+      try {
+        let payload: SettingsPayload;
+        if (option.kind === "auto") {
+          payload = await updateSettings(token, { provider: "auto" });
+        } else if (option.kind === "platform") {
+          payload = await activatePlatformModel(token, option.id);
+        } else {
+          payload = await activateModelConfiguration(token, option.id);
+        }
+        setSettings(payload);
+      } catch {
+        // Keep current selection; user can retry or open settings.
+      }
+    },
+    [token],
+  );
   useEffect(() => {
     if (showHeroComposer && !wasShowingHeroComposerRef.current) {
       setHeroGreetingKey(randomHeroGreetingKey());
@@ -760,7 +875,9 @@ export function ThreadShell({
           modelProvider={modelBadge.provider}
           modelProviderLabel={modelBadge.providerLabel}
           modelNeedsSetup={modelBadge.needsSetup}
-          onModelBadgeClick={modelBadge.needsSetup ? onOpenModelSettings : undefined}
+          modelOptions={modelOptions}
+          onSelectModelOption={handleSelectModelOption}
+          onModelBadgeClick={onOpenModelSettings}
           variant={showHeroComposer ? "hero" : "thread"}
           slashCommands={slashCommands}
           cliApps={cliApps}
@@ -793,7 +910,9 @@ export function ThreadShell({
           modelProvider={modelBadge.provider}
           modelProviderLabel={modelBadge.providerLabel}
           modelNeedsSetup={modelBadge.needsSetup}
-          onModelBadgeClick={modelBadge.needsSetup ? onOpenModelSettings : undefined}
+          modelOptions={modelOptions}
+          onSelectModelOption={handleSelectModelOption}
+          onModelBadgeClick={onOpenModelSettings}
           variant="hero"
           slashCommands={slashCommands}
           cliApps={cliApps}

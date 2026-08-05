@@ -23,23 +23,29 @@ from minibot.providers.registry import list_providers
 
 
 def _providers_public(config: AppConfig) -> list[dict[str, Any]]:
+    from minibot.config.keys import configured_via, resolve_api_key
+
     active = (config.provider or "openai").strip() or "openai"
-    key = config.openai_api_key
-    masked = mask_key(key)
+    user_key = config.openai_api_key or ""
+    masked = mask_key(user_key)
     out: list[dict[str, Any]] = []
     for spec in list_providers(include_stubs=True):
         name = str(spec["name"])
         is_active = name == active
+        # v1: single live user key applies to the active provider only.
+        via = configured_via(name, user_key=user_key if is_active else "")
+        resolved = resolve_api_key(name, user_key=user_key if is_active else "")
         out.append(
             {
                 "name": name,
                 "label": spec["label"],
                 "backend": spec["backend"],
                 "implemented": spec["implemented"],
-                "configured": bool(key) if is_active else False,
+                "configured": bool(resolved) if name != "ollama" else True,
+                "configured_via": via,
                 "auth_type": "api_key",
                 "api_key_required": name not in {"ollama"},
-                "api_key_hint": masked if is_active else None,
+                "api_key_hint": masked if is_active and user_key else None,
                 "api_base": config.openai_base_url if is_active else spec["default_api_base"],
                 "default_api_base": spec["default_api_base"],
                 "model_selectable": True,
@@ -66,6 +72,8 @@ class AppConfig(BaseModel):
     # Phase 6a: named OpenAI-compat presets
     active_preset: str = "default"
     model_presets: list[ModelPreset] = Field(default_factory=list)
+    # Approach A: selected platform builtin id (empty when using user/default preset).
+    active_platform_model: str = ""
     # Phase 5: MCP server presets
     mcp_presets: list[McpPreset] = Field(default_factory=list)
     # Phase 15: Feishu channel (QR setup + pairing)
@@ -78,7 +86,8 @@ def default_config_from_settings(settings: Settings | None = None) -> AppConfig:
     settings = settings or get_settings()
     config = AppConfig(
         model=settings.model,
-        openai_api_key=settings.resolved_api_key(),
+        # Keep openai_api_key empty: platform keys stay in env (Approach A).
+        openai_api_key="",
         openai_base_url=settings.openai_base_url,
         temperature=settings.temperature,
         max_iterations=settings.max_iterations,
@@ -128,6 +137,11 @@ def apply_settings_update(config: AppConfig, update: SettingsUpdate) -> AppConfi
         data[key] = value
     next_config = AppConfig.model_validate(data)
     ensure_presets(next_config)
+    # Auto / concrete BYOK providers leave platform selection; keep ``custom`` so
+    # saving a platform-backed model form does not wipe ``active_platform_model``.
+    provider = (update.provider or "").strip()
+    if provider == "auto" or (provider and provider != "custom"):
+        next_config.active_platform_model = ""
     if update.active_preset is None:
         apply_live_to_active_preset(next_config)
     return next_config
@@ -168,14 +182,33 @@ def feishu_public_payload(feishu: FeishuPersistedConfig) -> dict[str, Any]:
 
 def settings_public_payload(config: AppConfig) -> dict[str, Any]:
     """Shape compatible enough for the existing WebUI SettingsView."""
+    from minibot.config.keys import resolve_api_key
+    from minibot.config.platform_models import platform_models_public
     from minibot.config.settings import get_settings
     from minibot.workspace import default_workspace
 
     ensure_presets(config)
-    key = config.openai_api_key
-    masked = mask_key(key)
+    user_key = config.openai_api_key or ""
+    masked = mask_key(user_key)
     presets = presets_public_list(config)
-    runtime = get_settings()
+    settings = get_settings()
+    provider_name = (config.provider or "openai").strip() or "openai"
+    if provider_name == "auto":
+        from minibot.config.platform_models import any_platform_model_available
+
+        has_key = bool(user_key) or any_platform_model_available()
+        resolved_provider = config.provider
+    elif getattr(config, "active_platform_model", ""):
+        from minibot.config.platform_models import resolve_platform_runtime
+
+        platform_rt = resolve_platform_runtime(config.active_platform_model)
+        has_key = bool(platform_rt and platform_rt.available) or bool(
+            resolve_api_key(provider_name, user_key=user_key)
+        )
+        resolved_provider = (platform_rt.brand if platform_rt else None) or provider_name
+    else:
+        has_key = bool(resolve_api_key(provider_name, user_key=user_key))
+        resolved_provider = provider_name
     return {
         "surface": "browser",
         "runtime_surface": "browser",
@@ -185,11 +218,12 @@ def settings_public_payload(config: AppConfig) -> dict[str, Any]:
         },
         "requires_restart": False,
         "active_preset": config.active_preset,
+        "active_platform_model": getattr(config, "active_platform_model", "") or "",
         "agent": {
             "model": config.model,
             "provider": config.provider,
-            "resolved_provider": config.provider,
-            "has_api_key": bool(key),
+            "resolved_provider": resolved_provider,
+            "has_api_key": has_key,
             "model_preset": config.active_preset,
             "max_tokens": 4096,
             "context_window_tokens": getattr(config, "context_window_tokens", 128000) or 128000,
@@ -199,8 +233,9 @@ def settings_public_payload(config: AppConfig) -> dict[str, Any]:
             "bot_name": config.bot_name,
             "bot_icon": "nb",
             "tool_hint_max_length": 80,
-            "exec_sandbox": runtime.normalized_exec_backend(),
+            "exec_sandbox": settings.normalized_exec_backend(),
         },
+        "platform_models": platform_models_public(user_key=user_key),
         "model_presets": presets,
         "mcp_presets": mcp_presets_public_list(config),
         "channels": {
@@ -253,21 +288,21 @@ def settings_public_payload(config: AppConfig) -> dict[str, Any]:
             "private_service_protection_enabled": True,
             "mcp_server_count": len(getattr(config, "mcp_presets", None) or []),
             "exec_enabled": True,
-            "exec_sandbox": runtime.normalized_exec_backend(),
+            "exec_sandbox": settings.normalized_exec_backend(),
             "exec_path_prepend_set": False,
             "exec_path_append_set": False,
         },
         "provider_detail": {
             "name": config.provider,
             "api_base": config.openai_base_url,
-            "api_key_masked": masked,
-            "has_api_key": bool(key),
+            "api_key_masked": masked if user_key else None,
+            "has_api_key": has_key,
         },
         "runtime": {
-            "config_path": str(runtime.resolved_config_path()),
+            "config_path": str(settings.resolved_config_path()),
             "workspace_path": str(default_workspace()),
-            "gateway_host": runtime.host,
-            "gateway_port": runtime.port,
+            "gateway_host": settings.host,
+            "gateway_port": settings.port,
             "heartbeat": {
                 "enabled": False,
                 "interval_s": 0,

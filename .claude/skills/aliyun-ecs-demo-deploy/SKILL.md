@@ -29,6 +29,8 @@ ECS：`root@116.62.35.76`，密钥 `~/Downloads/agent.pem`，代码根 `/opt/dem
 
 Compose 入口：`/opt/demo/mini-langfuse/deploy/demo/`（`.env`、`docker-compose.yml`、`up.sh`）。
 
+平台模型密钥：在本机 `minibot/minibot/` 维护 `.env.models`，`./scripts/merge-env.sh` 后把 slot 变量追加进 ECS 的 `deploy/demo/.env`（compose 已转发 `MINIBOT_SERVER_{SLOT}_*`）。**不要**把 `.env.models` 打进镜像。
+
 更完整的踩坑实录：`mini-langfuse/docs/aliyun-ecs-demo-deploy.md`、`deploy/demo/GUIDE-liuyidi.me.md`。
 
 ## 何时用哪条路径

@@ -53,8 +53,15 @@ describe("provider brand logos", () => {
     expect(providerBrand("assemblyai")?.initials).toBe("AA");
   });
 
-  it("keeps Bocha web search settings on the first-party brand domain", () => {
-    expect(providerBrand("bocha")?.logoUrls).toContain("https://bochaai.com/favicon.ico");
-    expect(providerBrand("bocha")?.initials).toBe("B");
+  it("maps platform brand aliases for Qwen / GLM / Kimi / MiniMax", () => {
+    expect(providerBrand("qwen")?.initials).toBe("QW");
+    expect(providerBrand("qwen")?.logoUrls[0]).toBe("/brand/qwen.svg");
+    expect(providerBrand("qwen")?.color).toBe("#6D44E8");
+    expect(providerBrand("glm")?.initials).toBe("Z");
+    expect(providerBrand("glm")?.logoUrls[0]).toContain("chatglm.cn");
+    expect(providerBrand("kimi")?.initials).toBe("K");
+    expect(providerBrand("kimi")?.logoUrls[0]).toContain("kimi.moonshot.cn");
+    expect(providerBrand("minimax")?.initials).toBe("MM");
+    expect(providerBrand("minimax")?.logoUrls[0]).toContain("minimax.io");
   });
 });

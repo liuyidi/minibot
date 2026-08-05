@@ -63,10 +63,7 @@ class AppState:
     started_at: float = field(default_factory=time.time)
 
     def rebuild_provider(self) -> None:
-        if not self.config.openai_api_key:
-            key = self.settings.resolved_api_key()
-            if key:
-                self.config.openai_api_key = key
+        # Platform keys stay in env; do not copy them into config.json.
         provider = build_provider_chain(
             self.config,
             stats=self.fallback_stats,
@@ -114,8 +111,6 @@ def build_app_state() -> AppState:
         fallback.mkdir(parents=True, exist_ok=True)
         settings.__dict__["data_dir"] = fallback
     config = load_app_config()
-    if not config.openai_api_key:
-        config.openai_api_key = settings.resolved_api_key()
     sandbox_backend = build_sandbox_backend(settings)
     tools = register_default_tools(backend=sandbox_backend)
     from minibot.agent.approval import ApprovalPolicy

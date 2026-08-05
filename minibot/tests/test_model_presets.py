@@ -59,12 +59,30 @@ def test_activate_preset_copies_live_fields() -> None:
     assert cfg.openai_base_url == "https://api.openai.com/v1"
 
 
-def test_activate_requires_key_and_base() -> None:
+def test_activate_default_allows_empty_key_without_platform() -> None:
     cfg = AppConfig(openai_api_key="k", openai_base_url="https://x")
     ensure_presets(cfg)
     cfg.model_presets[0] = cfg.model_presets[0].model_copy(update={"api_key": ""})
+    activate_preset(cfg, "default")
+    assert cfg.openai_api_key == ""
+
+
+def test_activate_non_default_requires_key_or_platform() -> None:
+    cfg = AppConfig(openai_api_key="k", openai_base_url="https://x")
+    ensure_presets(cfg)
+    upsert_preset(
+        cfg,
+        preset_id="custom-a",
+        label="Custom",
+        model="m",
+        api_key="sk-temp-11111111",
+        api_base="https://x",
+    )
+    cfg.model_presets = [
+        p.model_copy(update={"api_key": ""}) if p.id == "custom-a" else p for p in cfg.model_presets
+    ]
     with pytest.raises(PresetError, match="api_key"):
-        activate_preset(cfg, "default")
+        activate_preset(cfg, "custom-a")
 
 
 def test_upsert_keeps_key_when_empty() -> None:

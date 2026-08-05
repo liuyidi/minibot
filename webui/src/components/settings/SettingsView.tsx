@@ -6,6 +6,7 @@ import {
   useState,
   type Dispatch,
   type FormEvent,
+  type MouseEvent as ReactMouseEvent,
   type ReactNode,
   type SetStateAction,
 } from "react";
@@ -21,6 +22,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Cloud,
+  Copy,
   Cpu,
   Database,
   Eye,
@@ -83,6 +85,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   checkVersion,
   createModelConfiguration,
+  activatePlatformModel,
   fetchAutomations,
   fetchSettings,
   fetchSettingsUsage,
@@ -112,6 +115,7 @@ import { notifyMcpPresetsChanged } from "@/lib/mcp-preset-events";
 import {
   SETTINGS_SECTIONS,
   SETTINGS_SHOW_PROVIDERS_PANEL,
+  SETTINGS_SHOW_USER_MODEL_CONFIGS,
 } from "@/lib/ui-entry";
 import { fmtDateTime, relativeTime } from "@/lib/format";
 import {
@@ -982,6 +986,36 @@ export function SettingsView({
     }
   };
 
+  const activatePlatformModelSelection = async (modelId: string) => {
+    if (!settings || saving) return;
+    setSaving(true);
+    try {
+      const payload = await activatePlatformModel(token, modelId);
+      applyPayload(payload);
+      onModelNameChange(payload.agent.model || null);
+      setError(null);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const activateAutoModelSelection = async () => {
+    if (!settings || saving) return;
+    setSaving(true);
+    try {
+      const payload = await updateSettings(token, { provider: "auto" });
+      applyPayload(payload);
+      onModelNameChange(payload.agent.model || null);
+      setError(null);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const openModelConfigurationDialog = () => {
     if (!settings) return;
     const currentProvider = settings.agent.provider;
@@ -1489,6 +1523,8 @@ export function SettingsView({
               onProviderOAuthLogin={(provider) => runProviderOAuth(provider, "login")}
               onSave={saveModelSettings}
               onCreateConfiguration={openModelConfigurationDialog}
+              onActivatePlatformModel={activatePlatformModelSelection}
+              onActivateAuto={activateAutoModelSelection}
             />
             {SETTINGS_SHOW_PROVIDERS_PANEL ? (
               <ProvidersSettings
@@ -2163,7 +2199,7 @@ function AppearanceSettings({
             <SegmentedControl
               value={localPrefs.activityMode}
               options={[
-                { value: "auto", label: tx("settings.values.auto", "Auto") },
+                { value: "auto", label: "Auto" },
                 { value: "expanded", label: tx("settings.values.expanded", "Expanded") },
               ]}
               onChange={(activityMode) =>
@@ -2327,6 +2363,8 @@ function ModelsSettings({
   onProviderOAuthLogin,
   onSave,
   onCreateConfiguration,
+  onActivatePlatformModel,
+  onActivateAuto,
 }: {
   token: string;
   form: AgentSettingsDraft;
@@ -2339,14 +2377,19 @@ function ModelsSettings({
   onProviderOAuthLogin: (provider: string) => void;
   onSave: () => void;
   onCreateConfiguration: () => void;
+  onActivatePlatformModel: (modelId: string) => void;
+  onActivateAuto: () => void;
 }) {
   const { t } = useTranslation();
   const tx = (key: string, fallback: string) => t(key, { defaultValue: fallback });
+  const platformModels = settings.platform_models ?? [];
+  const activePlatformModel = settings.active_platform_model || "";
+  const autoActive = (settings.agent.provider || "").trim() === "auto" && !activePlatformModel;
   const configuredProviders = settings.providers.filter((provider) => provider.configured);
   const showAutoProvider = defaultPreset(settings)?.provider === "auto" || form.provider === "auto";
   const selectableProviders = uniqueProviders(configuredProviders);
   const providerOptions = showAutoProvider
-    ? [{ name: "auto", label: tx("settings.values.auto", "Auto") }, ...selectableProviders]
+    ? [{ name: "auto", label: "Auto" }, ...selectableProviders]
     : selectableProviders;
   const providerValue = providerOptions.some((provider) => provider.name === form.provider)
     ? form.provider
@@ -2364,7 +2407,72 @@ function ModelsSettings({
     Boolean(selectedPreset && !selectedPreset.is_default && !form.presetLabel.trim());
   return (
     <div className="space-y-7">
+      {platformModels.length > 0 ? (
+        <section className="space-y-3">
+          <div>
+            <h3 className="text-[13px] font-semibold text-foreground">
+              {tx("settings.models.platformModels", "Platform models")}
+            </h3>
+            <p className="mt-0.5 text-[12px] text-muted-foreground">
+              {tx(
+                "settings.models.platformModelsHelp",
+                "Built-in models funded by the host. No API key required.",
+              )}
+            </p>
+          </div>
+          <div className="divide-y divide-border/60 rounded-xl border border-border/60 bg-card/40">
+            <PlatformModelRadioRow
+              id="auto"
+              title="Auto"
+              modelId="auto"
+              description={tx(
+                "settings.models.descriptions.auto",
+                "Picks the best available platform model for speed and quality.",
+              )}
+              provider="auto"
+              active={autoActive}
+              available
+              saving={saving}
+              showBrandLogos={showBrandLogos}
+              onSelect={onActivateAuto}
+            />
+            {platformModels.map((item) => {
+              const active = activePlatformModel === item.id;
+              return (
+                <PlatformModelRadioRow
+                  key={item.id}
+                  id={item.id}
+                  title={item.label}
+                  modelId={item.model}
+                  description={tx(
+                    `settings.models.descriptions.${item.id}`,
+                    platformModelFallbackDescription(item.id, item.label),
+                  )}
+                  provider={item.provider || "custom"}
+                  active={active}
+                  available={item.available}
+                  saving={saving}
+                  showBrandLogos={showBrandLogos}
+                  onSelect={() => onActivatePlatformModel(item.id)}
+                />
+              );
+            })}
+          </div>
+        </section>
+      ) : null}
+      {SETTINGS_SHOW_USER_MODEL_CONFIGS ? (
       <section>
+        <div className="mb-3">
+          <h3 className="text-[13px] font-semibold text-foreground">
+            {tx("settings.models.yourConfigurations", "Your configurations")}
+          </h3>
+          <p className="mt-0.5 text-[12px] text-muted-foreground">
+            {tx(
+              "settings.models.yourConfigurationsHelp",
+              "Custom presets and BYOK providers.",
+            )}
+          </p>
+        </div>
         <SettingsGroup>
           <SettingsRow
             title={tx("settings.rows.currentModel", "Current configuration")}
@@ -2500,7 +2608,147 @@ function ModelsSettings({
           />
         </SettingsGroup>
       </section>
+      ) : null}
     </div>
+  );
+}
+
+function platformModelFallbackDescription(id: string, label: string): string {
+  switch (id) {
+    case "platform-deepseek-v4-flash":
+      return "Fast DeepSeek model for everyday chat and light coding.";
+    case "platform-deepseek-v4-pro":
+      return "Stronger DeepSeek model for harder reasoning and coding tasks.";
+    case "platform-qwen3.7-plus":
+      return "Qwen Plus for balanced multilingual chat and agent work.";
+    case "platform-glm-5.2":
+      return "GLM for general reasoning and Chinese-centric workflows.";
+    case "platform-kimi-k2.7-code":
+      return "Kimi coding model tuned for repository-scale edits.";
+    case "platform-minimax-m3":
+      return "MiniMax M3 for high-throughput OpenAI-compatible calls.";
+    default:
+      return `${label} platform model.`;
+  }
+}
+
+function PlatformModelRadioRow({
+  id,
+  title,
+  modelId,
+  description,
+  provider,
+  active,
+  available,
+  saving,
+  showBrandLogos,
+  onSelect,
+}: {
+  id: string;
+  title: string;
+  modelId: string;
+  description: string;
+  provider: string;
+  active: boolean;
+  available: boolean;
+  saving: boolean;
+  showBrandLogos: boolean;
+  onSelect: () => void;
+}) {
+  const { t } = useTranslation();
+  const tx = (key: string, fallback: string) => t(key, { defaultValue: fallback });
+  const [copied, setCopied] = useState(false);
+  const disabled = !available || saving;
+
+  const copyModelId = async (event: ReactMouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(modelId);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1200);
+    } catch {
+      // ignore clipboard failures
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onSelect}
+      data-testid={`platform-model-${id}`}
+      className={cn(
+        "flex w-full items-start gap-3 px-3.5 py-3.5 text-left transition-colors",
+        !disabled && "hover:bg-muted/35",
+        disabled && "opacity-55",
+        active && "bg-muted/25",
+      )}
+    >
+      <span
+        className={cn(
+          "mt-1 grid h-4 w-4 shrink-0 place-items-center rounded-full border",
+          active ? "border-sky-500 bg-sky-500" : "border-muted-foreground/35 bg-background",
+        )}
+        aria-hidden
+      >
+        {active ? <span className="h-1.5 w-1.5 rounded-full bg-white" /> : null}
+      </span>
+      <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center">
+        {provider === "auto" ? (
+          <span className="grid h-8 w-8 place-items-center rounded-lg border border-sky-500/25 bg-sky-500/10 text-sky-600 dark:text-sky-300">
+            <Orbit className="h-4 w-4" aria-hidden />
+          </span>
+        ) : (
+          <span className="grid h-8 w-8 place-items-center [&_span]:h-7 [&_span]:w-7">
+            <ProviderPickerIcon provider={provider} showBrandLogos={showBrandLogos} />
+          </span>
+        )}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="flex flex-wrap items-center gap-2">
+          <span className="text-[13px] font-semibold text-foreground">{title}</span>
+          {active ? (
+            <span className="rounded-md bg-violet-500/12 px-1.5 py-0.5 text-[10px] font-medium text-violet-700 dark:text-violet-300">
+              {tx("settings.models.badgeEnabled", "Enabled")}
+            </span>
+          ) : null}
+          {!available ? (
+            <span className="rounded-md bg-amber-500/12 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 dark:text-amber-200">
+              {tx("settings.models.badgeUnavailable", "Unavailable")}
+            </span>
+          ) : null}
+        </span>
+        <span className="mt-1 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+          <span className="truncate">
+            {tx("settings.models.modelNameLabel", "Model Name")}: {modelId}
+          </span>
+          <span
+            role="button"
+            tabIndex={0}
+            onClick={copyModelId}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                event.stopPropagation();
+                void navigator.clipboard.writeText(modelId).then(() => {
+                  setCopied(true);
+                  window.setTimeout(() => setCopied(false), 1200);
+                });
+              }
+            }}
+            className="inline-flex h-5 w-5 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground"
+            title={tx("settings.models.copyModelName", "Copy model name")}
+            aria-label={tx("settings.models.copyModelName", "Copy model name")}
+          >
+            {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+          </span>
+        </span>
+        <span className="mt-1.5 block text-[12px] leading-relaxed text-muted-foreground">
+          {description}
+        </span>
+      </span>
+    </button>
   );
 }
 
@@ -6823,6 +7071,7 @@ function modelPresetProviderKey(
 
 const PROVIDER_ICONS: Record<string, LucideIcon> = {
   custom: Hexagon,
+  auto: Orbit,
   openrouter: Sparkles,
   skywork: Sparkles,
   aihubmix: Triangle,
@@ -6830,10 +7079,14 @@ const PROVIDER_ICONS: Record<string, LucideIcon> = {
   openai: Bot,
   deepseek: Waves,
   zhipu: Grid3X3,
+  glm: Grid3X3,
   dashscope: Cloud,
+  qwen: Cloud,
   moonshot: Moon,
+  kimi: Moon,
   minimax: Zap,
   minimax_anthropic: Brain,
+  doubao: Cloud,
   groq: Cpu,
   huggingface: Layers,
   gemini: Gem,
