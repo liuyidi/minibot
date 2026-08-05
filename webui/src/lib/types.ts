@@ -68,6 +68,8 @@ export interface UIMessage {
   reasoningStreaming?: boolean;
   /** End-to-end wall time for this assistant turn (persisted ``latency_ms`` / ``turn_end``). */
   latencyMs?: number;
+  /** Observability trace for this completed assistant turn. Enables per-turn human feedback. */
+  langfuseTraceId?: string;
   /** Lightweight provenance for proactive assistant messages. */
   source?: UIMessageSource;
   /** Stable protocol metadata for grouping all activity emitted by one user turn. */
@@ -346,6 +348,11 @@ export interface SettingsPayload {
     sections: string[];
   };
   restart_behavior_by_section?: Record<string, RestartBehavior>;
+  observability?: {
+    langfuse_enabled: boolean;
+    langfuse_configured: boolean;
+    langfuse_host?: string;
+  };
   agent: {
     model: string;
     provider: string;
@@ -865,6 +872,13 @@ export type InboundEvent =
       goal_state: GoalStateWsPayload;
     }
   | { event: "approval_required"; chat_id: string; approval: PendingApproval }
+  | {
+      event: "agent_trace";
+      chat_id: string;
+      langfuse_trace_id?: string;
+      stop_reason?: string;
+      tools_used?: string[];
+    }
   | {
       event: "session_updated";
       chat_id: string;

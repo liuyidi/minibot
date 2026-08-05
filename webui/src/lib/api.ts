@@ -152,6 +152,57 @@ export async function fetchPendingApprovals(
   return Array.isArray(payload.approvals) ? payload.approvals : [];
 }
 
+/** Submit a human thumbs-up/down score for one completed assistant trace. */
+export async function submitSessionScore(
+  token: string,
+  sessionId: string,
+  traceId: string,
+  value: boolean,
+  base: string = "",
+): Promise<void> {
+  await request(
+    `${base}/api/sessions/${encodeURIComponent(sessionId)}/score`,
+    token,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: "user-feedback",
+        data_type: "BOOLEAN",
+        value: value ? 1 : 0,
+        string_value: value ? "true" : "false",
+        trace_id: traceId,
+      }),
+    },
+  );
+}
+
+/** Store the optional reason and note supplied after a thumbs-down. */
+export async function submitSessionFeedbackDetail(
+  token: string,
+  sessionId: string,
+  traceId: string,
+  reason: string,
+  comment: string,
+  base: string = "",
+): Promise<void> {
+  await request(
+    `${base}/api/sessions/${encodeURIComponent(sessionId)}/score`,
+    token,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: "user-feedback-reason",
+        data_type: "CATEGORICAL",
+        string_value: reason,
+        comment: comment.trim() || undefined,
+        trace_id: traceId,
+      }),
+    },
+  );
+}
+
 /** Disk-backed WebUI display thread snapshot (separate from agent session). */
 export interface FetchWebuiThreadOptions {
   limit?: number;

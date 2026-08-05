@@ -214,8 +214,17 @@ async def run_turn(
         result = await state.loop.handle_turn(sid, body.content, entry="rest")
     except KeyError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="session not found") from None
-    except RuntimeError as exc:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)) from exc
+    except Exception as exc:
+        from minibot.observability.usage_budget import BudgetExceeded
+
+        if isinstance(exc, BudgetExceeded):
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail={"error": "budget_exceeded", "reason": exc.reason, "usage": exc.snapshot},
+            ) from exc
+        if isinstance(exc, RuntimeError):
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)) from exc
+        raise
 
     approval = state.approvals.get(result.approval_id) if result.approval_id else None
     return TurnResponse(
@@ -230,7 +239,7 @@ async def run_turn(
     )
 
 
-@router.post("/{session_id}/score")
+@router.post("/{session_id}/score", status_code=status.HTTP_202_ACCEPTED)
 async def score_session_turn(
     _auth: AuthDep,
     state: StateDep,
@@ -267,18 +276,18 @@ async def score_session_turn(
             detail="value or string_value required",
         )
 
-    result = lf.score(
+    job_id = state.score_queue.enqueue(
         trace_id=trace_id,
         name=body.name,
         value=value,
         string_value=string_value,
         data_type=data_type,
         comment=body.comment,
-        source="API",
+        source="HUMAN",
     )
-    if result is None:
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail="failed to post score to langfuse",
-        )
-    return {"ok": True, "trace_id": trace_id, "score": result}
+    return {
+        "ok": True,
+        "status": "queued",
+        "job_id": job_id,
+        "trace_id": trace_id,
+    }

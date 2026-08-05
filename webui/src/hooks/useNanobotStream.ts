@@ -246,6 +246,20 @@ function stampLastAssistantLatency(
   return prev;
 }
 
+function stampLastAssistantTrace(
+  prev: UIMessage[],
+  traceId: string,
+): UIMessage[] {
+  if (!traceId) return prev;
+  for (let i = prev.length - 1; i >= 0; i -= 1) {
+    const message = prev[i];
+    if (message.role !== "assistant" || message.kind === "trace") continue;
+    const merged: UIMessage = { ...message, langfuseTraceId: traceId };
+    return [...prev.slice(0, i), merged, ...prev.slice(i + 1)];
+  }
+  return prev;
+}
+
 function absorbCompleteAssistantMessage(
   prev: UIMessage[],
   message: Omit<UIMessage, "id" | "role" | "createdAt">,
@@ -836,6 +850,12 @@ export function useNanobotStream(
         setApprovalResolving(false);
         setIsStreaming(false);
         setRunStartedAt(null);
+        return;
+      }
+
+      if (ev.event === "agent_trace") {
+        const traceId = typeof ev.langfuse_trace_id === "string" ? ev.langfuse_trace_id : "";
+        if (traceId) setMessages((prev) => stampLastAssistantTrace(prev, traceId));
         return;
       }
 

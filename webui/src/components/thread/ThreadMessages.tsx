@@ -15,6 +15,10 @@ interface ThreadMessagesProps {
   forkBoundaryMessageCount?: number | null;
   onOpenFilePreview?: (path: string) => void;
   onForkFromMessage?: (beforeUserIndex: number) => void;
+  /** Enables latest-trace fallback for the newest completed assistant response. */
+  feedbackEnabled?: boolean;
+  feedbackByMessageId?: Record<string, boolean>;
+  onAssistantFeedback?: (message: UIMessage, helpful: boolean) => Promise<void>;
 }
 
 export type DisplayUnit = TurnUnit;
@@ -69,6 +73,9 @@ export function ThreadMessages({
   forkBoundaryMessageCount = null,
   onOpenFilePreview,
   onForkFromMessage,
+  feedbackEnabled = false,
+  feedbackByMessageId = {},
+  onAssistantFeedback,
 }: ThreadMessagesProps) {
   const { t } = useTranslation();
   const units = useMemo(() => buildDisplayUnits(messages, isStreaming), [isStreaming, messages]);
@@ -77,6 +84,15 @@ export function ThreadMessages({
     [forkBoundaryMessageCount, units],
   );
   const copyFlags = useMemo(() => assistantCopyFlags(units), [units]);
+  const latestAssistantMessageId = useMemo(() => {
+    for (let i = units.length - 1; i >= 0; i -= 1) {
+      const unit = units[i];
+      if (unit.type === "message" && unit.message.role === "assistant" && !unit.message.isStreaming) {
+        return unit.message.id;
+      }
+    }
+    return null;
+  }, [units]);
   const liveActivityClusterIndices = useMemo(
     () => isStreaming ? currentActivityClusterIndices(units) : new Set<number>(),
     [isStreaming, units],
@@ -136,6 +152,11 @@ export function ThreadMessages({
                       ? () => onForkFromMessage(forkIndex)
                       : undefined
                   }
+                  allowLatestTraceFeedback={
+                    feedbackEnabled && unit.message.id === latestAssistantMessageId
+                  }
+                  initialFeedback={feedbackByMessageId[unit.message.id] ?? null}
+                  onAssistantFeedback={onAssistantFeedback}
                 />
               )}
             </div>

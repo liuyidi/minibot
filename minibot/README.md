@@ -78,6 +78,18 @@ MINIBOT_SERVER_LANGFUSE_SECRET_KEY=sk-lf-demo
 
 先启动 mini-langfuse（API `:8000` / UI `:5173`），再启动 minibot；打一轮对话后在 Langfuse UI 的 Traces / Sessions / Prompts 查看。Chat 下方可对最近一轮 👍/👎 打分。
 
+### LLM 日限额熔断（可选）
+
+按 **UTC 自然日**累计 turns / tokens；超限后拒绝新对话，并跳过 cron。
+
+```bash
+# .env — 0 表示该维度不限
+MINIBOT_SERVER_DAILY_TURN_LIMIT=50
+MINIBOT_SERVER_DAILY_TOKEN_LIMIT=200000
+```
+
+查看用量：`GET /api/settings/usage`（含 `by_entry`：`ws` / `cron` / `rest` / …）。超限返回 HTTP 429。计数落在 `$MINIBOT_SERVER_DATA_DIR/usage/YYYY-MM-DD.json`。
+
 Default **workspace** (tools / `SOUL.md` / `USER.md`): `~/.minibot/workspace`
 (override with Chat workspace switch, or set `MINIBOT_SERVER_DATA_DIR`).
 Sessions live under `~/.minibot/sessions/`.

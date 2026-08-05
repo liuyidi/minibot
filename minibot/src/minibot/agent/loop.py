@@ -29,7 +29,7 @@ from minibot.workspace import normalize_workspace
 
 _LAST_TURNS_MAX = 40
 _ROLES = {"system", "user", "assistant", "tool"}
-_ENTRY_KEYS = ("rest", "ws", "cli", "dev", "unknown")
+_ENTRY_KEYS = ("rest", "ws", "cli", "dev", "cron", "unknown")
 
 
 def _now_iso() -> str:
@@ -57,6 +57,7 @@ class AgentLoop:
         config: AppConfig,
         approvals: ApprovalStore | None = None,
         system_prompt: str = "",
+        usage_budget: Any | None = None,
     ) -> None:
         self.sessions = sessions
         self.tools = tools
@@ -64,6 +65,7 @@ class AgentLoop:
         self.config = config
         self.approvals = approvals or ApprovalStore(sessions.data_dir)
         self.system_prompt = system_prompt
+        self.usage_budget = usage_budget
         self._locks: dict[str, _LockSlot] = {}
         self._last_turns: list[dict[str, Any]] = []
         self._entry_counts: dict[str, int] = {k: 0 for k in _ENTRY_KEYS}
@@ -141,6 +143,9 @@ class AgentLoop:
         if session is None:
             raise KeyError(f"unknown session: {session_id}")
 
+        if self.usage_budget is not None:
+            self.usage_budget.check(entry=entry_key)
+
         if workspace is not None:
             effective_ws = str(normalize_workspace(workspace, must_exist=True))
         else:
@@ -185,6 +190,13 @@ class AgentLoop:
                     slot.last_duration_ms = duration_ms
                     slot.last_finished_at = _now_iso()
                     self._entry_counts[entry_key] = self._entry_counts.get(entry_key, 0) + 1
+                    if self.usage_budget is not None:
+                        from minibot.observability.usage_budget import sum_usage_from_trace
+
+                        self.usage_budget.record_turn(
+                            entry=entry_key,
+                            usage=sum_usage_from_trace(result.trace),
+                        )
                     self._record_turn(
                         session_id,
                         duration_ms=duration_ms,
@@ -248,6 +260,10 @@ class AgentLoop:
         except KeyError:
             raise
         except Exception as exc:
+            from minibot.observability.usage_budget import BudgetExceeded
+
+            if isinstance(exc, BudgetExceeded):
+                raise
             raise RuntimeError(f"handle_turn failed (entry={entry_key}): {exc}") from exc
         finally:
             if parent_token is not None:

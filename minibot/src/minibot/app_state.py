@@ -23,6 +23,8 @@ from minibot.cron.types import CronJob
 from minibot.providers.factory import build_provider_chain
 from minibot.providers.fallback import FallbackStats
 from minibot.providers.fault_inject import FaultController
+from minibot.observability.score_queue import ScoreQueue
+from minibot.observability.usage_budget import BudgetExceeded, UsageBudget
 from minibot.session.store import SessionStore
 
 
@@ -45,9 +47,11 @@ class AppState:
     approvals: ApprovalStore
     cron: CronService | None = None
     bus_worker: BusWorker | None = None
+    usage_budget: UsageBudget | None = None
     tokens: dict[str, TokenRecord] = field(default_factory=dict)
     fallback_stats: FallbackStats = field(default_factory=FallbackStats)
     fault_controller: FaultController = field(default_factory=FaultController)
+    score_queue: ScoreQueue = field(default_factory=ScoreQueue)
     started_at: float = field(default_factory=time.time)
 
     def rebuild_provider(self) -> None:
@@ -116,6 +120,11 @@ def build_app_state() -> AppState:
     runner = AgentRunner(provider)
     sessions = SessionStore(data_dir=settings.data_dir)
     approvals = ApprovalStore(data_dir=settings.data_dir)
+    usage_budget = UsageBudget(
+        settings.data_dir,
+        daily_token_limit=settings.daily_token_limit,
+        daily_turn_limit=settings.daily_turn_limit,
+    )
     loop = AgentLoop(
         sessions=sessions,
         tools=tools,
@@ -123,6 +132,7 @@ def build_app_state() -> AppState:
         config=config,
         approvals=approvals,
         system_prompt=SYSTEM_PROMPT,
+        usage_budget=usage_budget,
     )
     from minibot.agent.tools.spawn import attach_spawn_tool
 
@@ -139,6 +149,7 @@ def build_app_state() -> AppState:
         approvals=approvals,
         fallback_stats=fallback_stats,
         fault_controller=fault_controller,
+        usage_budget=usage_budget,
     )
     state.bus_worker = BusWorker(state)
     cron_path = settings.data_dir.expanduser() / "cron" / "jobs.json"
@@ -146,6 +157,11 @@ def build_app_state() -> AppState:
     async def _on_cron_job(job: CronJob) -> None:
         from minibot.bus.events import InboundMessage
 
+        if state.usage_budget is not None and state.usage_budget.is_tripped():
+            raise BudgetExceeded(
+                state.usage_budget.snapshot().get("tripped_reason") or "budget",
+                snapshot=state.usage_budget.snapshot(),
+            )
         if state.sessions.get(job.session_id) is None:
             raise RuntimeError(f"unknown session_id={job.session_id}")
         # Bus → BusWorker → handle_turn(entry=cron); waiter completes when turn ends.

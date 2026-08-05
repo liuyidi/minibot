@@ -168,6 +168,32 @@ async def _probe_minikb(state: Any) -> dict[str, Any]:
         }
 
 
+def _budget_details(state: Any, *, zh: bool) -> list[str]:
+    budget = getattr(state, "usage_budget", None)
+    if budget is None:
+        return ["未启用"] if zh else ["disabled"]
+    snap = budget.snapshot()
+    limits = snap.get("limits") or {}
+    totals = snap.get("totals") or {}
+    if zh:
+        lines = [
+            f"日 turn 上限：{limits.get('daily_turn_limit') or '不限'}",
+            f"日 token 上限：{limits.get('daily_token_limit') or '不限'}",
+            f"今日 turns：{totals.get('turns', 0)} / tokens：{totals.get('total_tokens', 0)}",
+        ]
+        if snap.get("tripped"):
+            lines.append(f"已熔断：{snap.get('tripped_reason')}")
+        return lines
+    lines = [
+        f"daily turn limit: {limits.get('daily_turn_limit') or 'unlimited'}",
+        f"daily token limit: {limits.get('daily_token_limit') or 'unlimited'}",
+        f"today turns: {totals.get('turns', 0)} / tokens: {totals.get('total_tokens', 0)}",
+    ]
+    if snap.get("tripped"):
+        lines.append(f"tripped: {snap.get('tripped_reason')}")
+    return lines
+
+
 def _build_components(state: Any, minikb: dict[str, Any]) -> list[dict[str, Any]]:
     settings = state.settings
     webui_dist = resolve_webui_dist()
@@ -268,6 +294,21 @@ def _build_components(state: Any, minikb: dict[str, Any]) -> list[dict[str, Any]
                 f"Enabled: {cron_status.get('enabled_count', 0)}",
                 f"Running: {'yes' if cron_status.get('running') else 'no'}",
             ],
+        ),
+        _component(
+            key="llm_budget",
+            required=True,
+            status=(
+                "outage"
+                if (getattr(state, "usage_budget", None) is not None and state.usage_budget.is_tripped())
+                else "operational"
+            ),
+            label_zh="LLM 日限额",
+            label_en="LLM daily budget",
+            desc_zh="按 UTC 日累计 turns/tokens，超限熔断",
+            desc_en="UTC daily turn/token counters with kill-switch",
+            details_zh=_budget_details(state, zh=True),
+            details_en=_budget_details(state, zh=False),
         ),
         _component(
             key="knowledge_base",

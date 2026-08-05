@@ -57,8 +57,16 @@ class ModelConfigurationBody(BaseModel):
 
 
 @router.get("/usage")
-async def settings_usage(_auth: AuthDep) -> dict[str, Any]:
-    return {"days": [], "totals": {"prompt_tokens": 0, "completion_tokens": 0}}
+async def settings_usage(_auth: AuthDep, state: StateDep) -> dict[str, Any]:
+    if state.usage_budget is None:
+        return {
+            "days": [],
+            "totals": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0, "turns": 0},
+            "tripped": False,
+            "by_entry": {},
+            "limits": {"daily_token_limit": 0, "daily_turn_limit": 0, "enabled": False},
+        }
+    return state.usage_budget.snapshot()
 
 
 @router.get("/provider-models")

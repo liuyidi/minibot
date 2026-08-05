@@ -1006,6 +1006,17 @@
     "forkFromHere": "分叉",
     "copyReply": "复制",
     "copiedReply": "已复制",
+    "feedbackHelpful": "有帮助",
+    "feedbackUnhelpful": "没有帮助",
+    "feedbackDialog": {
+      "title": "哪些地方可以改进？",
+      "description": "你的反馈会帮助我们改进后续回复。",
+      "reasonLabel": "原因",
+      "reasons": { "incorrect": "内容不准确", "incomplete": "内容不完整", "style": "表达或格式不好", "tool": "工具执行有问题", "other": "其他" },
+      "commentPlaceholder": "可选补充说明",
+      "skip": "跳过",
+      "submit": "提交反馈"
+    },
     "turnLatencyTitle": "本轮耗时（端到端）"
   },
   "lightbox": {

@@ -287,7 +287,17 @@ async def fallback_probe_live(
 
     session = state.sessions.create(title="fallback-probe")
     content = str(payload.get("content") or "fallback probe").strip() or "fallback probe"
-    result = await state.loop.handle_turn(session.id, content, entry="dev")
+    try:
+        result = await state.loop.handle_turn(session.id, content, entry="dev")
+    except Exception as exc:
+        from minibot.observability.usage_budget import BudgetExceeded
+
+        if isinstance(exc, BudgetExceeded):
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail={"error": "budget_exceeded", "reason": exc.reason, "usage": exc.snapshot},
+            ) from exc
+        raise
     used = {}
     provider = state.runner.provider
     if hasattr(provider, "used_meta"):
@@ -318,7 +328,17 @@ async def runtime_demo_turn(
     elif state.sessions.get(session_id) is None:
         state.sessions.create(session_id=session_id, title="runtime-demo")
 
-    result = await state.loop.handle_turn(session_id, content, entry="dev")
+    try:
+        result = await state.loop.handle_turn(session_id, content, entry="dev")
+    except Exception as exc:
+        from minibot.observability.usage_budget import BudgetExceeded
+
+        if isinstance(exc, BudgetExceeded):
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail={"error": "budget_exceeded", "reason": exc.reason, "usage": exc.snapshot},
+            ) from exc
+        raise
     snap = state.loop.runtime_snapshot()
     worker = state.bus_worker.status() if state.bus_worker is not None else {}
     snap["bus"] = state.bus.snapshot(worker=worker)

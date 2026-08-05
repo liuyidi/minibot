@@ -1006,6 +1006,17 @@
     "forkFromHere": "Fork",
     "copyReply": "Copy",
     "copiedReply": "Copied",
+    "feedbackHelpful": "Helpful",
+    "feedbackUnhelpful": "Not helpful",
+    "feedbackDialog": {
+      "title": "What could be improved?",
+      "description": "Your feedback helps improve future responses.",
+      "reasonLabel": "Reason",
+      "reasons": { "incorrect": "Incorrect", "incomplete": "Incomplete", "style": "Style or format", "tool": "Tool execution", "other": "Other" },
+      "commentPlaceholder": "Optional details",
+      "skip": "Skip",
+      "submit": "Submit feedback"
+    },
     "turnLatencyTitle": "Response time (end-to-end)"
   },
   "lightbox": {

@@ -25,6 +25,7 @@ async def lifespan(app: FastAPI):
     state = build_app_state()
     app.state.app_state = state
     lf.init_from_settings(state.settings)
+    state.score_queue.start()
     if state.bus_worker is not None:
         state.bus_worker.start()
     try:
@@ -46,6 +47,7 @@ async def lifespan(app: FastAPI):
             await state.mcp.stop()
         if state.bus_worker is not None:
             await state.bus_worker.stop()
+        await state.score_queue.stop()
         lf.shutdown()
 
 

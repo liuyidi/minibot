@@ -9,6 +9,16 @@ import { ThreadComposer } from "@/components/thread/ThreadComposer";
 import { ThreadHeader } from "@/components/thread/ThreadHeader";
 import { StreamErrorNotice } from "@/components/thread/StreamErrorNotice";
 import { ApprovalCard } from "@/components/thread/ApprovalCard";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { ThreadViewport, type ThreadViewportHandle } from "@/components/thread/ThreadViewport";
 import { useNanobotStream, type SendImage, type SendOptions } from "@/hooks/useNanobotStream";
 import { useSessionHistory } from "@/hooks/useSessions";
@@ -17,6 +27,8 @@ import {
   fetchMcpPresets,
   fetchSettings,
   listSlashCommands,
+  submitSessionFeedbackDetail,
+  submitSessionScore,
 } from "@/lib/api";
 import {
   CLI_APPS_CHANGED_EVENT,
@@ -64,6 +76,8 @@ const FILE_PREVIEW_MIN_WIDTH = 360;
 const FILE_PREVIEW_MAX_WIDTH = 860;
 const FILE_PREVIEW_MIN_MAIN_WIDTH = 420;
 const FILE_PREVIEW_CLOSE_ANIMATION_MS = 320;
+const FEEDBACK_STORAGE_PREFIX = "minibot.assistant-feedback.";
+const FEEDBACK_REASONS = ["incorrect", "incomplete", "style", "tool", "other"] as const;
 
 function clampFilePreviewWidth(width: number, maxWidth: number): number {
   return Math.min(Math.max(width, FILE_PREVIEW_MIN_WIDTH), maxWidth);
@@ -74,6 +88,20 @@ function maxFilePreviewWidth(containerWidth: number): number {
     FILE_PREVIEW_MIN_WIDTH,
     Math.min(FILE_PREVIEW_MAX_WIDTH, containerWidth - FILE_PREVIEW_MIN_MAIN_WIDTH),
   );
+}
+
+function readStoredFeedback(chatId: string | null): Record<string, boolean> {
+  if (!chatId) return {};
+  try {
+    const raw = window.localStorage.getItem(`${FEEDBACK_STORAGE_PREFIX}${chatId}`);
+    const parsed: unknown = raw ? JSON.parse(raw) : {};
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {};
+    return Object.fromEntries(
+      Object.entries(parsed).filter((entry): entry is [string, boolean] => typeof entry[1] === "boolean"),
+    );
+  } catch {
+    return {};
+  }
 }
 
 interface ThreadShellProps {
@@ -283,6 +311,11 @@ export function ThreadShell({
     selectItems: installedMcpPresetsFromPayload,
   });
   const [settings, setSettings] = useState<SettingsPayload | null>(settingsSnapshot);
+  const [feedbackByMessageId, setFeedbackByMessageId] = useState<Record<string, boolean>>({});
+  const [feedbackDetailMessage, setFeedbackDetailMessage] = useState<UIMessage | null>(null);
+  const [feedbackReason, setFeedbackReason] = useState<(typeof FEEDBACK_REASONS)[number]>("incorrect");
+  const [feedbackComment, setFeedbackComment] = useState("");
+  const [feedbackDetailSubmitting, setFeedbackDetailSubmitting] = useState(false);
   const [heroGreetingKey, setHeroGreetingKey] = useState(randomHeroGreetingKey);
   const [scrollToBottomSignal, setScrollToBottomSignal] = useState(0);
   const [filePreviewPath, setFilePreviewPath] = useState<string | null>(null);
@@ -330,6 +363,10 @@ export function ThreadShell({
   }, [chatId, historyKey]);
 
   useEffect(() => {
+    setFeedbackByMessageId(readStoredFeedback(chatId));
+  }, [chatId]);
+
+  useEffect(() => {
     filePreviewWidthRef.current = filePreviewWidth;
   }, [filePreviewWidth]);
 
@@ -351,6 +388,7 @@ export function ThreadShell({
   }, []);
 
   const displayMessages = useMemo(() => projectWebuiThreadMessages(messages), [messages]);
+  const feedbackEnabled = settings?.observability?.langfuse_enabled === true;
 
   const showHeroComposer = messages.length === 0 && !loading;
   const wasShowingHeroComposerRef = useRef(showHeroComposer);
@@ -651,6 +689,48 @@ export function ThreadShell({
     [chatId, onForkChat],
   );
 
+  const handleAssistantFeedback = useCallback(
+    async (message: UIMessage, helpful: boolean) => {
+      if (!chatId || !feedbackEnabled) return;
+      // The API resolves an empty ID to the latest trace for this session.
+      // This preserves feedback after a WebUI reload, when history has no
+      // runtime-only trace ID attached to its message rows.
+      await submitSessionScore(token, chatId, message.langfuseTraceId ?? "", helpful);
+      setFeedbackByMessageId((current) => {
+        const next = { ...current, [message.id]: helpful };
+        try {
+          window.localStorage.setItem(`${FEEDBACK_STORAGE_PREFIX}${chatId}`, JSON.stringify(next));
+        } catch {
+          // The score was accepted by the server even if browser storage is unavailable.
+        }
+        return next;
+      });
+      if (!helpful) {
+        setFeedbackReason("incorrect");
+        setFeedbackComment("");
+        setFeedbackDetailMessage(message);
+      }
+    },
+    [chatId, feedbackEnabled, token],
+  );
+
+  const submitFeedbackDetail = useCallback(async () => {
+    if (!chatId || !feedbackDetailMessage || feedbackDetailSubmitting) return;
+    setFeedbackDetailSubmitting(true);
+    try {
+      await submitSessionFeedbackDetail(
+        token,
+        chatId,
+        feedbackDetailMessage.langfuseTraceId ?? "",
+        feedbackReason,
+        feedbackComment,
+      );
+      setFeedbackDetailMessage(null);
+    } finally {
+      setFeedbackDetailSubmitting(false);
+    }
+  }, [chatId, feedbackComment, feedbackDetailMessage, feedbackDetailSubmitting, feedbackReason, token]);
+
   const composer = (
     <>
       {streamError ? (
@@ -786,6 +866,9 @@ export function ThreadShell({
           onLoadOlder={loadOlder}
           onOpenFilePreview={historyKey ? handleOpenFilePreview : undefined}
           onForkFromMessage={onForkChat ? handleForkFromMessage : undefined}
+          feedbackEnabled={feedbackEnabled}
+          feedbackByMessageId={feedbackByMessageId}
+          onAssistantFeedback={handleAssistantFeedback}
         />
       </div>
       {filePreviewPath && historyKey ? (
@@ -799,6 +882,49 @@ export function ThreadShell({
           onClose={handleCloseFilePreview}
         />
       ) : null}
+      <Dialog
+        open={feedbackDetailMessage !== null}
+        onOpenChange={(open) => {
+          if (!open && !feedbackDetailSubmitting) setFeedbackDetailMessage(null);
+        }}
+      >
+        <DialogContent className="relative max-w-md rounded-[22px] border-border/70 bg-popover p-5 shadow-2xl">
+          <DialogHeader className="text-left">
+            <DialogTitle>{t("message.feedbackDialog.title")}</DialogTitle>
+            <DialogDescription>{t("message.feedbackDialog.description")}</DialogDescription>
+          </DialogHeader>
+          <fieldset className="grid gap-2" disabled={feedbackDetailSubmitting}>
+            <legend className="sr-only">{t("message.feedbackDialog.reasonLabel")}</legend>
+            {FEEDBACK_REASONS.map((reason) => (
+              <label key={reason} className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-muted/60">
+                <input
+                  type="radio"
+                  name="feedback-reason"
+                  value={reason}
+                  checked={feedbackReason === reason}
+                  onChange={() => setFeedbackReason(reason)}
+                />
+                <span>{t(`message.feedbackDialog.reasons.${reason}`)}</span>
+              </label>
+            ))}
+          </fieldset>
+          <Textarea
+            value={feedbackComment}
+            onChange={(event) => setFeedbackComment(event.target.value)}
+            placeholder={t("message.feedbackDialog.commentPlaceholder")}
+            maxLength={2000}
+            disabled={feedbackDetailSubmitting}
+          />
+          <DialogFooter className="gap-2 sm:space-x-0">
+            <Button type="button" variant="ghost" onClick={() => setFeedbackDetailMessage(null)} disabled={feedbackDetailSubmitting}>
+              {t("message.feedbackDialog.skip")}
+            </Button>
+            <Button type="button" onClick={() => void submitFeedbackDetail()} disabled={feedbackDetailSubmitting}>
+              {t("message.feedbackDialog.submit")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }

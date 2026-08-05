@@ -13,6 +13,8 @@ import {
   Copy,
   ImageIcon,
   Sparkles,
+  ThumbsDown,
+  ThumbsUp,
   Wrench,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -49,6 +51,10 @@ interface MessageBubbleProps {
   mcpPresets?: McpPresetInfo[];
   onOpenFilePreview?: (path: string) => void;
   onForkFromHere?: () => void;
+  /** The newest assistant reply can score the server's latest trace after a page reload. */
+  allowLatestTraceFeedback?: boolean;
+  initialFeedback?: boolean | null;
+  onAssistantFeedback?: (message: UIMessage, helpful: boolean) => Promise<void>;
 }
 
 function ForkArrowIcon({ className }: { className?: string }) {
@@ -87,9 +93,14 @@ export function MessageBubble({
   mcpPresets = [],
   onOpenFilePreview,
   onForkFromHere,
+  allowLatestTraceFeedback = false,
+  initialFeedback = null,
+  onAssistantFeedback,
 }: MessageBubbleProps) {
   const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
+  const [feedback, setFeedback] = useState<boolean | null>(null);
+  const [feedbackPending, setFeedbackPending] = useState(false);
   const copyResetRef = useRef<number | null>(null);
   const baseAnim = "animate-in fade-in-0 slide-in-from-bottom-1 duration-300";
   const mentionCliApps = useMemo(
@@ -108,6 +119,10 @@ export function MessageBubble({
       }
     };
   }, []);
+
+  useEffect(() => {
+    setFeedback(initialFeedback);
+  }, [initialFeedback, message.id]);
 
   const onCopyAssistantReply = useCallback(() => {
     void copyTextToClipboard(message.content).then((ok) => {
@@ -175,6 +190,9 @@ export function MessageBubble({
   const showAssistantActions = message.role === "assistant" && !message.isStreaming && !empty;
   const showCopyButton = showAssistantCopyAction && showAssistantActions;
   const showForkButton = showAssistantActions && !!onForkFromHere;
+  const showFeedbackButtons = showAssistantActions
+    && (!!message.langfuseTraceId || allowLatestTraceFeedback)
+    && !!onAssistantFeedback;
   const copyReplyLabel = copied ? t("message.copiedReply") : t("message.copyReply");
   const forkLabel = t("message.forkFromHere");
   const latencyMs = message.latencyMs;
@@ -183,7 +201,14 @@ export function MessageBubble({
     && latencyMs != null
     && !message.isStreaming
     && (!empty || hasReasoning || media.length > 0);
-  const showAssistantFooterRow = showCopyButton || showForkButton || showLatencyFooter;
+  const showAssistantFooterRow = showCopyButton || showForkButton || showFeedbackButtons || showLatencyFooter;
+  const onFeedback = (helpful: boolean) => {
+    if (!onAssistantFeedback || feedbackPending) return;
+    setFeedbackPending(true);
+    void onAssistantFeedback(message, helpful)
+      .then(() => setFeedback(helpful))
+      .finally(() => setFeedbackPending(false));
+  };
   return (
     <div className={cn("w-full text-[15px]", baseAnim)} style={{ lineHeight: "var(--cjk-line-height)" }}>
       {hasReasoning ? (
@@ -236,6 +261,54 @@ export function MessageBubble({
                     </TooltipTrigger>
                     <TooltipContent side="top" align="center">{copyReplyLabel}</TooltipContent>
                   </Tooltip>
+                ) : null}
+                {showFeedbackButtons ? (
+                  <>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          disabled={feedbackPending}
+                          onClick={() => onFeedback(true)}
+                          aria-label={t("message.feedbackHelpful")}
+                          aria-pressed={feedback === true}
+                          className={cn(
+                            "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full",
+                            "transition-colors",
+                            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                            feedback === true
+                              ? "bg-emerald-500/15 text-emerald-700 hover:bg-emerald-500/20 dark:text-emerald-400"
+                              : "hover:bg-muted/55 hover:text-foreground",
+                          )}
+                        >
+                          <ThumbsUp className="h-4 w-4" aria-hidden />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" align="center">{t("message.feedbackHelpful")}</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          disabled={feedbackPending}
+                          onClick={() => onFeedback(false)}
+                          aria-label={t("message.feedbackUnhelpful")}
+                          aria-pressed={feedback === false}
+                          className={cn(
+                            "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full",
+                            "transition-colors",
+                            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                            feedback === false
+                              ? "bg-destructive/10 text-destructive hover:bg-destructive/15"
+                              : "hover:bg-muted/55 hover:text-foreground",
+                          )}
+                        >
+                          <ThumbsDown className="h-4 w-4" aria-hidden />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" align="center">{t("message.feedbackUnhelpful")}</TooltipContent>
+                    </Tooltip>
+                  </>
                 ) : null}
                 {showForkButton ? (
                   <Tooltip>

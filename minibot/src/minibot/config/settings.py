@@ -42,6 +42,10 @@ class Settings(BaseSettings):
     minikb_timeout_s: float = 30.0
     minikb_ui_url: str = ""
 
+    # Daily LLM budget (UTC day). 0 = unlimited for that dimension.
+    daily_token_limit: int = 0
+    daily_turn_limit: int = 0
+
     def resolved_config_path(self) -> Path:
         if self.config_path is not None:
             return self.config_path.expanduser()

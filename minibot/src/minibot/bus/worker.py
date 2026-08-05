@@ -112,14 +112,25 @@ class BusWorker:
                 )
             self._complete_cron_wait(job_id)
         except Exception as exc:
+            from minibot.observability.usage_budget import BudgetExceeded
+
             self.last_error = f"{type(exc).__name__}: {exc}"
-            logger.exception("bus inbound handle_turn failed chat_id=%s", chat_id)
-            await bus_publish_error(
-                self.state,
-                channel=msg.channel,
-                chat_id=chat_id,
-                detail=f"{type(exc).__name__}: {exc}",
-            )
+            if isinstance(exc, BudgetExceeded):
+                logger.warning("bus inbound blocked by LLM budget chat_id=%s reason=%s", chat_id, exc.reason)
+                await bus_publish_error(
+                    self.state,
+                    channel=msg.channel,
+                    chat_id=chat_id,
+                    detail=f"budget_exceeded:{exc.reason}",
+                )
+            else:
+                logger.exception("bus inbound handle_turn failed chat_id=%s", chat_id)
+                await bus_publish_error(
+                    self.state,
+                    channel=msg.channel,
+                    chat_id=chat_id,
+                    detail=str(exc),
+                )
             self._complete_cron_wait(job_id, error=exc)
 
     def _complete_cron_wait(self, job_id: str, *, error: BaseException | None = None) -> None:

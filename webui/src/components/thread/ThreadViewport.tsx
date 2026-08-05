@@ -44,6 +44,9 @@ interface ThreadViewportProps {
   onLoadOlder?: () => Promise<void> | void;
   onOpenFilePreview?: (path: string) => void;
   onForkFromMessage?: (beforeUserIndex: number) => void;
+  feedbackEnabled?: boolean;
+  feedbackByMessageId?: Record<string, boolean>;
+  onAssistantFeedback?: (message: UIMessage, helpful: boolean) => Promise<void>;
 }
 
 const NEAR_BOTTOM_PX = 48;
@@ -114,6 +117,9 @@ export const ThreadViewport = forwardRef<ThreadViewportHandle, ThreadViewportPro
   onLoadOlder,
   onOpenFilePreview,
   onForkFromMessage,
+  feedbackEnabled = false,
+  feedbackByMessageId = {},
+  onAssistantFeedback,
 }, ref) {
   const { t } = useTranslation();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -456,6 +462,9 @@ export const ThreadViewport = forwardRef<ThreadViewportHandle, ThreadViewportPro
                   forkBoundaryMessageCount={visibleForkBoundaryMessageCount}
                   onOpenFilePreview={onOpenFilePreview}
                   onForkFromMessage={onForkFromMessage}
+                  feedbackEnabled={feedbackEnabled}
+                  feedbackByMessageId={feedbackByMessageId}
+                  onAssistantFeedback={onAssistantFeedback}
                 />
               </div>
             </div>

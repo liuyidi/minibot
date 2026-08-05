@@ -95,6 +95,90 @@ describe("MessageBubble", () => {
     expect(onForkFromHere).toHaveBeenCalledTimes(1);
   });
 
+  it("submits per-turn thumbs feedback only when the assistant message has a trace", async () => {
+    const onAssistantFeedback = vi.fn().mockResolvedValue(undefined);
+    const message: UIMessage = {
+      id: "a-feedback",
+      role: "assistant",
+      content: "A scored response.",
+      langfuseTraceId: "trace_123",
+      createdAt: Date.now(),
+    };
+
+    render(<MessageBubble message={message} onAssistantFeedback={onAssistantFeedback} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Helpful" }));
+    await waitFor(() => expect(onAssistantFeedback).toHaveBeenCalledWith(message, true));
+    expect(screen.getByRole("button", { name: "Helpful" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "Not helpful" })).toBeInTheDocument();
+  });
+
+  it("orders assistant actions as copy, thumbs up, thumbs down, then fork", () => {
+    const message: UIMessage = {
+      id: "a-action-order",
+      role: "assistant",
+      content: "A scored response.",
+      langfuseTraceId: "trace_123",
+      createdAt: Date.now(),
+    };
+
+    render(
+      <MessageBubble
+        message={message}
+        onForkFromHere={vi.fn()}
+        onAssistantFeedback={vi.fn().mockResolvedValue(undefined)}
+      />,
+    );
+
+    expect(screen.getAllByRole("button").map((button) => button.getAttribute("aria-label"))).toEqual([
+      "Copy",
+      "Helpful",
+      "Not helpful",
+      "Fork",
+    ]);
+  });
+
+  it("keeps feedback available for the latest reply when a reload removed its runtime trace ID", () => {
+    const message: UIMessage = {
+      id: "a-reloaded-feedback",
+      role: "assistant",
+      content: "A reply restored from history.",
+      createdAt: Date.now(),
+    };
+
+    render(
+      <MessageBubble
+        message={message}
+        allowLatestTraceFeedback
+        onAssistantFeedback={vi.fn().mockResolvedValue(undefined)}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "Helpful" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Not helpful" })).toBeInTheDocument();
+  });
+
+  it("restores a persisted thumbs-down selection", () => {
+    const message: UIMessage = {
+      id: "a-restored-feedback",
+      role: "assistant",
+      content: "A reply restored from history.",
+      langfuseTraceId: "trace_restored",
+      createdAt: Date.now(),
+    };
+
+    render(
+      <MessageBubble
+        message={message}
+        initialFeedback={false}
+        onAssistantFeedback={vi.fn().mockResolvedValue(undefined)}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "Not helpful" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "Helpful" })).toHaveAttribute("aria-pressed", "false");
+  });
+
   it("renders installed CLI app mentions inside sent user messages", () => {
     const message: UIMessage = {
       id: "u-cli",
