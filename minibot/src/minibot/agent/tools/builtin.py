@@ -11,9 +11,15 @@ from minibot.agent.tools.search import FindFilesTool, GrepTool
 from minibot.agent.tools.shell import ExecTool
 from minibot.agent.tools.web import WebFetchTool, WebSearchTool
 from minibot.config.settings import get_settings
+from minibot.sandbox.base import SandboxBackend
+from minibot.sandbox.local import LocalSandboxBackend
 
 
-def register_default_tools(registry: ToolRegistry | None = None) -> ToolRegistry:
+def register_default_tools(
+    registry: ToolRegistry | None = None,
+    *,
+    backend: SandboxBackend | None = None,
+) -> ToolRegistry:
     """Register Phase 1 + 3b builtin tools. Weather is intentionally omitted (1.4)."""
     tools = registry or ToolRegistry()
     tools.register(EchoTool())
@@ -23,7 +29,7 @@ def register_default_tools(registry: ToolRegistry | None = None) -> ToolRegistry
     tools.register(ListDirTool())
     tools.register(FindFilesTool())
     tools.register(GrepTool())
-    tools.register(ExecTool())
+    tools.register(ExecTool(backend=backend or LocalSandboxBackend()))
     tools.register(WebFetchTool())
     tools.register(WebSearchTool())
     tools.register(ReadMemoryTool())

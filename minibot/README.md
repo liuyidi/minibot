@@ -90,6 +90,19 @@ MINIBOT_SERVER_DAILY_TOKEN_LIMIT=200000
 
 查看用量：`GET /api/settings/usage`（含 `by_entry`：`ws` / `cron` / `rest` / …）。超限返回 HTTP 429。计数落在 `$MINIBOT_SERVER_DATA_DIR/usage/YYYY-MM-DD.json`。
 
+### E2B exec 沙箱（可选）
+
+默认 `local`（工作区 cwd + 可选 bwrap）。设为 `e2b` 后，`exec` 在 Firecracker microVM 里跑；文件读写仍在本机 workspace。
+
+```bash
+pip install -e ".[e2b]"
+# .env
+MINIBOT_SERVER_EXEC_BACKEND=e2b
+MINIBOT_SERVER_E2B_API_KEY=e2b_...   # 或 E2B_API_KEY=
+```
+
+国内可直连 `api.e2b.app`（有跨境延迟）；请在 E2B Dashboard 设 spend limit。Hobby 有一次性用量额度。
+
 Default **workspace** (tools / `SOUL.md` / `USER.md`): `~/.minibot/workspace`
 (override with Chat workspace switch, or set `MINIBOT_SERVER_DATA_DIR`).
 Sessions live under `~/.minibot/sessions/`.

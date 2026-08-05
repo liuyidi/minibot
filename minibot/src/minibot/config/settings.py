@@ -46,6 +46,12 @@ class Settings(BaseSettings):
     daily_token_limit: int = 0
     daily_turn_limit: int = 0
 
+    # Exec sandbox: local (cwd/bwrap) or e2b (Firecracker microVM)
+    exec_backend: str = "local"
+    e2b_api_key: str = ""
+    e2b_timeout_s: int = 900
+    e2b_idle_s: int = 900
+
     def resolved_config_path(self) -> Path:
         if self.config_path is not None:
             return self.config_path.expanduser()
@@ -57,6 +63,17 @@ class Settings(BaseSettings):
         import os
 
         return (os.environ.get("OPENAI_API_KEY") or "").strip()
+
+    def resolved_e2b_api_key(self) -> str:
+        if self.e2b_api_key.strip():
+            return self.e2b_api_key.strip()
+        import os
+
+        return (os.environ.get("E2B_API_KEY") or "").strip()
+
+    def normalized_exec_backend(self) -> str:
+        value = (self.exec_backend or "local").strip().lower()
+        return value if value in {"local", "e2b"} else "local"
 
 
 @lru_cache

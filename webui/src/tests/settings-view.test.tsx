@@ -468,14 +468,14 @@ describe("SettingsView Apps catalog", () => {
       ...settingsPayload(),
       agent: {
         ...settingsPayload().agent,
-        model: "deepseek-chat",
+        model: "deepseek-v4-flash",
         provider: "deepseek",
         resolved_provider: "deepseek",
       },
       model_presets: [
         {
           ...settingsPayload().model_presets[0],
-          model: "deepseek-chat",
+          model: "deepseek-v4-flash",
           provider: "deepseek",
         },
       ],
@@ -718,14 +718,14 @@ describe("SettingsView Apps catalog", () => {
       ...settingsPayload(),
       agent: {
         ...settingsPayload().agent,
-        model: "deepseek-chat",
+        model: "deepseek-v4-flash",
         provider: "deepseek",
         resolved_provider: "deepseek",
       },
       model_presets: [
         {
           ...settingsPayload().model_presets[0],
-          model: "deepseek-chat",
+          model: "deepseek-v4-flash",
           provider: "deepseek",
         },
       ],
@@ -771,7 +771,7 @@ describe("SettingsView Apps catalog", () => {
           status: "available",
           catalog_kind: "official",
           models: [
-            { id: "deepseek-chat", owned_by: "deepseek", context_window: 65536 },
+            { id: "deepseek-v4-flash", owned_by: "deepseek", context_window: 65536 },
             { id: "deepseek-reasoner", owned_by: "deepseek", context_window: 65536 },
           ],
           model_count: 2,
@@ -787,7 +787,7 @@ describe("SettingsView Apps catalog", () => {
 
     renderSettingsView({ initialSection: "models" });
 
-    const modelButtons = await screen.findAllByRole("button", { name: /deepseek-chat/i });
+    const modelButtons = await screen.findAllByRole("button", { name: /deepseek-v4-flash/i });
     fireEvent.pointerDown(modelButtons[modelButtons.length - 1]);
     await screen.findByText("deepseek-reasoner");
     fireEvent.click(screen.getAllByText("deepseek-reasoner")[0]);

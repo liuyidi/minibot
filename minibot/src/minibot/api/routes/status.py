@@ -168,6 +168,28 @@ async def _probe_minikb(state: Any) -> dict[str, Any]:
         }
 
 
+def _sandbox_details(state: Any, *, zh: bool) -> list[str]:
+    settings = state.settings
+    backend = settings.normalized_exec_backend()
+    key_ok = bool(settings.resolved_e2b_api_key()) if backend == "e2b" else True
+    active = 0
+    sb = getattr(state, "sandbox_backend", None)
+    if sb is not None and hasattr(sb, "active_count"):
+        try:
+            active = int(sb.active_count())
+        except Exception:  # noqa: BLE001
+            active = 0
+    if zh:
+        lines = [f"后端：{backend}", f"活跃沙箱：{active}"]
+        if backend == "e2b":
+            lines.append("API Key：已配置" if key_ok else "API Key：未配置")
+        return lines
+    lines = [f"backend: {backend}", f"active sandboxes: {active}"]
+    if backend == "e2b":
+        lines.append("api key: configured" if key_ok else "api key: missing")
+    return lines
+
+
 def _budget_details(state: Any, *, zh: bool) -> list[str]:
     budget = getattr(state, "usage_budget", None)
     if budget is None:
@@ -294,6 +316,24 @@ def _build_components(state: Any, minikb: dict[str, Any]) -> list[dict[str, Any]
                 f"Enabled: {cron_status.get('enabled_count', 0)}",
                 f"Running: {'yes' if cron_status.get('running') else 'no'}",
             ],
+        ),
+        _component(
+            key="exec_sandbox",
+            required=True,
+            status=(
+                "degraded"
+                if (
+                    state.settings.normalized_exec_backend() == "e2b"
+                    and not state.settings.resolved_e2b_api_key()
+                )
+                else "operational"
+            ),
+            label_zh="Exec 沙箱",
+            label_en="Exec sandbox",
+            desc_zh="local cwd/bwrap 或 E2B microVM",
+            desc_en="local cwd/bwrap or E2B microVM",
+            details_zh=_sandbox_details(state, zh=True),
+            details_en=_sandbox_details(state, zh=False),
         ),
         _component(
             key="llm_budget",

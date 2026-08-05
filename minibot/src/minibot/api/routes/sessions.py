@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from contextlib import suppress
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, status
@@ -196,6 +197,9 @@ async def delete_session(_auth: AuthDep, state: StateDep, session_id: str) -> di
     ok = state.sessions.delete(sid)
     if not ok:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="session not found")
+    if state.sandbox_backend is not None:
+        with suppress(Exception):
+            await state.sandbox_backend.close_session(sid)
     return {"ok": True, "deleted": sid}
 
 

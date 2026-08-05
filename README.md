@@ -37,6 +37,8 @@ minibot uses a layered config: env vars → `~/.minibot/config.json` → in-memo
 | `MINIBOT_SERVER_MINIKB_BASE_URL` | — | Optional minikb URL (e.g. `http://127.0.0.1:8080`) |
 | `MINIBOT_SERVER_DAILY_TURN_LIMIT` | `0` | UTC daily turn cap (`0` = unlimited); over → HTTP 429 |
 | `MINIBOT_SERVER_DAILY_TOKEN_LIMIT` | `0` | UTC daily token cap (`0` = unlimited); over → HTTP 429 |
+| `MINIBOT_SERVER_EXEC_BACKEND` | `local` | `local` or `e2b` (Firecracker microVM for `exec` only) |
+| `MINIBOT_SERVER_E2B_API_KEY` | — | E2B API key (or `E2B_API_KEY`); required when backend=`e2b` |
 
 Providers are selected via Settings model presets (`openai` / `anthropic` / `openrouter` / `deepseek` / `ollama` / `custom`). Anthropic uses the native Messages API; others use OpenAI-compatible `/chat/completions`. Optional: import keys from `~/.nanobot/config.json` via `/ui/providers.html`.
 

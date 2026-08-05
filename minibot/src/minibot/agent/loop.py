@@ -153,6 +153,9 @@ class AgentLoop:
 
         t0 = time.perf_counter()
         ws_token = bind_workspace(effective_ws)
+        from minibot.security.session_context import bind_session, reset_session
+
+        session_token = bind_session(session_id)
         parent_token = None
         abort_ev = self._abort_event(session_id)
         abort_ev.clear()
@@ -270,6 +273,7 @@ class AgentLoop:
                 from minibot.agent.tools.spawn import reset_parent_session
 
                 reset_parent_session(parent_token)
+            reset_session(session_token)
             reset_workspace(ws_token)
             abort_ev.clear()
 

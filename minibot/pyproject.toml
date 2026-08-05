@@ -13,8 +13,9 @@ dependencies = [
     "pydantic-settings>=2.12.0",
 ]
 
-[project.scripts]
-minibot = "minibot.__main__:main"
+[project.optional-dependencies]
+e2b = ["e2b>=1.0.0"]
+
 
 [build-system]
 requires = ["hatchling"]

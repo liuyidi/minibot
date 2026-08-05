@@ -25,6 +25,8 @@ from minibot.providers.fallback import FallbackStats
 from minibot.providers.fault_inject import FaultController
 from minibot.observability.score_queue import ScoreQueue
 from minibot.observability.usage_budget import BudgetExceeded, UsageBudget
+from minibot.sandbox.base import SandboxBackend
+from minibot.sandbox.factory import build_sandbox_backend
 from minibot.session.store import SessionStore
 
 
@@ -48,6 +50,7 @@ class AppState:
     cron: CronService | None = None
     bus_worker: BusWorker | None = None
     usage_budget: UsageBudget | None = None
+    sandbox_backend: SandboxBackend | None = None
     tokens: dict[str, TokenRecord] = field(default_factory=dict)
     fallback_stats: FallbackStats = field(default_factory=FallbackStats)
     fault_controller: FaultController = field(default_factory=FaultController)
@@ -108,7 +111,8 @@ def build_app_state() -> AppState:
     config = load_app_config()
     if not config.openai_api_key:
         config.openai_api_key = settings.resolved_api_key()
-    tools = register_default_tools()
+    sandbox_backend = build_sandbox_backend(settings)
+    tools = register_default_tools(backend=sandbox_backend)
     mcp = McpManager(tools)
     fallback_stats = FallbackStats()
     fault_controller = FaultController()
@@ -150,6 +154,7 @@ def build_app_state() -> AppState:
         fallback_stats=fallback_stats,
         fault_controller=fault_controller,
         usage_budget=usage_budget,
+        sandbox_backend=sandbox_backend,
     )
     state.bus_worker = BusWorker(state)
     cron_path = settings.data_dir.expanduser() / "cron" / "jobs.json"

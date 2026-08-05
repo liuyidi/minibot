@@ -47,6 +47,11 @@ async def lifespan(app: FastAPI):
             await state.mcp.stop()
         if state.bus_worker is not None:
             await state.bus_worker.stop()
+        if state.sandbox_backend is not None:
+            aclose = getattr(state.sandbox_backend, "aclose", None)
+            if callable(aclose):
+                with suppress(Exception):
+                    await aclose()
         await state.score_queue.stop()
         lf.shutdown()
 
