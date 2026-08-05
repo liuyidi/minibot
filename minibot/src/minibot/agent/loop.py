@@ -128,6 +128,7 @@ class AgentLoop:
         stream: bool | None = None,
         bus: MessageBus | None = None,
         channel: str = "websocket",
+        media: list[str] | None = None,
     ) -> AgentRunResult:
         """Run one user turn under the session lock.
 
@@ -186,6 +187,7 @@ class AgentLoop:
                         bus=bus,
                         channel=channel,
                         should_abort=lambda: abort_ev.is_set(),
+                        media=media,
                     )
                     slot.last_stop_reason = result.stop_reason
                     slot.last_workspace = effective_ws
@@ -420,15 +422,25 @@ class AgentLoop:
         bus: MessageBus | None = None,
         channel: str = "websocket",
         should_abort: Any | None = None,
+        media: list[str] | None = None,
     ) -> AgentRunResult:
-        from minibot.agent.context import build_system_prompt
+        from minibot.agent.context import (
+            build_system_prompt,
+            build_user_content,
+            message_for_runner,
+            persist_user_message,
+        )
 
         session = self.sessions.get(session_id)
         if session is None:
             raise KeyError(f"unknown session: {session_id}")
 
-        history = [m for m in session.messages if m.get("role") in _ROLES]
-        user_msg = {"role": "user", "content": content}
+        history = [message_for_runner(m) for m in session.messages if m.get("role") in _ROLES]
+        stored_user = persist_user_message(content, media)
+        user_msg = {
+            "role": "user",
+            "content": build_user_content(content, image_paths=media),
+        }
         context_meta: dict[str, Any] | None = None
         from minibot.observability import langfuse as lf
 
@@ -575,9 +587,11 @@ class AgentLoop:
             new_tail = result.messages[len(history) :]
             if new_tail and new_tail[0].get("role") == "system":
                 new_tail = new_tail[1:]
+            if new_tail and new_tail[0].get("role") == "user":
+                new_tail[0] = stored_user
             self.sessions.append_messages(
                 session_id,
-                new_tail if new_tail else [user_msg, {"role": "assistant", "content": result.content}],
+                new_tail if new_tail else [stored_user, {"role": "assistant", "content": result.content}],
             )
             await self.compact_if_needed(session_id)
             return result
@@ -597,9 +611,11 @@ class AgentLoop:
         new_tail = result.messages[len(history) :]
         if new_tail and new_tail[0].get("role") == "system":
             new_tail = new_tail[1:]
+        if new_tail and new_tail[0].get("role") == "user":
+            new_tail[0] = stored_user
         self.sessions.append_messages(
             session_id,
-            new_tail if new_tail else [user_msg, {"role": "assistant", "content": result.content}],
+            new_tail if new_tail else [stored_user, {"role": "assistant", "content": result.content}],
         )
         await self.compact_if_needed(session_id)
         return result

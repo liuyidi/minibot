@@ -105,7 +105,7 @@ webui · Dev UI/Insight · CLI · Desktop · RN
 
 **Insight 面（`/api/dev/*`）**：runtime、fallback simulate/arm、mcp probe、trace 辅助、race… —— **同一 Gateway**，权限上可后续限制为本地/dev。
 
-**缺口 / stub**：media、file-preview 等（Phase 8+）；客户端必须降级。
+**缺口 / stub**：commands CRUD 补齐、sidebar 持久化、`/model` 等（Phase 8 剩余）；media / file-preview 已落地（Phase 8.1）。
 
 ### 4.3 L2 — WebSocket
 

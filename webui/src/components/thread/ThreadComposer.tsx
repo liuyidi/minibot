@@ -10,6 +10,7 @@ import {
 } from "react";
 
 import { MarkdownText, preloadMarkdownText } from "@/components/MarkdownText";
+import { ContextUsageButton } from "@/components/thread/ContextUsageButton";
 import {
   CliAppMentionToken,
   McpPresetMentionToken,
@@ -82,6 +83,7 @@ import {
   logoFallbackUrls,
   providerBrand,
 } from "@/lib/provider-brand";
+import { UI_ENTRY } from "@/lib/ui-entry";
 import { cn } from "@/lib/utils";
 
 /** ``<input accept>``: aligned with the server's MIME whitelist. SVG is
@@ -161,6 +163,9 @@ interface ThreadComposerProps {
   mcpPresets?: McpPresetInfo[];
   onStop?: () => void;
   onTranscribeAudio?: (dataUrl: string, options?: { durationMs?: number }) => Promise<string>;
+  /** Session key for context-usage API (`websocket:…` or bare id). */
+  contextSessionKey?: string | null;
+  authToken?: string | null;
   /** Unix seconds from server; turn elapsed timer above input while set. */
   runStartedAt?: number | null;
   /** Sustained objective for this chat (WebSocket ``goal_state``). */
@@ -773,6 +778,8 @@ export function ThreadComposer({
   mcpPresets = [],
   onStop,
   onTranscribeAudio,
+  contextSessionKey = null,
+  authToken = null,
   runStartedAt = null,
   goalState,
   workspaceScope = null,
@@ -1196,7 +1203,7 @@ export function ThreadComposer({
   });
 
   useEffect(() => {
-    if (!onTranscribeAudio) return;
+    if (!UI_ENTRY.voice || !onTranscribeAudio) return;
 
     function onKeyDown(event: KeyboardEvent): void {
       if (!isVoiceShortcutDown(event) || event.repeat || voiceShortcutDownRef.current) return;
@@ -1543,7 +1550,7 @@ export function ThreadComposer({
   );
 
   const attachButtonDisabled = disabled || full;
-  const showVoiceButton = Boolean(onTranscribeAudio);
+  const showVoiceButton = UI_ENTRY.voice && Boolean(onTranscribeAudio);
   const voiceRecordingStatusLabel = t("thread.composer.voice.recordingStatus", {
     time: voiceRecorder.elapsedLabel,
     defaultValue: `Recording ${voiceRecorder.elapsedLabel}`,
@@ -1827,7 +1834,14 @@ export function ThreadComposer({
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-            ) : null}
+            ) : (
+              <ContextUsageButton
+                sessionKey={contextSessionKey}
+                token={authToken}
+                draftText={value}
+                isHero={isHero}
+              />
+            )}
             <Button
               type={showStopButton || modelNeedsSetup ? "button" : "submit"}
               size="icon"

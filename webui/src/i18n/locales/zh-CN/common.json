@@ -833,6 +833,17 @@
         "drag": "拖动排序"
       },
       "attachImage": "添加图片",
+      "contextUsage": {
+        "buttonAria": "显示上下文占用",
+        "title": "Context Usage",
+        "closeAria": "关闭",
+        "fullPct": "{{pct}}% Full",
+        "tokensLine": "~{{used}} / {{window}} Tokens",
+        "noSession": "打开会话后可估算上下文占用。",
+        "loadFailed": "无法加载上下文占用。",
+        "updating": "更新中…",
+        "estimateHint": "估算 · {{method}}"
+      },
       "imageMode": {
         "label": "图片生成",
         "toggle": "切换图片生成模式",

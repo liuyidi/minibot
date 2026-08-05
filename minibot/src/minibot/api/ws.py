@@ -402,8 +402,42 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
 
             if msg_type == "message":
                 chat_id = _session_id(str(frame.get("chat_id") or default_chat or ""))
-                content = str(frame.get("content") or "").strip()
-                if not chat_id or not content:
+                content = str(frame.get("content") or "")
+                raw_media = frame.get("media")
+                media_paths: list[str] = []
+                if raw_media is not None:
+                    if not isinstance(raw_media, list):
+                        await websocket.send_json(
+                            {
+                                "event": "error",
+                                "chat_id": chat_id,
+                                "detail": "attachment_rejected",
+                                "reason": "malformed",
+                            }
+                        )
+                        continue
+                    if state.media_gateway is None:
+                        await websocket.send_json(
+                            {
+                                "event": "error",
+                                "chat_id": chat_id,
+                                "detail": "attachment_rejected",
+                                "reason": "unavailable",
+                            }
+                        )
+                        continue
+                    media_paths, reason = state.media_gateway.store_inbound_attachments(raw_media)
+                    if reason is not None:
+                        await websocket.send_json(
+                            {
+                                "event": "error",
+                                "chat_id": chat_id,
+                                "detail": "attachment_rejected",
+                                "reason": reason,
+                            }
+                        )
+                        continue
+                if not chat_id or (not content.strip() and not media_paths):
                     await websocket.send_json(
                         {"event": "error", "chat_id": chat_id, "detail": "missing_chat_or_content"}
                     )
@@ -423,6 +457,7 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
                         sender_id="webui",
                         chat_id=chat_id,
                         content=content,
+                        media=media_paths,
                     )
                 )
                 continue

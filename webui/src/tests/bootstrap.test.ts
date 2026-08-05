@@ -14,17 +14,19 @@ describe("bootstrap helpers", () => {
     );
   });
 
-  it("overrides the server-provided websocket URL when on dev server port 5173", () => {
-    vi.stubGlobal("window", {
-      location: {
-        port: "5173",
-        hostname: "192.168.1.100",
-        protocol: "http:",
-      },
-    });
-    expect(deriveWsUrl("/", "tok", "ws://127.0.0.1:8765/")).toBe(
-      "ws://192.168.1.100:8766/?token=tok",
-    );
+  it("overrides the server-provided websocket URL when on Vite dev ports", () => {
+    for (const port of ["5173", "5174"]) {
+      vi.stubGlobal("window", {
+        location: {
+          port,
+          hostname: "192.168.1.100",
+          protocol: "http:",
+        },
+      });
+      expect(deriveWsUrl("/", "tok", "ws://127.0.0.1:8765/")).toBe(
+        "ws://192.168.1.100:8766/?token=tok",
+      );
+    }
   });
 
   it("preserves the host socket bridge URL", () => {

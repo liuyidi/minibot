@@ -767,6 +767,8 @@ export function ThreadShell({
           mcpPresets={mcpPresets}
           onStop={stop}
           onTranscribeAudio={transcribeAudio}
+          contextSessionKey={historyKey}
+          authToken={token}
           runStartedAt={runStartedAt}
           goalState={goalState}
           workspaceScope={workspaceScope}
@@ -796,8 +798,10 @@ export function ThreadShell({
           slashCommands={slashCommands}
           cliApps={cliApps}
           mcpPresets={mcpPresets}
-          runStartedAt={runStartedAt}
           onTranscribeAudio={transcribeAudio}
+          contextSessionKey={null}
+          authToken={token}
+          runStartedAt={runStartedAt}
           goalState={goalState}
           workspaceScope={workspaceScope}
           workspaceDefaultScope={workspaceDefaultScope}

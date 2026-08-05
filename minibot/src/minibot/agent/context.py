@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import base64
+import mimetypes
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 from minibot.agent.memory import read_memory
 from minibot.agent.skills import SkillsRegistry
+from minibot.utils.media_decode import detect_image_mime
 
 BOOTSTRAP_FILES = ("AGENTS.md", "SOUL.md", "USER.md")
 
@@ -152,6 +155,55 @@ def build_system_prompt(
         memory_chars=memory_chars,
         skills_count=skills_count,
     )
+
+
+def build_user_content(
+    text: str,
+    image_paths: list[str] | None,
+) -> str | list[dict[str, Any]]:
+    if not image_paths:
+        return text
+
+    image_blocks: list[dict[str, Any]] = []
+    for path in image_paths:
+        p = Path(path)
+        if not p.is_file():
+            continue
+        raw = p.read_bytes()
+        mime = detect_image_mime(raw) or mimetypes.guess_type(path)[0]
+        if not mime or not mime.startswith("image/"):
+            continue
+        b64 = base64.b64encode(raw).decode()
+        image_blocks.append({
+            "type": "image_url",
+            "image_url": {"url": f"data:{mime};base64,{b64}"},
+            "_meta": {"path": str(p)},
+        })
+
+    if not image_blocks:
+        return text
+    return image_blocks + [{"type": "text", "text": text}]
+
+
+def persist_user_message(content: str, media: list[str] | None = None) -> dict[str, Any]:
+    msg: dict[str, Any] = {"role": "user", "content": content}
+    if media:
+        msg["media"] = list(media)
+    return msg
+
+
+def message_for_runner(msg: dict[str, Any]) -> dict[str, Any]:
+    if msg.get("role") != "user":
+        return msg
+    media = msg.get("media")
+    if not isinstance(media, list) or not media:
+        return msg
+    paths = [str(p) for p in media if isinstance(p, str) and p]
+    if not paths:
+        return msg
+    content = msg.get("content")
+    text = content if isinstance(content, str) else ""
+    return {"role": "user", "content": build_user_content(text, image_paths=paths)}
 
 
 def build_turn_messages(

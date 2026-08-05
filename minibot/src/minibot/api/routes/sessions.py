@@ -30,7 +30,7 @@ class SessionSummary(BaseModel):
 
 
 class TurnRequest(BaseModel):
-    content: str = Field(min_length=1)
+    content: str = ""
     media: list[str] = Field(default_factory=list)
 
 
@@ -93,7 +93,11 @@ async def get_messages(_auth: AuthDep, state: StateDep, session_id: str) -> dict
     session = state.sessions.get(session_id)
     if session is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="session not found")
-    return {"session_id": session_id, "messages": session.messages}
+    # Shallow-copy message dicts: augment_media_urls mutates in place (media → media_urls).
+    payload = {"session_id": session_id, "messages": [dict(m) for m in session.messages]}
+    if state.media_gateway is not None:
+        state.media_gateway.augment_media_urls(payload)
+    return payload
 
 
 @router.get("/{session_id}/context-usage")
@@ -162,32 +166,75 @@ async def get_webui_thread(_auth: AuthDep, state: StateDep, session_id: str) -> 
     """Compatibility shape for the WebUI transcript loader."""
     session = state.sessions.get(session_id)
     if session is None:
-        # Also accept full key websocket:<id>
         if session_id.startswith("websocket:"):
             session = state.sessions.get(session_id.split(":", 1)[1])
     if session is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="session not found")
 
+    gateway = state.media_gateway
     ui_messages: list[dict[str, Any]] = []
     for idx, msg in enumerate(session.messages):
         role = msg.get("role")
         if role not in {"user", "assistant"}:
             continue
         content = msg.get("content")
-        if not isinstance(content, str) or not content.strip():
+        text = content if isinstance(content, str) else ""
+        media_paths = msg.get("media")
+        paths: list[str] = []
+        if isinstance(media_paths, list):
+            paths = [str(p) for p in media_paths if p]
+        if not text.strip() and not paths:
             continue
-        ui_messages.append(
-            {
-                "id": f"{session.id}-{idx}",
-                "role": role,
-                "content": content,
-            }
-        )
+        row: dict[str, Any] = {
+            "id": f"{session.id}-{idx}",
+            "role": role,
+            "content": text,
+            "createdAt": idx,
+        }
+        if paths and gateway is not None:
+            media_att = gateway.augment_transcript_user_media(paths)
+            if media_att:
+                row["media"] = media_att
+                if all(m.get("kind") == "image" for m in media_att):
+                    row["images"] = [{"url": m.get("url"), "name": m.get("name")} for m in media_att]
+        ui_messages.append(row)
     return {
         "schemaVersion": 1,
         "sessionKey": f"websocket:{session.id}",
         "messages": ui_messages,
     }
+
+
+@router.get("/{session_id}/file-preview")
+async def get_file_preview(
+    _auth: AuthDep,
+    state: StateDep,
+    session_id: str,
+    path: str = "",
+    probe: str = "",
+) -> dict[str, Any]:
+    from minibot.webui.file_preview import (
+        WebUIFilePreviewError,
+        file_preview_availability_payload,
+        file_preview_payload,
+    )
+
+    sid = session_id.split(":", 1)[1] if session_id.startswith("websocket:") else session_id
+    session = state.sessions.get(sid)
+    if session is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="session not found")
+
+    is_probe = probe == "1"
+    try:
+        if is_probe:
+            payload = file_preview_availability_payload(path, workspace=session.workspace_path)
+        else:
+            payload = file_preview_payload(path, workspace=session.workspace_path)
+    except WebUIFilePreviewError as exc:
+        if is_probe and exc.status in {400, 403, 404, 415}:
+            return {"available": False}
+        raise HTTPException(status_code=exc.status, detail=exc.message) from exc
+    return payload
 
 
 @router.delete("/{session_id}")
@@ -213,9 +260,16 @@ async def run_turn(
     sid = session_id.split(":", 1)[1] if session_id.startswith("websocket:") else session_id
     if state.sessions.get(sid) is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="session not found")
+    if not body.content.strip() and not body.media:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="missing content")
 
     try:
-        result = await state.loop.handle_turn(sid, body.content, entry="rest")
+        result = await state.loop.handle_turn(
+            sid,
+            body.content,
+            entry="rest",
+            media=list(body.media) if body.media else None,
+        )
     except KeyError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="session not found") from None
     except Exception as exc:

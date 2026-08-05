@@ -13,6 +13,17 @@ vi.mock("@/lib/imageEncode", () => ({
   })),
 }));
 
+vi.mock("@/lib/ui-entry", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/ui-entry")>();
+  return {
+    ...actual,
+    UI_ENTRY: {
+      ...actual.UI_ENTRY,
+      voice: true,
+    },
+  };
+});
+
 const COMMANDS: SlashCommand[] = [
   {
     command: "/stop",

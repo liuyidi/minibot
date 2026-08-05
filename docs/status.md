@@ -1,6 +1,6 @@
 # minibot 现状（进度快照）
 
-> 更新日期：2026-07-30  
+> 更新日期：2026-08-05  
 > 代码根：[`minibot/`](../minibot/)  
 > 主计划：[`migration.md`](./migration.md)  
 
@@ -17,7 +17,7 @@ minibot 已是可本地跑通的 **FastAPI agent 运行时 + 内嵌 Dev UI**：
 - **多 provider**：registry、OpenAI-compat、Anthropic Messages、model presets、**Fallback 链（6.5）**
 - mini-langfuse **软依赖旁路**（默认关）；minikb 只读转发 + Knowledge Dev UI
 - **已实现的安全暂停**：高风险工具 HITL 审批（持久化、REST / WS、Dev UI / WebUI 卡片）
-- **未做 / 待做主线**：`observability.html`（Phase 10 余量）、OpenAI `/v1`（Phase 7）、正式切换 WebUI 默认后端（Phase 9）
+- **未做 / 待做主线**：OpenAI `/v1`（Phase 7）、正式切换 WebUI 默认后端（Phase 9）；Composer / Phase 8 可穿插
 
 默认监听：`http://127.0.0.1:8766` · Dev UI：`/ui/`
 
@@ -34,17 +34,17 @@ minibot 已是可本地跑通的 **FastAPI agent 运行时 + 内嵌 Dev UI**：
   Phase 3b memory + skills
   Phase 5 MCP + mcp.html
   Phase 6a model presets + Settings 侧栏
-  Phase 10 子集 mini-langfuse 旁路（无完整页）
+  Phase 10 mini-langfuse 旁路（observability.html 已取消）
   Phase 4 cron + automations.html
   Phase 2 流式 + reasoning + Stop
   Phase 6 余量 registry + Anthropic + nanobot 导入 MVP
   Phase 6.5 Fallback / Retry（toast + runtime stats）
   KB Dev UI（minikb 转发）
+  Phase 11 核心 HITL
 
 【下一刀】
-  ① Phase 10 余量  observability.html
-  ② Phase 7        /v1 chat completions
-  ③ Composer P0 小插队 / Phase 8 media / Phase 12（短计划）…
+  ① Phase 7        /v1 chat completions
+  ② Composer P0 小插队 / Phase 8 media / Phase 12（短计划）…
 ```
 
 阶段笔记：[`phases/`](./phases/)。统一客户端合同：[`client-api.md`](./client-api.md)。
@@ -175,8 +175,8 @@ AppState.config + rebuild_provider() / MCP reconnect
 | 能力 | 状态 |
 |------|------|
 | Trace 页 + timing/usage | ✅ |
-| mini-langfuse 旁路上报 | ✅ 子集（默认关） |
-| `observability.html` 完整 DoD | ❌ **下一刀** |
+| mini-langfuse 旁路上报 | ✅（默认关） |
+| `observability.html` | ❌ **取消**（用 mini-langfuse UI + `trace.html`） |
 | minikb 客户端 + Knowledge UI | ✅ |
 
 ### 4.7 测试
@@ -238,8 +238,8 @@ minibot/
 ## 7. 和迁移计划的衔接
 
 1. **已完成至 MSV≈6.5**（流式 + 多 provider + fallback）；切换 nanobot WebUI 默认后端的门票仍见主计划（建议至少 MSV=2+6，正式切换 Phase 9）。
-2. **下一主线：** Phase 10 余量（`observability.html`）→ Phase 7 `/v1`。
+2. **下一主线：** Phase 7 `/v1`。Phase 10 旁路已完成；`observability.html` 已取消。
 3. **多端统一合同：** [`client-api.md`](./client-api.md)（CLI / webui / desktop / RN）。
-4. Composer UX / media / 权限确认 / long-goal 可穿插，但需短计划门槛的阶段不要整段抢跑。
+4. Composer UX / media / long-goal 可穿插，但需短计划门槛的阶段不要整段抢跑。
 
 改功能后请同步更新本文对应行，并以 [`migration.md`](./migration.md) checklist 为权威勾选源。

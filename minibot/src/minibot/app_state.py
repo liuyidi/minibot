@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import secrets
 import time
 from dataclasses import dataclass, field
@@ -58,6 +59,7 @@ class AppState:
     fallback_stats: FallbackStats = field(default_factory=FallbackStats)
     fault_controller: FaultController = field(default_factory=FaultController)
     score_queue: ScoreQueue = field(default_factory=ScoreQueue)
+    media_gateway: Any | None = None
     started_at: float = field(default_factory=time.time)
 
     def rebuild_provider(self) -> None:
@@ -149,6 +151,12 @@ def build_app_state() -> AppState:
     from minibot.agent.tools.spawn import attach_spawn_tool
 
     attach_spawn_tool(tools, loop=loop)
+    from minibot.webui.media_gateway import WebUIMediaGateway
+
+    media_gateway = WebUIMediaGateway(
+        logger=logging.getLogger("minibot.webui.media"),
+        secret=secrets.token_bytes(32),
+    )
     state = AppState(
         settings=settings,
         bus=MessageBus(),
@@ -163,6 +171,7 @@ def build_app_state() -> AppState:
         fault_controller=fault_controller,
         usage_budget=usage_budget,
         sandbox_backend=sandbox_backend,
+        media_gateway=media_gateway,
     )
     state.channels = build_channel_manager(settings, state.bus, config=config)
     state.bus_worker = BusWorker(state)

@@ -962,6 +962,30 @@ export interface FilePreviewPayload {
   truncated: boolean;
 }
 
+export interface ContextUsageCategory {
+  id: string;
+  label: string;
+  tokens: number;
+  count: number;
+  color: string;
+  pct: number;
+  tokens_label?: string;
+}
+
+export interface ContextUsagePayload {
+  context_window_tokens: number;
+  used_tokens: number;
+  free_tokens: number;
+  used_pct: number;
+  estimate_method: string;
+  categories: ContextUsageCategory[];
+  used_label?: string;
+  free_label?: string;
+  window_label?: string;
+  session_id?: string;
+  model?: string;
+}
+
 export type Outbound =
   | { type: "new_chat"; workspace_scope?: WorkspaceScopePayload }
   | { type: "fork_chat"; source_chat_id: string; before_user_index: number; title?: string }

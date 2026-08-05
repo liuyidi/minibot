@@ -25,6 +25,7 @@ import type {
   WorkspacesPayload,
   WebuiThreadPersistedPayload,
   WorkspaceScopePayload,
+  ContextUsagePayload,
 } from "./types";
 import { fetchWithTimeout } from "./http";
 
@@ -244,6 +245,24 @@ export async function fetchFilePreview(
   query.set("path", path);
   return request<FilePreviewPayload>(
     `${base}/api/sessions/${encodeURIComponent(key)}/file-preview?${query}`,
+    token,
+    undefined,
+    API_READ_TIMEOUT_MS,
+  );
+}
+
+export async function fetchContextUsage(
+  token: string,
+  key: string,
+  draft: string = "",
+  base: string = "",
+): Promise<ContextUsagePayload> {
+  const params = new URLSearchParams();
+  if (draft.trim()) params.set("draft", draft);
+  const query = params.toString();
+  const suffix = query ? `?${query}` : "";
+  return request<ContextUsagePayload>(
+    `${base}/api/sessions/${encodeURIComponent(key)}/context-usage${suffix}`,
     token,
     undefined,
     API_READ_TIMEOUT_MS,

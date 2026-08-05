@@ -8,9 +8,10 @@ import {
 } from "@/lib/ui-entry";
 
 describe("ui-entry gates", () => {
-  it("enables primary sidebar utilities and keeps apps hidden", () => {
+  it("enables primary sidebar utilities and keeps apps and voice hidden", () => {
     expect(UI_ENTRY.settings).toBe(true);
     expect(UI_ENTRY.apps).toBe(false);
+    expect(UI_ENTRY.voice).toBe(false);
     expect(UI_ENTRY.skills).toBe(true);
     expect(UI_ENTRY.automations).toBe(true);
     expect(UI_ENTRY.channels).toBe(true);

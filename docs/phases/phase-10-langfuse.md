@@ -3,6 +3,7 @@
 > **上游：** [`minibot-fastapi-migration.md`](../migration.md) Phase 10、[`minibot-core-impact.md`](./minibot-core-impact.md) Phase 10 表格
 > **前置：** Phase 0 完成（`AgentLoop` 是所有入口的统一收口点）
 > **默认关闭：** 无 `LANGFUSE_SECRET_KEY` 时零开销、零行为差异
+> **状态（2026-08-05）：** 旁路上报已落地（对接 mini-langfuse）。原计划的 `/ui/observability.html`（导出管道自检页）**已取消**——跨会话观察用 Langfuse UI，当轮用 `/ui/trace.html`。
 
 本文把 Phase 10 从一句话展开为可执行的细粒度步骤。
 

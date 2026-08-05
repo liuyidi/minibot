@@ -13,4 +13,4 @@
 | 6a presets | [phase-6a-model-presets.md](./phase-6a-model-presets.md) | ✅ |
 | 6 providers | [phase-6-providers.md](./phase-6-providers.md) | ✅ |
 | 6.5 fallback | [phase-6.5-fallback.md](./phase-6.5-fallback.md) | ✅ |
-| 10 langfuse | [phase-10-langfuse.md](./phase-10-langfuse.md) | 子集✅ / 余量待做 |
+| 8.1 media / file-preview | [phase-8.1-media.md](./phase-8.1-media.md) | ✅ |

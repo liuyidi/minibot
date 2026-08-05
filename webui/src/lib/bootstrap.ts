@@ -71,6 +71,13 @@ function devGatewayPort(): string {
   return env?.VITE_MINIBOT_WS_PORT ?? "8766";
 }
 
+/** Vite defaults to 5173; when occupied it increments (5174, …). Dev WS must
+ * talk to the gateway directly because Vite does not proxy ``/ws``. */
+function isViteDevServerPort(port: string): boolean {
+  const n = Number(port);
+  return Number.isInteger(n) && n >= 5173 && n < 5200;
+}
+
 /** Derive a WebSocket URL from the current window location and the server-provided path.
  *
  * Keeps the path segment exactly as the server registered it: the root ``/``
@@ -85,7 +92,7 @@ export function deriveWsUrl(
 ): string {
   const query = `?token=${encodeURIComponent(token)}`;
   const path = wsPath && wsPath.startsWith("/") ? wsPath : `/${wsPath || ""}`;
-  if (typeof window !== "undefined" && window.location.port === "5173") {
+  if (typeof window !== "undefined" && isViteDevServerPort(window.location.port)) {
     const host = window.location.hostname.includes(":")
       ? `[${window.location.hostname}]`
       : window.location.hostname;

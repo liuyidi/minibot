@@ -21,7 +21,7 @@
 | 目录 | 内容 |
 |------|------|
 | [`phases/`](./phases/) | 已完成 / 进行中 Phase 短记（验收与要点） |
-| [`notes/`](./notes/) | 工程笔记（如 Dev UI Trace 链路） |
+| [`notes/`](./notes/) | 工程笔记（如 Dev UI Trace、[vs OpenClaw](./notes/minibot-vs-openclaw-gap.md)、[vs nanobot](./notes/minibot-vs-nanobot-gap.md)） |
 | [`roadmap/`](./roadmap/) | 尚未并入主路线图的独立提案（如 A2A） |
 
 ## 客户端怎么接

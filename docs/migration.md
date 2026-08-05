@@ -296,8 +296,8 @@ flowchart TB
 | `/ui/v1-playground.html` | **7** | 待建 | 打 `/v1/chat/completions` 试玩 |
 | Chat 附件 / `/model` 指示 | **8** | 待增强 | media、当前 preset |
 | Phase 9 | **9** | 文档链接即可 | 迁移表 Done 说明页（可选） |
-| mini-langfuse 旁路 | **10 子集** | ✅ | Settings Observability badge；无完整页 |
-| `/ui/observability.html` | **10 余量** | 待建 | Langfuse on/off、最近 export |
+| mini-langfuse 旁路 | **10** | ✅ | Settings Observability badge；跨会话看 mini-langfuse UI |
+| `/ui/observability.html` | **10** | ❌ 取消 | 旁路已通 + 已有 Langfuse UI；不再做导出管道自检页 |
 | Chat 确认弹窗 | **11** | 待建 | tool_confirm_request UI |
 | Chat goal 面板 | **12** | 待建 | goal 状态机进度 |
 | Session Files 导出/导入 | **13** | 待增强 | 按钮触发 export/import |
@@ -330,7 +330,7 @@ flowchart TB
 ### 当前执行顺序（v3.6）
 
 > **进度快照：** 0 → 1 → 1.5A → 3a → 3b → 5 → 6a → 4 → 2 → 6(registry/Anthropic/import) → **6.5 Fallback** ✅。
-> **下一主线：** Phase 10 余量 → Phase 7 `/v1` → …
+> **下一主线：** Phase 7 `/v1` → …
 
 ```text
 【已完成 ✅】
@@ -341,7 +341,7 @@ flowchart TB
   Phase 3b memory + skills
   Phase 5 MCP + mcp.html（模板 / Invoke / pipeline）
   Phase 6a model presets + Settings 侧栏
-  Context usage；mini-langfuse 软依赖旁路（Phase 10 子集）
+  Context usage；mini-langfuse 旁路（Phase 10 ✅；observability.html 取消）
   Phase 4 cron + Automations（automations.html）
   Phase 2 流式 + reasoning + Stop（Chat UX-11/12）
   Phase 6 余量 registry + Anthropic + nanobot 导入
@@ -349,10 +349,9 @@ flowchart TB
   Phase 11 核心：HITL 审批（持久化 + REST / WS + Dev UI / WebUI）
 
 【未完成 · 推荐优先级 ↓】
-  ① Phase 10余量 observability.html + 完整 DoD  ← 下一刀
-  ② Phase 7     /v1 chat completions
-  ③ Composer P0 小插队（复制 / 重试…，可穿插）
-  ④ Phase 8     media / commands / /model…
+  ① Phase 7     /v1 chat completions  ← 下一刀
+  ② Composer P0 小插队（复制 / 重试…，可穿插）
+  ③ Phase 8     media / commands / /model…
   ⑤ Phase 12    Long task / goal（需短计划）
   ⑥ Phase 13    Session 导出/导入
   ⑦ Phase 2.5   async subagent（依赖 Phase 2）
@@ -360,7 +359,7 @@ flowchart TB
   ⑨ Phase 14+ / Next.js / 对标 15–20        （最低）
 ```
 
-**决策依据：** 先补「自动化 + 多后端」能力面；流式是切换门槛但体感后置过久，提到 6 余量之后；Langfuse 旁路已通，完整页可穿插；正式切换（9）放到能力齐后再做。
+**决策依据：** 先补「自动化 + 多后端」能力面；流式是切换门槛但体感后置过久，提到 6 余量之后；Langfuse 旁路已通，`observability.html` 已取消；正式切换（9）放到能力齐后再做。
 
 ### 已落地
 
@@ -403,7 +402,7 @@ flowchart TB
 | **UX-20** | 权限确认条 Allow once / always / deny | Claude 成熟 | **Phase 11** | 与 tool_confirm 合同一致 |
 | **UX-21** | Checkpoint / 回滚到某步 | Claude Code | **Phase 13** 前后评估 | 实验室价值高，可后置 |
 | **UX-22** | 斜杠命令 `/model` `/compact` `/clear` | Claude | **Phase 8** commands | 菜单 + 回车 |
-| **UX-23** | 语音输入 | Cursor / Claude | **Phase 8** transcribe | composer 麦克风 |
+| **UX-23** | 语音输入 | Cursor / Claude | **最低优先**（原 8.4）；`UI_ENTRY.voice=false` | composer 麦克风先隐藏 |
 | **UX-24** | 图片 / 附件拖拽 | 两边 | **Phase 8** media | 缩略图 + 消息附件 |
 | **UX-25** | Context 弹层费用粗算 | — | 有 usage 后 | 在已有 Context usage 上加 $ 估算 |
 | **UX-26** | 多 Tab 对话 | Cursor Composer | 评估 | 非必须；多 session 侧栏已部分覆盖 |
@@ -838,23 +837,24 @@ WS/REST/CLI → (Bus?) → AgentLoop(with session lock) → AgentRunner → Prov
 
 | 子步骤 | 改什么 | 模块影响 |
 |--------|--------|----------|
-| **8.1** media / file-preview | `/api/media/{sig}/{payload}`；Phase 2 只存元数据，本 Phase 补真实处理 | M-API 🆕、M-Sess 🔧 附件字段 |
+| **8.1** media / file-preview | `/api/media/{sig}/{payload}`；WS/REST 附件落盘；`file-preview`；`webui-thread` 签名回放 — **✅** | M-API 🆕、M-Sess 🔧 附件字段 |
 | **8.2** commands / workspaces CRUD | Phase 0.5 已骨架，本 Phase 补真实 CRUD | M-API 🔌 |
 | **8.3** sidebar-state 持久化 | 写到 `~/.minibot/sidebar-state.json` | M-API 🔌、M-Cfg 🔧 |
-| **8.4** transcribe_audio WS | 多 provider：groq / openai / assemblyai | M-API 🔌、M-Cfg 🔧、M-Prov 🔧 |
 | **8.5** file_edit / goal_* WS | Loop 向外推送 → M-Loop 出站事件扩展（配合 Phase 12） | M-Loop 🔧、M-API 🔌 |
 | **8.6** SPA mount（可选） | minibot mount `webui` build 产物（同端口托管） | M-API 🔌 |
 | **8.7** 模型运行时切换 | `/model fast` 命令注入 Loop，改当前 session 的 preset 引用 | M-Loop 🔧、M-Cfg 🔧 |
+
+> **8.4 transcribe（语音转写）已降到最低优先级**（见 checklist B4）；Composer 麦克风由 `UI_ENTRY.voice=false` 隐藏，实现代码保留。
 
 **Runner ReAct 不碰**：出站事件由 Loop 层扩展
 
 **热路径影响：** 🟡 低
 
-**验收：** 上传图片附件缩略图正常；groq 转写走通；`/model` 切换下一 turn 生效
+**验收：** 上传图片附件缩略图正常；`/model` 切换下一 turn 生效（**不含**转写）
 
 **Dev UI：**
 - Chat：附件预览条；顶栏显示当前 model preset（`/model` 切换后即时变）
-- Feature checks 增加 media / transcribe / model-switch 项
+- Feature checks 增加 media / model-switch 项
 
 ---
 
@@ -896,10 +896,8 @@ WS/REST/CLI → (Bus?) → AgentLoop(with session lock) → AgentRunner → Prov
 
 **不动：** Dev UI `/ui/trace.html` 本地路径；Langfuse 是补充非替换。
 
-**Dev UI：** 新建 `/ui/observability.html`
-- Langfuse enabled？env 是否齐全（不展示 secret）
-- 最近 N 次 `export_turn`：ok/fail、latency、trace id 链接（若有 host）
-- 文案明确：本地 Trace 页 vs Langfuse 云端分工
+**Dev UI（取消）：** 原计划 `/ui/observability.html`（导出管道自检：on/off、最近 export）——
+旁路已落地且跨会话观察用 mini-langfuse UI 即可，**2026-08-05 决定不做**。本地当轮仍看 `trace.html`。
 
 ---
 
@@ -1042,20 +1040,17 @@ Testing Infra → 0.1…0.6 → 1.x → 1.5A → 3a → 3b → 5 → 6a
 （+ Context usage / UX-10 / mini-langfuse 旁路）
 
 【未完成 · 推荐序】
-4 Cron + Automations     → 依赖 0.2 lock
-6 余量 Settings/Prov/导入 → 凑齐 MSV=6
-2 流式                   → ★ 动 Runner/Prov；凑齐 MSV=2
-10 余量 observability 页 → 旁路已通
-6.5 Fallback             → 生产可用性
-7 /v1                    → 新入口，共用 Loop
+7 /v1                    → 新入口，共用 Loop  ← 下一刀
 Composer P0 小插队       → 可穿插
 8 剩余表面 + /model
-11 权限确认              → Loop 暂停语义
 12 Long task
 13 导出/导入
 2.5 async subagent       → 依赖 Phase 2
 9 切换与退役             → 文档 + 默认端口
 14+ / Next.js / 对标扩展 → 最低优先级
+
+（Phase 4 / 6 余量 / 2 / 6.5 / 11 核心 / Phase 10 旁路已完成；
+ observability.html 已取消，见 Phase 10 节）
 ```
 
 每完成一 Phase：勾 checklist、跑 `cd minibot && pytest`、更新迁移表、**打开对应 Dev UI 页做 30 秒人工演示**。
@@ -1095,7 +1090,7 @@ minibot/src/minibot/
 | [`phase-5-mcp.md`](./phases/phase-5-mcp.md) | ✅ | 已完成 |
 | [`phase-6a-model-presets.md`](./phases/phase-6a-model-presets.md) | ✅ | 6a 已完成 |
 | [`phase-6-providers.md`](./phases/phase-6-providers.md) | ✅ | 6 registry / Anthropic / import |
-| [`phase-10-langfuse.md`](./phases/phase-10-langfuse.md) | ✅ 已有（旁路子集已落地） | 补 observability.html 前再对一下 |
+| [`phase-10-langfuse.md`](./phases/phase-10-langfuse.md) | ✅ 完成（旁路已落地；observability.html 取消） | — |
 | `phase-2-streaming.md` | ✅ | 流式 + reasoning + Stop；Bus 中心 |
 | `phase-4-cron.md` | ✅ | Cron + Automations MVP |
 | [`human-in-the-loop.md`](./human-in-the-loop.md) | ✅ Phase 11 核心实现与合同 | 后续策略配置扩展时更新 |
@@ -1130,7 +1125,7 @@ minibot/src/minibot/
 - [x] **Phase 5**：MCP tools + mcp-presets 【MSV=5】详见 [`phase-5-mcp.md`](./phases/phase-5-mcp.md)
   - [x] mcp.html：模板（Context7/fs）/ Invoke / pipeline 流水
 - [x] **Phase 6a**：OpenAI-compat `model_presets` + Settings 侧栏 【MSV=6 子集】详见 [`phase-6a-model-presets.md`](./phases/phase-6a-model-presets.md)
-- [x] **Phase 10 子集**：mini-langfuse 软依赖旁路（默认关；无完整 observability 页）
+- [x] **Phase 10**：mini-langfuse 软依赖旁路（默认关）【MSV=10】；`observability.html` **取消**（用 mini-langfuse UI + `trace.html`）
 - [x] **Phase 4**：cron + Automations REST 【MSV=4】详见 [`phase-4-cron.md`](./phases/phase-4-cron.md)
   - [x] automations.html：创建 / 启停 / 立即跑 / 正向+异常 Insight
 - [x] **Phase 2**：provider 抽象 + 流式 delta / reasoning + Stop 【MSV=2】详见 [`phase-2-streaming.md`](./phases/phase-2-streaming.md)
@@ -1146,8 +1141,7 @@ minibot/src/minibot/
 
 #### B1. 下一主线
 
-- [ ] **② Phase 10 余量**：`observability.html` + 完整 Insight DoD 【MSV=10】（旁路已通）详见 [`phase-10-langfuse.md`](./phases/phase-10-langfuse.md)
-- [ ] **④ Phase 7**：`/v1/chat/completions` + `/v1/models` 【MSV=7】（+ v1-playground）
+- [ ] **① Phase 7**：`/v1/chat/completions` + `/v1/models` 【MSV=7】（+ v1-playground）
 
 #### B2. 可穿插 / 体感
 
@@ -1165,7 +1159,7 @@ minibot/src/minibot/
 
 #### B3. 能力收尾 → 正式切换
 
-- [ ] **⑧ Phase 8**：media / file-preview / commands / workspaces / sidebar / transcribe / `/model` 【MSV=8】
+- [ ] **⑧ Phase 8**：media / file-preview / commands / workspaces / sidebar / `/model` 【MSV=8】（**不含** transcribe）
 - [x] **⑨ Phase 11（核心）**：工具权限确认 【MSV=11】；全局策略配置待补
 - [ ] **⑩ Phase 12**：Long task / Sustained goal 【MSV=12】❗需短计划
 - [ ] **⑪ Phase 13**：Session 导出/导入 【MSV=13】
@@ -1174,7 +1168,8 @@ minibot/src/minibot/
 
 #### B4. 最低优先级
 
-- [ ] **⑭ Phase 14**：多用户 / Pairing —— 独立评估，不承诺时间 【MSV=14】
+- [ ] **⑭ Phase 8.4 / UX-23**：transcribe（groq/openai/…）+ Composer 麦克风 —— WebUI 已 `UI_ENTRY.voice=false` 隐藏
+- [ ] **⑮ Phase 14**：多用户 / Pairing —— 独立评估，不承诺时间 【MSV=14】
 - [ ] **Dev UI Next.js 迁移**（延期；详见 [`devui-nextjs-migration.md`](./devui-nextjs-migration.md)）
 - [ ] **可选对标扩展**（详见 [`nous-hermes-parity.md`](./nous-hermes-parity.md)）
   - [ ] Phase 15 — IM Gateway
@@ -1188,7 +1183,7 @@ minibot/src/minibot/
 
 ## 执行方式建议
 
-- **当前下一刀（v3.6+）：** **Phase 10 余量**（observability.html）。其后 Phase 7 `/v1`。
+- **当前下一刀（v3.6+）：** **Phase 7** `/v1`。Phase 10 `observability.html` 已取消（2026-08-05）。
 - **Dev UI 框架：** 主线仍静态 HTML；Next.js 见延期计划，**优先级最低**
 - **学习优先**：阶段目标先问「理解了什么」，再问「功能齐了没有」
 - **Subagent-Driven**：一 Phase 一子代理，阶段末人工验收
@@ -1207,7 +1202,8 @@ minibot/src/minibot/
 | 主线 | Phase 1 工具 | 插队 3a→3b→5→6a | **Checklist：已完成置顶；未完成重排优先** |
 | 下一刀 | Phase 1 | Phase 4（MCP 完成后） | **Phase 6 余量 → 2 流式** |
 | 流式 | 后置 | 后置 | **提到 6 余量之后（仍需短计划）** |
-| Langfuse | 未做 | 软依赖旁路 | **记为 10 子集 ✅；完整页待做** |
+| Langfuse | 未做 | 软依赖旁路 | **Phase 10 旁路 ✅；observability.html 取消（2026-08-05）** |
 | Checklist 结构 | 按编号混排 | 同左 | **A 已实现 / B 未实现（①…⑭）** |
+| 下一刀（现行） | — | — | **Phase 7 `/v1`**（不再做 observability.html） |
 
-> 更早版本以 git 历史为准；**v3.6 为唯一现行版本**。
+> 更早版本以 git 历史为准；**v3.6 为唯一现行版本**（后补：取消 observability.html）。

@@ -834,6 +834,17 @@
         "drag": "Drag to reorder"
       },
       "attachImage": "Attach image",
+      "contextUsage": {
+        "buttonAria": "Show context usage",
+        "title": "Context Usage",
+        "closeAria": "Close",
+        "fullPct": "{{pct}}% Full",
+        "tokensLine": "~{{used}} / {{window}} Tokens",
+        "noSession": "Open a chat to estimate context usage.",
+        "loadFailed": "Could not load context usage.",
+        "updating": "Updating…",
+        "estimateHint": "Estimate · {{method}}"
+      },
       "imageMode": {
         "label": "Image Generation",
         "toggle": "Toggle image generation mode",

@@ -113,6 +113,7 @@ class BusWorker:
                 bus=self.state.bus,
                 channel=channel,
                 stream=False if not is_ws and not is_cron else None,
+                media=list(msg.media) if msg.media else None,
             )
 
             # WebUI/cron stream via Loop; IM channels need a final text reply on the bus.

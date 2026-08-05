@@ -4,6 +4,8 @@
  */
 export const UI_ENTRY = {
   apps: false,
+  /** Microphone / STT in composer — deferred (Phase 8.4 / UX-23, lowest priority). */
+  voice: false,
   skills: true,
   automations: true,
   channels: true,
