@@ -149,7 +149,7 @@ curl -fsS https://kb.liuyidi.me/health
 
 ```bash
 cd /opt/demo/mini-langfuse/deploy/demo
-# 按需 pull mini-langfuse / nanobot
+# 按需 pull mini-langfuse / minibot
 ./up.sh core
 ```
 
