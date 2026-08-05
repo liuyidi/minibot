@@ -16,6 +16,8 @@ from minibot.agent.tools.mcp import McpManager
 from minibot.agent.tools.registry import ToolRegistry
 from minibot.bus.queue import MessageBus
 from minibot.bus.worker import BusWorker
+from minibot.channels.factory import auto_approve_channels_from_settings, build_channel_manager
+from minibot.channels.manager import ChannelManager
 from minibot.config.app_config import AppConfig, load_app_config, save_app_config
 from minibot.config.settings import Settings, get_settings
 from minibot.cron.service import CronService
@@ -51,6 +53,7 @@ class AppState:
     bus_worker: BusWorker | None = None
     usage_budget: UsageBudget | None = None
     sandbox_backend: SandboxBackend | None = None
+    channels: ChannelManager | None = None
     tokens: dict[str, TokenRecord] = field(default_factory=dict)
     fallback_stats: FallbackStats = field(default_factory=FallbackStats)
     fault_controller: FaultController = field(default_factory=FaultController)
@@ -113,6 +116,11 @@ def build_app_state() -> AppState:
         config.openai_api_key = settings.resolved_api_key()
     sandbox_backend = build_sandbox_backend(settings)
     tools = register_default_tools(backend=sandbox_backend)
+    from minibot.agent.approval import ApprovalPolicy
+
+    tools.approval_policy = ApprovalPolicy(
+        auto_approve_channels=auto_approve_channels_from_settings(settings, config)
+    )
     mcp = McpManager(tools)
     fallback_stats = FallbackStats()
     fault_controller = FaultController()
@@ -156,7 +164,13 @@ def build_app_state() -> AppState:
         usage_budget=usage_budget,
         sandbox_backend=sandbox_backend,
     )
+    state.channels = build_channel_manager(settings, state.bus, config=config)
     state.bus_worker = BusWorker(state)
+    from minibot.channels.feishu_setup import FeishuSetupManager
+    from minibot.channels.pairing import PairingStore
+
+    state.feishu_setup = FeishuSetupManager()
+    state.feishu_pairing = PairingStore(settings.data_dir)
     cron_path = settings.data_dir.expanduser() / "cron" / "jobs.json"
 
     async def _on_cron_job(job: CronJob) -> None:

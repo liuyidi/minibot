@@ -14,6 +14,7 @@ export const SETTINGS_SECTIONS = [
   "overview",
   "appearance",
   "models",
+  "channels",
   "runtime",
 ] as const;
 

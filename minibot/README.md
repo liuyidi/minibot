@@ -103,6 +103,26 @@ MINIBOT_SERVER_E2B_API_KEY=e2b_...   # 或 E2B_API_KEY=
 
 国内可直连 `api.e2b.app`（有跨境延迟）；请在 E2B Dashboard 设 spend limit。Hobby 有一次性用量额度。
 
+### 飞书频道（Phase 15）
+
+支持 **扫码一键创建机器人**（飞书 `lark.register_app` / Device Authorization）与 **配对管理**。
+
+```bash
+pip install -e ".[feishu]"
+minibot
+# WebUI → 设置 → Channels → 飞书 → 配置 → 扫码 → 保存
+```
+
+也可手填 env（跳过扫码）：
+
+```bash
+MINIBOT_SERVER_FEISHU_ENABLED=true
+MINIBOT_SERVER_FEISHU_APP_ID=cli_...
+MINIBOT_SERVER_FEISHU_APP_SECRET=...
+```
+
+扫码保存后凭证写入 `config.json` 的 `feishu`；默认 `dm_policy=pairing`。微信通道尚未迁入。
+
 Default **workspace** (tools / `SOUL.md` / `USER.md`): `~/.minibot/workspace`
 (override with Chat workspace switch, or set `MINIBOT_SERVER_DATA_DIR`).
 Sessions live under `~/.minibot/sessions/`.

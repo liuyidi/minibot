@@ -17,6 +17,7 @@ from minibot.config.presets import (
 )
 from minibot.config.mcp_presets import McpPreset, presets_public_list as mcp_presets_public_list
 from minibot.config.settings import Settings, get_settings
+from minibot.channels.feishu_setup import FeishuPersistedConfig
 from minibot.providers.registry import list_providers
 
 
@@ -66,6 +67,8 @@ class AppConfig(BaseModel):
     model_presets: list[ModelPreset] = Field(default_factory=list)
     # Phase 5: MCP server presets
     mcp_presets: list[McpPreset] = Field(default_factory=list)
+    # Phase 15: Feishu channel (QR setup + pairing)
+    feishu: FeishuPersistedConfig = Field(default_factory=FeishuPersistedConfig)
 
 
 def default_config_from_settings(settings: Settings | None = None) -> AppConfig:
@@ -127,6 +130,22 @@ def apply_settings_update(config: AppConfig, update: SettingsUpdate) -> AppConfi
     return next_config
 
 
+def feishu_public_payload(feishu: FeishuPersistedConfig) -> dict[str, Any]:
+    connected = bool(feishu.app_id and feishu.app_secret and feishu.enabled)
+    return {
+        "enabled": feishu.enabled,
+        "connected": connected,
+        "app_id": feishu.app_id,
+        "has_app_secret": bool(feishu.app_secret),
+        "app_secret_masked": "••••••••" if feishu.app_secret else "",
+        "bot_name": feishu.bot_name,
+        "domain": feishu.domain,
+        "dm_policy": feishu.dm_policy,
+        "allow_from_count": len(feishu.allow_from),
+        "group_policy": feishu.group_policy,
+    }
+
+
 def settings_public_payload(config: AppConfig) -> dict[str, Any]:
     """Shape compatible enough for the existing WebUI SettingsView."""
     from minibot.config.settings import get_settings
@@ -164,6 +183,9 @@ def settings_public_payload(config: AppConfig) -> dict[str, Any]:
         },
         "model_presets": presets,
         "mcp_presets": mcp_presets_public_list(config),
+        "channels": {
+            "feishu": feishu_public_payload(config.feishu),
+        },
         "providers": _providers_public(config),
         "web_search": {
             "provider": "none",

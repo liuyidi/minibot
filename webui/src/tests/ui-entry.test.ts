@@ -20,6 +20,7 @@ describe("ui-entry gates", () => {
       "overview",
       "appearance",
       "models",
+      "channels",
       "runtime",
     ]);
     expect(SETTINGS_SHOW_PROVIDERS_PANEL).toBe(false);

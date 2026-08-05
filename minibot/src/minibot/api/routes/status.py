@@ -190,6 +190,48 @@ def _sandbox_details(state: Any, *, zh: bool) -> list[str]:
     return lines
 
 
+def _feishu_status(state: Any) -> str:
+    settings = state.settings
+    if not settings.feishu_enabled:
+        return "operational"
+    manager = getattr(state, "channels", None)
+    ch = None if manager is None else manager.channels.get("feishu")
+    if ch is None:
+        return "degraded"
+    if manager is not None and manager.last_error:
+        return "degraded"
+    return "operational" if ch.is_running or ch is not None else "degraded"
+
+
+def _feishu_details(state: Any, *, zh: bool) -> list[str]:
+    settings = state.settings
+    enabled = bool(settings.feishu_enabled)
+    manager = getattr(state, "channels", None)
+    ch = None if manager is None else manager.channels.get("feishu")
+    running = bool(ch and ch.is_running)
+    auto = bool(settings.feishu_auto_approve_tools)
+    err = getattr(manager, "last_error", None) if manager is not None else None
+    if zh:
+        lines = [
+            f"启用：{'是' if enabled else '否'}",
+            f"已注册：{'是' if ch else '否'}",
+            f"运行中：{'是' if running else '否'}",
+            f"HITL 自动批准：{'是' if auto else '否'}",
+        ]
+        if err:
+            lines.append(f"错误：{err}")
+        return lines
+    lines = [
+        f"enabled: {'yes' if enabled else 'no'}",
+        f"registered: {'yes' if ch else 'no'}",
+        f"running: {'yes' if running else 'no'}",
+        f"auto-approve tools: {'yes' if auto else 'no'}",
+    ]
+    if err:
+        lines.append(f"error: {err}")
+    return lines
+
+
 def _budget_details(state: Any, *, zh: bool) -> list[str]:
     budget = getattr(state, "usage_budget", None)
     if budget is None:
@@ -334,6 +376,17 @@ def _build_components(state: Any, minikb: dict[str, Any]) -> list[dict[str, Any]
             desc_en="local cwd/bwrap or E2B microVM",
             details_zh=_sandbox_details(state, zh=True),
             details_en=_sandbox_details(state, zh=False),
+        ),
+        _component(
+            key="feishu_channel",
+            required=False,
+            status=_feishu_status(state),
+            label_zh="飞书频道",
+            label_en="Feishu channel",
+            desc_zh="Phase 15：飞书 WebSocket 长连接",
+            desc_en="Phase 15: Feishu WebSocket long connection",
+            details_zh=_feishu_details(state, zh=True),
+            details_en=_feishu_details(state, zh=False),
         ),
         _component(
             key="llm_budget",

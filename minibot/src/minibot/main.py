@@ -10,7 +10,17 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from minibot.api.routes import approvals, auth, automations, misc, sessions, settings, status, workspaces
+from minibot.api.routes import (
+    approvals,
+    auth,
+    automations,
+    channels_feishu,
+    misc,
+    sessions,
+    settings,
+    status,
+    workspaces,
+)
 from minibot.api.ws import router as ws_router
 from minibot.app_state import build_app_state
 from minibot.webui_static import mount_webui, root_redirect_to_devui
@@ -28,6 +38,11 @@ async def lifespan(app: FastAPI):
     state.score_queue.start()
     if state.bus_worker is not None:
         state.bus_worker.start()
+    if state.channels is not None and state.channels.channels:
+        try:
+            await state.channels.start()
+        except Exception:  # noqa: BLE001 — never block boot on IM
+            pass
     try:
         await state.mcp.start(state.config.mcp_presets or [])
     except Exception:  # noqa: BLE001 — never block boot on MCP
@@ -45,6 +60,9 @@ async def lifespan(app: FastAPI):
                 await state.cron.stop()
         with suppress(Exception):
             await state.mcp.stop()
+        if state.channels is not None:
+            with suppress(Exception):
+                await state.channels.stop()
         if state.bus_worker is not None:
             await state.bus_worker.stop()
         if state.sandbox_backend is not None:
@@ -72,6 +90,7 @@ def create_app() -> FastAPI:
 
     app.include_router(auth.router)
     app.include_router(approvals.router)
+    app.include_router(channels_feishu.router)
     app.include_router(sessions.router)
     app.include_router(workspaces.router)
     app.include_router(settings.router)

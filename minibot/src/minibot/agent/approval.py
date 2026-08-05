@@ -126,11 +126,18 @@ class ApprovalPolicy:
 
     _ALWAYS = {"exec", "write_file", "edit_file", "write_memory"}
 
+    def __init__(self, auto_approve_channels: frozenset[str] | set[str] | None = None) -> None:
+        self.auto_approve_channels = frozenset(auto_approve_channels or ())
+
     def check(self, tool: Any, arguments: dict[str, Any]) -> tuple[bool, str, str]:
         del arguments  # Reserved for future command/path-specific policies.
         name = str(getattr(tool, "name", ""))
         mode = str(getattr(tool, "approval_mode", "policy"))
         risk = str(getattr(tool, "risk", "unknown"))
+        from minibot.security.channel_context import current_channel
+
+        if current_channel() in self.auto_approve_channels:
+            return False, "", risk
         if mode == "always" or name in self._ALWAYS or str(getattr(tool, "source", "")) == "mcp":
             return True, f"{name} may modify local state or invoke an external capability.", risk
         return False, "", risk

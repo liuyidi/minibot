@@ -36,6 +36,7 @@ import {
   Loader2,
   LogOut,
   Mic,
+  MessageSquare,
   Moon,
   PauseCircle,
   PlayCircle,
@@ -59,6 +60,7 @@ import {
 import { useTranslation } from "react-i18next";
 
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { ChannelsSettings } from "@/components/settings/ChannelsSettings";
 import { SkillsCatalogSettings } from "@/components/settings/SkillsCatalogSettings";
 import { Button } from "@/components/ui/button";
 import {
@@ -148,6 +150,7 @@ export type SettingsSectionKey =
   | "apps"
   | "automations"
   | "skills"
+  | "channels"
   | "runtime"
   | "advanced";
 
@@ -1649,6 +1652,8 @@ export function SettingsView({
         );
       case "skills":
         return <SkillsCatalogSettings skills={skills} />;
+      case "channels":
+        return <ChannelsSettings token={token} />;
       case "runtime":
         return (
           <RuntimeSettings
@@ -1793,6 +1798,7 @@ const ALL_SETTINGS_NAV_ITEMS: Array<{
   { key: "overview", icon: Activity, fallback: "Overview" },
   { key: "appearance", icon: Palette, fallback: "Appearance" },
   { key: "models", icon: SlidersHorizontal, fallback: "Models" },
+  { key: "channels", icon: MessageSquare, fallback: "Channels" },
   { key: "image", icon: ImageIcon, fallback: "Image" },
   { key: "voice", icon: Mic, fallback: "Voice" },
   { key: "browser", icon: Globe2, fallback: "Web" },

@@ -52,6 +52,15 @@ class Settings(BaseSettings):
     e2b_timeout_s: int = 900
     e2b_idle_s: int = 900
 
+    # Feishu / Lark IM channel (Phase 15 subset)
+    feishu_enabled: bool = False
+    feishu_app_id: str = ""
+    feishu_app_secret: str = ""
+    feishu_allow_from: str = "*"  # CSV of open_ids, or "*"
+    feishu_domain: str = "feishu"  # feishu | lark
+    feishu_group_policy: str = "mention"  # open | mention
+    feishu_auto_approve_tools: bool = True
+
     def resolved_config_path(self) -> Path:
         if self.config_path is not None:
             return self.config_path.expanduser()

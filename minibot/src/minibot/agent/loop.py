@@ -29,7 +29,7 @@ from minibot.workspace import normalize_workspace
 
 _LAST_TURNS_MAX = 40
 _ROLES = {"system", "user", "assistant", "tool"}
-_ENTRY_KEYS = ("rest", "ws", "cli", "dev", "cron", "unknown")
+_ENTRY_KEYS = ("rest", "ws", "cli", "dev", "cron", "feishu", "unknown")
 
 
 def _now_iso() -> str:
