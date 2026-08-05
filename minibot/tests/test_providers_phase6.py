@@ -1,4 +1,4 @@
-"""Phase 6: provider registry, Anthropic conversion, nanobot import."""
+"""Phase 6: provider registry and Anthropic conversion."""
 
 from __future__ import annotations
 
@@ -9,7 +9,6 @@ import pytest
 from fastapi.testclient import TestClient
 
 from minibot.config.app_config import AppConfig
-from minibot.config.nanobot_import import import_nanobot_into_config, preview_nanobot_import
 from minibot.config.presets import PresetError, activate_preset, ensure_presets, upsert_preset
 from minibot.providers.anthropic import (
     AnthropicProvider,
@@ -175,31 +174,6 @@ def test_activate_stub_provider_fails() -> None:
     )
     with pytest.raises(PresetError, match="not implemented"):
         activate_preset(cfg, "bedrock")
-
-
-def test_nanobot_import(tmp_path) -> None:
-    nanobot_cfg = {
-        "agents": {"defaults": {"model": "gpt-4o-mini"}},
-        "providers": {
-            "openai": {"apiKey": "sk-openai-aaaa1111", "apiBase": "https://api.openai.com/v1"},
-            "anthropic": {"apiKey": "sk-ant-bbbb2222", "apiBase": "https://api.anthropic.com"},
-            "bedrock": {"apiKey": "aws-token"},
-        },
-    }
-    path = tmp_path / "config.json"
-    path.write_text(json.dumps(nanobot_cfg), encoding="utf-8")
-    preview = preview_nanobot_import(path)
-    assert preview["ok"] is True
-    assert "openai" in preview["provider_keys_found"]
-
-    cfg = AppConfig(openai_api_key="seed-key-zzzz", openai_base_url="https://api.openai.com/v1")
-    ensure_presets(cfg)
-    result = import_nanobot_into_config(cfg, path=path, activate_first=True)
-    assert result["ok"] is True
-    assert any(p.startswith("nanobot-") for p in result["created"])
-    assert "bedrock" in result["skipped"] or any("bedrock" in s for s in result["skipped"])
-    ids = {p.id for p in cfg.model_presets}
-    assert any("anthropic" in i for i in ids)
 
 
 def test_dev_providers_api(client: TestClient, auth_headers: dict[str, str]) -> None:

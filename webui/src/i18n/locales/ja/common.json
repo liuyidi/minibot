@@ -63,7 +63,10 @@
     "portalLangfuse": "オブザーバビリティ",
     "portalKnowledge": "ナレッジ",
     "portalDevui": "開発メモ",
-    "channels": "IMチャンネル"
+    "channels": "IMチャンネル",
+    "newChatChannelsHint": "Channel chats come from Feishu / WeChat. Switch to Chats to create one.",
+    "tabChats": "Chats",
+    "tabChannels": "Channels"
   },
   "settings": {
     "backToChat": "チャットに戻る",
@@ -1008,7 +1011,24 @@
     "cliRunRan": "使用済み",
     "cliRunFailed": "失敗",
     "automationSourceFallback": "自動化",
-    "automationTriggered": "自動実行"
+    "automationTriggered": "自動実行",
+    "feedbackHelpful": "Helpful",
+    "feedbackUnhelpful": "Not helpful",
+    "feedbackDialog": {
+      "title": "What could be improved?",
+      "description": "Your feedback helps improve future responses.",
+      "reasonLabel": "Reason",
+      "reasons": {
+        "incorrect": "Incorrect",
+        "incomplete": "Incomplete",
+        "style": "Style or format",
+        "tool": "Tool execution",
+        "other": "Other"
+      },
+      "commentPlaceholder": "Optional details",
+      "skip": "Skip",
+      "submit": "Submit feedback"
+    }
   },
   "lightbox": {
     "title": "画像プレビュー",

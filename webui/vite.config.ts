@@ -4,8 +4,8 @@ import path from "node:path";
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
-  const target = env.NANOBOT_API_URL ?? "http://127.0.0.1:8766";
-  const hmrPath = "/__nanobot_vite_hmr";
+  const target = env.MINIBOT_API_URL ?? "http://127.0.0.1:8766";
+  const hmrPath = "/__minibot_vite_hmr";
 
   return {
     plugins: [react()],
@@ -22,7 +22,7 @@ export default defineConfig(({ mode }) => {
       exclude: ["@radix-ui/react-dialog"],
     },
     build: {
-      outDir: path.resolve(__dirname, "../nanobot/web/dist"),
+      outDir: path.resolve(__dirname, "dist"),
       emptyOutDir: true,
       sourcemap: false,
       rollupOptions: {

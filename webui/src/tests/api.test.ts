@@ -137,12 +137,12 @@ describe("webui API helpers", () => {
       expect.objectContaining({
         headers: {
           Authorization: "Bearer tok",
-          "X-Nanobot-Automation-Values": encodeURIComponent(JSON.stringify(values)),
+          "X-Minibot-Automation-Values": encodeURIComponent(JSON.stringify(values)),
         },
       }),
     );
     const header = vi.mocked(fetch).mock.calls[0][1]?.headers as Record<string, string>;
-    expect(header["X-Nanobot-Automation-Values"]).not.toContain("每日");
+    expect(header["X-Minibot-Automation-Values"]).not.toContain("每日");
   });
 
   it("fetches the WebUI skill summary", async () => {
@@ -196,7 +196,7 @@ describe("webui API helpers", () => {
       provider: "openrouter",
       contextWindowTokens: 262144,
       timezone: "Asia/Shanghai",
-      botName: "nanobot",
+      botName: "minibot",
       botIcon: "nb",
       toolHintMaxLength: 120,
     });
@@ -213,7 +213,7 @@ describe("webui API helpers", () => {
           model: "openrouter/test",
           provider: "openrouter",
           timezone: "Asia/Shanghai",
-          bot_name: "nanobot",
+          bot_name: "minibot",
         }),
       }),
     );
@@ -485,7 +485,7 @@ describe("webui API helpers", () => {
       expect.objectContaining({
         headers: expect.objectContaining({
           Authorization: "Bearer tok",
-          "X-Nanobot-MCP-Values": JSON.stringify({
+          "X-Minibot-MCP-Values": JSON.stringify({
             browserbase_api_key: "bb_live_test",
           }),
         }),
@@ -506,7 +506,7 @@ describe("webui API helpers", () => {
       expect.objectContaining({
         headers: expect.objectContaining({
           Authorization: "Bearer tok",
-          "X-Nanobot-MCP-Values": JSON.stringify({
+          "X-Minibot-MCP-Values": JSON.stringify({
             name: "docs",
             transport: "stdio",
             command: "npx",
@@ -523,7 +523,7 @@ describe("webui API helpers", () => {
       expect.objectContaining({
         headers: expect.objectContaining({
           Authorization: "Bearer tok",
-          "X-Nanobot-MCP-Values": JSON.stringify({
+          "X-Minibot-MCP-Values": JSON.stringify({
             config: '{"mcpServers":{"docs":{"command":"npx"}}}',
           }),
         }),
@@ -536,7 +536,7 @@ describe("webui API helpers", () => {
       expect.objectContaining({
         headers: expect.objectContaining({
           Authorization: "Bearer tok",
-          "X-Nanobot-MCP-Values": JSON.stringify({
+          "X-Minibot-MCP-Values": JSON.stringify({
             name: "docs",
             enabled_tools: ["search", "fetch"],
           }),

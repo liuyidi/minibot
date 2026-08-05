@@ -173,7 +173,7 @@ class EditFileTool(Tool):
     name = "edit_file"
     description = (
         "Replace text in a workspace file. Matching: exact → trim → quote-normalized "
-        "(same three-level strategy as nanobot)."
+        "(same three-level strategy as minibot)."
     )
     risk = "high"
     source = "builtin"

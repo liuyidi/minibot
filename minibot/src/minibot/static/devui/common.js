@@ -204,7 +204,7 @@
         {
           href: "/",
           title: "WebUI 主站",
-          desc: "nanobot 完整前端（接 minibot API）",
+          desc: "minibot 完整前端（接 minibot API）",
         },
         {
           href: "https://mlf.liuyidi.me",
@@ -229,7 +229,7 @@
         { href: "./memory.html", title: "Memory", desc: "MEMORY.md 读写与注入对照" },
         { href: "./skills.html", title: "Skills", desc: "技能发现、覆盖、body 预览" },
         { href: "./mcp.html", title: "MCP", desc: "MCP presets、注入 tools、正向/异常情景" },
-        { href: "./providers.html", title: "Providers", desc: "registry / Anthropic / nanobot 导入" },
+        { href: "./providers.html", title: "Providers", desc: "registry / Anthropic / minibot 导入" },
         { href: "./automations.html", title: "Automations", desc: "Cron jobs：创建 / 启停 / 立即跑" },
       ],
     },

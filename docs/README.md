@@ -37,7 +37,7 @@ CLI / webui / desktop / React Native
   minibot FastAPI :8766
 ```
 
-默认开发代理：`webui` 的 `NANOBOT_API_URL`（将更名为 `MINIBOT_API_URL`）→ `http://127.0.0.1:8766`。
+默认开发代理：`webui` 的 `MINIBOT_API_URL` → `http://127.0.0.1:8766`。
 
 ## 已删除（故意）
 

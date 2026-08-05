@@ -89,16 +89,7 @@
   <main>
     <p class="hint">
       Phase 6 Insight：绿色 = 已实现 backend；黄色 = stub（异常对照：激活会失败）。
-      可从 <code>~/.nanobot/config.json</code> 一键导入 presets。
     </p>
-
-    <div class="banner" id="importBanner">
-      <strong>发现 ~/.nanobot/config.json</strong>
-      <div class="meta" id="importPreview" style="margin-left:0">—</div>
-      <div class="actions">
-        <button type="button" id="btnImport">一键导入为 model presets</button>
-      </div>
-    </div>
 
     <div class="stack">
       <section>
@@ -184,18 +175,6 @@
         box.appendChild(card);
       }
       $("raw").textContent = JSON.stringify(data, null, 2);
-
-      const ni = await api("/api/dev/nanobot-import");
-      const banner = $("importBanner");
-      if (ni.detect && ni.detect.exists) {
-        banner.classList.add("show");
-        const prev = ni.preview || {};
-        $("importPreview").textContent =
-          `path=${ni.detect.path} · keys=[${(prev.provider_keys_found || []).join(", ")}] · ` +
-          `model_presets=${prev.model_preset_count || 0}`;
-      } else {
-        banner.classList.remove("show");
-      }
     }
 
     $("btnTheme").onclick = () => {
@@ -203,16 +182,6 @@
       syncThemeBtn();
     };
     $("btnRefresh").onclick = () => load().catch((e) => alert(e.message || e));
-    $("btnImport").onclick = async () => {
-      if (!confirm("从 ~/.nanobot/config.json 导入 providers 为 minibot presets？")) return;
-      try {
-        const res = await api("/api/dev/nanobot-import", { method: "POST", body: "{}" });
-        alert(`imported created=${(res.created || []).join(",") || "(none)"} updated=${(res.updated || []).join(",") || "(none)"}`);
-        await load();
-      } catch (e) {
-        alert(e.message || e);
-      }
-    };
 
     syncThemeBtn();
     bootstrap()

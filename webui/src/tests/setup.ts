@@ -57,5 +57,5 @@ beforeEach(async () => {
   await i18n.changeLanguage("en");
   document.documentElement.lang = "en";
   document.title = "minibot";
-  localStorage.setItem("nanobot.locale", "en");
+  localStorage.setItem("minibot.locale", "en");
 });

@@ -27,7 +27,7 @@ bun install
 bun run dev    # http://127.0.0.1:5173
 ```
 
-默认把 `/api` `/auth` `/webui` 代理到 `http://127.0.0.1:8766`（可用 `NANOBOT_API_URL` 覆盖）。合同见 [`client-api.md`](./client-api.md)。
+默认把 `/api` `/auth` `/webui` 代理到 `http://127.0.0.1:8766`（可用 `MINIBOT_API_URL` 覆盖）。合同见 [`client-api.md`](./client-api.md)。
 
 ## 下一步
 

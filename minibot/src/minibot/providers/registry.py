@@ -1,6 +1,6 @@
 """Provider registry — metadata for LLM backends (Phase 6).
 
-Inspired by nanobot's ProviderSpec and CrewAI's OPENAI_COMPATIBLE_PROVIDERS:
+Inspired by minibot's ProviderSpec and CrewAI's OPENAI_COMPATIBLE_PROVIDERS:
 a small table drives factory selection, default bases, and Dev UI listings.
 """
 

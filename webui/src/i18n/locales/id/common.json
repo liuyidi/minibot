@@ -63,7 +63,10 @@
     "portalLangfuse": "Observabilitas",
     "portalKnowledge": "Pengetahuan",
     "portalDevui": "Catatan dev",
-    "channels": "Saluran IM"
+    "channels": "Saluran IM",
+    "newChatChannelsHint": "Channel chats come from Feishu / WeChat. Switch to Chats to create one.",
+    "tabChats": "Chats",
+    "tabChannels": "Channels"
   },
   "settings": {
     "backToChat": "Kembali ke chat",
@@ -1008,7 +1011,24 @@
     "cliRunRan": "Digunakan",
     "cliRunFailed": "Gagal",
     "automationSourceFallback": "Otomatisasi",
-    "automationTriggered": "Dipicu otomatis"
+    "automationTriggered": "Dipicu otomatis",
+    "feedbackHelpful": "Helpful",
+    "feedbackUnhelpful": "Not helpful",
+    "feedbackDialog": {
+      "title": "What could be improved?",
+      "description": "Your feedback helps improve future responses.",
+      "reasonLabel": "Reason",
+      "reasons": {
+        "incorrect": "Incorrect",
+        "incomplete": "Incomplete",
+        "style": "Style or format",
+        "tool": "Tool execution",
+        "other": "Other"
+      },
+      "commentPlaceholder": "Optional details",
+      "skip": "Skip",
+      "submit": "Submit feedback"
+    }
   },
   "lightbox": {
     "title": "Pratinjau gambar",

@@ -22,11 +22,10 @@ class BootstrapResponse(BaseModel):
 @router.get("/webui/bootstrap")
 async def bootstrap(
     state: StateDep,
-    x_nanobot_auth: str | None = Header(default=None, alias="X-Nanobot-Auth"),
     x_minibot_auth: str | None = Header(default=None, alias="X-Minibot-Auth"),
 ) -> BootstrapResponse:
     secret = state.settings.auth_secret.strip()
-    supplied = x_minibot_auth or x_nanobot_auth
+    supplied = x_minibot_auth
     if secret and (not supplied or supplied != secret):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
     token = state.issue_token()

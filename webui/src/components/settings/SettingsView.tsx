@@ -255,7 +255,7 @@ interface CustomMcpForm {
   toolTimeout: string;
 }
 
-const LOCAL_PREFS_STORAGE_KEY = "nanobot-webui.settings-preferences";
+const LOCAL_PREFS_STORAGE_KEY = "minibot-webui.settings-preferences";
 
 const DEFAULT_LOCAL_PREFS: LocalPreferences = {
   density: "comfortable",
@@ -786,7 +786,7 @@ export function SettingsView({
     try {
       window.localStorage.setItem(LOCAL_PREFS_STORAGE_KEY, JSON.stringify(localPrefs));
     } catch {
-      // Browser-only preferences should never block settings.
+      // ignore
     }
   }, [localPrefs]);
 

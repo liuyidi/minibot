@@ -25,14 +25,12 @@ def _extract_bearer(authorization: str | None) -> str | None:
 async def require_token(
     request: Request,
     authorization: Annotated[str | None, Header()] = None,
-    x_nanobot_auth: Annotated[str | None, Header(alias="X-Nanobot-Auth")] = None,
     x_minibot_auth: Annotated[str | None, Header(alias="X-Minibot-Auth")] = None,
 ) -> str:
     state: AppState = request.app.state.app_state
     token = (
         _extract_bearer(authorization)
         or x_minibot_auth
-        or x_nanobot_auth
         or request.query_params.get("token")
     )
     if not state.check_token(token):

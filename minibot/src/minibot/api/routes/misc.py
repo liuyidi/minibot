@@ -59,29 +59,6 @@ async def dev_providers(_auth: AuthDep, state: StateDep) -> dict[str, Any]:
     }
 
 
-@router.get("/api/dev/nanobot-import")
-async def nanobot_import_status(_auth: AuthDep) -> dict[str, Any]:
-    from minibot.config.nanobot_import import detect_nanobot_config, preview_nanobot_import
-
-    detect = detect_nanobot_config()
-    preview = preview_nanobot_import() if detect.get("exists") else None
-    return {"ok": True, "detect": detect, "preview": preview}
-
-
-@router.post("/api/dev/nanobot-import")
-async def nanobot_import_run(_auth: AuthDep, state: StateDep) -> dict[str, Any]:
-    from minibot.config.nanobot_import import import_nanobot_into_config
-
-    try:
-        result = import_nanobot_into_config(state.config, activate_first=True)
-    except FileNotFoundError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
-    except (OSError, ValueError) as exc:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
-    state.save_config()
-    return {"ok": True, **result}
-
-
 @router.get("/api/dev/mcp")
 async def dev_mcp(_auth: AuthDep, state: StateDep) -> dict[str, Any]:
     """Dev UI: MCP runtime snapshot + configured presets (headers masked)."""

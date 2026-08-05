@@ -64,7 +64,7 @@ webui · Dev UI/Insight · CLI · Desktop · RN
 
 | 客户端 | 今天打谁 | 今天是否经 Client API |
 |--------|----------|------------------------|
-| `webui/` | minibot `:8766`（`NANOBOT_API_URL`） | 半套：散落 `bootstrap`/`api`/`nanobot-client`，未成包 |
+| `webui/` | minibot `:8766`（`MINIBOT_API_URL`） | 半套：散落 `bootstrap`/`api`/`minibot-client`，未成包 |
 | Dev UI `/ui/` | 同源 minibot | ❌ 各页手写 `fetch` |
 | CLI | 进程内 `AgentLoop` | ❌ |
 | Desktop | host → 同合同 | 半套（随 webui） |
@@ -96,7 +96,7 @@ webui · Dev UI/Insight · CLI · Desktop · RN
 | 项 | 约定 |
 |----|------|
 | 路径 | `GET /webui/bootstrap`（兼 `GET /auth/bootstrap`） |
-| 可选头 | `X-Minibot-Auth` / `X-Nanobot-Auth` |
+| 可选头 | `X-Minibot-Auth` |
 | 响应 | `token`, `ws_path`, `expires_in`, `model_name?`, `runtime_surface: "minibot"` |
 
 ### 4.2 L1 — REST
@@ -236,7 +236,7 @@ webui/src/lib/nanobot-client.ts → export { MinibotClient as NanobotClient } fr
 
 - RN Phase 1：依赖同一 TS 包（或发布 workspace）  
 - Desktop：只换 `WebSocket` 注入  
-- env：`MINIBOT_API_URL` alias `NANOBOT_API_URL`  
+- env：`MINIBOT_API_URL`  
 - **验收：** RN 连上本机 8766 流式一轮  
 
 ### M8 — 删除旧实现
@@ -264,11 +264,8 @@ webui/src/lib/nanobot-client.ts → export { MinibotClient as NanobotClient } fr
 
 | 现状 | 目标 |
 |------|------|
-| `NANOBOT_API_URL` | `MINIBOT_API_URL`（旧名 alias） |
-| `VITE_NANOBOT_WS_PORT` | `VITE_MINIBOT_WS_PORT` |
 | `NanobotClient` | `MinibotClient`（旧名 export） |
 | build → `nanobot/web/dist` | `MINIBOT_WEBUI_DIST` / 包内 static |
-| localStorage `nanobot-webui.*` | `minibot-webui.*`（读旧写新） |
 
 ---
 

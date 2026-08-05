@@ -15,7 +15,7 @@ router = APIRouter(tags=["workspaces"])
 
 class WorkspaceSetBody(BaseModel):
     workspace_path: str = Field(min_length=1)
-    # Compatibility with nanobot WebUI scope shape (optional).
+    # Compatibility with minibot WebUI scope shape (optional).
     project_path: str | None = None
     access_mode: str = "restricted"
 

@@ -65,7 +65,8 @@
     "portalLangfuse": "可觀測 (Langfuse)",
     "portalKnowledge": "知識庫",
     "portalDevui": "開發筆記",
-    "channels": "IM 頻道"
+    "channels": "IM 頻道",
+    "newChatChannelsHint": "Channel chats come from Feishu / WeChat. Switch to Chats to create one."
   },
   "settings": {
     "backToChat": "返回聊天",
@@ -1010,7 +1011,24 @@
     "cliRunRan": "已使用",
     "cliRunFailed": "失敗",
     "automationSourceFallback": "自動化",
-    "automationTriggered": "自動觸發"
+    "automationTriggered": "自動觸發",
+    "feedbackHelpful": "Helpful",
+    "feedbackUnhelpful": "Not helpful",
+    "feedbackDialog": {
+      "title": "What could be improved?",
+      "description": "Your feedback helps improve future responses.",
+      "reasonLabel": "Reason",
+      "reasons": {
+        "incorrect": "Incorrect",
+        "incomplete": "Incomplete",
+        "style": "Style or format",
+        "tool": "Tool execution",
+        "other": "Other"
+      },
+      "commentPlaceholder": "Optional details",
+      "skip": "Skip",
+      "submit": "Submit feedback"
+    }
   },
   "lightbox": {
     "title": "圖片預覽",

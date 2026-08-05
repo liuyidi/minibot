@@ -1,7 +1,7 @@
 """Anthropic Messages API provider (httpx, no SDK dependency).
 
 Converts OpenAI-style chat messages/tools used by AgentRunner into Anthropic's
-Messages format. Pattern mirrors nanobot's AnthropicProvider and CrewAI's
+Messages format. Pattern mirrors minibot's AnthropicProvider and CrewAI's
 native Anthropic completion, kept lean for minibot.
 """
 

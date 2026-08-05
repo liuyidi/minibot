@@ -2,7 +2,7 @@
 name: aliyun-ecs-demo-deploy
 description: >-
   Publish and deploy the liuyidi.me interview demo stack on Aliyun ECS
-  (mini-langfuse + minibot/nanobot WebUI + optional minikb). Use when the user
+  (mini-langfuse + minibot WebUI + optional minikb). Use when the user
   asks to 发布、部署、重建镜像、更新 ECS、up.sh、bot.liuyidi.me、mlf.liuyidi.me、
   kb.liuyidi.me、demo-minibot、demo-minikb, or to ship local commits to the live
   demo server.
@@ -15,7 +15,7 @@ description: >-
 | 域名 | 服务 | 本机端口（宿主机） |
 |------|------|-------------------|
 | https://mlf.liuyidi.me | mini-langfuse | 8080 → web, 8000 → API |
-| https://bot.liuyidi.me | minibot + nanobot WebUI | 8766 |
+| https://bot.liuyidi.me | minibot + WebUI | 8766 |
 | https://kb.liuyidi.me | minikb（可选） | 8081 |
 
 ECS：`root@116.62.35.76`，密钥 `~/Downloads/agent.pem`，代码根 `/opt/demo/`。
@@ -23,8 +23,7 @@ ECS：`root@116.62.35.76`，密钥 `~/Downloads/agent.pem`，代码根 `/opt/dem
 ```text
 /opt/demo/
   mini-langfuse/     # compose 在 deploy/demo/
-  nanobot/           # monorepo；minibot 在 nanobot/minibot
-  minibot -> nanobot/minibot
+  minibot/           # monorepo（Dockerfile.minibot + webui/ + minibot/）
   minikb/
 ```
 
@@ -34,7 +33,7 @@ Compose 入口：`/opt/demo/mini-langfuse/deploy/demo/`（`.env`、`docker-compo
 
 ## 何时用哪条路径
 
-1. **只改了 minibot / WebUI 代码** → 拉 `nanobot` + 重建 `minibot` 镜像
+1. **只改了 minibot / WebUI 代码** → 拉 `minibot` monorepo + 重建 `minibot` 镜像
 2. **只改了 minikb** → 拉 `minikb` + 重建 `minikb`（需 `--profile kb`）
 3. **改了 compose / Langfuse** → 拉 `mini-langfuse` + `./up.sh core` 或针对性 recreate
 4. **首次 / 全量含知识库** → `./up.sh kb`（2C2G 务必有 swap）
@@ -48,7 +47,7 @@ cd <repo> && git status && git push origin HEAD
 
 相关仓远程习惯：
 
-- nanobot / minibot：`github.com:liuyidi/minibot.git`（本地目录常为 `ai/nanobot`）
+- minibot：`github.com:liuyidi/minibot.git`
 - mini-langfuse：`github.com:liuyidi/mini-langfuse`（或当前 origin）
 - minikb：`github.com:liuyidi/minikb`
 
@@ -70,15 +69,14 @@ WebUI 打进镜像：`Dockerfile.minibot` 多阶段构建 `webui/` → `/app/web
 
 ```bash
 ssh -i ~/Downloads/agent.pem -o StrictHostKeyChecking=no root@116.62.35.76 'set -euo pipefail
-cd /opt/demo/nanobot
+cd /opt/demo/minibot
 git fetch origin main
 git reset --hard origin/main   # 避免本地脏文件挡 pull；确认无未提交热修再硬重置
 git rev-parse --short HEAD
 
 cd /opt/demo/mini-langfuse/deploy/demo
 set -a; source .env; set +a
-export NANOBOT_DIR=/opt/demo/nanobot
-export MINIBOT_DIR=/opt/demo/minibot
+export MINIBOT_REPO_DIR=/opt/demo/minibot
 export MLF_DIR=/opt/demo/mini-langfuse
 
 # 只要 minibot：避免顺带 rebuild server（DaoCloud 偶发 EOF）
@@ -125,7 +123,7 @@ cd /opt/demo/minikb && git fetch origin main && git reset --hard origin/main
 cd /opt/demo/mini-langfuse/deploy/demo
 set -a; source .env; set +a
 export MINIKB_DIR=/opt/demo/minikb MLF_DIR=/opt/demo/mini-langfuse
-export NANOBOT_DIR=/opt/demo/nanobot MINIBOT_DIR=/opt/demo/minibot
+export MINIBOT_REPO_DIR=/opt/demo/minibot MINIBOT_DIR=/opt/demo/minibot
 export COMPOSE_BAKE=false
 
 COMPOSE=(docker compose -f docker-compose.yml --env-file .env --profile kb)
@@ -222,9 +220,9 @@ free -h   # 2C2G：起 kb 后 available 变紧，应有 /swapfile
 PEM=~/Downloads/agent.pem
 HOST=root@116.62.35.76
 ssh -i "$PEM" -o StrictHostKeyChecking=no "$HOST" \
-  'cd /opt/demo/nanobot && git fetch origin main && git reset --hard origin/main && \
+  'cd /opt/demo/minibot && git fetch origin main && git reset --hard origin/main && \
    cd /opt/demo/mini-langfuse/deploy/demo && set -a && source .env && set +a && \
-   export NANOBOT_DIR=/opt/demo/nanobot MINIBOT_DIR=/opt/demo/minibot MLF_DIR=/opt/demo/mini-langfuse && \
+   export MINIBOT_REPO_DIR=/opt/demo/minibot MLF_DIR=/opt/demo/mini-langfuse && \
    docker compose -f docker-compose.yml --env-file .env build minibot && \
    docker compose -f docker-compose.yml --env-file .env up -d minibot && \
    curl -fsS http://127.0.0.1:8766/health'

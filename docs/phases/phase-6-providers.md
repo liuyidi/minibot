@@ -10,7 +10,6 @@
 - `providers/anthropic.py`：httpx Messages API（无 anthropic SDK 依赖）；OpenAI 消息/工具转换；chat + SSE stream
 - `AppState.rebuild_provider` 改走 factory
 - ModelPreset 增加 `provider` 字段；Settings / Dev UI 可选 anthropic
-- `config/nanobot_import.py` + `GET/POST /api/dev/nanobot-import`
 - Insight UI：`/ui/providers.html`（正常：registry 绿；异常：stub 黄；导入黄条）
 
 ## 刻意不做（后续）

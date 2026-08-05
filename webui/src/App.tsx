@@ -32,7 +32,7 @@ import {
 } from "@/lib/bootstrap";
 import { displayTitle } from "@/lib/chat-groups";
 import { deriveTitle } from "@/lib/format";
-import { NanobotClient } from "@/lib/nanobot-client";
+import { MinibotClient } from "@/lib/minibot-client";
 import { ClientProvider, useClient } from "@/providers/ClientProvider";
 import type {
   ChatSummary,
@@ -59,17 +59,16 @@ type BootState =
   | { status: "auth"; failed?: boolean }
   | {
       status: "ready";
-      client: NanobotClient;
+      client: MinibotClient;
       token: string;
       tokenExpiresAt: number;
       modelName: string | null;
       runtimeSurface: RuntimeSurface;
     };
 
-const SIDEBAR_STORAGE_KEY = "nanobot-webui.sidebar";
-const SESSION_UPDATES_STORAGE_KEY = "nanobot-webui.sidebar.session-updates.v1";
-const LEGACY_COMPLETED_RUNS_STORAGE_KEY = "nanobot-webui.sidebar.completed-runs.v1";
-const RESTART_STARTED_KEY = "nanobot-webui.restartStartedAt";
+const SIDEBAR_STORAGE_KEY = "minibot-webui.sidebar";
+const SESSION_UPDATES_STORAGE_KEY = "minibot-webui.sidebar.session-updates.v1";
+const RESTART_STARTED_KEY = "minibot-webui.restartStartedAt";
 const SIDEBAR_WIDTH = 272;
 const SIDEBAR_RAIL_WIDTH = 56;
 const MOBILE_SIDEBAR_WIDTH = `min(${SIDEBAR_WIDTH}px, calc(100vw - 0.75rem))`;
@@ -296,9 +295,7 @@ function readSidebarOpen(): boolean {
 function readSessionUpdateChatIds(): Set<string> {
   if (typeof window === "undefined") return new Set();
   try {
-    const raw =
-      window.localStorage.getItem(SESSION_UPDATES_STORAGE_KEY)
-      ?? window.localStorage.getItem(LEGACY_COMPLETED_RUNS_STORAGE_KEY);
+    const raw = window.localStorage.getItem(SESSION_UPDATES_STORAGE_KEY);
     const parsed = raw ? JSON.parse(raw) : [];
     if (!Array.isArray(parsed)) return new Set();
     return new Set(parsed.filter((item): item is string => typeof item === "string"));
@@ -314,7 +311,7 @@ function writeSessionUpdateChatIds(chatIds: Set<string>): void {
       JSON.stringify(Array.from(chatIds)),
     );
   } catch {
-    // ignore storage errors (private mode, etc.)
+    // ignore storage errors
   }
 }
 
@@ -377,7 +374,7 @@ export default function App() {
   const bootstrapSecretRef = useRef("");
 
   const refreshReadyClient = useCallback(
-    async (client: NanobotClient, fallbackSurface: RuntimeSurface) => {
+    async (client: MinibotClient, fallbackSurface: RuntimeSurface) => {
       const boot = await fetchBootstrap("", bootstrapSecretRef.current);
       const url = deriveWsUrl(boot.ws_path, boot.token, boot.ws_url);
       const runtimeSurface = boot.runtime_surface
@@ -418,7 +415,7 @@ export default function App() {
           const url = deriveWsUrl(boot.ws_path, boot.token, boot.ws_url);
           const runtimeSurface = toRuntimeSurface(boot.runtime_surface);
           const runtimeHost = createRuntimeHost(runtimeSurface, boot.runtime_capabilities);
-          const client = new NanobotClient({
+          const client = new MinibotClient({
             url,
             socketFactory: runtimeHost.socketFactory,
             onReauth: async () => {
@@ -673,7 +670,7 @@ function Shell({
         hostSidebarOpen ? "1" : "0",
       );
     } catch {
-      // ignore storage errors (private mode, etc.)
+      // ignore storage errors
     }
   }, [hostSidebarOpen]);
 
@@ -1267,11 +1264,7 @@ function Shell({
     if (!chatId) return;
     restartSawDisconnectRef.current = false;
     setIsRestarting(true);
-    try {
-      window.localStorage.setItem(RESTART_STARTED_KEY, String(Date.now()));
-    } catch {
-      // ignore storage errors
-    }
+    window.localStorage.setItem(RESTART_STARTED_KEY, String(Date.now()));
     client.sendMessage(chatId, "/restart");
   }, [activeSession?.chatId, client]);
 
@@ -1316,13 +1309,9 @@ function Shell({
 
   useEffect(() => {
     return client.onStatus((status) => {
-      const startedAt = (() => {
-        try {
-          return Number(window.localStorage.getItem(RESTART_STARTED_KEY) ?? "0");
-        } catch {
-          return 0;
-        }
-      })();
+      const startedAt = Number(
+        window.localStorage.getItem(RESTART_STARTED_KEY) ?? "0",
+      );
       if (!startedAt) return;
       if (status !== "open") {
         restartSawDisconnectRef.current = true;
@@ -1330,11 +1319,7 @@ function Shell({
       }
       const elapsedMs = Date.now() - startedAt;
       if (!restartSawDisconnectRef.current && elapsedMs < 1500) return;
-      try {
-        window.localStorage.removeItem(RESTART_STARTED_KEY);
-      } catch {
-        // ignore storage errors
-      }
+      window.localStorage.removeItem(RESTART_STARTED_KEY);
       setIsRestarting(false);
       setRestartToast(t("app.restart.completed", { seconds: (elapsedMs / 1000).toFixed(1) }));
       window.setTimeout(() => setRestartToast(null), 3_500);

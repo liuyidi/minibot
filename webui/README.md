@@ -1,7 +1,7 @@
-# nanobot WebUI Source
+# minibot WebUI Source
 
-This directory contains the React/TypeScript source for the nanobot WebUI. If
-you installed `nanobot-ai` from PyPI and only want to use the bundled browser UI,
+This directory contains the React/TypeScript source for the minibot WebUI. If
+you installed `minibot` from PyPI and only want to use the bundled browser UI,
 read the user guide in [`docs/webui.md`](../docs/webui.md). You do not need
 Node.js, Bun, Vite, or anything in this directory unless you are changing the
 frontend.
@@ -12,8 +12,8 @@ For the project overview, install guide, and general docs map, see the root [`RE
 
 | Goal | Start with | Opens at |
 |---|---|---|
-| Use the bundled browser UI | [`docs/webui.md`](../docs/webui.md) | `http://127.0.0.1:8765` |
-| Use the WebUI from another device | [`docs/webui.md#lan-access`](../docs/webui.md#lan-access) | `http://<your-ip>:8765` |
+| Use the bundled browser UI | [`docs/webui.md`](../docs/webui.md) | `http://127.0.0.1:8766` |
+| Use the WebUI from another device | [`docs/webui.md#lan-access`](../docs/webui.md#lan-access) | `http://<your-ip>:8766` |
 | Change WebUI source code | [Develop the WebUI (Vite HMR)](#develop-the-webui-vite-hmr) | `http://127.0.0.1:5173` |
 | Debug setup failures | [`docs/troubleshooting.md#webui-problems`](../docs/troubleshooting.md#webui-problems) | Diagnosis order and common fixes |
 
@@ -25,12 +25,12 @@ reads session metadata from the embedded REST surface on the same port.
 
 ```text
 webui/                 source tree (this directory)
-nanobot/web/dist/      build output served by the gateway
+minibot/web/dist/      build output served by the gateway
 ```
 
 ## Develop the WebUI (Vite HMR)
 
-### 1. Install nanobot from source
+### 1. Install minibot from source
 
 From the repository root:
 
@@ -42,7 +42,7 @@ python -m pip install -e .
 
 ### 2. Enable the WebSocket channel
 
-In `~/.nanobot/config.json`, merge:
+In `~/.minibot/config.json`, merge:
 
 ```json
 { "channels": { "websocket": { "enabled": true } } }
@@ -53,7 +53,7 @@ In `~/.nanobot/config.json`, merge:
 In one terminal:
 
 ```bash
-nanobot gateway
+minibot gateway
 ```
 
 ### 4. Start the WebUI dev server
@@ -68,12 +68,12 @@ bun run dev
 
 Then open `http://127.0.0.1:5173`.
 
-By default the dev server proxies `/api`, `/webui`, `/auth`, and WebSocket traffic to `http://127.0.0.1:8765`.
+By default the dev server proxies `/api`, `/webui`, `/auth`, and WebSocket traffic to `http://127.0.0.1:8766`.
 
 If your gateway listens on a non-default port, point the dev server at it:
 
 ```bash
-NANOBOT_API_URL=http://127.0.0.1:9000 bun run dev
+MINIBOT_API_URL=http://127.0.0.1:9000 bun run dev
 ```
 
 ## Build for packaged runtime
@@ -84,7 +84,7 @@ If you want to preview the production bundle locally without rebuilding the whee
 
 ```bash
 cd webui
-bun run build          # writes to ../nanobot/web/dist
+bun run build          # writes to ../minibot/web/dist
 ```
 
 The gateway picks up the new bundle on the next restart.

@@ -1,86 +1,129 @@
 # minibot
 
-FastAPI agent runtime for local WebUI chat. Built as the next-generation backend replacing legacy `nanobot gateway`, with a focus on readable code, learning-friendly architecture, and deep integration with the local dev ecosystem.
+[English](./README.en.md) | 简体中文
 
-## Why minibot
+**minibot** 是一个本地优先的 **AI Agent 运行时**：用 FastAPI 承载「大模型 + 工具 + 会话」闭环，并用 React WebUI（及飞书 / 微信等 IM）与人对齐协作。
 
-- **Learning-first**: every Phase includes normal + abnormal Dev UI pages so you can see how the agent loop works (and how it breaks).
-- **Readable core**: agent loop, provider streaming, tool execution, session JSONL, memory, and MCP presets all live in `src/minibot/`.
-- **Local-first**: sessions, memory, and cron jobs live under `~/.minibot/`; no cloud required for the default path.
-- **Composable**: OpenAI-compatible providers, MCP servers, and minikb knowledge bases plug in without touching the core runner.
+## 能做什么
 
-## Quick start
+| 能力 | 说明 |
+|------|------|
+| **Agent 对话** | WebSocket 流式回复；多会话；侧边栏「对话 / 频道」分流 WebUI 与 IM |
+| **多模型** | OpenAI 兼容网关 + Anthropic 等；设置里切换 model preset，下一轮生效 |
+| **工具执行** | 读改文件、Shell/exec（本地或 E2B）、网页搜索/抓取、MCP 工具注入 |
+| **记忆与技能** | 会话 JSONL 持久化、工作区记忆、Skills；可选知识库 minikb |
+| **定时任务** | Cron / 自动化：按时触发 agent 回合 |
+| **IM 频道** | 飞书、微信（iLink Claw）扫码接入；群聊策略等按频道能力 |
+| **可观测** | 可选对接 [mini-langfuse](https://github.com/liuyidi/mini-langfuse) 看 Trace / Session |
+| **多端入口** | 本仓库 WebUI；同协议可接 [minibot-react-native](https://github.com/liuyidi/minibot-react-native) 等客户端 |
+
+```text
+  WebUI / 飞书 / 微信 / 移动端
+           │  REST + WebSocket
+           ▼
+     ┌─────────────┐
+     │   minibot   │  Agent Loop → Runner → LLM / Tools
+     │   :8766     │  Sessions · Memory · MCP · Cron
+     └─────────────┘
+           │
+     ~/.minibot/   （配置、会话、工作区）
+```
+
+## 仓库结构
+
+```text
+minibot/              # Python 包（Agent、API、频道、工具）
+webui/                # Vite + React SPA（构建 → webui/dist）
+Dockerfile.minibot    # 运行时 + WebUI 一体镜像
+docs/                 # 设计与分阶段文档
+packages/             # 可选共享客户端包
+```
+
+## 快速开始
+
+### 运行时
 
 ```bash
 cd minibot
 python3 -m venv .venv
-source .venv/bin/activate
-pip install -e .
-# optional: export OPENAI_API_KEY=sk-...
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
+pip install -e ".[feishu,weixin]"
+# 可选: export OPENAI_API_KEY=sk-...
 minibot
 ```
 
-Open the bundled Dev UI at `http://127.0.0.1:8766/ui/` (Chat) or the trace page at `http://127.0.0.1:8766/ui/trace.html`.
+- 健康检查：`http://127.0.0.1:8766/health`
+- Dev UI：`http://127.0.0.1:8766/ui/`
+- 打包后的 WebUI（有 `webui/dist` 或设置了 `MINIBOT_WEBUI_DIST`）：`http://127.0.0.1:8766/`
 
-## Configuration
-
-minibot uses a layered config: env vars → `~/.minibot/config.json` → in-memory `AppState`.
-
-| Variable | Default | Meaning |
-|----------|---------|---------|
-| `MINIBOT_SERVER_HOST` | `127.0.0.1` | Bind host |
-| `MINIBOT_SERVER_PORT` | `8766` | Bind port |
-| `MINIBOT_SERVER_OPENAI_API_KEY` | — | LLM key (or use `OPENAI_API_KEY`) |
-| `MINIBOT_SERVER_OPENAI_BASE_URL` | `https://api.openai.com/v1` | OpenAI-compatible base URL |
-| `MINIBOT_SERVER_MODEL` | `gpt-4o-mini` | Default model |
-| `MINIBOT_SERVER_DATA_DIR` | `~/.minibot` | Data root |
-| `MINIBOT_SERVER_MINIKB_BASE_URL` | — | Optional minikb URL (e.g. `http://127.0.0.1:8080`) |
-| `MINIBOT_SERVER_DAILY_TURN_LIMIT` | `0` | UTC daily turn cap (`0` = unlimited); over → HTTP 429 |
-| `MINIBOT_SERVER_DAILY_TOKEN_LIMIT` | `0` | UTC daily token cap (`0` = unlimited); over → HTTP 429 |
-| `MINIBOT_SERVER_EXEC_BACKEND` | `local` | `local` or `e2b` (Firecracker microVM for `exec` only) |
-| `MINIBOT_SERVER_E2B_API_KEY` | — | E2B API key (or `E2B_API_KEY`); required when backend=`e2b` |
-
-Providers are selected via Settings model presets (`openai` / `anthropic` / `openrouter` / `deepseek` / `ollama` / `custom`). Anthropic uses the native Messages API; others use OpenAI-compatible `/chat/completions`. Optional: import keys from `~/.nanobot/config.json` via `/ui/providers.html`.
-
-See [`minibot/README.md`](./minibot/README.md) for full env / Docker / MCP / minikb / langfuse wiring.
-
-## Architecture
-
-```text
-WebUI / cli_chat
-    → api/ws.py or api/routes/sessions.py
-    → AgentLoop (session lock + context build)
-    → AgentRunner (streaming + tools)
-    → providers/* (OpenAI-compat first, extensible)
-    → agent/tools/* (filesystem, shell, web, MCP, kb_*)
-    → session JSONL + memory + skills
-```
-
-- **Dev UI pages**: `/ui/` (Chat), `/ui/runtime.html` (lock/bus), `/ui/tools.html` (tool calls), `/ui/context.html` (system prompt), `/ui/mcp.html` (MCP presets), `/ui/knowledge.html` (minikb), `/ui/automations.html` (cron).
-- **Testing**: `cd minibot && pytest` (fake provider, concurrency helpers, streaming assertions).
-
-## Status
-
-Current baseline and migration plan live in:
-
-- [`docs/status.md`](./docs/status.md)
-- [`docs/migration.md`](./docs/migration.md)
-- [`docs/client-api.md`](./docs/client-api.md) — unified client contract + OpenAPI plan
-- [`packages/minibot-client`](./packages/minibot-client) — published `@liuyidi/minibot-client`, import alias `@minibot/client` (RN / webui / desktop)
-
-Next milestone: **Phase 6 余量** — provider registry + nanobot config import, so Settings can stand alone from legacy.
-
-## Docker
+### WebUI 开发
 
 ```bash
-cd minibot
-docker build -t minibot .
+cd webui
+npm install
+MINIBOT_API_URL=http://127.0.0.1:8766 npm run dev
+```
+
+开发服务器会把 `/api`、`/webui`、`/auth` 代理到运行时（默认 `:8766`）。
+
+```bash
+npm run build   # → webui/dist
+npm test
+```
+
+### Docker
+
+```bash
+docker build -f Dockerfile.minibot -t minibot:local .
 docker run --rm -p 8766:8766 \
   -e MINIBOT_SERVER_HOST=0.0.0.0 \
   -e MINIBOT_SERVER_OPENAI_API_KEY=sk-... \
-  minibot
+  minibot:local
 ```
 
-## Contributing
+## 配置
 
-Read [`CONTRIBUTING.md`](./CONTRIBUTING.md) for the contribution flow. The goal is not just feature parity, but a codebase you can explain to someone else in 10 minutes.
+配置层级：环境变量 → `~/.minibot/config.json` → 内存状态。
+
+| 变量 | 默认 | 含义 |
+|------|------|------|
+| `MINIBOT_SERVER_HOST` | `127.0.0.1` | 监听地址 |
+| `MINIBOT_SERVER_PORT` | `8766` | 端口 |
+| `MINIBOT_SERVER_OPENAI_API_KEY` | — | 模型 Key（或 `OPENAI_API_KEY`） |
+| `MINIBOT_SERVER_OPENAI_BASE_URL` | `https://api.openai.com/v1` | OpenAI 兼容 Base URL |
+| `MINIBOT_SERVER_MODEL` | `gpt-4o-mini` | 默认模型 |
+| `MINIBOT_SERVER_DATA_DIR` | `~/.minibot` | 数据目录 |
+| `MINIBOT_WEBUI_DIST` | — | WebUI 构建目录 |
+| `MINIBOT_SERVER_MINIKB_BASE_URL` | — | 可选知识库地址 |
+| `MINIBOT_SERVER_EXEC_BACKEND` | `local` | `local` 或 `e2b` |
+| `AUTH_SECRET` | 空 | 设置后 bootstrap 需要 `X-Minibot-Auth` |
+
+模型预设、MCP、频道凭证在 WebUI **设置** / **IM 频道** 中管理。
+
+更多细节：[`minibot/README.md`](./minibot/README.md)、[`webui/README.md`](./webui/README.md)、[`docs/`](./docs/)。
+
+## 架构
+
+```text
+WebUI / IM 频道
+  → API / WebSocket 总线
+  → Agent Loop（上下文 + 会话锁）
+  → Agent Runner（流式 + 工具调用）
+  → Providers（OpenAI 兼容 / Anthropic / …）
+  → Tools（文件系统、exec、网页、MCP、知识库、cron）
+  → 会话 JSONL + 记忆 + Skills
+```
+
+## 开发
+
+```bash
+cd minibot && pytest -q
+cd minibot && ruff check src/minibot
+cd webui && npm test
+```
+
+面向 Agent 的仓库说明见 [`AGENTS.md`](./AGENTS.md)。
+
+## 许可
+
+详见仓库内许可证文件。

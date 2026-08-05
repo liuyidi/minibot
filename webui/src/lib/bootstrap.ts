@@ -1,7 +1,7 @@
 import type { BootstrapResponse } from "./types";
 import { fetchWithTimeout } from "./http";
 
-const SECRET_STORAGE_KEY = "nanobot-webui.bootstrap-secret";
+const SECRET_STORAGE_KEY = "minibot-webui.bootstrap-secret";
 
 /** Read a previously saved bootstrap secret from localStorage. */
 export function loadSavedSecret(): string {
@@ -15,6 +15,7 @@ export function loadSavedSecret(): string {
 
 /** Persist the bootstrap secret so page reloads don't re-prompt. */
 export function saveSecret(secret: string): void {
+  if (typeof window === "undefined") return;
   try {
     window.localStorage.setItem(SECRET_STORAGE_KEY, secret);
   } catch {
@@ -24,11 +25,18 @@ export function saveSecret(secret: string): void {
 
 /** Clear the saved bootstrap secret (sign out). */
 export function clearSavedSecret(): void {
+  if (typeof window === "undefined") return;
   try {
     window.localStorage.removeItem(SECRET_STORAGE_KEY);
   } catch {
     // ignore
   }
+}
+
+function authHeaders(secret: string): Record<string, string> {
+  return {
+    "X-Minibot-Auth": secret,
+  };
 }
 
 /**
@@ -40,10 +48,7 @@ export async function fetchBootstrap(
   secret: string = "",
   timeoutMs?: number,
 ): Promise<BootstrapResponse> {
-  const headers: Record<string, string> = {};
-  if (secret) {
-    headers["X-Nanobot-Auth"] = secret;
-  }
+  const headers: Record<string, string> = secret ? authHeaders(secret) : {};
   const res = await fetchWithTimeout(`${baseUrl}/webui/bootstrap`, {
     method: "GET",
     credentials: "same-origin",
@@ -57,6 +62,13 @@ export async function fetchBootstrap(
     throw new Error("bootstrap response missing token or ws_path");
   }
   return body;
+}
+
+function devGatewayPort(): string {
+  const env = (import.meta as {
+    env?: { VITE_MINIBOT_WS_PORT?: string };
+  }).env;
+  return env?.VITE_MINIBOT_WS_PORT ?? "8766";
 }
 
 /** Derive a WebSocket URL from the current window location and the server-provided path.
@@ -77,13 +89,10 @@ export function deriveWsUrl(
     const host = window.location.hostname.includes(":")
       ? `[${window.location.hostname}]`
       : window.location.hostname;
-    // minibot FastAPI default port (legacy gateway was 8765).
-    const gatewayPort = (import.meta as { env?: { VITE_NANOBOT_WS_PORT?: string } }).env
-      ?.VITE_NANOBOT_WS_PORT
-      ?? "8766";
+    const gatewayPort = devGatewayPort();
     return `ws://${host}:${gatewayPort}${path}${query}`;
   }
-  if (wsUrl && /^(wss?|nanobot-host):\/\//i.test(wsUrl)) {
+  if (wsUrl && /^(wss?|minibot-host):\/\//i.test(wsUrl)) {
     const join = wsUrl.includes("?") ? "&" : "?";
     return `${wsUrl}${join}token=${encodeURIComponent(token)}`;
   }

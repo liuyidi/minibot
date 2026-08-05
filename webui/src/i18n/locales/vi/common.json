@@ -63,7 +63,10 @@
     "portalLangfuse": "Quan sát",
     "portalKnowledge": "Kho kiến thức",
     "portalDevui": "Ghi chú dev",
-    "channels": "Kênh IM"
+    "channels": "Kênh IM",
+    "newChatChannelsHint": "Channel chats come from Feishu / WeChat. Switch to Chats to create one.",
+    "tabChats": "Chats",
+    "tabChannels": "Channels"
   },
   "settings": {
     "backToChat": "Quay lại chat",
@@ -1008,7 +1011,24 @@
     "cliRunRan": "Đã dùng",
     "cliRunFailed": "Thất bại",
     "automationSourceFallback": "Tự động hóa",
-    "automationTriggered": "Tự động kích hoạt"
+    "automationTriggered": "Tự động kích hoạt",
+    "feedbackHelpful": "Helpful",
+    "feedbackUnhelpful": "Not helpful",
+    "feedbackDialog": {
+      "title": "What could be improved?",
+      "description": "Your feedback helps improve future responses.",
+      "reasonLabel": "Reason",
+      "reasons": {
+        "incorrect": "Incorrect",
+        "incomplete": "Incomplete",
+        "style": "Style or format",
+        "tool": "Tool execution",
+        "other": "Other"
+      },
+      "commentPlaceholder": "Optional details",
+      "skip": "Skip",
+      "submit": "Submit feedback"
+    }
   },
   "lightbox": {
     "title": "Xem trước ảnh",

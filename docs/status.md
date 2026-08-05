@@ -111,7 +111,6 @@ AppState.config + rebuild_provider() / MCP reconnect
 | | nanobot | minibot |
 |--|---------|---------|
 | 主配置 | `~/.nanobot/config.json` | `~/.minibot/config.json` |
-| 互通 | — | **可选导入**：`GET/POST /api/dev/nanobot-import`（Phase 6 MVP） |
 
 ---
 
@@ -129,7 +128,7 @@ AppState.config + rebuild_provider() / MCP reconnect
 
 | 能力 | 状态 |
 |------|------|
-| bootstrap + Bearer / `X-Minibot-Auth` / `X-Nanobot-Auth` | ✅ |
+| bootstrap + Bearer / `X-Minibot-Auth` | ✅ |
 | Sessions REST + JSONL | ✅ |
 | Pairing / 多用户 | ❌ Phase 14 |
 
@@ -219,7 +218,7 @@ minibot/
     main.py                 # FastAPI
     app_state.py            # DI：loop / bus / runner / mcp / cron / fallback_stats
     cli_chat.py
-    config/                 # Settings + AppConfig + presets + mcp + nanobot_import
+    config/                 # Settings + AppConfig + presets + mcp
     api/                    # REST + WS
     agent/                  # loop, runner, context, memory, skills, tools/
     providers/              # base, openai_compat, anthropic, registry, factory, fallback

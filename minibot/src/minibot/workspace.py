@@ -10,10 +10,10 @@ class WorkspaceError(ValueError):
 
 
 def default_workspace() -> Path:
-    """Return the default agent workspace, aligned with nanobot's home layout.
+    """Return the default agent workspace, aligned with minibot's home layout.
 
     Default: ``{data_dir}/workspace`` → usually ``~/.minibot/workspace``.
-    Creates the directory if missing (same idea as nanobot ``get_workspace_path``).
+    Creates the directory if missing (same idea as minibot ``get_workspace_path``).
     """
     from minibot.config.settings import get_settings
 

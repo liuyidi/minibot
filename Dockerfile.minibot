@@ -1,4 +1,4 @@
-# Build context: nanobot monorepo root (contains webui/ + minibot/).
+# Build context: monorepo root (contains webui/ + minibot/).
 # additional_contexts:
 #   langfuse_sdk: path to mini-langfuse/sdk-python
 
@@ -10,8 +10,8 @@ RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
 COPY webui/package.json ./
 RUN npm install --loglevel=error
 COPY webui/ ./
-# vite outDir → ../nanobot/web/dist ⇒ /nanobot/web/dist when cwd is /webui
-RUN mkdir -p /nanobot/web && npm run build && test -f /nanobot/web/dist/index.html
+# vite outDir → /webui/dist
+RUN npm run build && test -f /webui/dist/index.html
 
 # --- minibot runtime ---
 FROM docker.m.daocloud.io/library/python:3.11-slim
@@ -32,7 +32,7 @@ WORKDIR /app
 
 COPY minibot/pyproject.toml minibot/README.md ./
 COPY minibot/src ./src
-COPY --from=webui /nanobot/web/dist /app/webui-dist
+COPY --from=webui /webui/dist /app/webui-dist
 
 COPY --from=langfuse_sdk . /tmp/sdk-python
 

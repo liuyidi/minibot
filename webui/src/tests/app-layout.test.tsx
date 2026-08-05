@@ -58,7 +58,7 @@ function baseSettingsPayload() {
       temperature: 0.1,
       reasoning_effort: null,
       timezone: "UTC",
-      bot_name: "nanobot",
+      bot_name: "minibot",
       bot_icon: "nb",
       tool_hint_max_length: 40,
     },
@@ -186,7 +186,7 @@ vi.mock("@/lib/bootstrap", () => ({
   clearSavedSecret: vi.fn(),
 }));
 
-vi.mock("@/lib/nanobot-client", () => {
+vi.mock("@/lib/minibot-client", () => {
   class MockClient {
     status = "idle" as const;
     defaultChatId: string | null = null;
@@ -212,7 +212,7 @@ vi.mock("@/lib/nanobot-client", () => {
     updateUrl = updateUrlSpy;
   }
 
-  return { NanobotClient: MockClient };
+  return { MinibotClient: MockClient };
 });
 
 import { deriveWsUrl, fetchBootstrap } from "@/lib/bootstrap";
@@ -234,9 +234,9 @@ describe("App layout", () => {
     sessionUpdateHandlers.clear();
     window.history.replaceState(null, "", "/");
     setNavigatorPlatform("Linux x86_64");
-    localStorage.removeItem("nanobot-webui.sidebar");
-    localStorage.removeItem("nanobot-webui.sidebar.completed-runs.v1");
-    localStorage.removeItem("nanobot-webui.sidebar.session-updates.v1");
+    localStorage.removeItem("minibot-webui.sidebar");
+    localStorage.removeItem("minibot-webui.sidebar.completed-runs.v1");
+    localStorage.removeItem("minibot-webui.sidebar.session-updates.v1");
     vi.mocked(fetchBootstrap).mockReset().mockResolvedValue({
       token: "tok",
       ws_path: "/",
@@ -541,7 +541,7 @@ describe("App layout", () => {
     );
     expect(updateCall).toBeTruthy();
     const headers = updateCall?.[1]?.headers as Record<string, string>;
-    expect(JSON.parse(decodeURIComponent(headers["X-Nanobot-Automation-Values"]))).toEqual({
+    expect(JSON.parse(decodeURIComponent(headers["X-Minibot-Automation-Values"]))).toEqual({
       name: "Past one-shot",
       message: "Updated one-shot message",
     });
@@ -1011,7 +1011,7 @@ describe("App layout", () => {
         chatId: "new",
         createdAt: "2026-04-15T12:00:00Z",
         updatedAt: "2026-04-15T12:00:00Z",
-        preview: "hi nanobot",
+        preview: "hi minibot",
       },
       {
         key: "websocket:alpha",
@@ -1055,9 +1055,9 @@ describe("App layout", () => {
     await waitFor(() => expect(connectSpy).toHaveBeenCalled());
     const sidebar = screen.getByRole("navigation", { name: "Sidebar navigation" });
     await waitFor(() =>
-      expect(within(sidebar).getByText("Chats")).toBeInTheDocument(),
+      expect(within(sidebar).getByRole("tab", { name: "Chats" })).toBeInTheDocument(),
     );
-    const group = within(sidebar).getByText("Chats").closest("section");
+    const group = within(sidebar).getByRole("region", { name: "Chats" });
     expect(group).toBeTruthy();
     const labels = within(group as HTMLElement)
       .getAllByRole("button")
@@ -1228,7 +1228,7 @@ describe("App layout", () => {
       },
     ];
     localStorage.setItem(
-      "nanobot-webui.sidebar.session-updates.v1",
+      "minibot-webui.sidebar.session-updates.v1",
       JSON.stringify(["chat-b"]),
     );
 
@@ -1326,7 +1326,7 @@ describe("App layout", () => {
                 temperature: 0.1,
                 reasoning_effort: null,
                 timezone: "UTC",
-                bot_name: "nanobot",
+                bot_name: "minibot",
                 bot_icon: "nb",
                 tool_hint_max_length: 40,
               },
@@ -1684,7 +1684,7 @@ describe("App layout", () => {
                 temperature: 0.1,
                 reasoning_effort: null,
                 timezone: "UTC",
-                bot_name: "nanobot",
+                bot_name: "minibot",
                 bot_icon: "nb",
                 tool_hint_max_length: 40,
               },

@@ -20,5 +20,5 @@ def safe_filename(name: str) -> str:
 
 
 def redirect_lib_logging(_prefix: str) -> None:
-    """No-op stub (nanobot bridged third-party logs into loguru)."""
+    """No-op stub (minibot bridged third-party logs into loguru)."""
     return

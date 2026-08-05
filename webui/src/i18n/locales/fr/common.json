@@ -63,7 +63,10 @@
     "portalLangfuse": "Observabilité",
     "portalKnowledge": "Connaissances",
     "portalDevui": "Notes de développement",
-    "channels": "Canaux IM"
+    "channels": "Canaux IM",
+    "newChatChannelsHint": "Channel chats come from Feishu / WeChat. Switch to Chats to create one.",
+    "tabChats": "Chats",
+    "tabChannels": "Channels"
   },
   "settings": {
     "backToChat": "Retour au chat",
@@ -1008,7 +1011,24 @@
     "cliRunRan": "Utilisé",
     "cliRunFailed": "Échec",
     "automationSourceFallback": "Automatisation",
-    "automationTriggered": "Déclenché automatiquement"
+    "automationTriggered": "Déclenché automatiquement",
+    "feedbackHelpful": "Helpful",
+    "feedbackUnhelpful": "Not helpful",
+    "feedbackDialog": {
+      "title": "What could be improved?",
+      "description": "Your feedback helps improve future responses.",
+      "reasonLabel": "Reason",
+      "reasons": {
+        "incorrect": "Incorrect",
+        "incomplete": "Incomplete",
+        "style": "Style or format",
+        "tool": "Tool execution",
+        "other": "Other"
+      },
+      "commentPlaceholder": "Optional details",
+      "skip": "Skip",
+      "submit": "Submit feedback"
+    }
   },
   "lightbox": {
     "title": "Aperçu de l’image",

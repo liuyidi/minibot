@@ -267,7 +267,7 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
     await websocket.accept()
     known: set[str] = set()
     # Ephemeral id for protocol compatibility only — do NOT persist a session
-    # on connect (nanobot does the same). Persisting here made every refresh /
+    # on connect (minibot does the same). Persisting here made every refresh /
     # reconnect spawn an empty sidebar chat.
     default_chat: str | None = uuid.uuid4().hex[:12]
 

@@ -1,6 +1,6 @@
 # minibot
 
-FastAPI agent runtime (replacement path for legacy `nanobot gateway` WebUI backend).
+FastAPI agent runtime
 
 ## Layout
 
@@ -156,9 +156,9 @@ cd minibot && python -m minibot.cli_chat
 | `OPENAI_API_KEY` | — | LLM key (or use `OPENAI_API_KEY`) |
 | `OPENAI_BASE_URL` | OpenAI | Compatible base URL |
 | `MODEL` | `gpt-4o-mini` | Default model |
-| `AUTH_SECRET` | empty | If set, bootstrap requires `X-Nanobot-Auth` or `X-Minibot-Auth` |
+| `AUTH_SECRET` | empty | If set, bootstrap requires `X-Minibot-Auth` |
 | `REQUIRE_AUTH` | `false` | Force token checks |
 
 See [docs/client-api.md](../docs/client-api.md) for the unified REST + WebSocket contract outline.
 See [docs/human-in-the-loop.md](../docs/human-in-the-loop.md) for the HITL approval contract and UI flow.
-See [docs/server.md](../docs/server.md) for migration notes vs legacy `nanobot gateway`.
+See [docs/server.md](../docs/server.md) 
