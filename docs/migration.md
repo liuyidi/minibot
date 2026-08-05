@@ -329,7 +329,7 @@ flowchart TB
 
 ### 当前执行顺序（v3.6）
 
-> **进度快照：** 0 → 1 → 1.5A → 3a → 3b → 5 → 6a → 4 → 2 → 6(registry/Anthropic/import) → **6.5 Fallback** ✅。
+> **进度快照：** 0 → 1 → 1.5A → 3a → 3b → 5 → 6a → 4 → 2 → 6(registry/Anthropic/import) → **6.5 Fallback** ✅ → **平台多 slot / Auto 首可用** ✅（跨平台模型失败切换未接线，见 status §4.5）。
 > **下一主线：** Phase 7 `/v1` → …
 
 ```text
@@ -839,7 +839,7 @@ WS/REST/CLI → (Bus?) → AgentLoop(with session lock) → AgentRunner → Prov
 |--------|--------|----------|
 | **8.1** media / file-preview | `/api/media/{sig}/{payload}`；WS/REST 附件落盘；`file-preview`；`webui-thread` 签名回放 — **✅** | M-API 🆕、M-Sess 🔧 附件字段 |
 | **8.2** commands / workspaces CRUD | Phase 0.5 已骨架，本 Phase 补真实 CRUD | M-API 🔌 |
-| **8.3** sidebar-state 持久化 | 写到 `~/.minibot/sidebar-state.json` | M-API 🔌、M-Cfg 🔧 |
+| **8.3** sidebar-state 持久化 | 写到 `~/.minibot/webui/sidebar-state.json` — **✅** | M-API 🔌、M-Cfg 🔧 |
 | **8.5** file_edit / goal_* WS | Loop 向外推送 → M-Loop 出站事件扩展（配合 Phase 12） | M-Loop 🔧、M-API 🔌 |
 | **8.6** SPA mount（可选） | minibot mount `webui` build 产物（同端口托管） | M-API 🔌 |
 | **8.7** 模型运行时切换 | `/model fast` 命令注入 Loop，改当前 session 的 preset 引用 | M-Loop 🔧、M-Cfg 🔧 |

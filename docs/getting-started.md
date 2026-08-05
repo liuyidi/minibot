@@ -7,7 +7,8 @@ cd minibot
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -e .
-# export OPENAI_API_KEY=sk-...   # 或 MINIBOT_SERVER_OPENAI_API_KEY
+# 推荐：.env.runtime + .env.models → ./scripts/merge-env.sh
+# 或至少：MINIBOT_SERVER_OPENAI_API_KEY / OPENAI_API_KEY
 minibot
 ```
 
@@ -15,7 +16,7 @@ minibot
 - Dev UI Chat：`http://127.0.0.1:8766/ui/`
 - 健康检查：`GET /health` → `{ "runtime": "minibot" }`
 
-常用环境变量见 [`status.md`](./status.md) §配置。包内说明见 [`minibot/README.md`](../minibot/README.md)。
+多 provider / 平台内置模型 / preset 失败切换边界见 [`status.md`](./status.md) §3–§4.5。包内说明见 [`minibot/README.md`](../minibot/README.md)。
 
 ## 产品 WebUI（Vite）
 

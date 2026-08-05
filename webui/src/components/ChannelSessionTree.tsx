@@ -1,3 +1,19 @@
+import {
+  Archive,
+  ArchiveRestore,
+  MoreHorizontal,
+  Pencil,
+  Pin,
+  PinOff,
+} from "lucide-react";
+import { useTranslation } from "react-i18next";
+
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import type { ChatSummary } from "@/lib/types";
 import {
@@ -5,6 +21,9 @@ import {
   imSessionLabel,
   type ImPlatform,
 } from "@/lib/im-sessions";
+
+const ACTION_MENU_CONTENT_CLASS = "w-[8.5rem] min-w-[8.5rem]";
+const ACTION_MENU_ITEM_CLASS = "grid w-[7.75rem] grid-cols-[1rem_minmax(0,1fr)] items-center gap-2";
 
 const PLATFORM_META: Record<
   ImPlatform,
@@ -26,18 +45,41 @@ interface ChannelSessionTreeProps {
   sessions: ChatSummary[];
   activeKey: string | null;
   onSelect: (key: string) => void;
+  onTogglePin: (key: string) => void;
+  onRequestRename: (key: string, label: string) => void;
+  onToggleArchive: (key: string) => void;
+  pinnedKeys?: string[];
+  archivedKeys?: string[];
+  titleOverrides?: Record<string, string>;
+  showArchived?: boolean;
   runningChatIds?: string[];
   updatedChatIds?: string[];
+  actionMenuPortalContainer?: HTMLElement | null;
 }
 
 export function ChannelSessionTree({
   sessions,
   activeKey,
   onSelect,
+  onTogglePin,
+  onRequestRename,
+  onToggleArchive,
+  pinnedKeys = [],
+  archivedKeys = [],
+  titleOverrides = {},
+  showArchived = false,
   runningChatIds = [],
   updatedChatIds = [],
+  actionMenuPortalContainer,
 }: ChannelSessionTreeProps) {
-  const grouped = groupImSessions(sessions);
+  const { t } = useTranslation();
+  const pinned = new Set(pinnedKeys);
+  const archived = new Set(archivedKeys);
+  const grouped = groupImSessions(sessions, {
+    pinnedKeys,
+    archivedKeys,
+    showArchived,
+  });
   const platforms = (Object.keys(PLATFORM_META) as ImPlatform[]).filter(
     (platform) => grouped[platform].length > 0,
   );
@@ -71,40 +113,98 @@ export function ChannelSessionTree({
                 const active = session.key === activeKey;
                 const running = runningChatIds.includes(session.chatId);
                 const updated = updatedChatIds.includes(session.chatId);
-                const label = imSessionLabel(session, platform);
+                const label = imSessionLabel(session, platform, titleOverrides);
+                const isPinned = pinned.has(session.key);
+                const isArchived = archived.has(session.key);
                 return (
-                  <button
+                  <div
                     key={session.key}
-                    type="button"
-                    onClick={() => onSelect(session.key)}
                     className={cn(
-                      "mb-1 flex w-full min-w-0 items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs transition-colors",
+                      "group mb-1 flex w-full min-w-0 items-center gap-1 rounded-md px-1 text-xs transition-colors",
                       active
                         ? "bg-sidebar-accent text-sidebar-accent-foreground"
                         : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-foreground",
                     )}
                   >
-                    {platform === "feishu" ? (
-                      <span
+                    <button
+                      type="button"
+                      onClick={() => onSelect(session.key)}
+                      className="flex min-w-0 flex-1 items-center gap-2 px-1 py-1.5 text-left"
+                    >
+                      {platform === "feishu" ? (
+                        <span
+                          className={cn(
+                            "truncate rounded-md px-2 py-0.5 font-mono",
+                            active ? "bg-background/70" : "bg-muted/70",
+                          )}
+                          title={label}
+                        >
+                          {label}
+                        </span>
+                      ) : (
+                        <span className="truncate" title={label}>
+                          {label}
+                        </span>
+                      )}
+                      {isPinned ? (
+                        <Pin className="h-3 w-3 shrink-0 opacity-70" aria-hidden />
+                      ) : null}
+                      {running ? (
+                        <span className="ml-auto h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
+                      ) : updated ? (
+                        <span className="ml-auto h-1.5 w-1.5 shrink-0 rounded-full bg-sky-500" />
+                      ) : null}
+                    </button>
+                    <DropdownMenu modal={false}>
+                      <DropdownMenuTrigger
                         className={cn(
-                          "truncate rounded-md px-2 py-0.5 font-mono",
-                          active ? "bg-background/70" : "bg-muted/70",
+                          "inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-muted-foreground/75 opacity-40 transition-opacity",
+                          "hover:bg-sidebar-accent hover:text-sidebar-foreground group-hover:opacity-100",
+                          "focus-visible:opacity-100",
+                          active && "opacity-100",
                         )}
-                        title={label}
+                        aria-label={t("chat.actions", { title: label })}
                       >
-                        {label}
-                      </span>
-                    ) : (
-                      <span className="truncate" title={label}>
-                        {label}
-                      </span>
-                    )}
-                    {running ? (
-                      <span className="ml-auto h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
-                    ) : updated ? (
-                      <span className="ml-auto h-1.5 w-1.5 shrink-0 rounded-full bg-sky-500" />
-                    ) : null}
-                  </button>
+                        <MoreHorizontal className="h-3.5 w-3.5" />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent
+                        align="end"
+                        className={ACTION_MENU_CONTENT_CLASS}
+                        portalContainer={actionMenuPortalContainer}
+                        onCloseAutoFocus={(event) => event.preventDefault()}
+                      >
+                        <DropdownMenuItem
+                          onSelect={() => onTogglePin(session.key)}
+                          className={ACTION_MENU_ITEM_CLASS}
+                        >
+                          {isPinned ? (
+                            <PinOff className="h-4 w-4 shrink-0" />
+                          ) : (
+                            <Pin className="h-4 w-4 shrink-0" />
+                          )}
+                          {isPinned ? t("chat.unpin") : t("chat.pin")}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onSelect={() => onRequestRename(session.key, label)}
+                          className={ACTION_MENU_ITEM_CLASS}
+                        >
+                          <Pencil className="h-4 w-4 shrink-0" />
+                          {t("chat.rename")}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onSelect={() => onToggleArchive(session.key)}
+                          className={ACTION_MENU_ITEM_CLASS}
+                        >
+                          {isArchived ? (
+                            <ArchiveRestore className="h-4 w-4 shrink-0" />
+                          ) : (
+                            <Archive className="h-4 w-4 shrink-0" />
+                          )}
+                          {isArchived ? t("chat.unarchive") : t("chat.archive")}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 );
               })}
             </div>

@@ -11,6 +11,10 @@
 - WS：`provider_switched`；Chat toast；`runtime.html` 显示 switches 计数
 - `/api/dev/runtime` 增加 `fallback` 字段
 
+## 明确不做（本 Phase）
+
+- **同模型 backoff 重试**：失败即试下一 slot，无独立重试层。
+- **平台 catalog / Auto 链式 failover**：`fallback` 只接受 **用户 preset id**；`provider=auto` 仅 `first_available_platform_runtime()`，请求失败不会自动换下一个平台模型。若要做，需另开切片（把 platform ids 编进 `ProviderSlot` 链）。
 ## Dev UI 调试（Runtime）
 
 `/ui/runtime.html` → **Provider fallback · Insight**

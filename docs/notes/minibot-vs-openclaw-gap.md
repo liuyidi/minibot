@@ -28,7 +28,7 @@
 | 能力 | 覆盖 | minibot | OpenClaw | 差距要点 |
 |------|------|---------|----------|----------|
 | Agent 对话 | ~70% | WS 流式、多会话、对话/频道分流；Composer 仍缺队列/重试/@ 文件等 | Control UI + 多端；block streaming、steering、中途插话 | 核心闭环可用；产品级聊天气泡与命令面仍薄 |
-| 多模型 | ~45% | OpenAI 兼容 + Anthropic；preset + fallback；Azure/Bedrock/OAuth stub | 广 provider 矩阵；Codex/Copilot 等 plugin harness；按 model 选 runtime | 日常切模型够用；订阅制/Harness/全量 provider 差一截 |
+| 多模型 | ~55% | OpenAI 兼容 + Anthropic；平台多 slot builtins + Auto 首可用；preset + fallback；Azure/Bedrock/OAuth stub | 广 provider 矩阵；Codex/Copilot 等 plugin harness；按 model 选 runtime | 日常切模型 + 运营方内置够用；平台 Auto 尚无跨模型失败切换；订阅制/Harness/全量 provider 仍差 |
 | 工具执行 | ~40% | fs / shell(E2B) / web / MCP / sync spawn；HITL 审批 | 上述 + browser / apply_patch / nodes / media / code mode / tool search / swarm | coding+MCP 主路径在；浏览器、设备节点、媒体生成几乎空白 |
 | 记忆与技能 | ~35% | JSONL 会话、workspace memory、Skills；可选 minikb | Active Memory 溯源、Dreaming、ClawHub、Skill Workshop、per-agent skills | 有「能用的 memory/skills」；缺市场与记忆治理深度 |
 | 定时任务 | ~50% | Cron / Automations MVP（创建、启停、立即跑） | cron + heartbeat + TaskFlow 耐久编排 + standing orders | 定时触发 agent 有了；自主 heartbeat / 可恢复长任务未齐 |

@@ -105,6 +105,13 @@ export function normalizeSidebarState(raw: unknown): SidebarStatePayload {
   };
 }
 
+/** True when the gateway echoed a real schema-v1 sidebar state (not a stub). */
+export function isPersistedSidebarState(raw: unknown): boolean {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return false;
+  const value = raw as Record<string, unknown>;
+  return Array.isArray(value.archived_keys) && Array.isArray(value.pinned_keys);
+}
+
 function pruneMissingSessions(
   state: SidebarStatePayload,
   sessions: ChatSummary[],
@@ -180,9 +187,11 @@ export function useSidebarState(
       stateRef.current = next;
       setState(next);
       try {
-        const persisted = normalizeSidebarState(
-          await persistSidebarState(tokenRef.current, next),
-        );
+        const raw = await persistSidebarState(tokenRef.current, next);
+        // Older minibot stubs returned {collapsed, title_overrides} and would wipe
+        // optimistic pin/archive/rename if we normalized them into empty defaults.
+        if (!isPersistedSidebarState(raw)) return;
+        const persisted = normalizeSidebarState(raw);
         if (persistVersionRef.current !== version) return;
         stateRef.current = persisted;
         setState(persisted);

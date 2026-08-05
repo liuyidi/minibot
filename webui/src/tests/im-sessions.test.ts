@@ -47,4 +47,46 @@ describe("im-sessions", () => {
     expect(imSessionLabel(grouped.feishu[0], "feishu")).toMatch(/^ou_42081ae/);
     expect(imSessionLabel(grouped.weixin[0], "weixin")).toBe("我的微信");
   });
+
+  it("pins channel sessions, hides archived unless shown, and prefers title overrides", () => {
+    const older = session({
+      key: "websocket:feishu:ou_older",
+      updatedAt: "2026-08-05T10:00:00Z",
+    });
+    const newer = session({
+      key: "websocket:feishu:ou_newer",
+      updatedAt: "2026-08-05T12:00:00Z",
+    });
+    const archived = session({
+      key: "websocket:feishu:ou_archived",
+      updatedAt: "2026-08-05T13:00:00Z",
+    });
+
+    const hidden = groupImSessions([older, newer, archived], {
+      pinnedKeys: ["websocket:feishu:ou_older"],
+      archivedKeys: ["websocket:feishu:ou_archived"],
+      showArchived: false,
+    });
+    expect(hidden.feishu.map((row) => row.key)).toEqual([
+      "websocket:feishu:ou_older",
+      "websocket:feishu:ou_newer",
+    ]);
+
+    const shown = groupImSessions([older, newer, archived], {
+      pinnedKeys: ["websocket:feishu:ou_older"],
+      archivedKeys: ["websocket:feishu:ou_archived"],
+      showArchived: true,
+    });
+    expect(shown.feishu.map((row) => row.key)).toEqual([
+      "websocket:feishu:ou_older",
+      "websocket:feishu:ou_archived",
+      "websocket:feishu:ou_newer",
+    ]);
+
+    expect(
+      imSessionLabel(newer, "feishu", {
+        "websocket:feishu:ou_newer": "客户支持",
+      }),
+    ).toBe("客户支持");
+  });
 });

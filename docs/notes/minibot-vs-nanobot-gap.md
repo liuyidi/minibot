@@ -33,7 +33,7 @@ migration 门票口径：MSV=2+6 可切 WebUI 后端；**MSV=4 后可称「和 n
 | Memory / Skills | ~55% | MEMORY.md + read/write_memory；内置少量 skills | **Dream** 两阶段巩固 + `/dream*`；skills 市场（skills.sh） | 缺 Dream；缺技能市场 |
 | Cron / Automations | ~70% | Automations REST + Dev UI | cron tool + automations + heartbeat cron + `nanobot trigger` | 缺 heartbeat 模板任务、本地 trigger CLI |
 | Long goal | ~10% | WS 有 `goal_status` 痕迹；无完整工具 | `create_goal` / `update_goal` + `/goal` | **Phase 12 未做** |
-| Providers | ~50% | OpenAI-compat 族 + Anthropic + fallback；Azure/Bedrock stub | 40+ registry；Codex/Copilot/xAI OAuth；Responses API；图生/转写 provider | OAuth / 云厂商 / 媒体 provider 大缺口 |
+| Providers | ~55% | OpenAI-compat 族 + Anthropic + preset fallback；平台多 slot + Auto 首可用；Azure/Bedrock stub | 40+ registry；Codex/Copilot/xAI OAuth；Responses API；图生/转写 provider | OAuth / 云厂商 / 媒体 provider 大缺口；平台 Auto 无跨模型失败切换 |
 | OpenAI `/v1` API | 0% | 未暴露 | `nanobot serve`：`/v1/chat/completions` + `/v1/models` | **Phase 7** |
 | IM 频道 | ~15% | 飞书、微信 + pairing 雏形 | 17 包：Telegram/Discord/Slack/WhatsApp/… | 刻意后置 Phase 15；非 WebUI 对等阻塞项 |
 | Pairing / 多用户 | ~30% | 频道级 Feishu/Weixin pairing | 全局 pairing store + Settings 审批 + `/pairing` | Phase 14 独立评估 |

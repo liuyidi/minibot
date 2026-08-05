@@ -42,7 +42,13 @@ function truncateMiddle(text: string, max = 16): string {
 }
 
 /** Sidebar label for an IM child session. */
-export function imSessionLabel(session: ChatSummary, platform: ImPlatform): string {
+export function imSessionLabel(
+  session: ChatSummary,
+  platform: ImPlatform,
+  titleOverrides?: Record<string, string>,
+): string {
+  const fromOverride = (titleOverrides?.[session.key] || "").trim();
+  if (fromOverride) return fromOverride;
   const override = (session.title || "").trim();
   const peer = imPeerId(session, platform);
   if (platform === "weixin") {
@@ -53,15 +59,30 @@ export function imSessionLabel(session: ChatSummary, platform: ImPlatform): stri
   return truncateMiddle(peer || session.preview || "飞书会话", 18);
 }
 
-export function groupImSessions(sessions: ChatSummary[]): Record<ImPlatform, ChatSummary[]> {
+export interface GroupImSessionsOptions {
+  pinnedKeys?: string[];
+  archivedKeys?: string[];
+  showArchived?: boolean;
+}
+
+export function groupImSessions(
+  sessions: ChatSummary[],
+  options: GroupImSessionsOptions = {},
+): Record<ImPlatform, ChatSummary[]> {
+  const pinned = new Set(options.pinnedKeys ?? []);
+  const archived = new Set(options.archivedKeys ?? []);
+  const showArchived = Boolean(options.showArchived);
   const out: Record<ImPlatform, ChatSummary[]> = { feishu: [], weixin: [] };
   for (const session of sessions) {
     const platform = imPlatformFromSession(session);
     if (!platform) continue;
+    if (archived.has(session.key) && !showArchived) continue;
     out[platform].push(session);
   }
   for (const platform of IM_PREFIXES) {
     out[platform].sort((a, b) => {
+      const pinOrder = Number(pinned.has(b.key)) - Number(pinned.has(a.key));
+      if (pinOrder !== 0) return pinOrder;
       const ta = Date.parse(a.updatedAt || a.createdAt || "") || 0;
       const tb = Date.parse(b.updatedAt || b.createdAt || "") || 0;
       return tb - ta;

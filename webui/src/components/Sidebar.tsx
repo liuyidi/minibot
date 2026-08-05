@@ -329,8 +329,18 @@ export function Sidebar(props: SidebarProps) {
                 sessions={channelSessions}
                 activeKey={props.activeKey}
                 onSelect={props.onSelect}
+                onTogglePin={props.onTogglePin}
+                onRequestRename={props.onRequestRename}
+                onToggleArchive={props.onToggleArchive}
+                pinnedKeys={props.pinnedKeys}
+                archivedKeys={props.archivedKeys}
+                titleOverrides={props.titleOverrides}
+                showArchived={props.showArchived}
                 runningChatIds={props.runningChatIds}
                 updatedChatIds={props.updatedChatIds}
+                actionMenuPortalContainer={
+                  props.containActionMenus ? menuPortalContainer : undefined
+                }
               />
             )}
           </>

@@ -40,8 +40,9 @@ docker run --rm -p 8766:8766 \
 
 ### 平台内置模型（`.env.models`）
 
-运营方密钥按 slot 写在 env（见 `.env.models.example`），Settings 里显示为 platform models。  
-多数槽位走 **OpenAI-compat**；`doubao` 走 **Anthropic Messages**。
+运营方密钥按 slot 写在 env（见 `.env.models.example`），WebUI Settings → Models 显示为 platform models；**密钥不进** `config.json`。  
+多数槽位走 **OpenAI-compat**；`doubao` 走 **Anthropic Messages**。  
+**Auto** = catalog 里第一个有 key 的 slot（启动时选定），**不是**请求失败后再换平台模型。
 
 推荐拆分后合并：
 
@@ -53,9 +54,11 @@ cp .env.models.example .env.models   # 填入各 SLOT 的 KEY/BASE/MODEL
 
 部署到 ECS 时把合并结果写入 compose `.env`，或把 `.env.models` 挂到 `MINIBOT_SERVER_DATA_DIR`。
 
-### 多 LLM（用户 preset）
+### 多 LLM（用户 preset）+ 失败切换
 
-仍可在 Chat → Settings 新建 BYOK preset（OpenAI-compat / Anthropic），切换后下一轮生效。
+仍可在 Settings 新建 BYOK preset（OpenAI-compat / Anthropic），切换后下一轮生效。  
+在 preset 上配置 `fallback: ["backup-preset-id", …]` 后，软错误 / 429 / 5xx / 超时 / 连接失败会切下一档（Phase 6.5 `FallbackProvider`，WS `provider_switched`）。  
+**没有**同模型 backoff 重试；平台 Auto **不会**用这套链。
 
 ```bash
 # 或用 API

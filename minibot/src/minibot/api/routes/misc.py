@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Query, status
 
 from minibot.api.deps import AuthDep, StateDep
 
@@ -17,14 +17,45 @@ async def list_commands(_auth: AuthDep) -> dict[str, list]:
 
 
 @router.get("/api/webui/sidebar-state")
-async def sidebar_state(_auth: AuthDep) -> dict[str, Any]:
-    return {"collapsed": False, "title_overrides": {}, "project_names": {}}
+async def sidebar_state(_auth: AuthDep, state: StateDep) -> dict[str, Any]:
+    from minibot.webui.sidebar_state import read_webui_sidebar_state
+
+    return read_webui_sidebar_state(state.settings.data_dir)
 
 
 @router.get("/api/webui/sidebar-state/update")
 @router.post("/api/webui/sidebar-state/update")
-async def sidebar_state_update(_auth: AuthDep) -> dict[str, Any]:
-    return {"collapsed": False, "title_overrides": {}, "project_names": {}}
+async def sidebar_state_update(
+    _auth: AuthDep,
+    state: StateDep,
+    state_json: str | None = Query(default=None, alias="state"),
+) -> dict[str, Any]:
+    """Persist sidebar workspace state (query ``state`` = JSON string)."""
+    import json
+
+    from minibot.webui.sidebar_state import write_webui_sidebar_state
+
+    if state_json is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="missing state")
+    try:
+        decoded = json.loads(state_json)
+    except json.JSONDecodeError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="state must be JSON"
+        ) from exc
+    if not isinstance(decoded, dict):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="state must be an object"
+        )
+    try:
+        return write_webui_sidebar_state(state.settings.data_dir, decoded)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    except OSError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="failed to write sidebar state",
+        ) from exc
 
 
 @router.get("/api/webui/skills")

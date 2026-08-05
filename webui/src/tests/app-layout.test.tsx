@@ -282,6 +282,7 @@ describe("App layout", () => {
     expect(within(sidebar).getByRole("button", { name: "Skills" })).toBeInTheDocument();
     expect(within(sidebar).getByRole("link", { name: "Knowledge" })).toBeInTheDocument();
     expect(within(sidebar).getByRole("button", { name: "Settings" })).toBeInTheDocument();
+    expect(within(sidebar).queryByRole("button", { name: "Show archived" })).not.toBeInTheDocument();
   });
 
   it("opens Skills from the main sidebar", async () => {
