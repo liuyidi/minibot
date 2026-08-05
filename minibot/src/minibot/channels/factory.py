@@ -7,6 +7,7 @@ from typing import Any
 
 from minibot.bus.queue import MessageBus
 from minibot.channels.feishu_setup import FeishuPersistedConfig
+from minibot.channels.weixin_setup import WeixinPersistedConfig
 from minibot.channels.manager import ChannelManager
 from minibot.channels.paths import configure_channel_paths
 from minibot.config.app_config import AppConfig
@@ -48,6 +49,28 @@ def resolve_feishu_config(settings: Settings, config: AppConfig | None) -> Feish
     )
 
 
+def resolve_weixin_config(settings: Settings, config: AppConfig | None) -> WeixinPersistedConfig | None:
+    """Prefer persisted QR/save config; fall back to env flags."""
+    persisted = getattr(config, "weixin", None) if config is not None else None
+    if isinstance(persisted, WeixinPersistedConfig) and persisted.token.strip():
+        return persisted if persisted.enabled else None
+
+    if not settings.weixin_enabled:
+        return None
+    token = settings.weixin_token.strip()
+    if not token:
+        return None
+    return WeixinPersistedConfig(
+        enabled=True,
+        token=token,
+        bot_name="minibot",
+        dm_policy="open" if settings.weixin_allow_from.strip() == "*" else "allowlist",
+        allow_from=_parse_allow_from(settings.weixin_allow_from),
+        base_url=settings.weixin_base_url.strip() or WeixinPersistedConfig().base_url,
+        poll_timeout=settings.weixin_poll_timeout,
+    )
+
+
 def build_channel_manager(
     settings: Settings,
     bus: MessageBus,
@@ -82,6 +105,24 @@ def build_channel_manager(
         manager.register(channel)
         log.info("Feishu channel registered app_id=%s dm_policy=%s", feishu.app_id, feishu.dm_policy)
 
+    weixin = resolve_weixin_config(settings, config)
+    if weixin is not None:
+        from minibot.channels.weixin import WeixinChannel, WeixinConfig
+
+        allow = list(weixin.allow_from) or (["*"] if weixin.dm_policy == "open" else [])
+        cfg = WeixinConfig(
+            enabled=True,
+            token=weixin.token,
+            base_url=weixin.base_url,
+            poll_timeout=weixin.poll_timeout,
+            allow_from=allow,
+            streaming=False,
+        )
+        channel = WeixinChannel(cfg, bus)
+        channel.dm_policy = weixin.dm_policy  # type: ignore[attr-defined]
+        manager.register(channel)
+        log.info("Weixin channel registered dm_policy=%s", weixin.dm_policy)
+
     return manager
 
 
@@ -96,6 +137,11 @@ def auto_approve_channels_from_settings(
     # Env-only enable still auto-approves when flag set.
     if settings.feishu_enabled and settings.feishu_auto_approve_tools:
         out.add("feishu")
+    weixin = resolve_weixin_config(settings, config)
+    if weixin is not None and settings.weixin_auto_approve_tools:
+        out.add("weixin")
+    if settings.weixin_enabled and settings.weixin_auto_approve_tools:
+        out.add("weixin")
     return frozenset(out)
 
 
@@ -132,3 +178,32 @@ async def reload_feishu_channel(state: Any) -> None:
         return
     manager.register(channel)
     asyncio.create_task(channel.start(), name="feishu-channel-reload")
+
+
+async def reload_weixin_channel(state: Any) -> None:
+    """Stop existing weixin channel (if any) and rebuild from current config."""
+    import asyncio
+
+    manager = getattr(state, "channels", None)
+    if manager is None:
+        state.channels = build_channel_manager(state.settings, state.bus, config=state.config)
+        manager = state.channels
+    else:
+        existing = manager.channels.pop("weixin", None)
+        if existing is not None:
+            try:
+                await existing.stop()
+            except Exception:  # noqa: BLE001
+                log.exception("stop weixin failed")
+
+    weixin = resolve_weixin_config(state.settings, state.config)
+    if weixin is None:
+        return
+    rebuilt = build_channel_manager(state.settings, state.bus, config=state.config)
+    channel = rebuilt.channels.get("weixin")
+    if channel is None:
+        if rebuilt.last_error:
+            manager.last_error = rebuilt.last_error
+        return
+    manager.register(channel)
+    asyncio.create_task(channel.start(), name="weixin-channel-reload")

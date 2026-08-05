@@ -61,6 +61,14 @@ class Settings(BaseSettings):
     feishu_group_policy: str = "mention"  # open | mention
     feishu_auto_approve_tools: bool = True
 
+    # WeChat / weixin IM channel (Phase 1)
+    weixin_enabled: bool = False
+    weixin_token: str = ""
+    weixin_allow_from: str = "*"
+    weixin_base_url: str = ""
+    weixin_poll_timeout: int = 35
+    weixin_auto_approve_tools: bool = True
+
     def resolved_config_path(self) -> Path:
         if self.config_path is not None:
             return self.config_path.expanduser()

@@ -1,4 +1,4 @@
-"""Feishu DM pairing store (Layer 2 — OpenClaw-style pending allow/ignore)."""
+"""IM channel DM pairing store (Layer 2 — OpenClaw-style pending allow/ignore)."""
 
 from __future__ import annotations
 
@@ -38,8 +38,9 @@ class PendingPairing:
 
 
 class PairingStore:
-    def __init__(self, data_dir: Path) -> None:
-        self.path = Path(data_dir) / "pairing" / "feishu.json"
+    def __init__(self, data_dir: Path, channel: str = "feishu") -> None:
+        self.channel = str(channel).strip() or "feishu"
+        self.path = Path(data_dir) / "pairing" / f"{self.channel}.json"
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self._approved: set[str] = set()
         self._pending: dict[str, PendingPairing] = {}
@@ -100,7 +101,7 @@ class PairingStore:
                 return p
         item = PendingPairing(
             id=f"pair_{uuid.uuid4().hex[:12]}",
-            channel="feishu",
+            channel=self.channel,
             sender_id=sid,
             chat_type=chat_type,
             created_at=_now(),

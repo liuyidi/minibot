@@ -167,10 +167,13 @@ def build_app_state() -> AppState:
     state.channels = build_channel_manager(settings, state.bus, config=config)
     state.bus_worker = BusWorker(state)
     from minibot.channels.feishu_setup import FeishuSetupManager
+    from minibot.channels.weixin_setup import WeixinSetupManager
     from minibot.channels.pairing import PairingStore
 
     state.feishu_setup = FeishuSetupManager()
     state.feishu_pairing = PairingStore(settings.data_dir)
+    state.weixin_setup = WeixinSetupManager()
+    state.weixin_pairing = PairingStore(settings.data_dir, channel="weixin")
     cron_path = settings.data_dir.expanduser() / "cron" / "jobs.json"
 
     async def _on_cron_job(job: CronJob) -> None:

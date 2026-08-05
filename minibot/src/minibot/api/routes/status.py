@@ -190,6 +190,49 @@ def _sandbox_details(state: Any, *, zh: bool) -> list[str]:
     return lines
 
 
+def _weixin_status(state: Any) -> str:
+    cfg = getattr(state.config, "weixin", None)
+    enabled = bool(cfg and cfg.enabled and cfg.token.strip())
+    if not enabled:
+        return "disabled"
+    manager = getattr(state, "channels", None)
+    ch = None if manager is None else manager.channels.get("weixin")
+    if ch is None:
+        return "degraded"
+    if manager is not None and manager.last_error:
+        return "degraded"
+    return "operational" if ch.is_running or ch is not None else "degraded"
+
+
+def _weixin_details(state: Any, *, zh: bool) -> list[str]:
+    cfg = getattr(state.config, "weixin", None)
+    enabled = bool(cfg and cfg.enabled and cfg.token.strip())
+    manager = getattr(state, "channels", None)
+    ch = None if manager is None else manager.channels.get("weixin")
+    running = bool(ch and ch.is_running)
+    auto = bool(state.settings.weixin_auto_approve_tools)
+    err = getattr(manager, "last_error", None) if manager is not None else None
+    if zh:
+        lines = [
+            f"启用：{'是' if enabled else '否'}",
+            f"已注册：{'是' if ch else '否'}",
+            f"运行中：{'是' if running else '否'}",
+            f"HITL 自动批准：{'是' if auto else '否'}",
+        ]
+        if err:
+            lines.append(f"错误：{err}")
+        return lines
+    lines = [
+        f"enabled: {'yes' if enabled else 'no'}",
+        f"registered: {'yes' if ch else 'no'}",
+        f"running: {'yes' if running else 'no'}",
+        f"auto-approve tools: {'yes' if auto else 'no'}",
+    ]
+    if err:
+        lines.append(f"error: {err}")
+    return lines
+
+
 def _feishu_status(state: Any) -> str:
     settings = state.settings
     if not settings.feishu_enabled:
@@ -387,6 +430,17 @@ def _build_components(state: Any, minikb: dict[str, Any]) -> list[dict[str, Any]
             desc_en="Phase 15: Feishu WebSocket long connection",
             details_zh=_feishu_details(state, zh=True),
             details_en=_feishu_details(state, zh=False),
+        ),
+        _component(
+            key="weixin_channel",
+            required=False,
+            status=_weixin_status(state),
+            label_zh="微信频道",
+            label_en="WeChat channel",
+            desc_zh="Phase 1：微信 QR 登录 + 文本长轮询",
+            desc_en="Phase 1: WeChat QR login + text long-poll",
+            details_zh=_weixin_details(state, zh=True),
+            details_en=_weixin_details(state, zh=False),
         ),
         _component(
             key="llm_budget",

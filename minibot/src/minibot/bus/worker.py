@@ -86,6 +86,8 @@ class BusWorker:
             entry = "ws"
         elif channel == "feishu":
             entry = "feishu"
+        elif channel == "weixin":
+            entry = "weixin"
         else:
             entry = channel if channel in getattr(self.state.loop, "_entry_counts", {}) else "unknown"
 

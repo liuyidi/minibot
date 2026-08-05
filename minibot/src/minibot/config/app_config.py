@@ -18,6 +18,7 @@ from minibot.config.presets import (
 from minibot.config.mcp_presets import McpPreset, presets_public_list as mcp_presets_public_list
 from minibot.config.settings import Settings, get_settings
 from minibot.channels.feishu_setup import FeishuPersistedConfig
+from minibot.channels.weixin_setup import WeixinPersistedConfig
 from minibot.providers.registry import list_providers
 
 
@@ -69,6 +70,8 @@ class AppConfig(BaseModel):
     mcp_presets: list[McpPreset] = Field(default_factory=list)
     # Phase 15: Feishu channel (QR setup + pairing)
     feishu: FeishuPersistedConfig = Field(default_factory=FeishuPersistedConfig)
+    # Phase 16: WeChat / weixin channel (QR login + text I/O)
+    weixin: WeixinPersistedConfig = Field(default_factory=WeixinPersistedConfig)
 
 
 def default_config_from_settings(settings: Settings | None = None) -> AppConfig:
@@ -130,6 +133,21 @@ def apply_settings_update(config: AppConfig, update: SettingsUpdate) -> AppConfi
     return next_config
 
 
+def weixin_public_payload(weixin: WeixinPersistedConfig) -> dict[str, Any]:
+    connected = bool(weixin.token.strip() and weixin.enabled)
+    return {
+        "enabled": weixin.enabled,
+        "connected": connected,
+        "has_token": bool(weixin.token.strip()),
+        "token_masked": "••••••••" if weixin.token.strip() else "",
+        "bot_name": weixin.bot_name,
+        "dm_policy": weixin.dm_policy,
+        "allow_from_count": len(weixin.allow_from),
+        "base_url": weixin.base_url,
+        "poll_timeout": weixin.poll_timeout,
+    }
+
+
 def feishu_public_payload(feishu: FeishuPersistedConfig) -> dict[str, Any]:
     connected = bool(feishu.app_id and feishu.app_secret and feishu.enabled)
     return {
@@ -185,6 +203,7 @@ def settings_public_payload(config: AppConfig) -> dict[str, Any]:
         "mcp_presets": mcp_presets_public_list(config),
         "channels": {
             "feishu": feishu_public_payload(config.feishu),
+            "weixin": weixin_public_payload(config.weixin),
         },
         "providers": _providers_public(config),
         "web_search": {
