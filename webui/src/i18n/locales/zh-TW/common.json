@@ -49,6 +49,8 @@
     "searchResults": "搜尋結果",
     "noSearchResults": "沒有符合的對話。",
     "recent": "最近對話",
+    "tabChats": "對話",
+    "tabChannels": "頻道",
     "settings": "設定",
     "language": {
       "label": "語言",

@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   Archive,
   Brain,
@@ -18,10 +18,12 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
+import { ChannelSessionTree } from "@/components/ChannelSessionTree";
 import { ChatList } from "@/components/ChatList";
 import { ConnectionBadge } from "@/components/ConnectionBadge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { isImSession, isWebChatSession } from "@/lib/im-sessions";
 import { PORTAL } from "@/lib/portal";
 import { UI_ENTRY } from "@/lib/ui-entry";
 import type {
@@ -29,6 +31,8 @@ import type {
   SidebarViewState,
 } from "@/lib/types";
 import { cn } from "@/lib/utils";
+
+type SessionListTab = "chats" | "channels";
 
 interface SidebarProps {
   sessions: ChatSummary[];
@@ -89,12 +93,28 @@ export function Sidebar(props: SidebarProps) {
   const { t, i18n } = useTranslation();
   const [menuPortalContainer, setMenuPortalContainer] =
     useState<HTMLElement | null>(null);
+  const [sessionTab, setSessionTab] = useState<SessionListTab>("chats");
   const collapsed = Boolean(props.collapsed);
   const toggleLabel = t("thread.header.toggleSidebar");
   const newChatShortcut = newChatShortcutLabel();
   const downloadAppLabel = t("sidebar.downloadApp", {
     defaultValue: i18n.resolvedLanguage?.startsWith("zh") ? "下载应用" : "Download app",
   });
+  const webChatSessions = useMemo(
+    () => props.sessions.filter(isWebChatSession),
+    [props.sessions],
+  );
+  const channelSessions = useMemo(
+    () => props.sessions.filter(isImSession),
+    [props.sessions],
+  );
+
+  useEffect(() => {
+    if (!props.activeKey) return;
+    const active = props.sessions.find((session) => session.key === props.activeKey);
+    if (!active) return;
+    setSessionTab(isImSession(active) ? "channels" : "chats");
+  }, [props.activeKey, props.sessions]);
 
   return (
     <nav
@@ -165,6 +185,12 @@ export function Sidebar(props: SidebarProps) {
           icon={<SquarePen className="h-4 w-4" />}
           shortcut={newChatShortcut}
           ariaKeyShortcuts="Meta+Shift+O Control+Shift+O"
+          disabled={!collapsed && sessionTab === "channels"}
+          disabledHint={t("sidebar.newChatChannelsHint", {
+            defaultValue: i18n.resolvedLanguage?.startsWith("zh")
+              ? "频道会话由飞书 / 微信产生，请切换到「对话」新建"
+              : "Channel chats come from Feishu / WeChat. Switch to Chats to create one.",
+          })}
         />
         <SidebarActionButton
           collapsed={collapsed}
@@ -232,36 +258,82 @@ export function Sidebar(props: SidebarProps) {
         )}
       >
         {!collapsed && (
-          <ChatList
-            sessions={props.sessions}
-            activeKey={props.activeKey}
-            loading={props.loading}
-            emptyLabel={t("chat.noSessions")}
-            onSelect={props.onSelect}
-            onRequestDelete={props.onRequestDelete}
-            onTogglePin={props.onTogglePin}
-            onRequestRename={props.onRequestRename}
-            onToggleArchive={props.onToggleArchive}
-            onToggleGroup={props.onToggleGroup}
-            onRequestRenameProject={props.onRequestRenameProject}
-            onNewChatInProject={props.onNewChatInProject}
-            pinnedKeys={props.pinnedKeys}
-            archivedKeys={props.archivedKeys}
-            titleOverrides={props.titleOverrides}
-            projectNameOverrides={props.projectNameOverrides}
-            collapsedGroups={props.collapsedGroups}
-            runningChatIds={props.runningChatIds}
-            updatedChatIds={props.updatedChatIds}
-            density={props.viewState?.density}
-            showPreviews={props.viewState?.show_previews}
-            showTimestamps={props.viewState?.show_timestamps}
-            sort={props.viewState?.sort}
-            showArchived={props.showArchived}
-            defaultWorkspacePath={props.defaultWorkspacePath}
-            actionMenuPortalContainer={
-              props.containActionMenus ? menuPortalContainer : undefined
-            }
-          />
+          <>
+            <div
+              role="tablist"
+              aria-label={t("sidebar.recent")}
+              className="mx-2 mb-1 flex shrink-0 items-end gap-4 border-b border-sidebar-border/50 px-3"
+            >
+              <button
+                type="button"
+                role="tab"
+                aria-selected={sessionTab === "chats"}
+                onClick={() => setSessionTab("chats")}
+                className={cn(
+                  "relative -mb-px pb-2 text-[13px] transition-colors",
+                  sessionTab === "chats"
+                    ? "font-semibold text-sidebar-foreground after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:rounded-full after:bg-sidebar-foreground"
+                    : "font-normal text-muted-foreground hover:text-sidebar-foreground",
+                )}
+              >
+                {t("sidebar.tabChats", { defaultValue: "Chats" })}
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={sessionTab === "channels"}
+                onClick={() => setSessionTab("channels")}
+                className={cn(
+                  "relative -mb-px pb-2 text-[13px] transition-colors",
+                  sessionTab === "channels"
+                    ? "font-semibold text-sidebar-foreground after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:rounded-full after:bg-sidebar-foreground"
+                    : "font-normal text-muted-foreground hover:text-sidebar-foreground",
+                )}
+              >
+                {t("sidebar.tabChannels", { defaultValue: "Channels" })}
+              </button>
+            </div>
+            {sessionTab === "chats" ? (
+              <ChatList
+                sessions={webChatSessions}
+                activeKey={props.activeKey}
+                loading={props.loading}
+                emptyLabel={t("chat.noSessions")}
+                onSelect={props.onSelect}
+                onRequestDelete={props.onRequestDelete}
+                onTogglePin={props.onTogglePin}
+                onRequestRename={props.onRequestRename}
+                onToggleArchive={props.onToggleArchive}
+                onToggleGroup={props.onToggleGroup}
+                onRequestRenameProject={props.onRequestRenameProject}
+                onNewChatInProject={props.onNewChatInProject}
+                pinnedKeys={props.pinnedKeys}
+                archivedKeys={props.archivedKeys}
+                titleOverrides={props.titleOverrides}
+                projectNameOverrides={props.projectNameOverrides}
+                collapsedGroups={props.collapsedGroups}
+                runningChatIds={props.runningChatIds}
+                updatedChatIds={props.updatedChatIds}
+                density={props.viewState?.density}
+                showPreviews={props.viewState?.show_previews}
+                showTimestamps={props.viewState?.show_timestamps}
+                sort={props.viewState?.sort}
+                showArchived={props.showArchived}
+                defaultWorkspacePath={props.defaultWorkspacePath}
+                actionMenuPortalContainer={
+                  props.containActionMenus ? menuPortalContainer : undefined
+                }
+              />
+            ) : (
+              <ChannelSessionTree
+                sessions={channelSessions}
+                activeKey={props.activeKey}
+                onSelect={props.onSelect}
+                runningChatIds={props.runningChatIds}
+                updatedChatIds={props.updatedChatIds}
+              />
+            )}
+          </>
         )}
       </div>
       <Separator className="bg-sidebar-border/50" />
@@ -371,6 +443,8 @@ function SidebarActionButton({
   icon,
   onClick,
   active = false,
+  disabled = false,
+  disabledHint,
   className,
   shortcut,
   ariaKeyShortcuts,
@@ -380,11 +454,19 @@ function SidebarActionButton({
   icon: ReactNode;
   onClick: () => void;
   active?: boolean;
+  disabled?: boolean;
+  disabledHint?: string;
   className?: string;
   shortcut?: string;
   ariaKeyShortcuts?: string;
 }) {
-  const title = shortcut ? `${label} (${shortcut})` : collapsed ? label : undefined;
+  const title = disabled
+    ? disabledHint || label
+    : shortcut
+      ? `${label} (${shortcut})`
+      : collapsed
+        ? label
+        : undefined;
 
   return (
     <Button
@@ -392,9 +474,14 @@ function SidebarActionButton({
       variant="ghost"
       aria-label={label}
       aria-current={active ? "page" : undefined}
-      aria-keyshortcuts={ariaKeyShortcuts}
+      aria-keyshortcuts={disabled ? undefined : ariaKeyShortcuts}
+      aria-disabled={disabled || undefined}
+      disabled={disabled}
       title={title}
-      onClick={() => onClick()}
+      onClick={() => {
+        if (disabled) return;
+        onClick();
+      }}
       className={cn(
         "group h-8 min-w-0 gap-2 overflow-hidden rounded-full font-medium text-sidebar-foreground/85 hover:bg-sidebar-accent/75 hover:text-sidebar-foreground",
         "transition-[width,padding,border-radius,color,background-color] duration-300 ease-out",
@@ -402,6 +489,7 @@ function SidebarActionButton({
           ? "w-9 justify-center gap-0 rounded-xl px-0"
           : "w-full justify-start gap-2 px-3 text-[12.5px]",
         active && "bg-sidebar-accent text-sidebar-foreground shadow-[inset_0_0_0_1px_hsl(var(--sidebar-border)/0.55)]",
+        disabled && "cursor-not-allowed opacity-40 hover:bg-transparent hover:text-sidebar-foreground/85",
         className,
       )}
     >

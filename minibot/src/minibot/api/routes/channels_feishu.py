@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 from typing import Any, Literal
 
 from fastapi import APIRouter, HTTPException
@@ -78,10 +77,7 @@ async def setup_start(
         )
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
-    for _ in range(40):
-        if session.qr_url or session.status not in {"starting", "pending"}:
-            break
-        await asyncio.sleep(0.05)
+    # Return immediately; client polls for qr_url so the modal can open without waiting.
     return session.public()
 
 
@@ -109,10 +105,6 @@ async def setup_refresh(
         )
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
-    for _ in range(40):
-        if session.qr_url or session.status not in {"starting", "pending"}:
-            break
-        await asyncio.sleep(0.05)
     return session.public()
 
 

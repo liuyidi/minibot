@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 from typing import Any, Literal
 
 from fastapi import APIRouter, HTTPException
@@ -73,10 +72,7 @@ async def setup_start(
         bot_name=body.bot_name or state.config.bot_name or "minibot",
         base_url=body.base_url or state.config.weixin.base_url,
     )
-    for _ in range(40):
-        if session.qr_url or session.qr_image_base64 or session.status not in {"starting", "pending"}:
-            break
-        await asyncio.sleep(0.05)
+    # Return immediately; client polls for QR so the modal can open without waiting.
     return session.public()
 
 
@@ -101,10 +97,6 @@ async def setup_refresh(
         bot_name=body.bot_name or state.config.bot_name or "minibot",
         base_url=body.base_url or state.config.weixin.base_url,
     )
-    for _ in range(40):
-        if session.qr_url or session.qr_image_base64 or session.status not in {"starting", "pending"}:
-            break
-        await asyncio.sleep(0.05)
     return session.public()
 
 

@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link2, MoreHorizontal, Pencil, RefreshCw, Trash2, X } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { Link2, Loader2, MoreHorizontal, Pencil, RefreshCw, Trash2, X } from "lucide-react";
+import QRCode from "qrcode";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -99,26 +100,9 @@ async function api<T>(token: string, path: string, init?: RequestInit): Promise<
   return (await res.json()) as T;
 }
 
-function qrImageUrl(data: string): string {
-  return `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(data)}`;
-}
-
-function resolveQrSrc(
-  setup: FeishuSetupSession | WeixinSetupSession | null,
-  channel: ChannelKind,
-): string | null {
-  if (!setup) return null;
-  if (channel === "weixin") {
-    const wx = setup as WeixinSetupSession;
-    if (wx.qr_image_base64) {
-      const raw = wx.qr_image_base64;
-      return raw.startsWith("data:") ? raw : `data:image/png;base64,${raw}`;
-    }
-  }
-  if (setup.qr_url) {
-    return qrImageUrl(setup.qr_url);
-  }
-  return null;
+function resolveBase64Qr(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  return raw.startsWith("data:") ? raw : `data:image/png;base64,${raw}`;
 }
 
 function isConfigured(channel: ChannelKind, status: FeishuStatus | WeixinStatus | null): boolean {
@@ -133,37 +117,23 @@ function isConfigured(channel: ChannelKind, status: FeishuStatus | WeixinStatus 
 
 function FeishuLogo({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 48 48" className={className} aria-hidden>
-      <path
-        fill="#00D6B9"
-        d="M14.2 8.4c2.6-3.8 7.8-4.8 11.6-2.2l9.6 6.6c3.8 2.6 4.8 7.8 2.2 11.6L28.2 38.6c-2.6 3.8-7.8 4.8-11.6 2.2l-9.6-6.6c-3.8-2.6-4.8-7.8-2.2-11.6L14.2 8.4z"
-      />
-      <path
-        fill="#1456F0"
-        d="M22.8 12.2c1.5-2.1 4.4-2.7 6.5-1.2l7.4 5.1c2.1 1.5 2.7 4.4 1.2 6.5l-7.4 10.8c-1.5 2.1-4.4 2.7-6.5 1.2l-7.4-5.1c-2.1-1.5-2.7-4.4-1.2-6.5l7.4-10.8z"
-      />
-      <path fill="#fff" d="M26.2 18.8h4.2v12.4h-4.2z" />
-      <path fill="#fff" d="M21.4 23.6h13.8v4.2H21.4z" />
-    </svg>
+    <img
+      src="/brand/feishu.svg"
+      alt=""
+      className={cn("object-contain", className)}
+      draggable={false}
+    />
   );
 }
 
 function WeChatLogo({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 48 48" className={className} aria-hidden>
-      <path
-        fill="#07C160"
-        d="M18.4 10.2c-7.6 0-13.8 5.2-13.8 11.6 0 3.7 2.1 7 5.4 9.1l-1.4 4.2 4.9-2.5c1.5.4 3.1.7 4.9.7.5 0 1-.1 1.5-.1-.3-.9-.5-1.9-.5-2.9 0-6.5 6.3-11.7 14-11.7.4 0 .8 0 1.2.1-1.7-5.1-7.4-8.9-14.2-8.9-1.1 0-2.1.1-3.1.4z"
-      />
-      <circle cx="13.2" cy="20.4" r="1.7" fill="#fff" />
-      <circle cx="21.6" cy="20.4" r="1.7" fill="#fff" />
-      <path
-        fill="#07C160"
-        d="M39.2 23.1c-6.5 0-11.8 4.4-11.8 9.9 0 2.1.9 4.1 2.4 5.7l-1 3.1 3.7-1.9c1.2.3 2.5.5 3.9.5 6.5 0 11.8-4.4 11.8-9.9s-5.3-7.4-11.8-7.4h-1.2z"
-      />
-      <circle cx="35.1" cy="32.2" r="1.5" fill="#fff" />
-      <circle cx="42.2" cy="32.2" r="1.5" fill="#fff" />
-    </svg>
+    <img
+      src="/brand/wechat.svg"
+      alt=""
+      className={cn("object-contain", className)}
+      draggable={false}
+    />
   );
 }
 
@@ -221,6 +191,8 @@ export function ChannelsSettings({ token }: { token: string }) {
   const [feishuSetup, setFeishuSetup] = useState<FeishuSetupSession | null>(null);
   const [weixinSetup, setWeixinSetup] = useState<WeixinSetupSession | null>(null);
   const [pending, setPending] = useState<PairingItem[]>([]);
+  const [localQrSrc, setLocalQrSrc] = useState<string | null>(null);
+  const [qrLoading, setQrLoading] = useState(false);
 
   const refreshStatus = useCallback(async () => {
     const [feishuData, weixinData] = await Promise.all([
@@ -239,10 +211,37 @@ export function ChannelsSettings({ token }: { token: string }) {
 
   const startSetup = useCallback(
     async (channel: ChannelKind, options?: { isEdit?: boolean }) => {
-      setBusy(true);
       setError(null);
       setSetupChannel(channel);
       setSetupIsEdit(Boolean(options?.isEdit));
+      setLocalQrSrc(null);
+      setQrLoading(true);
+      // Open modal immediately so the click feels instant; QR fills in via poll.
+      if (channel === "feishu") {
+        setFeishuSetup({
+          id: "",
+          status: "starting",
+          qr_url: null,
+          expire_in: null,
+          bot_name: "minibot",
+          app_id: "",
+          scanner_open_id: "",
+          error: null,
+        });
+      } else {
+        setWeixinSetup({
+          id: "",
+          status: "starting",
+          qr_url: null,
+          qr_image_base64: null,
+          expire_in: null,
+          bot_name: "minibot",
+          scanner_user_id: "",
+          error: null,
+        });
+      }
+      setSetupOpen(true);
+      setBusy(true);
       try {
         if (channel === "feishu") {
           const session = await api<FeishuSetupSession>(token, "/api/channels/feishu/setup/start", {
@@ -257,9 +256,10 @@ export function ChannelsSettings({ token }: { token: string }) {
           });
           setWeixinSetup(session);
         }
-        setSetupOpen(true);
       } catch (err) {
         setError(err instanceof Error ? err.message : String(err));
+        setSetupOpen(false);
+        setQrLoading(false);
       } finally {
         setBusy(false);
       }
@@ -268,12 +268,23 @@ export function ChannelsSettings({ token }: { token: string }) {
   );
 
   const activeSetup = setupChannel === "feishu" ? feishuSetup : weixinSetup;
+  const setupSuccess = activeSetup?.status === "success";
+  const hasRemoteQr = Boolean(
+    activeSetup?.qr_url ||
+      (setupChannel === "weixin" &&
+        Boolean((activeSetup as WeixinSetupSession | null)?.qr_image_base64)),
+  );
+  const waitingForQr = Boolean(
+    setupOpen && activeSetup && !setupSuccess && !localQrSrc && (qrLoading || !hasRemoteQr),
+  );
 
   useEffect(() => {
     if (!setupOpen || !activeSetup?.id) return;
     if (["success", "denied", "expired", "error", "cancelled"].includes(activeSetup.status)) return;
     const base =
       setupChannel === "feishu" ? "/api/channels/feishu" : "/api/channels/weixin";
+    // Poll fast until QR arrives, then slower for login status.
+    const intervalMs = hasRemoteQr ? 1200 : 350;
     const t = window.setInterval(() => {
       void api<FeishuSetupSession | WeixinSetupSession>(
         token,
@@ -284,13 +295,67 @@ export function ChannelsSettings({ token }: { token: string }) {
           else setWeixinSetup(session as WeixinSetupSession);
         })
         .catch(() => undefined);
-    }, 1500);
+    }, intervalMs);
     return () => window.clearInterval(t);
-  }, [setupOpen, activeSetup?.id, activeSetup?.status, setupChannel, token]);
+  }, [
+    setupOpen,
+    activeSetup?.id,
+    activeSetup?.status,
+    hasRemoteQr,
+    setupChannel,
+    token,
+  ]);
 
+  // Render Feishu/WeChat QR URLs locally — no third-party QR image CDN.
+  useEffect(() => {
+    let cancelled = false;
+    const base64 =
+      setupChannel === "weixin"
+        ? resolveBase64Qr((activeSetup as WeixinSetupSession | null)?.qr_image_base64)
+        : null;
+    if (base64) {
+      setLocalQrSrc(base64);
+      setQrLoading(false);
+      return;
+    }
+    const url = activeSetup?.qr_url?.trim();
+    if (!url) {
+      setLocalQrSrc(null);
+      return;
+    }
+    setQrLoading(true);
+    void QRCode.toDataURL(url, {
+      width: 480,
+      margin: 2,
+      errorCorrectionLevel: "M",
+    })
+      .then((dataUrl) => {
+        if (!cancelled) {
+          setLocalQrSrc(dataUrl);
+          setQrLoading(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setLocalQrSrc(null);
+          setQrLoading(false);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    activeSetup?.qr_url,
+    setupChannel,
+    (activeSetup as WeixinSetupSession | null)?.qr_image_base64,
+  ]);
+
+  const qrSrc = setupSuccess ? null : localQrSrc;
   const refreshQr = useCallback(async () => {
     if (!activeSetup?.id) return;
     setBusy(true);
+    setLocalQrSrc(null);
+    setQrLoading(true);
     try {
       if (setupChannel === "feishu") {
         const session = await api<FeishuSetupSession>(
@@ -315,6 +380,7 @@ export function ChannelsSettings({ token }: { token: string }) {
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
+      setQrLoading(false);
     } finally {
       setBusy(false);
     }
@@ -425,15 +491,11 @@ export function ChannelsSettings({ token }: { token: string }) {
     [token],
   );
 
-  const setupSuccess = activeSetup?.status === "success";
-  const qrSrc = useMemo(
-    () => resolveQrSrc(activeSetup, setupChannel),
-    [activeSetup, setupChannel],
-  );
-
   const cancelSetup = useCallback(() => {
     setSetupOpen(false);
     setSetupIsEdit(false);
+    setLocalQrSrc(null);
+    setQrLoading(false);
     if (!activeSetup?.id) return;
     const base = setupChannel === "feishu" ? "/api/channels/feishu" : "/api/channels/weixin";
     void api(token, `${base}/setup/${activeSetup.id}/cancel`, { method: "POST" });
@@ -480,18 +542,20 @@ export function ChannelsSettings({ token }: { token: string }) {
         </div>
         {configured ? (
           <div className="flex shrink-0 items-center gap-3">
-            <button
-              type="button"
-              className="relative text-sm text-primary hover:underline"
-              onClick={() => void openPairing(channel)}
-            >
-              配对管理
-              {pendingCount > 0 ? (
-                <span className="absolute -right-3 -top-2 rounded-full bg-red-500 px-1.5 text-[10px] text-white">
-                  {pendingCount}
-                </span>
-              ) : null}
-            </button>
+            {channel === "feishu" ? (
+              <button
+                type="button"
+                className="relative text-sm text-primary hover:underline"
+                onClick={() => void openPairing("feishu")}
+              >
+                配对管理
+                {pendingCount > 0 ? (
+                  <span className="absolute -right-3 -top-2 rounded-full bg-red-500 px-1.5 text-[10px] text-white">
+                    {pendingCount}
+                  </span>
+                ) : null}
+              </button>
+            ) : null}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -592,12 +656,21 @@ export function ChannelsSettings({ token }: { token: string }) {
             </p>
 
             <div className="mt-5 flex flex-col items-center gap-3">
-              {qrSrc && !setupSuccess ? (
-                <img
-                  src={qrSrc}
-                  alt={`${setupChannel} setup QR`}
-                  className="h-60 w-60 rounded-lg border bg-white p-2"
-                />
+              {!setupSuccess && (qrSrc || waitingForQr) ? (
+                <div className="relative flex h-60 w-60 items-center justify-center overflow-hidden rounded-lg border bg-white p-2">
+                  {qrSrc ? (
+                    <img
+                      src={qrSrc}
+                      alt={`${setupChannel} setup QR`}
+                      className="h-full w-full object-contain"
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                      <Loader2 className="h-6 w-6 animate-spin" />
+                      <span className="text-xs">正在获取二维码…</span>
+                    </div>
+                  )}
+                </div>
               ) : null}
               {setupSuccess ? (
                 <div className="w-full space-y-3">
