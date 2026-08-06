@@ -58,7 +58,7 @@ lib/
 | `lib/configs/` | env/build flags, host runtime adapters | API call implementations |
 | `lib/constants/` | static tables / brand maps | logic with side effects |
 | `lib/utils/` | general pure helpers | chat-turn domain pipelines |
-| `lib/types/` | shared DTOs / UI message types | runtime code |
+| `lib/types/` | shared DTOs split by domain (`message`, `settings`, `protocol`, …) | runtime code |
 | `lib/chat/` | activity timeline, tool traces, display scrubbers | generic `cn` / date format |
 
 Import from category paths (`@/lib/apis/api`, `@/lib/utils/format`). `@/lib/utils` / `@/lib/types` resolve via folder barrels.
