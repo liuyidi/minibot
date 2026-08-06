@@ -155,7 +155,7 @@ export function NewModelConfigurationDialog({
   );
 }
 
-export function ModelsPage({
+export function ModelsSettings({
   token,
   form,
   setForm,

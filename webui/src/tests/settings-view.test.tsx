@@ -168,7 +168,7 @@ const installedAnyGen = {
 
 function renderSettingsView(
   options: {
-    initialSection?: "overview" | "apps" | "automations" | "advanced" | "models";
+    initialSection?: "overview" | "apps" | "advanced" | "models";
     initialSettings?: SettingsPayload;
     showSidebar?: boolean;
     onSettingsChange?: (payload: SettingsPayload) => void;
@@ -198,21 +198,20 @@ describe("SettingsView Apps catalog", () => {
     vi.unstubAllGlobals();
   });
 
-  it("does not show the Settings kicker on the standalone Automations surface", async () => {
+  it("renders Automations as a standalone page (not under Settings chrome)", async () => {
+    const { AutomationsPage } = await import("@/pages/automations");
     vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);
-      if (url === "/api/settings") return jsonResponse(settingsPayload());
       if (url === "/api/webui/automations") return jsonResponse({ jobs: [] });
       return jsonResponse({});
     }));
 
-    renderSettingsView({
-      initialSection: "automations",
-      initialSettings: settingsPayload(),
-      showSidebar: false,
-    });
+    render(
+      <ClientProvider client={{} as never} token="tok">
+        <AutomationsPage />
+      </ClientProvider>,
+    );
 
-    expect(screen.getByRole("heading", { name: "Scheduled tasks" })).toBeInTheDocument();
     expect(await screen.findByText("Start your first automation")).toBeInTheDocument();
     expect(screen.queryByText("Settings")).not.toBeInTheDocument();
   });

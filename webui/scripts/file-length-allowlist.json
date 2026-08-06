@@ -59,12 +59,8 @@
     "max": 2368,
     "reason": "legacy debt; do not grow — split toward ≤350"
   },
-  "pages/models/ModelsPage.tsx": {
+  "pages/settings/models/ModelsSettings.tsx": {
     "max": 557,
-    "reason": "legacy debt; do not grow — split toward ≤350"
-  },
-  "pages/settings/SettingsPage.tsx": {
-    "max": 1285,
     "reason": "legacy debt; do not grow — split toward ≤350"
   },
   "pages/settings/apps/apps-ui.tsx": {

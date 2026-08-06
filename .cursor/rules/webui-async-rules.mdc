@@ -1,6 +1,14 @@
+---
+description: WebUI async layering — lib/apis, hooks, stores, pages
+globs: webui/**/*.{ts,tsx}
+alwaysApply: false
+---
+
 # WebUI 异步请求维护规则
 
 适用范围：`minibot/webui` 中所有新增或重构的异步请求、页面数据加载、写操作、刷新逻辑。
+
+视图与逻辑解耦、多端复用（App / Desktop）见 `webui-view-logic-decoupling.mdc`。
 
 ## 1. 分层原则
 

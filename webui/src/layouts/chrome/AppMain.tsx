@@ -1,9 +1,14 @@
 import { SettingsPage } from "@/pages/settings";
+import { AutomationsPage } from "@/pages/automations";
+import { ChannelsPage } from "@/pages/channels";
+import { SkillsPage } from "@/pages/skills";
 import { ThreadShell } from "@/components/thread/ThreadShell";
 import { DownloadPage } from "@/pages/download";
+import { UtilityPageFrame } from "@/layouts/chrome/UtilityPageFrame";
 import type { AppLayoutModel } from "@/layouts/hooks/useAppLayoutModel";
 import { defaultShellRoute } from "@/routes";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 export type AppMainHostActions = {
   onLogout: () => void;
@@ -18,6 +23,7 @@ export function AppMain({
   model: AppLayoutModel;
   host: AppMainHostActions;
 }) {
+  const { t } = useTranslation();
   const {
     view,
     settingsInitialSection,
@@ -75,7 +81,31 @@ export function AppMain({
         <div className="absolute inset-0 flex flex-col">
           <DownloadPage onOpenApp={() => navigate(defaultShellRoute(), { replace: true })} />
         </div>
-      ) : view !== "chat" ? (
+      ) : view === "automations" ? (
+        <UtilityPageFrame
+          title={t("settings.nav.automations", { defaultValue: "Scheduled tasks" })}
+          onBackToChat={utilityNav.onBackToChat}
+          hostChromeInset={showHostChrome}
+        >
+          <AutomationsPage />
+        </UtilityPageFrame>
+      ) : view === "skills" ? (
+        <UtilityPageFrame
+          title={t("settings.nav.skills", { defaultValue: "Skills · Connectors" })}
+          onBackToChat={utilityNav.onBackToChat}
+          hostChromeInset={showHostChrome}
+        >
+          <SkillsPage />
+        </UtilityPageFrame>
+      ) : view === "channels" ? (
+        <UtilityPageFrame
+          title={t("settings.nav.channels", { defaultValue: "IM channels" })}
+          onBackToChat={utilityNav.onBackToChat}
+          hostChromeInset={showHostChrome}
+        >
+          <ChannelsPage />
+        </UtilityPageFrame>
+      ) : view === "settings" || view === "apps" ? (
         <div className="absolute inset-0 flex flex-col">
           <SettingsPage
             theme={theme}

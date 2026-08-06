@@ -8,9 +8,6 @@ export type SettingsSectionKey =
   | "voice"
   | "browser"
   | "apps"
-  | "automations"
-  | "skills"
-  | "channels"
   | "runtime"
   | "advanced";
 
@@ -50,3 +47,22 @@ export interface CustomMcpForm {
   headers: string;
   toolTimeout: string;
 }
+
+export type SettingsPageProps = {
+  theme: "light" | "dark";
+  initialSection?: SettingsSectionKey;
+  initialSettings?: SettingsPayload | null;
+  showSidebar?: boolean;
+  onToggleTheme: () => void;
+  onBackToChat: () => void;
+  onModelNameChange: (modelName: string | null) => void;
+  onSettingsChange?: (payload: SettingsPayload) => void;
+  onRefreshSettings?: () => Promise<SettingsPayload | null>;
+  onWorkspaceSettingsChange?: () => void | Promise<void>;
+  onSectionChange?: (section: SettingsSectionKey) => void;
+  onLogout?: () => void;
+  onRestart?: () => void;
+  onNativeEngineRestart?: () => Promise<string>;
+  isRestarting?: boolean;
+  hostChromeInset?: boolean;
+};

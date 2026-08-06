@@ -11,6 +11,7 @@ export type {
   ProviderApiType,
   ProviderForm,
   RestartAwarePayload,
+  SettingsPageProps,
   SettingsSectionKey,
 } from "./types";
 

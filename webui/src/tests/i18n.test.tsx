@@ -31,7 +31,6 @@ const SETTINGS_NAV_KEYS = [
   "image",
   "browser",
   "apps",
-  "automations",
   "runtime",
   "advanced",
 ];

@@ -4,7 +4,6 @@ import {
   Globe2,
   ImageIcon,
   LogOut,
-  MessageSquare,
   Mic,
   Palette,
   Server,
@@ -28,7 +27,6 @@ const ALL_SETTINGS_NAV_ITEMS: Array<{
   { key: "overview", icon: Activity, fallback: "Overview" },
   { key: "appearance", icon: Palette, fallback: "Appearance" },
   { key: "models", icon: SlidersHorizontal, fallback: "Models" },
-  { key: "channels", icon: MessageSquare, fallback: "Channels" },
   { key: "image", icon: ImageIcon, fallback: "Image" },
   { key: "voice", icon: Mic, fallback: "Voice" },
   { key: "browser", icon: Globe2, fallback: "Web" },
@@ -44,13 +42,8 @@ const SETTINGS_NAV_ITEMS = ALL_SETTINGS_NAV_ITEMS.filter((item) =>
 export function titleForSection(section: SettingsSectionKey): string {
   const fromNav = SETTINGS_NAV_ITEMS.find((item) => item.key === section)?.fallback;
   if (fromNav) return fromNav;
-  const utilityFallbacks: Partial<Record<SettingsSectionKey, string>> = {
-    apps: "Apps",
-    automations: "Scheduled tasks",
-    skills: "Skills · Connectors",
-    channels: "IM channels",
-  };
-  return utilityFallbacks[section] ?? "Settings";
+  if (section === "apps") return "Apps";
+  return "Settings";
 }
 
 export function SettingsSidebar({

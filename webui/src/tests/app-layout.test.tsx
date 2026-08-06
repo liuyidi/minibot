@@ -1573,7 +1573,7 @@ describe("App layout", () => {
 
   it("falls back to overview when a disabled settings section is in the URL hash", async () => {
     mockFetchRoutes({ "/api/settings": baseSettingsPayload() });
-    window.history.replaceState(null, "", "/#/settings?section=voice");
+    window.history.replaceState(null, "", "/#/settings/voice");
 
     render(<App />);
 
@@ -1591,18 +1591,28 @@ describe("App layout", () => {
     const sidebar = screen.getByRole("navigation", { name: "Sidebar navigation" });
     fireEvent.click(within(sidebar).getByRole("button", { name: "Settings" }));
     expect(await screen.findByRole("heading", { name: "Overview" })).toBeInTheDocument();
-    expect(window.location.hash).toBe("#/settings");
+    expect(window.location.hash).toBe("#/settings/overview");
 
     const settingsNav = screen.getByRole("navigation", { name: "Settings sections" });
     fireEvent.click(within(settingsNav).getByRole("button", { name: "Models" }));
 
     expect(await screen.findByRole("heading", { name: "Models" })).toBeInTheDocument();
-    expect(window.location.hash).toBe("#/settings?section=models");
+    expect(window.location.hash).toBe("#/settings/models");
 
     fireEvent.click(within(settingsNav).getByRole("button", { name: "System" }));
 
     expect(await screen.findByText("Bot name")).toBeInTheDocument();
-    expect(window.location.hash).toBe("#/settings?section=runtime");
+    expect(window.location.hash).toBe("#/settings/runtime");
+  });
+
+  it("accepts legacy settings ?section= URLs", async () => {
+    mockFetchRoutes({ "/api/settings": baseSettingsPayload() });
+    window.history.replaceState(null, "", "/#/settings?section=appearance");
+
+    render(<App />);
+
+    await waitFor(() => expect(connectSpy).toHaveBeenCalled());
+    expect(await screen.findByRole("heading", { name: "Appearance" })).toBeInTheDocument();
   });
 
   it("keeps Apps hidden from the main sidebar until UI_ENTRY.apps is enabled", async () => {

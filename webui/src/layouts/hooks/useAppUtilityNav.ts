@@ -72,9 +72,16 @@ export function useAppUtilityNav({
 
   const onOpenUtility = useCallback(
     (utility: SidebarUtilityKey) => {
-      openPage(utility, utility);
+      setSessionSearchOpen(false);
+      navigate({
+        view: utility,
+        activeKey,
+        // Only Apps still maps through the settings section registry.
+        settingsSection: utility === "apps" ? "apps" : "overview",
+      });
+      setMobileSidebarOpen(false);
     },
-    [openPage],
+    [activeKey, navigate, setMobileSidebarOpen, setSessionSearchOpen],
   );
 
   const onOpenSettings = useCallback(

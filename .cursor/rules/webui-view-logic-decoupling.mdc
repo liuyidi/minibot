@@ -1,0 +1,72 @@
+---
+description: Decouple WebUI views from hooks/async/API logic for app and desktop reuse
+globs: webui/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# WebUI view ↔ logic decoupling
+
+Goal: keep **presentation** (Web / future App / Desktop shells) replaceable, while **business logic** (hooks, async lifecycle, requests, pure domain) stays reusable.
+
+Companion rules: `webui-async-rules.mdc` (api → hook → page), `webui-component-structure.mdc` (where files live).
+
+## Layers
+
+| Layer | Location | May depend on | Must not contain |
+|-------|----------|---------------|------------------|
+| Transport | `lib/apis/` | `fetch`, types, timeouts | React, JSX, DOM, routing, i18n UI |
+| Pure domain | `lib/chat/`, `lib/utils/`, `lib/types/`, `lib/constants/` | other pure `lib/` | React hooks, JSX, `window`/`document` (unless a documented host adapter) |
+| Logic | `hooks/<domain>/` | apis, pure lib, thin host adapters (`useClient`, token) | JSX, Tailwind class strings, layout markup |
+| View | `pages/`, `components/`, `layouts/chrome/` | hooks + presentational children | raw `fetch`, request URL assembly, response parsing, long async orchestration |
+
+`stores/` stays **UI chrome only** (sidebar, dialogs, badges) — not a reusable business-data layer. See `stores/README.md`.
+
+## Rules of thumb
+
+1. **New feature order**: `lib/apis` (and pure helpers) → domain `hooks/` → thin page/UI that only binds props/events.
+2. **Pages compose, they do not own transport**: no scattered `fetch` / URL building in JSX files; call hooks (or page-private `useXxx` that still calls `lib/apis`).
+3. **Presentational splits** (`*-ui.tsx`, dumb components) receive data + callbacks; they do not call APIs.
+4. **Host-specific UI stays in view**: React Router / HashRouter, DOM events, CSS, lucide icons, Web-only widgets. Do not bury these inside shared hooks or `lib/apis`.
+5. **Logic should survive a shell swap**: if RN / Electron / Tauri later replaces `pages/`, the same hooks + apis should still drive sessions, settings, skills, channels, etc.
+6. **Avoid “god components”**: when a `.tsx` mixes large markup with multi-step async, extract a hook (or pure helper) before adding more behavior.
+
+## Examples
+
+```tsx
+// ❌ BAD — view owns request + parsing
+export function SkillsPage() {
+  const [rows, setRows] = useState([]);
+  useEffect(() => {
+    void fetch("/api/webui/skills").then((r) => r.json()).then(setRows);
+  }, []);
+  return <ul>{rows.map(/* … */)}</ul>;
+}
+
+// ✅ GOOD — transport in apis, lifecycle in hook, page binds UI
+// lib/apis/skills.ts: fetchSkills(token)
+// hooks/skills/useSkills.ts: { skills, loading, error, refresh }
+export function SkillsPage() {
+  const { skills, loading, error, refresh } = useSkills();
+  return <SkillsList skills={skills} loading={loading} error={error} onRetry={refresh} />;
+}
+```
+
+```ts
+// ❌ BAD — hook returns className / JSX decisions
+export function useChannels() {
+  return { cardClass: "rounded-xl border p-4", icon: <Wifi /> };
+}
+
+// ✅ GOOD — hook returns domain state; view decides presentation
+export function useChannels() {
+  return { channels, connectingId, connect, disconnect };
+}
+```
+
+## Checklist before merging UI work
+
+- [ ] Request/URL/parse live in `lib/apis/` (or existing client), not in JSX
+- [ ] loading / error / refresh / cancel live in a hook
+- [ ] View files mostly render + forward events
+- [ ] Pure transforms (normalize, merge, format for domain) live in `lib/` without React
+- [ ] Nothing in `lib/apis` or domain hooks would break if the Web shell were deleted

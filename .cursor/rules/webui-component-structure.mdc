@@ -31,6 +31,15 @@ webui/src/
 │       ├── xxx-ui.tsx       # optional large presentational split
 │       └── components/      # page-private UI only
 │
+│   # Settings is layout + section pages (not one mega page):
+│   pages/settings/
+│   ├── SettingsLayout.tsx           # sidebar / title / load shell + section→Page map
+│   ├── useSettingsShellModel.ts     # thin shared payload / nav / prefs / restart
+│   ├── SettingsShellContext.tsx     # shell + chrome only (no section handlers)
+│   └── <section>/
+│       ├── XxxPage.tsx              # thin page; binds shell + colocated hook
+│       └── useXxxSettings.ts        # section form/actions (split further if >400)
+│
 ├── components/              # shared business UI (2+ consumers)
 │   ├── ui/                  # atomic primitives (shadcn / Radix)
 │   ├── sidebar/               # sidebar, session lists, chrome dialogs
@@ -87,9 +96,11 @@ Import from category paths (`@/lib/apis/api`, `@/lib/utils/format`). `@/lib/util
 
 ## Layer responsibilities
 
+View vs logic decoupling (reuse hooks/apis for App / Desktop): see `webui-view-logic-decoupling.mdc`.
+
 | Path | Put here | Do not put here |
 |------|----------|-----------------|
-| `pages/<page>/` | page entry, orchestration, `components/` used only by this page | atomic Button/Dialog; multi-page business blocks |
+| `pages/<page>/` | page entry, orchestration, `components/` used only by this page | atomic Button/Dialog; multi-page business blocks; raw fetch / response parsing |
 | `layouts/` | app chrome (`AppLayout`; `chrome/` UI + `hooks/` model — see `layouts/README.md`) | feature pages; route URL helpers |
 | `routes/` | URL ↔ `ShellRoute`, `useShellNavigate`, `HashChangeSync` | layout JSX; feature UI |
 | `stores/` | Zustand chrome / session-badge state | server session lists / WS client |
@@ -98,7 +109,7 @@ Import from category paths (`@/lib/apis/api`, `@/lib/utils/format`). `@/lib/util
 | `components/thread/` | chat surface, messages, activity, file preview | settings forms; sidebar |
 | `components/markdown/` | MarkdownText, CodeBlock renderer | page-private widgets |
 | `components/settings/` | settings-domain shared chrome | one-off page widgets |
-| `hooks/` | domain-grouped reusable `useXxx` (`@/hooks/sessions`, …) | page-private helpers (`pages/<page>/useXxx.ts`) |
+| `hooks/` | domain-grouped reusable `useXxx` (`@/hooks/sessions`, …) | JSX / Tailwind presentation; page-private helpers (`pages/<page>/useXxx.ts`) |
 | `lib/` | categorized modules above | React components / JSX |
 | `providers/` | global Context | ordinary feature UI |
 | `i18n/` | locale JSON + i18n bootstrap | business logic |

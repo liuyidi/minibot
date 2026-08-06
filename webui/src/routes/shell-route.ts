@@ -10,7 +10,7 @@ export type ShellView =
   | "channels"
   | "download";
 
-/** Sidebar utility hubs: view key equals settingsSection. */
+/** Sidebar utility hubs (standalone top-level routes; not settings sections). */
 export type SidebarUtilityKey = Extract<
   ShellView,
   "apps" | "automations" | "skills" | "channels"
@@ -35,9 +35,6 @@ const SETTINGS_SECTION_KEYS: SettingsSectionKey[] = [
   "voice",
   "browser",
   "apps",
-  "automations",
-  "skills",
-  "channels",
   "runtime",
   "advanced",
 ];
@@ -51,14 +48,7 @@ export function defaultShellRoute(): ShellRoute {
 }
 
 export function shellViewForSettingsSection(section: SettingsSectionKey): ShellView {
-  if (
-    section === "apps" ||
-    section === "automations" ||
-    section === "skills" ||
-    section === "channels"
-  ) {
-    return section;
-  }
+  if (section === "apps") return "apps";
   return "settings";
 }
 
@@ -67,18 +57,29 @@ function normalizePathname(pathname: string): string {
   return pathname.startsWith("/") ? pathname : `/${pathname}`;
 }
 
+const STANDALONE_UTILITY_PATHS = new Set(["automations", "skills", "channels"]);
+
 export function shellRouteFromLocation(location: ShellLocation): ShellRoute {
-  const pathname = normalizePathname(location.pathname);
+  const pathname = normalizePathname(location.pathname).replace(/\/+$/, "") || "/new";
   const params = new URLSearchParams(
     location.search.startsWith("?") ? location.search.slice(1) : location.search,
   );
-  const rawSettingsSection = params.get("section");
-  const parsedSection = isSettingsSectionKey(rawSettingsSection)
-    ? rawSettingsSection
-    : "overview";
+  const legacySection = params.get("section");
   const activeKey = params.get("chat")?.trim() || null;
 
-  if (pathname === "/settings") {
+  const settingsPathMatch = pathname.match(/^\/settings(?:\/([^/]+))?$/);
+  if (settingsPathMatch) {
+    const pathSection = settingsPathMatch[1] ?? null;
+    const rawSection = pathSection ?? legacySection;
+    // Legacy bookmarks: /settings/skills → /skills (no longer settings sections).
+    if (rawSection && STANDALONE_UTILITY_PATHS.has(rawSection)) {
+      return {
+        view: rawSection as "automations" | "skills" | "channels",
+        activeKey,
+        settingsSection: "overview",
+      };
+    }
+    const parsedSection = isSettingsSectionKey(rawSection) ? rawSection : "overview";
     const settingsSection =
       shellViewForSettingsSection(parsedSection) === "settings" &&
       !isEnabledSettingsSection(parsedSection)
@@ -94,15 +95,15 @@ export function shellRouteFromLocation(location: ShellLocation): ShellRoute {
     return { view: "apps", activeKey, settingsSection: "apps" };
   }
   if (pathname === "/automations") {
-    return { view: "automations", activeKey, settingsSection: "automations" };
+    return { view: "automations", activeKey, settingsSection: "overview" };
   }
   if (pathname === "/skills") {
-    return { view: "skills", activeKey, settingsSection: "skills" };
+    return { view: "skills", activeKey, settingsSection: "overview" };
   }
   if (pathname === "/channels") {
-    return { view: "channels", activeKey, settingsSection: "channels" };
+    return { view: "channels", activeKey, settingsSection: "overview" };
   }
-  if (pathname === "/download" || pathname === "/download/") {
+  if (pathname === "/download") {
     return { view: "download", activeKey: null, settingsSection: "overview" };
   }
   if (pathname.startsWith("/chat/")) {
@@ -135,15 +136,25 @@ export function shellRouteToLocation(route: ShellRoute): ShellLocation {
       search: "",
     };
   }
+
   const params = new URLSearchParams();
   if (route.activeKey) params.set("chat", route.activeKey);
-  if (route.view === "settings" && route.settingsSection !== "overview") {
-    params.set("section", route.settingsSection);
-  }
   const query = params.toString();
+  const search = query ? `?${query}` : "";
+
+  // Utility hubs keep top-level paths; settings sections are nested pages.
+  if (
+    route.view === "apps" ||
+    route.view === "automations" ||
+    route.view === "skills" ||
+    route.view === "channels"
+  ) {
+    return { pathname: `/${route.view}`, search };
+  }
+
   return {
-    pathname: `/${route.view}`,
-    search: query ? `?${query}` : "",
+    pathname: `/settings/${route.settingsSection}`,
+    search,
   };
 }
 

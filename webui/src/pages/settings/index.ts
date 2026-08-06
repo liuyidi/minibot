@@ -1,2 +1,6 @@
-export { SettingsPage, type SettingsPageProps } from "./SettingsPage";
+export {
+  SettingsLayout,
+  SettingsPage,
+  type SettingsPageProps,
+} from "./SettingsLayout";
 export type { SettingsSectionKey } from "./shared/types";

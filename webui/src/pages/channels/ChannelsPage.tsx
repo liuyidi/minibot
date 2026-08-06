@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 
 import { useChannels } from "@/hooks/channels";
 import type { WeixinSetupSession } from "@/lib/apis/channels";
+import { useClient } from "@/providers/ClientProvider";
 
 import { ChannelCard, ChannelPairingModal, ChannelSetupModal } from "./channels-ui";
 
@@ -12,8 +13,9 @@ function resolveBase64Qr(raw: string | null | undefined): string | null {
   return raw.startsWith("data:") ? raw : `data:image/png;base64,${raw}`;
 }
 
-export function ChannelsPage({ token }: { token: string }) {
+export function ChannelsPage() {
   const { t } = useTranslation();
+  const { token } = useClient();
   const {
     feishu,
     weixin,
