@@ -279,7 +279,7 @@ describe("App layout", () => {
     expect(within(sidebar).queryByRole("button", { name: "Apps" })).not.toBeInTheDocument();
     expect(within(sidebar).getByRole("button", { name: "IM channels" })).toBeInTheDocument();
     expect(within(sidebar).getByRole("button", { name: "Scheduled tasks" })).toBeInTheDocument();
-    expect(within(sidebar).getByRole("button", { name: "Skills" })).toBeInTheDocument();
+    expect(within(sidebar).getByRole("button", { name: "Skills · Connectors" })).toBeInTheDocument();
     expect(within(sidebar).getByRole("link", { name: "Knowledge" })).toBeInTheDocument();
     expect(within(sidebar).getByRole("button", { name: "Settings" })).toBeInTheDocument();
     expect(within(sidebar).queryByRole("button", { name: "Show archived" })).not.toBeInTheDocument();
@@ -322,23 +322,23 @@ describe("App layout", () => {
 
     await waitFor(() => expect(connectSpy).toHaveBeenCalled());
     const sidebar = screen.getByRole("navigation", { name: "Sidebar navigation" });
-    fireEvent.click(within(sidebar).getByRole("button", { name: "Skills" }));
+    fireEvent.click(within(sidebar).getByRole("button", { name: "Skills · Connectors" }));
 
-    expect(await screen.findByRole("heading", { name: "Skills" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Skills · Connectors" })).toBeInTheDocument();
     expect(screen.getByText("cron")).toBeInTheDocument();
     expect(screen.getByText("github")).toBeInTheDocument();
     expect(screen.getByText("Missing: CLI: gh")).toBeInTheDocument();
     expect(screen.getByRole("navigation", { name: "Sidebar navigation" })).toBeInTheDocument();
     expect(screen.queryByRole("navigation", { name: "Settings sections" })).not.toBeInTheDocument();
     expect(window.location.hash).toBe("#/skills");
-    expect(document.title).toBe("Skills · minibot");
+    expect(document.title).toBe("Skills · Connectors · minibot");
 
     fireEvent.click(screen.getByRole("button", { name: "Back to chat" }));
     expect(await screen.findByText(HERO_GREETING_PATTERN)).toBeInTheDocument();
 
     window.history.replaceState(null, "", "/#/skills");
     window.dispatchEvent(new HashChangeEvent("hashchange"));
-    expect(await screen.findByRole("heading", { name: "Skills" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Skills · Connectors" })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Open details for github" }));
 
@@ -449,17 +449,23 @@ describe("App layout", () => {
     expect(automationsMain).not.toBeNull();
     expect(within(automationsMain as HTMLElement).queryByText("Settings")).not.toBeInTheDocument();
     expect(screen.getAllByText("Daily repo check").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText("Check the repo status").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText("Release prep").length).toBeGreaterThanOrEqual(1);
+    expect(screen.queryByText("Check the repo status")).not.toBeInTheDocument();
     expect(screen.getByText("WeChat quiz")).toBeInTheDocument();
-    expect(screen.getByText("WeChat")).toBeInTheDocument();
     expect(screen.queryByText("weixin:wx-chat")).not.toBeInTheDocument();
     expect(screen.queryByText("memory with dream state")).not.toBeInTheDocument();
-    expect(screen.getByText("heartbeat")).toBeInTheDocument();
+    expect(screen.getAllByText("heartbeat").length).toBeGreaterThanOrEqual(1);
     expect(document.title).toBe("Scheduled tasks · minibot");
 
+    // System tasks are pinned at the top of the scheduled-task list.
+    const systemSection = screen.getByLabelText("System tasks");
+    expect(within(systemSection).getByText("heartbeat")).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Scheduled tasks" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Run history" })).toBeInTheDocument();
+    expect(screen.getAllByRole("switch", { name: "Pause" }).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByRole("button", { name: "More actions" }).length).toBeGreaterThanOrEqual(1);
+
     const searchInput = within(automationsMain as HTMLElement).getByPlaceholderText(
-      "Search task, message, linked chat, or schedule",
+      "Search automations / logs",
     );
     fireEvent.change(searchInput, { target: { value: "WeChat" } });
     await waitFor(() => expect(screen.queryByText("Daily repo check")).not.toBeInTheDocument());
@@ -499,7 +505,7 @@ describe("App layout", () => {
     mockFetchRoutes({
       "/api/settings": baseSettingsPayload(),
       "/api/webui/automations": { jobs: [pastOneShot] },
-      "/api/webui/automations/update?id=past-one-shot": {
+      "/api/webui/automations/past-one-shot": {
         jobs: [
           {
             ...pastOneShot,
@@ -516,7 +522,7 @@ describe("App layout", () => {
     await waitFor(() => expect(connectSpy).toHaveBeenCalled());
 
     expect((await screen.findAllByText("Past one-shot")).length).toBeGreaterThanOrEqual(1);
-    fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+    fireEvent.click(screen.getByText("Past one-shot"));
     expect(screen.queryByText("Run time must be in the future.")).not.toBeInTheDocument();
     expect(
       screen.queryByText("Update the prompt and schedule. The linked chat stays unchanged."),
@@ -533,22 +539,19 @@ describe("App layout", () => {
 
     await waitFor(() => {
       expect(fetch).toHaveBeenCalledWith(
-        "/api/webui/automations/update?id=past-one-shot",
-        expect.any(Object),
+        "/api/webui/automations/past-one-shot",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({
+            name: "Past one-shot",
+            message: "Updated one-shot message",
+          }),
+        }),
       );
-    });
-    const updateCall = vi.mocked(fetch).mock.calls.find(
-      ([url]) => String(url) === "/api/webui/automations/update?id=past-one-shot",
-    );
-    expect(updateCall).toBeTruthy();
-    const headers = updateCall?.[1]?.headers as Record<string, string>;
-    expect(JSON.parse(decodeURIComponent(headers["X-Minibot-Automation-Values"]))).toEqual({
-      name: "Past one-shot",
-      message: "Updated one-shot message",
     });
   });
 
-  it("keeps long automation details expandable without nested scrolling", async () => {
+  it("opens the edit dialog from a compact automation row", async () => {
     const longMessage = [
       "Review the release plan and prepare a concise status update for the channel.",
       "Include blockers, owners, follow-up dates, and any risky assumptions that changed since yesterday.",
@@ -604,23 +607,13 @@ describe("App layout", () => {
 
     await waitFor(() => expect(connectSpy).toHaveBeenCalled());
 
-    const detailHeading = await screen.findByRole("heading", { name: "Long detail automation" });
-    const detailPanel = detailHeading.closest("article") as HTMLElement;
-    expect(detailPanel).not.toBeNull();
-    const message = Array.from(detailPanel.querySelectorAll("section div")).find(
-      (node) => node.textContent === longMessage,
-    ) as HTMLElement | undefined;
-    expect(message).toBeTruthy();
-    expect(message!).toHaveClass("line-clamp-6");
-
-    fireEvent.click(within(detailPanel).getByRole("button", { name: "Show full message" }));
-    expect(within(detailPanel).getByRole("button", { name: "Show less" })).toBeInTheDocument();
-    expect(message!).not.toHaveClass("line-clamp-6");
-
-    expect(within(detailPanel).queryByText("Recent health")).not.toBeInTheDocument();
-    expect(within(detailPanel).queryByRole("button", { name: /Run history/ })).not.toBeInTheDocument();
-    expect(within(detailPanel).queryByText(/oldest failure/)).not.toBeInTheDocument();
-    expect(within(detailPanel).queryByText("No error recorded")).not.toBeInTheDocument();
+    expect(screen.queryByText(longMessage)).not.toBeInTheDocument();
+    fireEvent.click(await screen.findByText("Long detail automation"));
+    expect(screen.getByRole("heading", { name: "Edit automation" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Message")).toHaveValue(longMessage);
+    expect(screen.getByRole("link", { name: "Release prep" })).toBeInTheDocument();
+    expect(screen.queryByText("Recent health")).not.toBeInTheDocument();
+    expect(screen.queryByText(/oldest failure/)).not.toBeInTheDocument();
   });
 
   it("localizes the Automations surface", async () => {
@@ -676,10 +669,11 @@ describe("App layout", () => {
     const automationsMain = heading.closest("main");
     expect(automationsMain).not.toBeNull();
     expect(within(automationsMain as HTMLElement).queryByText("设置")).not.toBeInTheDocument();
-    expect(screen.getByText("任务队列")).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "定时任务" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "运行记录" })).toBeInTheDocument();
     expect(screen.getAllByText("每日检查").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText("检查仓库状态").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText("每 1天")).toBeInTheDocument();
+    expect(screen.queryByText("检查仓库状态")).not.toBeInTheDocument();
+    expect(document.body.textContent).toContain("每 1天");
     expect(screen.queryByText("最近健康状态")).not.toBeInTheDocument();
     expect(screen.queryByText("近期无问题")).not.toBeInTheDocument();
     expect(screen.queryByText("Workspace automations")).not.toBeInTheDocument();
@@ -1511,7 +1505,7 @@ describe("App layout", () => {
     const sidebar = screen.getByRole("navigation", { name: "Sidebar navigation" });
     expect(within(sidebar).getByRole("button", { name: "Search" })).toBeInTheDocument();
     expect(within(sidebar).queryByRole("button", { name: "Apps" })).not.toBeInTheDocument();
-    expect(within(sidebar).getByRole("button", { name: "Skills" })).toBeInTheDocument();
+    expect(within(sidebar).getByRole("button", { name: "Skills · Connectors" })).toBeInTheDocument();
     expect(within(sidebar).getByRole("button", { name: "Scheduled tasks" })).toBeInTheDocument();
     fireEvent.click(within(sidebar).getByRole("button", { name: "Settings" }));
 

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
 from dataclasses import dataclass
 from pathlib import Path
@@ -12,6 +13,7 @@ from typing import Any
 import yaml
 
 BUILTIN_SKILLS_DIR = Path(__file__).resolve().parent.parent / "skills"
+_SKILL_NAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$")
 
 
 @dataclass(frozen=True)
@@ -207,6 +209,31 @@ class SkillsRegistry:
 
     def webui_list_payload(self) -> dict[str, Any]:
         return {"skills": [self.webui_summary(s) for s in self.list_skills()]}
+
+    def install_skill(self, markdown: str, *, name: str | None = None) -> SkillInfo:
+        """Write a workspace SKILL.md from markdown (creates or overwrites)."""
+        if self.workspace is None:
+            raise ValueError("workspace is required to install skills")
+        text = (markdown or "").strip()
+        if not text:
+            raise ValueError("markdown is required")
+        parsed = _parse_skill_markdown(text, source="workspace", name=name or "skill")
+        if parsed is None:
+            raise ValueError("invalid skill markdown")
+        skill_name = (name or parsed.name or "").strip()
+        if not _SKILL_NAME_RE.match(skill_name):
+            raise ValueError(
+                "skill name must be alphanumeric (plus - _), max 64 chars"
+            )
+        target_dir = self.workspace / "skills" / skill_name
+        target_dir.mkdir(parents=True, exist_ok=True)
+        target = target_dir / "SKILL.md"
+        # Prefer caller markdown so frontmatter stays intact.
+        target.write_text(text if text.endswith("\n") else text + "\n", encoding="utf-8")
+        loaded = _load_skill_file(target, source="workspace", name=skill_name)
+        if loaded is None:
+            raise ValueError("failed to load installed skill")
+        return loaded
 
     def api_payload(self, *, include_body: bool = False, body_limit: int = 12_000) -> dict[str, Any]:
         """Dev-oriented payload (paths, always flags). Prefer webui_* for product UI."""

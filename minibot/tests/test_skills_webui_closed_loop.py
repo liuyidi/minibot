@@ -192,3 +192,36 @@ def test_webui_summary_payload_shape(tmp_path: Path) -> None:
     assert payload["skills"][0]["name"] == "plain"
     assert payload["skills"][0]["description"] == "Hello."
     assert payload["skills"][0]["available"] is True
+
+
+def test_install_skill_writes_workspace_skill(tmp_path: Path) -> None:
+    reg = SkillsRegistry(tmp_path, builtin_dir=tmp_path / "no-builtin")
+    info = reg.install_skill(
+        "---\nname: my-note\ndescription: A note skill.\n---\n\n# Hello\n",
+    )
+    assert info.name == "my-note"
+    assert info.source == "workspace"
+    path = tmp_path / "skills" / "my-note" / "SKILL.md"
+    assert path.is_file()
+    assert "Hello" in path.read_text(encoding="utf-8")
+
+
+def test_webui_install_skill_api(
+    client: TestClient, auth_headers: dict[str, str], tmp_path: Path, monkeypatch
+) -> None:
+    from minibot.api.routes import misc as misc_routes
+
+    monkeypatch.setattr(misc_routes, "_webui_skills_workspace", lambda _state: tmp_path)
+    resp = client.post(
+        "/api/webui/skills",
+        headers=auth_headers,
+        json={
+            "markdown": "---\nname: uploaded\ndescription: From API.\n---\n\n# Uploaded\n",
+        },
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["name"] == "uploaded"
+    assert data["source"] == "workspace"
+    assert data["available"] is True
+    assert (tmp_path / "skills" / "uploaded" / "SKILL.md").is_file()

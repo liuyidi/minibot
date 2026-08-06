@@ -61,7 +61,7 @@
     "channels": "IM 频道",
     "automations": "定时任务",
     "skills": {
-      "title": "技能"
+      "title": "技能·连接器"
     },
     "portalHome": "门户首页",
     "portalLangfuse": "可观测 (Langfuse)",
@@ -90,7 +90,7 @@
       "advanced": "安全",
       "apps": "应用",
       "automations": "定时任务",
-      "skills": "技能",
+      "skills": "技能·连接器",
       "channels": "IM 频道"
     },
     "sections": {
@@ -512,12 +512,48 @@
         "updated": "更新时间",
         "name": "名称"
       },
-      "search": "搜索任务、消息、关联会话或计划",
-      "queue": "任务队列",
+      "search": "搜索自动化/记录",
+      "queue": "定时任务",
       "loading": "正在加载自动任务...",
-      "noMatches": "当前视图没有匹配的自动任务。",
-      "empty": "暂无自动任务。",
+      "noMatches": "没有匹配的自动化任务",
+      "empty": "开启你的第一个自动化任务吧",
       "emptyHint": "请从它应该运行的来源处创建，这样 minibot 才能保留正确上下文。",
+      "tabs": {
+        "label": "自动化视图",
+        "tasks": "定时任务",
+        "runs": "运行记录"
+      },
+      "filter": "筛选",
+      "systemSection": "系统任务",
+      "add": "添加自动化",
+      "createUntitled": "新建自动化",
+      "createTipLabel": "提示",
+      "createTip": "自动化任务执行时，请勿关闭电脑或退出客户端，否则任务将无法正常执行。",
+      "dismissTip": "关闭提示",
+      "closeDetail": "关闭",
+      "createHint": "在对话里让 minibot 用 cron 工具创建定时任务，会自动绑定当前会话上下文。也可在 Dev UI /automations 页创建。",
+      "goChat": "去对话创建",
+      "templatesTitle": "自动化任务模版",
+      "templateHint": "把下面这段话发给 minibot，让它帮你创建对应的定时任务：",
+      "copyPrompt": "复制提示词",
+      "runsEmpty": "暂无运行记录",
+      "runFilters": {
+        "all": "全部",
+        "ok": "成功",
+        "error": "失败",
+        "running": "运行中",
+        "skipped": "已归档"
+      },
+      "runStatus": {
+        "ok": "成功",
+        "error": "失败",
+        "running": "运行中",
+        "skipped": "已归档"
+      },
+      "day": {
+        "today": "今天",
+        "yesterday": "昨天"
+      },
       "oneShot": "一次性",
       "systemTask": "系统管理的自动任务",
       "labels": {
@@ -532,12 +568,48 @@
       "resume": "恢复",
       "edit": "编辑",
       "delete": "删除",
+      "moreActions": "更多操作",
       "protected": "受保护",
       "editTitle": "编辑自动任务",
       "save": "保存",
       "deleteTitle": "删除自动任务",
       "deleteDescription": "这会从 cron 存储中删除 {{name}}，历史聊天消息会保留在会话中。",
       "cancel": "取消",
+      "fields": {
+        "name": "名称",
+        "namePlaceholder": "每日 AI 新闻推送",
+        "message": "消息",
+        "prompt": "提示词",
+        "promptPlaceholder": "任务触发时，希望 minibot 做什么？",
+        "session": "关联会话",
+        "sessionHelp": "在该会话上下文中执行，回复与历史会保留在对应聊天里。",
+        "sessionLoading": "正在加载会话…",
+        "sessionEmpty": "还没有会话，请先开始一次对话",
+        "frequency": "执行频率",
+        "everyDay": "每天",
+        "time": "时间",
+        "scheduleType": "计划类型",
+        "every": "间隔",
+        "unit": "单位",
+        "cronExpression": "Cron 表达式",
+        "timezone": "时区",
+        "runAt": "运行时间"
+      },
+      "scheduleTypes": {
+        "periodic": "周期",
+        "every": "按间隔",
+        "cron": "Cron",
+        "at": "单次"
+      },
+      "validation": {
+        "nameRequired": "请填写名称。",
+        "messageRequired": "请填写提示词。",
+        "sessionRequired": "请选择关联会话。",
+        "intervalRequired": "间隔必须是正整数。",
+        "cronRequired": "请填写 Cron 表达式。",
+        "timeRequired": "请选择运行时间。",
+        "futureRequired": "运行时间必须在未来。"
+      },
       "status": {
         "system": "系统",
         "running": "正在运行",
@@ -589,34 +661,11 @@
         "showMore": "查看完整消息",
         "showLess": "收起消息"
       },
-      "fields": {
-        "name": "名称",
-        "message": "消息",
-        "scheduleType": "计划类型",
-        "every": "每隔",
-        "unit": "单位",
-        "cronExpression": "Cron 表达式",
-        "timezone": "时区",
-        "runAt": "运行时间"
-      },
-      "scheduleTypes": {
-        "every": "间隔",
-        "cron": "Cron",
-        "at": "一次性"
-      },
       "everyUnits": {
         "second": "秒",
         "minute": "分钟",
         "hour": "小时",
         "day": "天"
-      },
-      "validation": {
-        "nameRequired": "名称不能为空。",
-        "messageRequired": "消息不能为空。",
-        "intervalRequired": "间隔必须是正整数。",
-        "cronRequired": "Cron 表达式不能为空。",
-        "timeRequired": "运行时间不能为空。",
-        "futureRequired": "运行时间必须晚于当前时间。"
       }
     },
     "oauth": {
@@ -633,9 +682,37 @@
       "notSignedIn": "未登录"
     },
     "skills": {
-      "description": "查看此 agent 在对话中可以加载的指令技能。",
+      "description": "管理对话可加载的技能，以及 MCP 连接器。",
       "caption": "{{available}} 个可用 · 共 {{total}} 个",
       "featured": "Agent 技能",
+      "hubTabs": "技能与连接器",
+      "tabSkills": "技能",
+      "tabConnectors": "连接器",
+      "searchSkills": "搜索技能",
+      "searchConnectors": "搜索连接器",
+      "installedCount": "我安装的 {{count}}",
+      "addSkill": "添加技能",
+      "addConnector": "添加连接器",
+      "addSkillHint": "粘贴 SKILL.md，将保存到当前工作区的 skills/ 目录。",
+      "addConnectorHint": "添加自定义 MCP（stdio 或 HTTP）。",
+      "nameOptional": "名称（可选；默认取 frontmatter）",
+      "uploadFile": "或上传文件",
+      "install": "安装",
+      "saveConnector": "保存",
+      "connectorLabel": "名称",
+      "sectionBuiltin": "内置",
+      "sectionAdded": "已添加",
+      "sectionInstalledConnectors": "已安装",
+      "sectionOptionalConnectors": "可选添加",
+      "emptyBuiltin": "没有匹配的内置技能。",
+      "emptyAdded": "还没有工作区技能。点「添加技能」安装一个。",
+      "emptyInstalledConnectors": "还没有已安装的连接器。",
+      "emptyOptionalConnectors": "没有可添加的模板。",
+      "connectorEnabled": "已启用",
+      "connectorDisabled": "未启用",
+      "add": "添加",
+      "loading": "加载中…",
+      "noDescription": "暂无描述。",
       "empty": "暂无可用技能。",
       "sourceWorkspace": "自定义",
       "sourceBuiltin": "内置",

@@ -1,61 +1,304 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import type { TFunction } from "i18next";
-import { Brain, Check, CircleAlert, KeyRound, Loader2, Terminal } from "lucide-react";
+import {
+  Brain,
+  Check,
+  CircleAlert,
+  KeyRound,
+  Loader2,
+  Plug,
+  Plus,
+  Search,
+  Sparkles,
+  Terminal,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
 
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
-import { fetchSkillDetail } from "@/lib/api";
+import {
+  applyMcpTemplate,
+  fetchMinibotMcpList,
+  fetchSkillDetail,
+  fetchSkills,
+  installSkill,
+  upsertMcpPresetJson,
+  type MinibotMcpPreset,
+  type MinibotMcpTemplate,
+} from "@/lib/api";
 import type { SkillDetail, SkillSummary } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useClient } from "@/providers/ClientProvider";
 
-export function SkillsCatalogSettings({ skills }: { skills: SkillSummary[] }) {
+type HubTab = "skills" | "connectors";
+
+export function SkillsCatalogSettings({ skills: initialSkills }: { skills: SkillSummary[] }) {
   const { t } = useTranslation();
-  const availableCount = skills.filter((skill) => skill.available).length;
+  const { token } = useClient();
+  const [tab, setTab] = useState<HubTab>("skills");
+  const [query, setQuery] = useState("");
+  const [skills, setSkills] = useState<SkillSummary[]>(initialSkills);
+  const [presets, setPresets] = useState<MinibotMcpPreset[]>([]);
+  const [templates, setTemplates] = useState<MinibotMcpTemplate[]>([]);
+  const [mcpLoading, setMcpLoading] = useState(true);
   const [selectedSkill, setSelectedSkill] = useState<SkillSummary | null>(null);
+  const [addOpen, setAddOpen] = useState(false);
+  const [busyKey, setBusyKey] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setSkills(initialSkills);
+  }, [initialSkills]);
+
+  const refreshSkills = async () => {
+    const payload = await fetchSkills(token);
+    setSkills(payload.skills);
+  };
+
+  const refreshMcp = async () => {
+    setMcpLoading(true);
+    try {
+      const payload = await fetchMinibotMcpList(token);
+      setPresets(payload.presets ?? []);
+      setTemplates(payload.templates ?? []);
+    } catch {
+      setPresets([]);
+      setTemplates([]);
+    } finally {
+      setMcpLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void refreshMcp();
+  }, [token]);
+
+  const q = query.trim().toLowerCase();
+  const match = (text: string) => !q || text.toLowerCase().includes(q);
+
+  const builtinSkills = useMemo(
+    () => skills.filter((s) => s.source === "builtin" && match(`${s.name} ${s.description}`)),
+    [skills, q],
+  );
+  const addedSkills = useMemo(
+    () => skills.filter((s) => s.source === "workspace" && match(`${s.name} ${s.description}`)),
+    [skills, q],
+  );
+
+  const installedIds = useMemo(() => new Set(presets.map((p) => p.id)), [presets]);
+  const filteredPresets = useMemo(
+    () => presets.filter((p) => match(`${p.id} ${p.label} ${p.command ?? ""} ${p.url ?? ""}`)),
+    [presets, q],
+  );
+  const optionalTemplates = useMemo(
+    () =>
+      templates.filter((tpl) => {
+        const presetId = String(tpl.preset?.id || tpl.id);
+        if (installedIds.has(presetId) || installedIds.has(tpl.id)) return false;
+        return match(`${tpl.id} ${tpl.label} ${tpl.hint ?? ""}`);
+      }),
+    [templates, installedIds, q],
+  );
+
+  const installedCount =
+    skills.filter((s) => s.source === "workspace").length + presets.length;
+
+  const onAddTemplate = async (templateId: string) => {
+    setBusyKey(`tpl:${templateId}`);
+    setError(null);
+    try {
+      const payload = await applyMcpTemplate(token, {
+        template_id: templateId,
+        enable: true,
+      });
+      setPresets(payload.presets ?? []);
+      setTemplates(payload.templates ?? []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setBusyKey(null);
+    }
+  };
 
   return (
-    <div className="space-y-7">
-      <section className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-        <p className="max-w-[680px] text-[13px] leading-5 text-muted-foreground">
-          {t("settings.skills.description", {
-            defaultValue: "Review the instruction skills this agent can load during a conversation.",
-          })}
-        </p>
-        <span className="text-[12px] font-medium text-muted-foreground">
-          {t("settings.skills.caption", {
-            available: availableCount,
-            total: skills.length,
-            defaultValue: "{{available}} available · {{total}} total",
-          })}
-        </span>
-      </section>
-
-      <section>
-        <div className="flex items-center justify-between border-b border-border/45 pb-3">
-          <h2 className="mb-2 px-1 text-[13px] font-semibold tracking-[-0.01em] text-foreground/85">
-            {t("settings.skills.featured", { defaultValue: "Agent skills" })}
-          </h2>
-          <span className="rounded-full bg-muted px-2.5 py-1 text-[12px] font-medium text-muted-foreground">
-            {skills.length}
-          </span>
+    <div className="space-y-6">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div
+          role="tablist"
+          aria-label={t("settings.skills.hubTabs", { defaultValue: "Skills and connectors" })}
+          className="inline-flex w-fit items-center gap-1 rounded-full bg-muted/70 p-1"
+        >
+          <TabButton
+            active={tab === "skills"}
+            icon={<Sparkles className="h-3.5 w-3.5" aria-hidden />}
+            label={t("settings.skills.tabSkills", { defaultValue: "Skills" })}
+            onClick={() => setTab("skills")}
+          />
+          <TabButton
+            active={tab === "connectors"}
+            icon={<Plug className="h-3.5 w-3.5" aria-hidden />}
+            label={t("settings.skills.tabConnectors", { defaultValue: "Connectors" })}
+            onClick={() => setTab("connectors")}
+          />
         </div>
-        {skills.length ? (
-          <div className="grid gap-x-10 gap-y-1 py-3 md:grid-cols-2">
-            {skills.map((skill) => (
-              <SkillCatalogRow
-                key={`${skill.source}:${skill.name}`}
-                skill={skill}
-                onSelect={setSelectedSkill}
+
+        <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-center lg:max-w-xl lg:justify-end">
+          <div className="relative min-w-0 flex-1">
+            <Search
+              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+              aria-hidden
+            />
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={
+                tab === "skills"
+                  ? t("settings.skills.searchSkills", { defaultValue: "Search skills" })
+                  : t("settings.skills.searchConnectors", { defaultValue: "Search connectors" })
+              }
+              className="h-10 rounded-full border-border/50 bg-background/80 pl-9"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="hidden whitespace-nowrap rounded-full bg-muted px-3 py-2 text-[12px] font-medium text-muted-foreground sm:inline-flex">
+              {t("settings.skills.installedCount", {
+                count: installedCount,
+                defaultValue: "Installed {{count}}",
+              })}
+            </span>
+            <Button
+              type="button"
+              className="h-10 rounded-full px-4"
+              onClick={() => setAddOpen(true)}
+            >
+              <Plus className="h-4 w-4" aria-hidden />
+              {tab === "skills"
+                ? t("settings.skills.addSkill", { defaultValue: "Add skill" })
+                : t("settings.skills.addConnector", { defaultValue: "Add connector" })}
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {error ? (
+        <div className="rounded-[14px] bg-destructive/10 px-3 py-2 text-[13px] text-destructive">
+          {error}
+        </div>
+      ) : null}
+
+      {tab === "skills" ? (
+        <div className="space-y-8">
+          <CatalogSection
+            title={t("settings.skills.sectionBuiltin", { defaultValue: "Built-in" })}
+            count={builtinSkills.length}
+          >
+            {builtinSkills.length ? (
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {builtinSkills.map((skill) => (
+                  <SkillCard key={`b:${skill.name}`} skill={skill} onSelect={setSelectedSkill} />
+                ))}
+              </div>
+            ) : (
+              <EmptyHint
+                text={t("settings.skills.emptyBuiltin", { defaultValue: "No built-in skills match." })}
               />
-            ))}
-          </div>
-        ) : (
-          <div className="px-3 py-12 text-center text-sm text-muted-foreground">
-            {t("settings.skills.empty", { defaultValue: "No skills are available." })}
-          </div>
-        )}
-      </section>
+            )}
+          </CatalogSection>
+
+          <CatalogSection
+            title={t("settings.skills.sectionAdded", { defaultValue: "Added" })}
+            count={addedSkills.length}
+          >
+            {addedSkills.length ? (
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {addedSkills.map((skill) => (
+                  <SkillCard key={`w:${skill.name}`} skill={skill} onSelect={setSelectedSkill} />
+                ))}
+              </div>
+            ) : (
+              <EmptyHint
+                text={t("settings.skills.emptyAdded", {
+                  defaultValue: "No workspace skills yet. Use Add skill to install one.",
+                })}
+              />
+            )}
+          </CatalogSection>
+        </div>
+      ) : (
+        <div className="space-y-8">
+          <CatalogSection
+            title={t("settings.skills.sectionInstalledConnectors", { defaultValue: "Installed" })}
+            count={filteredPresets.length}
+          >
+            {mcpLoading ? (
+              <LoadingHint />
+            ) : filteredPresets.length ? (
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {filteredPresets.map((preset) => (
+                  <ConnectorCard
+                    key={preset.id}
+                    title={preset.label || preset.id}
+                    description={
+                      preset.inferred_type ||
+                      preset.type ||
+                      (preset.command ? `stdio · ${preset.command}` : preset.url || "MCP")
+                    }
+                    badge={
+                      preset.enabled
+                        ? t("settings.skills.connectorEnabled", { defaultValue: "Enabled" })
+                        : t("settings.skills.connectorDisabled", { defaultValue: "Disabled" })
+                    }
+                    badgeTone={preset.enabled ? "success" : "muted"}
+                  />
+                ))}
+              </div>
+            ) : (
+              <EmptyHint
+                text={t("settings.skills.emptyInstalledConnectors", {
+                  defaultValue: "No connectors installed yet.",
+                })}
+              />
+            )}
+          </CatalogSection>
+
+          <CatalogSection
+            title={t("settings.skills.sectionOptionalConnectors", { defaultValue: "Optional" })}
+            count={optionalTemplates.length}
+          >
+            {mcpLoading ? (
+              <LoadingHint />
+            ) : optionalTemplates.length ? (
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {optionalTemplates.map((tpl) => (
+                  <ConnectorCard
+                    key={tpl.id}
+                    title={tpl.label}
+                    description={tpl.hint || tpl.id}
+                    actionLabel={t("settings.skills.add", { defaultValue: "Add" })}
+                    actionBusy={busyKey === `tpl:${tpl.id}`}
+                    onAction={() => void onAddTemplate(tpl.id)}
+                  />
+                ))}
+              </div>
+            ) : (
+              <EmptyHint
+                text={t("settings.skills.emptyOptionalConnectors", {
+                  defaultValue: "No optional templates available.",
+                })}
+              />
+            )}
+          </CatalogSection>
+        </div>
+      )}
 
       <SkillDetailSheet
         skill={selectedSkill}
@@ -64,11 +307,97 @@ export function SkillsCatalogSettings({ skills }: { skills: SkillSummary[] }) {
           if (!open) setSelectedSkill(null);
         }}
       />
+
+      <AddSkillDialog
+        open={addOpen && tab === "skills"}
+        onOpenChange={setAddOpen}
+        onInstalled={async () => {
+          await refreshSkills();
+          setAddOpen(false);
+        }}
+      />
+
+      <AddConnectorDialog
+        open={addOpen && tab === "connectors"}
+        onOpenChange={setAddOpen}
+        onSaved={async () => {
+          await refreshMcp();
+          setAddOpen(false);
+        }}
+      />
     </div>
   );
 }
 
-function SkillCatalogRow({
+function TabButton({
+  active,
+  icon,
+  label,
+  onClick,
+}: {
+  active: boolean;
+  icon: ReactNode;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="tab"
+      aria-selected={active}
+      onClick={onClick}
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[13px] font-medium transition-colors",
+        active
+          ? "bg-foreground text-background shadow-sm"
+          : "text-muted-foreground hover:text-foreground",
+      )}
+    >
+      {icon}
+      {label}
+    </button>
+  );
+}
+
+function CatalogSection({
+  title,
+  count,
+  children,
+}: {
+  title: string;
+  count: number;
+  children: ReactNode;
+}) {
+  return (
+    <section>
+      <div className="mb-3 flex items-center justify-between border-b border-border/45 pb-2">
+        <h2 className="px-1 text-[13px] font-semibold tracking-[-0.01em] text-foreground/85">
+          {title}
+        </h2>
+        <span className="rounded-full bg-muted px-2.5 py-1 text-[12px] font-medium text-muted-foreground">
+          {count}
+        </span>
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function EmptyHint({ text }: { text: string }) {
+  return <div className="px-1 py-8 text-center text-sm text-muted-foreground">{text}</div>;
+}
+
+function LoadingHint() {
+  const { t } = useTranslation();
+  return (
+    <div className="flex items-center gap-2 px-1 py-8 text-sm text-muted-foreground">
+      <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+      {t("settings.skills.loading", { defaultValue: "Loading…" })}
+    </div>
+  );
+}
+
+function SkillCard({
   skill,
   onSelect,
 }: {
@@ -76,11 +405,7 @@ function SkillCatalogRow({
   onSelect: (skill: SkillSummary) => void;
 }) {
   const { t } = useTranslation();
-  const sourceLabel = skillSourceLabel(skill.source, t);
   const StatusIcon = skill.available ? Check : CircleAlert;
-  const statusLabel = skill.available
-    ? t("settings.skills.statusAvailable", { defaultValue: "Available" })
-    : t("settings.skills.statusUnavailable", { defaultValue: "Unavailable" });
 
   return (
     <button
@@ -91,48 +416,303 @@ function SkillCatalogRow({
       })}
       onClick={() => onSelect(skill)}
       className={cn(
-        "group flex min-w-0 items-center gap-3 rounded-[16px] px-3 py-3 text-left transition-colors",
-        "hover:bg-muted/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-        !skill.available && "opacity-65",
+        "group relative flex min-h-[7.5rem] flex-col gap-2 rounded-[18px] border border-border/45 bg-card/70 p-4 text-left transition-colors",
+        "hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        !skill.available && "opacity-70",
       )}
     >
-      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] bg-muted/70 text-muted-foreground">
-        <Brain className="h-5 w-5" strokeWidth={1.8} aria-hidden />
-      </div>
-      <div className="min-w-0 flex-1">
-        <div className="flex min-w-0 items-center gap-2">
-          <h3 className="truncate text-[15px] font-semibold leading-5 text-foreground">
-            {skill.name}
-          </h3>
-          <span className="shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-semibold leading-none text-muted-foreground">
-            {sourceLabel}
-          </span>
+      <div className="flex items-start gap-3">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] bg-muted/80 text-muted-foreground">
+          <Brain className="h-5 w-5" strokeWidth={1.8} aria-hidden />
         </div>
-        <p className="mt-1 line-clamp-2 text-[13px] leading-5 text-muted-foreground">
-          {skill.description}
-        </p>
-        {!skill.available && skill.unavailable_reason ? (
-          <p className="mt-1 truncate text-[12px] leading-4 text-muted-foreground/80">
-            {t("settings.skills.unavailableReason", {
-              reason: skill.unavailable_reason,
-              defaultValue: "Missing: {{reason}}",
-            })}
+        <div className="min-w-0 flex-1">
+          <h3 className="truncate text-[15px] font-semibold text-foreground">{skill.name}</h3>
+          <p className="mt-1 line-clamp-3 text-[12.5px] leading-5 text-muted-foreground">
+            {skill.description || t("settings.skills.noDescription", { defaultValue: "No description." })}
           </p>
-        ) : null}
+          {!skill.available && skill.unavailable_reason ? (
+            <p className="mt-1 truncate text-[12px] leading-4 text-muted-foreground/80">
+              {t("settings.skills.unavailableReason", {
+                reason: skill.unavailable_reason,
+                defaultValue: "Missing: {{reason}}",
+              })}
+            </p>
+          ) : null}
+        </div>
       </div>
-      <span
-        title={!skill.available && skill.unavailable_reason ? skill.unavailable_reason : undefined}
-        className={cn(
-          "hidden shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[12px] font-medium sm:inline-flex",
-          skill.available
-            ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
-            : "bg-muted text-muted-foreground",
-        )}
-      >
+      <div className="mt-auto flex items-center gap-1.5 text-[11px] text-muted-foreground">
         <StatusIcon className="h-3.5 w-3.5" aria-hidden />
-        {statusLabel}
-      </span>
+        {skill.available
+          ? t("settings.skills.statusAvailable", { defaultValue: "Available" })
+          : t("settings.skills.statusUnavailable", { defaultValue: "Unavailable" })}
+      </div>
     </button>
+  );
+}
+
+function ConnectorCard({
+  title,
+  description,
+  badge,
+  badgeTone = "muted",
+  actionLabel,
+  actionBusy,
+  onAction,
+}: {
+  title: string;
+  description: string;
+  badge?: string;
+  badgeTone?: "muted" | "success";
+  actionLabel?: string;
+  actionBusy?: boolean;
+  onAction?: () => void;
+}) {
+  return (
+    <div className="relative flex min-h-[7.5rem] flex-col gap-2 rounded-[18px] border border-border/45 bg-card/70 p-4">
+      {onAction ? (
+        <Button
+          type="button"
+          size="icon"
+          variant="secondary"
+          className="absolute right-3 top-3 h-8 w-8 rounded-full"
+          disabled={actionBusy}
+          onClick={onAction}
+          aria-label={actionLabel}
+        >
+          {actionBusy ? (
+            <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+          ) : (
+            <Plus className="h-4 w-4" aria-hidden />
+          )}
+        </Button>
+      ) : null}
+      <div className="flex items-start gap-3 pr-8">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] bg-muted/80 text-muted-foreground">
+          <Plug className="h-5 w-5" strokeWidth={1.8} aria-hidden />
+        </div>
+        <div className="min-w-0 flex-1">
+          <h3 className="truncate text-[15px] font-semibold text-foreground">{title}</h3>
+          <p className="mt-1 line-clamp-3 text-[12.5px] leading-5 text-muted-foreground">
+            {description}
+          </p>
+        </div>
+      </div>
+      {badge ? (
+        <span
+          className={cn(
+            "mt-auto w-fit rounded-full px-2 py-0.5 text-[11px] font-medium",
+            badgeTone === "success"
+              ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+              : "bg-muted text-muted-foreground",
+          )}
+        >
+          {badge}
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
+function AddSkillDialog({
+  open,
+  onOpenChange,
+  onInstalled,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onInstalled: () => Promise<void>;
+}) {
+  const { t } = useTranslation();
+  const { token } = useClient();
+  const [name, setName] = useState("");
+  const [markdown, setMarkdown] = useState(
+    "---\nname: my-skill\ndescription: What this skill does.\n---\n\n# My skill\n\nInstructions…\n",
+  );
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const submit = async () => {
+    setSaving(true);
+    setError(null);
+    try {
+      await installSkill(token, {
+        markdown,
+        name: name.trim() || undefined,
+      });
+      await onInstalled();
+      setName("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-xl">
+        <DialogHeader>
+          <DialogTitle>{t("settings.skills.addSkill", { defaultValue: "Add skill" })}</DialogTitle>
+          <DialogDescription>
+            {t("settings.skills.addSkillHint", {
+              defaultValue: "Paste a SKILL.md. It is saved under the current workspace skills/ folder.",
+            })}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          <Input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder={t("settings.skills.nameOptional", {
+              defaultValue: "Name (optional; defaults to frontmatter)",
+            })}
+          />
+          <textarea
+            value={markdown}
+            onChange={(e) => setMarkdown(e.target.value)}
+            rows={12}
+            className="w-full rounded-md border border-input bg-background px-3 py-2 font-mono text-[12px] leading-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          />
+          <label className="inline-flex cursor-pointer items-center gap-2 text-[12px] text-muted-foreground">
+            <input
+              type="file"
+              accept=".md,text/markdown,text/plain"
+              className="text-[12px]"
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                setMarkdown(await file.text());
+                if (!name.trim()) {
+                  setName(file.name.replace(/\.md$/i, "").replace(/[^A-Za-z0-9_-]+/g, "-"));
+                }
+              }}
+            />
+            {t("settings.skills.uploadFile", { defaultValue: "Or upload a file" })}
+          </label>
+          {error ? <p className="text-[13px] text-destructive">{error}</p> : null}
+        </div>
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            {t("common.cancel", { defaultValue: "Cancel" })}
+          </Button>
+          <Button type="button" disabled={saving || !markdown.trim()} onClick={() => void submit()}>
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
+            {t("settings.skills.install", { defaultValue: "Install" })}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function AddConnectorDialog({
+  open,
+  onOpenChange,
+  onSaved,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSaved: () => Promise<void>;
+}) {
+  const { t } = useTranslation();
+  const { token } = useClient();
+  const [label, setLabel] = useState("");
+  const [transport, setTransport] = useState<"stdio" | "streamableHttp" | "sse">("stdio");
+  const [command, setCommand] = useState("npx");
+  const [argsText, setArgsText] = useState("-y @modelcontextprotocol/server-filesystem /tmp");
+  const [url, setUrl] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const submit = async () => {
+    setSaving(true);
+    setError(null);
+    try {
+      await upsertMcpPresetJson(token, {
+        label: label.trim() || undefined,
+        enabled: true,
+        type: transport,
+        command: transport === "stdio" ? command.trim() : "",
+        args:
+          transport === "stdio"
+            ? argsText
+                .split(/\s+/)
+                .map((part) => part.trim())
+                .filter(Boolean)
+            : [],
+        url: transport === "stdio" ? "" : url.trim(),
+      });
+      await onSaved();
+      setLabel("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>
+            {t("settings.skills.addConnector", { defaultValue: "Add connector" })}
+          </DialogTitle>
+          <DialogDescription>
+            {t("settings.skills.addConnectorHint", {
+              defaultValue: "Add a custom MCP server (stdio or HTTP).",
+            })}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          <Input
+            value={label}
+            onChange={(e) => setLabel(e.target.value)}
+            placeholder={t("settings.skills.connectorLabel", { defaultValue: "Label" })}
+          />
+          <div className="flex gap-2">
+            {(["stdio", "streamableHttp", "sse"] as const).map((value) => (
+              <Button
+                key={value}
+                type="button"
+                size="sm"
+                variant={transport === value ? "default" : "outline"}
+                className="rounded-full"
+                onClick={() => setTransport(value)}
+              >
+                {value}
+              </Button>
+            ))}
+          </div>
+          {transport === "stdio" ? (
+            <>
+              <Input
+                value={command}
+                onChange={(e) => setCommand(e.target.value)}
+                placeholder="command"
+              />
+              <Input
+                value={argsText}
+                onChange={(e) => setArgsText(e.target.value)}
+                placeholder="args (space-separated)"
+              />
+            </>
+          ) : (
+            <Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://…" />
+          )}
+          {error ? <p className="text-[13px] text-destructive">{error}</p> : null}
+        </div>
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            {t("common.cancel", { defaultValue: "Cancel" })}
+          </Button>
+          <Button type="button" disabled={saving} onClick={() => void submit()}>
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
+            {t("settings.skills.saveConnector", { defaultValue: "Save" })}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -219,7 +799,9 @@ function SkillDetailSheet({
             </div>
           ) : (
             <div className="mt-7 space-y-6">
-              <DetailSection title={t("settings.skills.descriptionTitle", { defaultValue: "Description" })}>
+              <DetailSection
+                title={t("settings.skills.descriptionTitle", { defaultValue: "Description" })}
+              >
                 <p className="text-[14px] leading-6 text-muted-foreground">{activeSkill.description}</p>
               </DetailSection>
 
@@ -247,7 +829,6 @@ function SkillDetailSheet({
               ) : null}
 
               {detail ? <RequirementsSection detail={detail} /> : null}
-
               {detail ? <RawInstructionsBlock markdown={detail.raw_markdown} /> : null}
             </div>
           )}
@@ -275,9 +856,6 @@ function RawInstructionsBlock({ markdown }: { markdown: string }) {
           className={cn(
             "max-h-[min(42vh,32rem)] overflow-auto overscroll-contain px-3.5 py-3 pr-4",
             "whitespace-pre-wrap break-words font-mono text-[12px] leading-[1.7] text-foreground/62",
-            "scrollbar-thin scrollbar-track-transparent",
-            "[&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar]:w-1.5",
-            "[&::-webkit-scrollbar-thumb]:bg-muted-foreground/25",
           )}
         >
           {content}

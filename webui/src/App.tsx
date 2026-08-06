@@ -1402,7 +1402,7 @@ function Shell({
     }
     if (view === "skills") {
       document.title = t("app.documentTitle.chat", {
-        title: t("settings.nav.skills", { defaultValue: "Skills" }),
+        title: t("settings.nav.skills", { defaultValue: "Skills · Connectors" }),
       });
       return;
     }

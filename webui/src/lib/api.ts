@@ -91,10 +91,6 @@ function mcpValuesHeader(values: Record<string, unknown>): HeadersInit | undefin
   return { "X-Minibot-MCP-Values": JSON.stringify(payload) };
 }
 
-function automationValuesHeader(values: AutomationUpdatePayload): HeadersInit {
-  return { "X-Minibot-Automation-Values": encodeURIComponent(JSON.stringify(values)) };
-}
-
 function splitKey(key: string): { channel: string; chatId: string } {
   const idx = key.indexOf(":");
   if (idx === -1) return { channel: "", chatId: key };
@@ -300,13 +296,18 @@ export async function runAutomationAction(
   id: string,
   base: string = "",
 ): Promise<AutomationsPayload> {
-  const query = new URLSearchParams();
-  query.set("id", id);
+  const encoded = encodeURIComponent(id);
+  if (action === "delete") {
+    return request<AutomationsPayload>(
+      `${base}/api/webui/automations/${encoded}`,
+      token,
+      { method: "DELETE" },
+    );
+  }
   return request<AutomationsPayload>(
-    `${base}/api/webui/automations/${action}?${query}`,
+    `${base}/api/webui/automations/${encoded}/${action}`,
     token,
-    undefined,
-    API_READ_TIMEOUT_MS,
+    { method: "POST" },
   );
 }
 
@@ -316,15 +317,37 @@ export async function updateAutomation(
   values: AutomationUpdatePayload,
   base: string = "",
 ): Promise<AutomationsPayload> {
-  const query = new URLSearchParams();
-  query.set("id", id);
   return request<AutomationsPayload>(
-    `${base}/api/webui/automations/update?${query}`,
+    `${base}/api/webui/automations/${encodeURIComponent(id)}`,
     token,
     {
-      headers: automationValuesHeader(values),
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(values),
     },
-    API_READ_TIMEOUT_MS,
+  );
+}
+
+export async function createAutomation(
+  token: string,
+  values: {
+    name: string;
+    message: string;
+    session_id: string;
+    schedule: NonNullable<AutomationUpdatePayload["schedule"]>;
+    enabled?: boolean;
+    delete_after_run?: boolean;
+  },
+  base: string = "",
+): Promise<AutomationsPayload> {
+  return request<AutomationsPayload>(
+    `${base}/api/webui/automations`,
+    token,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(values),
+    },
   );
 }
 
@@ -351,6 +374,91 @@ export async function fetchSkillDetail(
     undefined,
     API_READ_TIMEOUT_MS,
   );
+}
+
+export async function installSkill(
+  token: string,
+  body: { markdown: string; name?: string },
+  base: string = "",
+): Promise<SkillDetail> {
+  return request<SkillDetail>(`${base}/api/webui/skills`, token, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+export type MinibotMcpPreset = {
+  id: string;
+  label: string;
+  enabled: boolean;
+  type?: string | null;
+  command?: string;
+  args?: string[];
+  url?: string;
+  inferred_type?: string | null;
+};
+
+export type MinibotMcpTemplate = {
+  id: string;
+  label: string;
+  hint?: string;
+  preset?: { id?: string; label?: string; [key: string]: unknown };
+  api_key_field?: string;
+};
+
+export type MinibotMcpListPayload = {
+  presets: MinibotMcpPreset[];
+  templates?: MinibotMcpTemplate[];
+  runtime?: unknown;
+};
+
+export async function fetchMinibotMcpList(
+  token: string,
+  base: string = "",
+): Promise<MinibotMcpListPayload> {
+  return request<MinibotMcpListPayload>(
+    `${base}/api/settings/mcp-presets`,
+    token,
+    undefined,
+    API_READ_TIMEOUT_MS,
+  );
+}
+
+export async function applyMcpTemplate(
+  token: string,
+  body: { template_id: string; api_key?: string; enable?: boolean },
+  base: string = "",
+): Promise<MinibotMcpListPayload> {
+  await request(`${base}/api/settings/mcp-presets/from-template`, token, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  return fetchMinibotMcpList(token, base);
+}
+
+export async function upsertMcpPresetJson(
+  token: string,
+  body: {
+    id?: string;
+    label?: string;
+    enabled?: boolean;
+    type?: string;
+    command?: string;
+    args?: string[];
+    url?: string;
+    headers?: Record<string, string>;
+    env?: Record<string, string>;
+  },
+  base: string = "",
+): Promise<MinibotMcpListPayload> {
+  await request(`${base}/api/settings/mcp-presets`, token, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  return fetchMinibotMcpList(token, base);
 }
 
 export async function deleteSession(

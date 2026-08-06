@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   createModelConfiguration,
+  createAutomation,
   deleteSession,
   fetchFilePreview,
   fetchAutomations,
@@ -17,6 +18,7 @@ import {
   fetchWebuiThread,
   fetchWorkspaces,
   importMcpConfig,
+  installSkill,
   listSessions,
   listSlashCommands,
   loginProviderOAuth,
@@ -117,8 +119,21 @@ describe("webui API helpers", () => {
     await runAutomationAction("tok", "disable", "job 1/2");
 
     expect(fetch).toHaveBeenCalledWith(
-      "/api/webui/automations/disable?id=job+1%2F2",
+      "/api/webui/automations/job%201%2F2/disable",
       expect.objectContaining({
+        method: "POST",
+        headers: { Authorization: "Bearer tok" },
+      }),
+    );
+  });
+
+  it("serializes workspace automation deletes", async () => {
+    await runAutomationAction("tok", "delete", "job 1/2");
+
+    expect(fetch).toHaveBeenCalledWith(
+      "/api/webui/automations/job%201%2F2",
+      expect.objectContaining({
+        method: "DELETE",
         headers: { Authorization: "Bearer tok" },
       }),
     );
@@ -133,16 +148,39 @@ describe("webui API helpers", () => {
     await updateAutomation("tok", "job 1/2", values);
 
     expect(fetch).toHaveBeenCalledWith(
-      "/api/webui/automations/update?id=job+1%2F2",
+      "/api/webui/automations/job%201%2F2",
       expect.objectContaining({
+        method: "POST",
         headers: {
           Authorization: "Bearer tok",
-          "X-Minibot-Automation-Values": encodeURIComponent(JSON.stringify(values)),
+          "Content-Type": "application/json",
         },
+        body: JSON.stringify(values),
       }),
     );
-    const header = vi.mocked(fetch).mock.calls[0][1]?.headers as Record<string, string>;
-    expect(header["X-Minibot-Automation-Values"]).not.toContain("每日");
+  });
+
+  it("creates workspace automations", async () => {
+    const values = {
+      name: "每日 AI 新闻推送",
+      message: "汇总昨天值得关注的 AI 新闻",
+      session_id: "chat-1",
+      schedule: { kind: "cron" as const, expr: "0 9 * * *" },
+      delete_after_run: false,
+    };
+    await createAutomation("tok", values);
+
+    expect(fetch).toHaveBeenCalledWith(
+      "/api/webui/automations",
+      expect.objectContaining({
+        method: "POST",
+        headers: {
+          Authorization: "Bearer tok",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(values),
+      }),
+    );
   });
 
   it("fetches the WebUI skill summary", async () => {
@@ -163,6 +201,22 @@ describe("webui API helpers", () => {
       "/api/webui/skills/current%20web",
       expect.objectContaining({
         headers: { Authorization: "Bearer tok" },
+      }),
+    );
+  });
+
+  it("installs a skill via POST JSON body", async () => {
+    await installSkill("tok", { markdown: "---\nname: x\n---\n\n# X\n", name: "x" });
+
+    expect(fetch).toHaveBeenCalledWith(
+      "/api/webui/skills",
+      expect.objectContaining({
+        method: "POST",
+        headers: {
+          Authorization: "Bearer tok",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ markdown: "---\nname: x\n---\n\n# X\n", name: "x" }),
       }),
     );
   });

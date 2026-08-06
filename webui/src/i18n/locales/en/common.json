@@ -61,7 +61,7 @@
     "channels": "IM channels",
     "automations": "Scheduled tasks",
     "skills": {
-      "title": "Skills"
+      "title": "Skills · Connectors"
     },
     "portalHome": "Home",
     "portalLangfuse": "Observability",
@@ -90,7 +90,7 @@
       "advanced": "Security",
       "apps": "Apps",
       "automations": "Scheduled tasks",
-      "skills": "Skills",
+      "skills": "Skills · Connectors",
       "channels": "IM channels"
     },
     "sections": {
@@ -512,12 +512,48 @@
         "updated": "Updated",
         "name": "Name"
       },
-      "search": "Search task, message, linked chat, or schedule",
-      "queue": "Queue",
+      "search": "Search automations / logs",
+      "queue": "Scheduled tasks",
       "loading": "Loading automations...",
       "noMatches": "No automations match this view.",
-      "empty": "No automations yet.",
+      "empty": "Start your first automation",
       "emptyHint": "Create one from where it should run so minibot keeps the right context.",
+      "tabs": {
+        "label": "Automations views",
+        "tasks": "Scheduled tasks",
+        "runs": "Run history"
+      },
+      "filter": "Filter",
+      "systemSection": "System tasks",
+      "add": "Add automation",
+      "createUntitled": "New automation",
+      "createTipLabel": "Tip",
+      "createTip": "Keep the minibot client running while automations are scheduled. If the machine sleeps or the app exits, tasks will not fire on time.",
+      "dismissTip": "Dismiss tip",
+      "closeDetail": "Close",
+      "createHint": "Ask minibot in chat to create a cron job so it keeps the right session context. You can also create one in Dev UI /automations.",
+      "goChat": "Create in chat",
+      "templatesTitle": "Automation templates",
+      "templateHint": "Send this prompt to minibot to create the matching scheduled task:",
+      "copyPrompt": "Copy prompt",
+      "runsEmpty": "No run history yet",
+      "runFilters": {
+        "all": "All",
+        "ok": "Success",
+        "error": "Failed",
+        "running": "Running",
+        "skipped": "Archived"
+      },
+      "runStatus": {
+        "ok": "Success",
+        "error": "Failed",
+        "running": "Running",
+        "skipped": "Archived"
+      },
+      "day": {
+        "today": "Today",
+        "yesterday": "Yesterday"
+      },
       "oneShot": "One-time",
       "systemTask": "System-managed automation",
       "labels": {
@@ -532,12 +568,48 @@
       "resume": "Resume",
       "edit": "Edit",
       "delete": "Delete",
+      "moreActions": "More actions",
       "protected": "Protected",
       "editTitle": "Edit automation",
       "save": "Save",
       "deleteTitle": "Delete automation",
       "deleteDescription": "This removes {{name}} from the cron store. Past chat messages stay in the session.",
       "cancel": "Cancel",
+      "fields": {
+        "name": "Name",
+        "namePlaceholder": "Daily AI news",
+        "message": "Message",
+        "prompt": "Prompt",
+        "promptPlaceholder": "What should minibot do when this task runs?",
+        "session": "Linked chat",
+        "sessionHelp": "Runs in this chat’s context so replies and history stay attached.",
+        "sessionLoading": "Loading chats…",
+        "sessionEmpty": "No chats yet — start one first",
+        "frequency": "Frequency",
+        "everyDay": "Every day",
+        "time": "Time",
+        "scheduleType": "Schedule type",
+        "every": "Every",
+        "unit": "Unit",
+        "cronExpression": "Cron expression",
+        "timezone": "Timezone",
+        "runAt": "Run at"
+      },
+      "scheduleTypes": {
+        "periodic": "Periodic",
+        "every": "Interval",
+        "cron": "Cron",
+        "at": "Once"
+      },
+      "validation": {
+        "nameRequired": "Name is required.",
+        "messageRequired": "Message is required.",
+        "sessionRequired": "Select a linked chat.",
+        "intervalRequired": "Interval must be a positive number.",
+        "cronRequired": "Cron expression is required.",
+        "timeRequired": "Run time is required.",
+        "futureRequired": "Run time must be in the future."
+      },
       "status": {
         "system": "System",
         "running": "Running now",
@@ -589,34 +661,11 @@
         "showMore": "Show full message",
         "showLess": "Show less"
       },
-      "fields": {
-        "name": "Name",
-        "message": "Message",
-        "scheduleType": "Schedule type",
-        "every": "Every",
-        "unit": "Unit",
-        "cronExpression": "Cron expression",
-        "timezone": "Timezone",
-        "runAt": "Run at"
-      },
-      "scheduleTypes": {
-        "every": "Interval",
-        "cron": "Cron",
-        "at": "Once"
-      },
       "everyUnits": {
         "second": "Seconds",
         "minute": "Minutes",
         "hour": "Hours",
         "day": "Days"
-      },
-      "validation": {
-        "nameRequired": "Name is required.",
-        "messageRequired": "Message is required.",
-        "intervalRequired": "Interval must be a positive number.",
-        "cronRequired": "Cron expression is required.",
-        "timeRequired": "Run time is required.",
-        "futureRequired": "Run time must be in the future."
       }
     },
     "oauth": {
@@ -633,9 +682,37 @@
       "notSignedIn": "Not signed in"
     },
     "skills": {
-      "description": "Review the instruction skills this agent can load during a conversation.",
+      "description": "Manage instruction skills and MCP connectors for this agent.",
       "caption": "{{available}} available · {{total}} total",
       "featured": "Agent skills",
+      "hubTabs": "Skills and connectors",
+      "tabSkills": "Skills",
+      "tabConnectors": "Connectors",
+      "searchSkills": "Search skills",
+      "searchConnectors": "Search connectors",
+      "installedCount": "Installed {{count}}",
+      "addSkill": "Add skill",
+      "addConnector": "Add connector",
+      "addSkillHint": "Paste a SKILL.md. It is saved under the current workspace skills/ folder.",
+      "addConnectorHint": "Add a custom MCP server (stdio or HTTP).",
+      "nameOptional": "Name (optional; defaults to frontmatter)",
+      "uploadFile": "Or upload a file",
+      "install": "Install",
+      "saveConnector": "Save",
+      "connectorLabel": "Label",
+      "sectionBuiltin": "Built-in",
+      "sectionAdded": "Added",
+      "sectionInstalledConnectors": "Installed",
+      "sectionOptionalConnectors": "Optional",
+      "emptyBuiltin": "No built-in skills match.",
+      "emptyAdded": "No workspace skills yet. Use Add skill to install one.",
+      "emptyInstalledConnectors": "No connectors installed yet.",
+      "emptyOptionalConnectors": "No optional templates available.",
+      "connectorEnabled": "Enabled",
+      "connectorDisabled": "Disabled",
+      "add": "Add",
+      "loading": "Loading…",
+      "noDescription": "No description.",
       "empty": "No skills are available.",
       "sourceWorkspace": "Custom",
       "sourceBuiltin": "Built-in",

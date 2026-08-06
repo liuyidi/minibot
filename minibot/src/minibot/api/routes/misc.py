@@ -103,6 +103,27 @@ async def skill_detail(name: str, _auth: AuthDep, state: StateDep) -> dict[str, 
     return reg.webui_detail(skill)
 
 
+@router.post("/api/webui/skills")
+async def install_skill(_auth: AuthDep, state: StateDep, body: dict[str, Any]) -> dict[str, Any]:
+    """Install / overwrite a workspace skill from SKILL.md markdown."""
+    from minibot.agent.skills import SkillsRegistry
+
+    markdown = str(body.get("markdown") or "")
+    name_raw = body.get("name")
+    name = str(name_raw).strip() if name_raw is not None and str(name_raw).strip() else None
+    reg = SkillsRegistry(_webui_skills_workspace(state))
+    try:
+        skill = reg.install_skill(markdown, name=name)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    except OSError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="failed to write skill",
+        ) from exc
+    return reg.webui_detail(skill)
+
+
 @router.get("/api/dev/providers")
 async def dev_providers(_auth: AuthDep, state: StateDep) -> dict[str, Any]:
     """Dev UI: registry + active preset summary (keys masked)."""
