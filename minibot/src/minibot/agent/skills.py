@@ -2,14 +2,16 @@
 
 from __future__ import annotations
 
-import re
+import json
+import os
+import shutil
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-BUILTIN_SKILLS_DIR = Path(__file__).resolve().parent.parent / "skills"
+import yaml
 
-_FRONTMATTER = re.compile(r"^---\s*\r?\n(.*?)\r?\n---\s*\r?\n?", re.DOTALL)
+BUILTIN_SKILLS_DIR = Path(__file__).resolve().parent.parent / "skills"
 
 
 @dataclass(frozen=True)
@@ -20,26 +22,70 @@ class SkillInfo:
     source: str  # builtin | workspace
     path: str
     body: str
+    raw_markdown: str
+    requires_bins: tuple[str, ...]
+    requires_env: tuple[str, ...]
 
 
-def _parse_frontmatter(raw: str) -> tuple[dict[str, Any], str]:
-    match = _FRONTMATTER.match(raw)
-    if not match:
-        return {}, raw
+def _as_str_list(value: object) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    return [item.strip() for item in value if isinstance(item, str) and item.strip()]
+
+
+def _parse_nanobot_metadata(raw: object) -> dict[str, Any]:
+    if isinstance(raw, str):
+        try:
+            raw = json.loads(raw)
+        except (json.JSONDecodeError, TypeError):
+            return {}
+    if not isinstance(raw, dict):
+        return {}
+    payload = raw.get("nanobot", raw.get("openclaw", {}))
+    return payload if isinstance(payload, dict) else {}
+
+
+def _extract_requires(meta: dict[str, Any]) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    requires = meta.get("requires")
+    if not isinstance(requires, dict):
+        nested = _parse_nanobot_metadata(meta.get("metadata")).get("requires")
+        requires = nested if isinstance(nested, dict) else {}
+    bins = _as_str_list(requires.get("bins") if isinstance(requires, dict) else None)
+    env = _as_str_list(requires.get("env") if isinstance(requires, dict) else None)
+    return tuple(bins), tuple(env)
+
+
+def _parse_skill_markdown(raw: str, *, source: str, name: str) -> SkillInfo | None:
     meta: dict[str, Any] = {}
-    for line in match.group(1).splitlines():
-        line = line.strip()
-        if not line or line.startswith("#") or ":" not in line:
-            continue
-        key, _, value = line.partition(":")
-        key = key.strip()
-        value = value.strip().strip("\"'")
-        if key == "always":
-            meta[key] = value.lower() in {"true", "yes", "1"}
-        else:
-            meta[key] = value
-    body = raw[match.end() :]
-    return meta, body
+    body = raw
+    raw_markdown = raw
+    if raw.startswith("---"):
+        parts = raw.split("---", 2)
+        if len(parts) >= 3:
+            try:
+                parsed = yaml.safe_load(parts[1])
+            except yaml.YAMLError:
+                parsed = None
+            if isinstance(parsed, dict):
+                meta = parsed
+            body = parts[2].lstrip("\n")
+    always_raw = meta.get("always", False)
+    if isinstance(always_raw, str):
+        always = always_raw.lower() in {"true", "yes", "1"}
+    else:
+        always = bool(always_raw)
+    bins, env = _extract_requires(meta)
+    return SkillInfo(
+        name=str(meta.get("name") or name),
+        description=str(meta.get("description") or "").strip(),
+        always=always,
+        source=source,
+        path="",  # filled by caller
+        body=body.strip(),
+        raw_markdown=raw_markdown,
+        requires_bins=bins,
+        requires_env=env,
+    )
 
 
 def _load_skill_file(path: Path, *, source: str, name: str) -> SkillInfo | None:
@@ -47,14 +93,19 @@ def _load_skill_file(path: Path, *, source: str, name: str) -> SkillInfo | None:
         raw = path.read_text(encoding="utf-8")
     except OSError:
         return None
-    meta, body = _parse_frontmatter(raw)
+    info = _parse_skill_markdown(raw, source=source, name=name)
+    if info is None:
+        return None
     return SkillInfo(
-        name=str(meta.get("name") or name),
-        description=str(meta.get("description") or "").strip(),
-        always=bool(meta.get("always", False)),
-        source=source,
+        name=info.name,
+        description=info.description,
+        always=info.always,
+        source=info.source,
         path=str(path),
-        body=body.strip(),
+        body=info.body,
+        raw_markdown=info.raw_markdown,
+        requires_bins=info.requires_bins,
+        requires_env=info.requires_env,
     )
 
 
@@ -72,7 +123,6 @@ class SkillsRegistry:
 
     def list_skills(self) -> list[SkillInfo]:
         by_name: dict[str, SkillInfo] = {}
-        # Builtin first; workspace overrides same name.
         if self.builtin_dir.is_dir():
             for skill_dir in sorted(self.builtin_dir.iterdir()):
                 path = skill_dir / "SKILL.md"
@@ -91,14 +141,38 @@ class SkillsRegistry:
                             by_name[info.name] = info
         return sorted(by_name.values(), key=lambda s: s.name)
 
+    def get(self, name: str) -> SkillInfo | None:
+        return next((s for s in self.list_skills() if s.name == name), None)
+
+    def requirements(self, skill: SkillInfo) -> dict[str, list[str]]:
+        missing_bins = [b for b in skill.requires_bins if not shutil.which(b)]
+        missing_env = [e for e in skill.requires_env if not os.environ.get(e)]
+        return {
+            "bins": list(skill.requires_bins),
+            "env": list(skill.requires_env),
+            "missing_bins": missing_bins,
+            "missing_env": missing_env,
+        }
+
+    def is_available(self, skill: SkillInfo) -> bool:
+        req = self.requirements(skill)
+        return not req["missing_bins"] and not req["missing_env"]
+
+    def unavailable_reason(self, skill: SkillInfo) -> str:
+        req = self.requirements(skill)
+        parts = [f"CLI: {name}" for name in req["missing_bins"]] + [
+            f"ENV: {name}" for name in req["missing_env"]
+        ]
+        return ", ".join(parts)
+
     def always_skills(self) -> list[SkillInfo]:
-        return [s for s in self.list_skills() if s.always]
+        return [s for s in self.list_skills() if s.always and self.is_available(s)]
 
     def build_skills_summary(self, *, exclude: set[str] | None = None) -> str:
         skip = exclude or set()
         lines: list[str] = []
         for skill in self.list_skills():
-            if skill.name in skip:
+            if skill.name in skip or not self.is_available(skill):
                 continue
             desc = skill.description or "(no description)"
             lines.append(f"- **{skill.name}** ({skill.source}): {desc}")
@@ -112,7 +186,30 @@ class SkillsRegistry:
         ]
         return "\n\n---\n\n".join(parts)
 
+    def webui_summary(self, skill: SkillInfo) -> dict[str, Any]:
+        available = self.is_available(skill)
+        item: dict[str, Any] = {
+            "name": skill.name,
+            "description": skill.description,
+            "source": skill.source,
+            "available": available,
+        }
+        if not available:
+            item["unavailable_reason"] = self.unavailable_reason(skill)
+        return item
+
+    def webui_detail(self, skill: SkillInfo) -> dict[str, Any]:
+        return {
+            **self.webui_summary(skill),
+            "requirements": self.requirements(skill),
+            "raw_markdown": skill.raw_markdown,
+        }
+
+    def webui_list_payload(self) -> dict[str, Any]:
+        return {"skills": [self.webui_summary(s) for s in self.list_skills()]}
+
     def api_payload(self, *, include_body: bool = False, body_limit: int = 12_000) -> dict[str, Any]:
+        """Dev-oriented payload (paths, always flags). Prefer webui_* for product UI."""
         skills = self.list_skills()
         items: list[dict[str, Any]] = []
         for s in skills:
@@ -123,7 +220,11 @@ class SkillsRegistry:
                 "source": s.source,
                 "path": s.path,
                 "body_chars": len(s.body),
+                "available": self.is_available(s),
             }
+            reason = self.unavailable_reason(s)
+            if reason:
+                item["unavailable_reason"] = reason
             if include_body:
                 body = s.body
                 if len(body) > body_limit:

@@ -1139,10 +1139,18 @@ minibot/src/minibot/
 
 ### B. 未实现（按推荐优先级 ↓）
 
-#### B1. 下一主线
+#### B1. 下一主线（WebUI 表面优先 · 2026-08-06）
 
-- [ ] **① Composer P0 小插队** + [`plans/api-mutation-post-body.md`](./plans/api-mutation-post-body.md) GET→POST 债
-- [ ] **② Phase 8**：media / commands / workspaces / `/model` 等收尾 【MSV=8】（**不含** transcribe；8.1/8.3 已部分 ✅）
+> 详单：[`notes/webui-surface-priority.md`](./notes/webui-surface-priority.md)  
+> 原则：**侧栏露出 ⇒ 可用，否则关掉入口**；对话权限 / 附件优先于 `/v1`。
+
+- [x] **① Automations WebUI↔API 对齐**（POST enable/disable/run；DELETE；JSON update；`origin`；session automations；删会话级联。产品内「新建」仍可用 API/Dev UI）
+- [x] **② Skills 最小闭环**（`GET /api/webui/skills/{name}` + `available` / requires；启用开关可随后）
+- [ ] **③ Knowledge 期望管理**（外链/minikb 未配置灰态；不做完整上传页）
+- [ ] **④ 对话默认权限生效**（露出 Security / Default access；allow once / always；Phase 11 余量）
+- [ ] **⑤ 附件 Composer 扩面**（pdf/md/txt/csv/json 等后端已允许类型）
+- [ ] **⑥ Composer P0 小插队** + [`plans/api-mutation-post-body.md`](./plans/api-mutation-post-body.md) GET→POST 债
+- [ ] **⑦ Phase 8 余量**：commands / workspaces / `/model`（**不含** transcribe；8.1/8.3 已部分 ✅）
 
 #### B2. 可穿插 / 体感
 
@@ -1184,7 +1192,7 @@ minibot/src/minibot/
 
 ## 执行方式建议
 
-- **当前下一刀（2026-08-06）：** Composer P0 / Phase 8 收尾 / API GET→POST 债。**Phase 7 `/v1` 降为最低（放最后）**。Phase 10 `observability.html` 已取消。
+- **当前下一刀（2026-08-06 重排）：** **WebUI 表面优先** — Automations 合同 → Skills 详情 → Knowledge 期望 → 默认权限 → 附件扩面 → Composer/API 债 / Phase 8 余量。详见 [`notes/webui-surface-priority.md`](./notes/webui-surface-priority.md)。**Phase 7 `/v1` 最低。** Phase 10 `observability.html` 已取消。
 - **Dev UI 框架：** 主线仍静态 HTML；Next.js 见延期计划，**优先级最低**
 - **学习优先**：阶段目标先问「理解了什么」，再问「功能齐了没有」
 - **Subagent-Driven**：一 Phase 一子代理，阶段末人工验收
@@ -1205,6 +1213,6 @@ minibot/src/minibot/
 | 流式 | 后置 | 后置 | **提到 6 余量之后（仍需短计划）** |
 | Langfuse | 未做 | 软依赖旁路 | **Phase 10 旁路 ✅；observability.html 取消（2026-08-05）** |
 | Checklist 结构 | 按编号混排 | 同左 | **A 已实现 / B 未实现（①…⑭）** |
-| 下一刀（现行） | — | — | **Composer / Phase 8**（Phase 7 `/v1` 放最后） |
+| 下一刀（现行） | — | — | **WebUI 表面优先**（Automations/Skills/权限/附件 → Composer；Phase 7 放最后） |
 
 > 更早版本以 git 历史为准；**v3.6 为唯一现行版本**（后补：取消 observability.html）。

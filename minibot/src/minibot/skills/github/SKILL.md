@@ -1,6 +1,9 @@
 ---
 name: github
 description: Interact with GitHub using the `gh` CLI (issues, PRs, runs, api).
+requires:
+  bins:
+    - gh
 ---
 
 # GitHub

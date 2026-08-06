@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query, status
@@ -71,18 +72,35 @@ async def sidebar_state_update_get(
     return _persist_sidebar_state(state.settings.data_dir, decoded)
 
 
-@router.get("/api/webui/skills")
-async def skills(_auth: AuthDep, state: StateDep) -> dict[str, Any]:
-    """Installed skills (builtin + current default workspace overrides)."""
-    from minibot.agent.skills import SkillsRegistry
+def _webui_skills_workspace(state: StateDep) -> str | Path:
     from minibot.workspace import default_workspace
 
-    workspace = default_workspace()
+    workspace: str | Path = default_workspace()
     # Prefer newest session workspace when available (matches Chat).
     sessions = state.sessions.list()
     if sessions and sessions[0].workspace_path:
         workspace = sessions[0].workspace_path
-    return SkillsRegistry(workspace).api_payload()
+    return workspace
+
+
+@router.get("/api/webui/skills")
+async def skills(_auth: AuthDep, state: StateDep) -> dict[str, Any]:
+    """Installed skills (builtin + current default workspace overrides)."""
+    from minibot.agent.skills import SkillsRegistry
+
+    return SkillsRegistry(_webui_skills_workspace(state)).webui_list_payload()
+
+
+@router.get("/api/webui/skills/{name}")
+async def skill_detail(name: str, _auth: AuthDep, state: StateDep) -> dict[str, Any]:
+    """Single skill detail for WebUI (requirements + raw SKILL.md)."""
+    from minibot.agent.skills import SkillsRegistry
+
+    reg = SkillsRegistry(_webui_skills_workspace(state))
+    skill = reg.get(name)
+    if skill is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="skill not found")
+    return reg.webui_detail(skill)
 
 
 @router.get("/api/dev/providers")
