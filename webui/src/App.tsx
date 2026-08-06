@@ -6,8 +6,10 @@ import {
   type FormEvent,
 } from "react";
 import { useTranslation } from "react-i18next";
+import { HashRouter, Route, Routes } from "react-router-dom";
 
 import { Shell } from "@/components/shell";
+import { HashChangeSync } from "@/components/shell/HashChangeSync";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -283,12 +285,24 @@ export default function App() {
       token={state.token}
       modelName={state.modelName}
     >
-      <Shell
-        runtimeSurface={state.runtimeSurface}
-        onModelNameChange={handleModelNameChange}
-        onLogout={handleLogout}
-        onNativeEngineRestart={handleNativeEngineRestart}
-      />
+      <HashRouter>
+        <Routes>
+          <Route
+            path="*"
+            element={
+              <>
+                <HashChangeSync />
+                <Shell
+                  runtimeSurface={state.runtimeSurface}
+                  onModelNameChange={handleModelNameChange}
+                  onLogout={handleLogout}
+                  onNativeEngineRestart={handleNativeEngineRestart}
+                />
+              </>
+            }
+          />
+        </Routes>
+      </HashRouter>
     </ClientProvider>
   );
 }

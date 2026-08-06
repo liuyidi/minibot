@@ -16,6 +16,11 @@ export type ShellRoute = {
   settingsSection: SettingsSectionKey;
 };
 
+export type ShellLocation = {
+  pathname: string;
+  search: string;
+};
+
 const SETTINGS_SECTION_KEYS: SettingsSectionKey[] = [
   "overview",
   "appearance",
@@ -51,24 +56,23 @@ export function shellViewForSettingsSection(section: SettingsSectionKey): ShellV
   return "settings";
 }
 
-export function readShellRoute(): ShellRoute {
-  if (typeof window === "undefined") return defaultShellRoute();
-  const hash = window.location.hash.startsWith("#")
-    ? window.location.hash.slice(1)
-    : window.location.hash;
-  if (!hash || hash === "/" || hash === "/new") return defaultShellRoute();
+function normalizePathname(pathname: string): string {
+  if (!pathname || pathname === "/") return "/new";
+  return pathname.startsWith("/") ? pathname : `/${pathname}`;
+}
 
-  const [path, query = ""] = hash.split("?", 2);
-  const params = new URLSearchParams(query);
+export function shellRouteFromLocation(location: ShellLocation): ShellRoute {
+  const pathname = normalizePathname(location.pathname);
+  const params = new URLSearchParams(
+    location.search.startsWith("?") ? location.search.slice(1) : location.search,
+  );
   const rawSettingsSection = params.get("section");
   const parsedSection = isSettingsSectionKey(rawSettingsSection)
     ? rawSettingsSection
     : "overview";
   const activeKey = params.get("chat")?.trim() || null;
 
-  if (path === "/settings") {
-    // Sidebar utility sections (apps/skills/automations) keep their own routes.
-    // Hidden Settings-only sections fall back to overview.
+  if (pathname === "/settings") {
     const settingsSection =
       shellViewForSettingsSection(parsedSection) === "settings" &&
       !isEnabledSettingsSection(parsedSection)
@@ -80,23 +84,23 @@ export function readShellRoute(): ShellRoute {
       settingsSection,
     };
   }
-  if (path === "/apps") {
+  if (pathname === "/apps") {
     return { view: "apps", activeKey, settingsSection: "apps" };
   }
-  if (path === "/automations") {
+  if (pathname === "/automations") {
     return { view: "automations", activeKey, settingsSection: "automations" };
   }
-  if (path === "/skills") {
+  if (pathname === "/skills") {
     return { view: "skills", activeKey, settingsSection: "skills" };
   }
-  if (path === "/channels") {
+  if (pathname === "/channels") {
     return { view: "channels", activeKey, settingsSection: "channels" };
   }
-  if (path === "/download" || path === "/download/") {
+  if (pathname === "/download" || pathname === "/download/") {
     return { view: "download", activeKey: null, settingsSection: "overview" };
   }
-  if (path.startsWith("/chat/")) {
-    const encoded = path.slice("/chat/".length);
+  if (pathname.startsWith("/chat/")) {
+    const encoded = pathname.slice("/chat/".length);
     try {
       const key = decodeURIComponent(encoded).trim();
       return key
@@ -106,17 +110,24 @@ export function readShellRoute(): ShellRoute {
       return defaultShellRoute();
     }
   }
+  if (pathname === "/new") {
+    return defaultShellRoute();
+  }
   return defaultShellRoute();
 }
 
-export function shellRouteHash(route: ShellRoute): string {
+/** Path + search for HashRouter `navigate` (no leading `#`). */
+export function shellRouteToLocation(route: ShellRoute): ShellLocation {
   if (route.view === "download") {
-    return "#/download/";
+    return { pathname: "/download/", search: "" };
   }
   if (route.view === "chat") {
-    return route.activeKey
-      ? `#/chat/${encodeURIComponent(route.activeKey)}`
-      : "#/new";
+    return {
+      pathname: route.activeKey
+        ? `/chat/${encodeURIComponent(route.activeKey)}`
+        : "/new",
+      search: "",
+    };
   }
   const params = new URLSearchParams();
   if (route.activeKey) params.set("chat", route.activeKey);
@@ -124,7 +135,30 @@ export function shellRouteHash(route: ShellRoute): string {
     params.set("section", route.settingsSection);
   }
   const query = params.toString();
-  return `#/${route.view}${query ? `?${query}` : ""}`;
+  return {
+    pathname: `/${route.view}`,
+    search: query ? `?${query}` : "",
+  };
+}
+
+export function shellRouteHash(route: ShellRoute): string {
+  const { pathname, search } = shellRouteToLocation(route);
+  return `#${pathname}${search}`;
+}
+
+/** Read route from `window.location.hash` (tests / non-Router callers). */
+export function readShellRoute(): ShellRoute {
+  if (typeof window === "undefined") return defaultShellRoute();
+  const hash = window.location.hash.startsWith("#")
+    ? window.location.hash.slice(1)
+    : window.location.hash;
+  if (!hash || hash === "/" || hash === "/new") return defaultShellRoute();
+
+  const [path, query = ""] = hash.split("?", 2);
+  return shellRouteFromLocation({
+    pathname: path || "/new",
+    search: query ? `?${query}` : "",
+  });
 }
 
 export function writeShellRoute(route: ShellRoute, replace = false): void {

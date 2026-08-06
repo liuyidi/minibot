@@ -18,7 +18,8 @@ For the project overview, install guide, and general docs map, see the root [`RE
 | Debug setup failures | [`docs/troubleshooting.md#webui-problems`](../docs/troubleshooting.md#webui-problems) | Diagnosis order and common fixes |
 
 The source app is built with Vite + React 18 + TypeScript + Tailwind 3 +
-shadcn/ui. It talks to the gateway over the WebSocket multiplex protocol and
+shadcn/ui, React Router (`HashRouter`, same `#/...` URLs), and Zustand for shell
+chrome state. It talks to the gateway over the WebSocket multiplex protocol and
 reads session metadata from the embedded REST surface on the same port.
 
 ## Layout
@@ -38,7 +39,8 @@ Path alias: `@/` → `src/`.
 ```text
 src/
 ├── main.tsx                 # entry: mount, i18n, global CSS
-├── App.tsx                  # shell: hash routes, auth, layout (keep thin)
+├── App.tsx                  # boot / auth; HashRouter + Shell when ready
+├── stores/                  # Zustand (ui chrome, session badges)
 ├── globals.css
 │
 ├── pages/                   # route-level pages (one folder per feature)

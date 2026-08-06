@@ -217,6 +217,7 @@ vi.mock("@/lib/apis/minibot-client", () => {
 
 import { deriveWsUrl, fetchBootstrap } from "@/lib/apis/bootstrap";
 import App from "@/App";
+import { useSessionUiStore, useUiStore } from "@/stores";
 
 describe("App layout", () => {
   beforeEach(async () => {
@@ -237,6 +238,8 @@ describe("App layout", () => {
     localStorage.removeItem("minibot-webui.sidebar");
     localStorage.removeItem("minibot-webui.sidebar.completed-runs.v1");
     localStorage.removeItem("minibot-webui.sidebar.session-updates.v1");
+    useUiStore.getState().reset();
+    useSessionUiStore.getState().reset();
     vi.mocked(fetchBootstrap).mockReset().mockResolvedValue({
       token: "tok",
       ws_path: "/",

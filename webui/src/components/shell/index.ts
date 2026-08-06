@@ -4,6 +4,8 @@ export {
   defaultShellRoute,
   readShellRoute,
   writeShellRoute,
+  shellRouteFromLocation,
+  shellRouteToLocation,
   shellViewForSettingsSection,
   type ShellRoute,
   type ShellView,
