@@ -1,7 +1,7 @@
 import { useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 
-import type { SettingsSectionKey } from "@/components/settings/SettingsView";
+import type { SettingsSectionKey } from "@/pages/settings";
 import type { ChatSummary } from "@/lib/types";
 import {
   shellViewForSettingsSection,

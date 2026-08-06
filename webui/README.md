@@ -129,13 +129,13 @@ Import from the category path, e.g. `@/lib/apis/api`, `@/lib/utils/format`. Fold
 | `i18n/` | locale JSON + bootstrap | business logic |
 | `tests/` | `*.test.ts(x)` | production code |
 
-**Placement checklist:** primitive → `components/ui`; shared business → `components/`; page-only → `pages/<page>/components/`; pure logic → `lib/`; reusable hooks → `hooks/`.
+**Placement checklist:** primitive → `components/ui`; shared business → `components/`; page-only → `pages/<page>/components/`; settings sections → `pages/settings/<section>/`; pure logic → `lib/`; reusable hooks → `hooks/`.
 
 **File size:** prefer ≤ ~350 lines per file; split page shell / UI / hooks / helpers when larger. Prefer extracting into `pages/` or `components/<domain>/` over growing `App.tsx` / `SettingsView.tsx`.
 
 **Page imports:** `import { ChannelsPage } from "@/pages/channels"`. Do not add full pages under `components/settings/`.
 
-Migrated / in-progress page folders: `pages/automations`, `channels`, `skills`, `download`, `models`.
+Migrated / in-progress page folders: `pages/automations`, `channels`, `skills`, `download`, `models`, `settings` (section subfolders).
 
 ## Develop the WebUI (Vite HMR)
 

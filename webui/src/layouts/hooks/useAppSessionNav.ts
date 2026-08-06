@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 
 import { normalizeWorkspaceScope } from "@/layouts/constants";
 import type { ShellNavigateFn } from "@/layouts/hooks/useAppUtilityNav";
-import type { SettingsSectionKey } from "@/components/settings/SettingsView";
+import type { SettingsSectionKey } from "@/pages/settings";
 import { displayTitle } from "@/lib/utils/chat-groups";
 import { projectNameFromPath } from "@/lib/utils/workspace";
 import type {

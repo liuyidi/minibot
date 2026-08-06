@@ -1,4 +1,4 @@
-import type { SettingsSectionKey } from "@/components/settings/SettingsView";
+import type { SettingsSectionKey } from "@/pages/settings";
 import { isEnabledSettingsSection } from "@/lib/configs/ui-entry";
 
 export type ShellView =

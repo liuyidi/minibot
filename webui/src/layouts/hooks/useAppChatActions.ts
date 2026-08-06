@@ -3,7 +3,7 @@ import { type Dispatch, type SetStateAction } from "react";
 import { useAppSessionNav } from "@/layouts/hooks/useAppSessionNav";
 import { useAppSidebarMutations } from "@/layouts/hooks/useAppSidebarMutations";
 import type { ShellNavigateFn } from "@/layouts/hooks/useAppUtilityNav";
-import type { SettingsSectionKey } from "@/components/settings/SettingsView";
+import type { SettingsSectionKey } from "@/pages/settings";
 import type {
   ChatSummary,
   SessionAutomationJob,

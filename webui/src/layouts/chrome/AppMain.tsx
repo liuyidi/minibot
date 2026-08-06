@@ -1,4 +1,4 @@
-import { SettingsView } from "@/components/settings/SettingsView";
+import { SettingsPage } from "@/pages/settings";
 import { ThreadShell } from "@/components/thread/ThreadShell";
 import { DownloadPage } from "@/pages/download";
 import type { AppLayoutModel } from "@/layouts/hooks/useAppLayoutModel";
@@ -77,7 +77,7 @@ export function AppMain({
         </div>
       ) : view !== "chat" ? (
         <div className="absolute inset-0 flex flex-col">
-          <SettingsView
+          <SettingsPage
             theme={theme}
             initialSection={settingsInitialSection}
             initialSettings={workspace.settingsSnapshot}

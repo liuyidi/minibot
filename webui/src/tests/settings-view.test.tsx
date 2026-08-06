@@ -10,7 +10,7 @@ vi.mock("@/lib/configs/ui-entry", async () => {
   };
 });
 
-import { SettingsView } from "@/components/settings/SettingsView";
+import { SettingsPage as SettingsView } from "@/pages/settings";
 import { ClientProvider } from "@/providers/ClientProvider";
 import type { SettingsPayload } from "@/lib/types";
 
