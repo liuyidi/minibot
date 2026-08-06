@@ -23,8 +23,8 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { ThreadViewport, type ThreadViewportHandle } from "@/components/thread/ThreadViewport";
-import { useMinibotStream, type SendImage, type SendOptions } from "@/hooks/useMinibotStream";
-import { useSessionHistory } from "@/hooks/useSessions";
+import { useMinibotStream, type SendImage, type SendOptions } from "@/hooks/sessions";
+import { useSessionHistory } from "@/hooks/sessions";
 import {
   activateModelConfiguration,
   activatePlatformModel,

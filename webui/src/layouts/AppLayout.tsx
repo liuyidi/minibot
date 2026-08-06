@@ -7,7 +7,7 @@ import { AppSidebarChrome } from "@/layouts/chrome/AppSidebarChrome";
 import { HostChrome } from "@/layouts/chrome/HostChrome";
 import { useAppLayoutModel } from "@/layouts/hooks/useAppLayoutModel";
 import { Button } from "@/components/ui/button";
-import { ThemeProvider } from "@/hooks/useTheme";
+import { ThemeProvider } from "@/hooks/ui";
 import { cn } from "@/lib/utils";
 import type { RuntimeSurface } from "@/lib/types";
 

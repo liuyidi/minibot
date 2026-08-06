@@ -32,7 +32,7 @@ minibot/web/dist/      build output served by the gateway
 Agent-facing Cursor rules for the same conventions live under
 [`.cursor/rules/`](../.cursor/rules/) — especially `webui-component-structure.mdc`
 and **`webui-async-rules.mdc`** (apis → domain hooks → pages; Zustand is UI-only).
-For list-style server domains, follow `hooks/useSessions.ts` as the gold pattern:
+For list-style server domains, follow `hooks/sessions/useSessions.ts` as the gold pattern:
 `{ data, loading, error, refresh }` plus cancel on unmount and refresh after writes.
 
 ### `src/` directory structure
@@ -67,7 +67,7 @@ src/
 │   │   └── activity/
 │   └── *.tsx
 │
-├── hooks/                   # reusable React hooks
+├── hooks/                   # reusable hooks by domain (sessions, skills, …)
 ├── lib/                     # no JSX — see `lib/` layout below
 ├── providers/               # React context providers
 ├── i18n/                    # i18n init + locales/<lang>/common.json
@@ -75,6 +75,22 @@ src/
 ├── types/                   # ambient *.d.ts
 └── workers/                 # Web Workers
 ```
+
+### `hooks/` layout
+
+```text
+hooks/
+├── sessions/       # list/history/stream/session pickers
+├── skills/         # skills list + hub catalog
+├── settings/       # settings, usage, workspaces, provider models
+├── channels/       # Feishu/Weixin pairing
+├── automations/    # cron jobs CRUD
+├── ui/             # theme, sidebar, composer helpers
+└── index.ts        # re-exports all domains (prefer domain barrels)
+```
+
+Import from a domain barrel, e.g. `@/hooks/sessions`, `@/hooks/settings`.
+Page-private hooks stay under `pages/<page>/` (e.g. `useSkillDetail`).
 
 ### `lib/` layout
 
@@ -104,7 +120,7 @@ Import from the category path, e.g. `@/lib/apis/api`, `@/lib/utils/format`. Fold
 | `pages/<page>/` | page entry, orchestration, page-only `components/` | atomic controls; multi-page business blocks |
 | `components/ui/` | Button, Dialog, Input, Sheet, … | business copy / API logic |
 | `components/` (+ `settings/`, `thread/`) | UI used by app shell or ≥2 pages | one-off page widgets |
-| `hooks/` | reusable `useXxx` | tiny one-file helpers (keep local) |
+| `hooks/` | domain-grouped reusable `useXxx` (`@/hooks/sessions`, …) | page-private helpers (keep under `pages/<page>/`) |
 | `lib/` | categorized modules above | React components / JSX |
 | `providers/` | global Context | ordinary feature UI |
 | `i18n/` | locale JSON + bootstrap | business logic |

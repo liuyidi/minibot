@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   isPersistedSidebarState,
   normalizeSidebarState,
-} from "@/hooks/useSidebarState";
+} from "@/hooks/ui";
 
 describe("isPersistedSidebarState", () => {
   it("rejects legacy stub payloads that would wipe archive keys", () => {

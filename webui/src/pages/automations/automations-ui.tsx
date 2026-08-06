@@ -62,7 +62,7 @@ import { SegmentedControl, ToggleButton } from "@/components/settings/controls";
 import { fmtDateTime, relativeTime } from "@/lib/utils/format";
 import { bareSessionId } from "@/lib/utils/im-sessions";
 import { cn } from "@/lib/utils";
-import { useSessionOptions } from "@/hooks/useSessionOptions";
+import { useSessionOptions } from "@/hooks/sessions";
 import type {
   AutomationsPayload,
   AutomationUpdatePayload,
@@ -116,118 +116,92 @@ const AUTOMATION_TEMPLATE_CARDS: Array<{
   id: string;
   icon: LucideIcon;
   titleKey: string;
-  title: string;
   descKey: string;
-  desc: string;
-  prompt: string;
+  promptKey: string;
 }> = [
   {
     id: "ai-news",
     icon: Newspaper,
     titleKey: "settings.automations.templates.aiNews.title",
-    title: "每日 AI 新闻推送",
     descKey: "settings.automations.templates.aiNews.desc",
-    desc: "每天汇总值得关注的 AI 动态",
-    prompt: "每天早上汇总昨天值得关注的 AI 新闻，用中文简洁推送。",
+    promptKey: "settings.automations.templates.aiNews.prompt",
   },
   {
     id: "english",
     icon: Languages,
     titleKey: "settings.automations.templates.english.title",
-    title: "每日 5 个英语单词",
     descKey: "settings.automations.templates.english.desc",
-    desc: "每天学习并复习 5 个单词",
-    prompt: "每天教我 5 个实用英语单词，带例句和简单复习题。",
+    promptKey: "settings.automations.templates.english.prompt",
   },
   {
     id: "story",
     icon: Moon,
     titleKey: "settings.automations.templates.story.title",
-    title: "每日儿童睡前故事",
     descKey: "settings.automations.templates.story.desc",
-    desc: "每晚讲一个温馨短故事",
-    prompt: "每天晚上讲一个适合儿童的温馨睡前故事，控制在 400 字内。",
+    promptKey: "settings.automations.templates.story.prompt",
   },
   {
     id: "weekly",
     icon: ClipboardList,
     titleKey: "settings.automations.templates.weekly.title",
-    title: "每周工作周报",
     descKey: "settings.automations.templates.weekly.desc",
-    desc: "汇总本周进展与下周计划",
-    prompt: "每周五帮我整理工作周报草稿：本周完成、风险、下周计划。",
+    promptKey: "settings.automations.templates.weekly.prompt",
   },
   {
     id: "movie",
     icon: Film,
     titleKey: "settings.automations.templates.movie.title",
-    title: "经典电影推荐",
     descKey: "settings.automations.templates.movie.desc",
-    desc: "推荐一部值得重看的经典片",
-    prompt: "每周推荐一部经典电影，说明为什么适合今天看。",
+    promptKey: "settings.automations.templates.movie.prompt",
   },
   {
     id: "history",
     icon: CalendarDays,
     titleKey: "settings.automations.templates.history.title",
-    title: "历史上的今天",
     descKey: "settings.automations.templates.history.desc",
-    desc: "回顾历史上的今天",
-    prompt: "每天分享 3 条「历史上的今天」事件，附一句启发。",
+    promptKey: "settings.automations.templates.history.prompt",
   },
   {
     id: "why",
     icon: Lightbulb,
     titleKey: "settings.automations.templates.why.title",
-    title: "每日一个为什么",
     descKey: "settings.automations.templates.why.desc",
-    desc: "回答一个有趣的为什么",
-    prompt: "每天回答一个有趣的「为什么」，用通俗语言解释。",
+    promptKey: "settings.automations.templates.why.prompt",
   },
   {
     id: "parents",
     icon: UserRound,
     titleKey: "settings.automations.templates.parents.title",
-    title: "父母联系提醒",
     descKey: "settings.automations.templates.parents.desc",
-    desc: "提醒给家人打个电话",
-    prompt: "每周提醒我给父母打个电话，并给一句暖心开场白。",
+    promptKey: "settings.automations.templates.parents.prompt",
   },
   {
     id: "checkup",
     icon: Stethoscope,
     titleKey: "settings.automations.templates.checkup.title",
-    title: "体检预约提醒",
     descKey: "settings.automations.templates.checkup.desc",
-    desc: "提醒安排年度体检",
-    prompt: "每月提醒我确认体检预约进度，必要时给出行动清单。",
+    promptKey: "settings.automations.templates.checkup.prompt",
   },
   {
     id: "interview",
     icon: MessageSquare,
     titleKey: "settings.automations.templates.interview.title",
-    title: "面试准备提醒",
     descKey: "settings.automations.templates.interview.desc",
-    desc: "面试前整理要点",
-    prompt: "在我约定时间前，提醒面试准备：公司背景、常见问题、自我介绍。",
+    promptKey: "settings.automations.templates.interview.prompt",
   },
   {
     id: "meeting",
     icon: ClipboardList,
     titleKey: "settings.automations.templates.meeting.title",
-    title: "会议前准备",
     descKey: "settings.automations.templates.meeting.desc",
-    desc: "会前梳理议程与材料",
-    prompt: "会前 30 分钟提醒我准备议程、材料与待确认问题。",
+    promptKey: "settings.automations.templates.meeting.prompt",
   },
   {
     id: "wallpaper",
     icon: ImageIcon,
     titleKey: "settings.automations.templates.wallpaper.title",
-    title: "可爱萌宠手机壁纸",
     descKey: "settings.automations.templates.wallpaper.desc",
-    desc: "每日一张萌宠灵感描述",
-    prompt: "每天描述一张可爱萌宠手机壁纸构图，便于我去生成图片。",
+    promptKey: "settings.automations.templates.wallpaper.prompt",
   },
 ];
 
@@ -286,19 +260,19 @@ export function AutomationsSettings({
     null;
 
   const filterOptions: Array<{ value: AutomationFilter; label: string }> = [
-    { value: "all", label: tx("settings.automations.filters.all", "全部") },
-    { value: "active", label: tx("settings.automations.filters.active", "进行中") },
-    { value: "paused", label: tx("settings.automations.filters.paused", "已暂停") },
-    { value: "failed", label: tx("settings.automations.filters.failed", "失败") },
-    { value: "system", label: tx("settings.automations.filters.system", "系统任务") },
+    { value: "all", label: t("settings.automations.filters.all") },
+    { value: "active", label: t("settings.automations.filters.active") },
+    { value: "paused", label: t("settings.automations.filters.paused") },
+    { value: "failed", label: t("settings.automations.filters.failed") },
+    { value: "system", label: t("settings.automations.filters.system") },
   ];
 
   const runFilterOptions: Array<{ value: AutomationRunFilter; label: string }> = [
-    { value: "all", label: tx("settings.automations.runFilters.all", "全部") },
-    { value: "ok", label: tx("settings.automations.runFilters.ok", "成功") },
-    { value: "error", label: tx("settings.automations.runFilters.error", "失败") },
-    { value: "running", label: tx("settings.automations.runFilters.running", "运行中") },
-    { value: "skipped", label: tx("settings.automations.runFilters.skipped", "已归档") },
+    { value: "all", label: t("settings.automations.runFilters.all") },
+    { value: "ok", label: t("settings.automations.runFilters.ok") },
+    { value: "error", label: t("settings.automations.runFilters.error") },
+    { value: "running", label: t("settings.automations.runFilters.running") },
+    { value: "skipped", label: t("settings.automations.runFilters.skipped") },
   ];
 
   const runLogs = useMemo(() => {
@@ -344,7 +318,7 @@ export function AutomationsSettings({
       .sort((a, b) => b.run_at_ms - a.run_at_ms);
   }, [jobs, query, runFilter]);
 
-  const runGroups = useMemo(() => groupAutomationRunLogs(runLogs, locale, tx), [locale, runLogs, tx]);
+  const runGroups = useMemo(() => groupAutomationRunLogs(runLogs, locale, t), [locale, runLogs, t]);
 
   useEffect(() => {
     if (systemSheetJobId && !jobs.some((job) => job.id === systemSheetJobId && job.protected)) {
@@ -393,7 +367,7 @@ export function AutomationsSettings({
               onClick={() => onRequestCreate()}
             >
               <Plus className="mr-1.5 h-4 w-4" aria-hidden />
-              {tx("settings.automations.add", "添加自动化")}
+              {t("settings.automations.add")}
             </Button>
           ) : null}
           <DropdownMenu>
@@ -401,7 +375,7 @@ export function AutomationsSettings({
               <button
                 type="button"
                 className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border/45 bg-background/90 text-muted-foreground shadow-[0_8px_22px_rgba(15,23,42,0.04)] transition-colors hover:bg-muted/60 hover:text-foreground"
-                aria-label={tx("settings.automations.filter", "筛选")}
+                aria-label={t("settings.automations.filter")}
               >
                 <Filter className="h-4 w-4" aria-hidden />
               </button>
@@ -429,9 +403,9 @@ export function AutomationsSettings({
                   <DropdownMenuSeparator />
                   {(
                     [
-                      ["next", tx("settings.automations.sort.next", "下次运行")],
-                      ["last", tx("settings.automations.sort.last", "上次运行")],
-                      ["name", tx("settings.automations.sort.name", "名称")],
+                      ["next", t("settings.automations.sort.next")],
+                      ["last", t("settings.automations.sort.last")],
+                      ["name", t("settings.automations.sort.name")],
                     ] as const
                   ).map(([value, label]) => (
                     <DropdownMenuItem key={value} onClick={() => onSortChange(value)}>
@@ -469,7 +443,7 @@ export function AutomationsSettings({
           {tx("settings.automations.loading", "Loading automations...")}
         </div>
       ) : tab === "runs" ? (
-        <AutomationRunLogsPanel groups={runGroups} emptyLabel={tx("settings.automations.runsEmpty", "暂无运行记录")} />
+        <AutomationRunLogsPanel groups={runGroups} emptyLabel={t("settings.automations.runsEmpty")} />
       ) : (
         <div className="space-y-5">
           {systemJobs.length ? (
@@ -498,7 +472,7 @@ export function AutomationsSettings({
                           {job.name || job.id}
                         </span>
                         <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
-                          {tx("settings.automations.protected", "系统")}
+                          {t("settings.automations.protected")}
                         </span>
                       </span>
                       <span className="mt-1 block truncate text-[12px] text-muted-foreground">
@@ -518,7 +492,7 @@ export function AutomationsSettings({
           {userJobs.length ? (
             <section
               className="overflow-hidden rounded-2xl border border-border/40 bg-background/80"
-              aria-label={tx("settings.automations.queue", "定时任务")}
+              aria-label={t("settings.automations.queue")}
             >
               {userJobs.map((job, index) => (
                 <AutomationListItem
@@ -538,8 +512,8 @@ export function AutomationsSettings({
               <AlarmClock className="mx-auto h-12 w-12 text-muted-foreground/55" aria-hidden />
               <p className="mt-4 text-[14px] text-muted-foreground">
                 {jobs.some((job) => !job.protected)
-                  ? tx("settings.automations.noMatches", "没有匹配的自动化任务")
-                  : tx("settings.automations.empty", "开启你的第一个自动化任务吧")}
+                  ? t("settings.automations.noMatches")
+                  : t("settings.automations.empty")}
               </p>
               <Button
                 type="button"
@@ -547,7 +521,7 @@ export function AutomationsSettings({
                 onClick={() => onRequestCreate()}
               >
                 <Plus className="mr-1.5 h-4 w-4" aria-hidden />
-                {tx("settings.automations.add", "添加自动化")}
+                {t("settings.automations.add")}
               </Button>
             </section>
           )}
@@ -555,7 +529,7 @@ export function AutomationsSettings({
           {!userJobs.length ? (
             <section className="space-y-3">
               <h2 className="px-1 text-[14px] font-semibold text-foreground">
-                {tx("settings.automations.templatesTitle", "自动化任务模版")}
+                {t("settings.automations.templatesTitle")}
               </h2>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {AUTOMATION_TEMPLATE_CARDS.map((card) => {
@@ -566,8 +540,8 @@ export function AutomationsSettings({
                       type="button"
                       onClick={() =>
                         onRequestCreate({
-                          name: tx(card.titleKey, card.title),
-                          message: card.prompt,
+                          name: t(card.titleKey),
+                          message: t(card.promptKey),
                         })
                       }
                       className="flex items-start gap-3 rounded-2xl border border-border/40 bg-background/85 px-3.5 py-3.5 text-left shadow-[0_10px_28px_rgba(15,23,42,0.04)] transition-colors hover:bg-muted/30"
@@ -577,10 +551,10 @@ export function AutomationsSettings({
                       </span>
                       <span className="min-w-0">
                         <span className="block truncate text-[13.5px] font-semibold text-foreground">
-                          {tx(card.titleKey, card.title)}
+                          {t(card.titleKey)}
                         </span>
                         <span className="mt-1 block text-[12px] leading-5 text-muted-foreground">
-                          {tx(card.descKey, card.desc)}
+                          {t(card.descKey)}
                         </span>
                       </span>
                     </button>
@@ -612,7 +586,7 @@ function AutomationRunLogsPanel({
   groups,
   emptyLabel,
 }: {
-  groups: Array<{ label: string; rows: Array<{ key: string; title: string; status: string; time: string }> }>;
+  groups: Array<{ label: string; rows: Array<{ key: string; title: string; status: string; time: string; running: boolean }> }>;
   emptyLabel: string;
 }) {
   if (!groups.length) {
@@ -645,7 +619,7 @@ function AutomationRunLogsPanel({
                 </div>
                 <div className="flex shrink-0 items-center gap-2 text-[12px] text-muted-foreground">
                   <span className="tabular-nums">{row.time}</span>
-                  {row.status.includes("运行") || row.status.toLowerCase().includes("run") ? (
+                  {row.running ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin text-emerald-600" aria-hidden />
                   ) : null}
                 </div>
@@ -668,25 +642,25 @@ function groupAutomationRunLogs(
     error: string | null;
   }>,
   locale: string,
-  tx: (key: string, fallback: string, values?: Record<string, unknown>) => string,
-): Array<{ label: string; rows: Array<{ key: string; title: string; status: string; time: string }> }> {
+  t: (key: string, values?: Record<string, unknown>) => string,
+): Array<{ label: string; rows: Array<{ key: string; title: string; status: string; time: string; running: boolean }> }> {
   const now = new Date();
   const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
   const startYesterday = startToday - 86_400_000;
-  const groups = new Map<string, Array<{ key: string; title: string; status: string; time: string }>>();
+  const groups = new Map<string, Array<{ key: string; title: string; status: string; time: string; running: boolean }>>();
 
   const statusLabel = (status: string) => {
-    if (status === "ok") return tx("settings.automations.runStatus.ok", "成功");
-    if (status === "error") return tx("settings.automations.runStatus.error", "失败");
-    if (status === "running") return tx("settings.automations.runStatus.running", "运行中");
-    if (status === "skipped") return tx("settings.automations.runStatus.skipped", "已归档");
+    if (status === "ok") return t("settings.automations.runStatus.ok");
+    if (status === "error") return t("settings.automations.runStatus.error");
+    if (status === "running") return t("settings.automations.runStatus.running");
+    if (status === "skipped") return t("settings.automations.runStatus.skipped");
     return status;
   };
 
   for (const row of rows) {
     let label = fmtDateTime(row.run_at_ms, locale).slice(0, 10);
-    if (row.run_at_ms >= startToday) label = tx("settings.automations.day.today", "今天");
-    else if (row.run_at_ms >= startYesterday) label = tx("settings.automations.day.yesterday", "昨天");
+    if (row.run_at_ms >= startToday) label = t("settings.automations.day.today");
+    else if (row.run_at_ms >= startYesterday) label = t("settings.automations.day.yesterday");
     const list = groups.get(label) ?? [];
     const time = new Date(row.run_at_ms).toLocaleTimeString(locale, {
       hour: "2-digit",
@@ -698,6 +672,7 @@ function groupAutomationRunLogs(
       title: row.job.name || row.job.id,
       status: statusLabel(row.status),
       time,
+      running: row.status === "running",
     });
     groups.set(label, list);
   }

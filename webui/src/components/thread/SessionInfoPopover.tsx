@@ -14,7 +14,7 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useSessionAutomationJobs } from "@/hooks/useSessionAutomationJobs";
+import { useSessionAutomationJobs } from "@/hooks/sessions";
 import { currentLocale } from "@/i18n";
 import { fmtDateTime } from "@/lib/utils/format";
 import type { SessionAutomationJob } from "@/lib/types";

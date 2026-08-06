@@ -73,10 +73,10 @@ import {
   type AttachmentError,
   MAX_IMAGES_PER_MESSAGE,
   type RestoredReadyImage,
-} from "@/hooks/useAttachedImages";
-import { useClipboardAndDrop } from "@/hooks/useClipboardAndDrop";
-import type { SendImage, SendOptions } from "@/hooks/useMinibotStream";
-import { useVoiceRecorder, type VoiceRecorderErrorKey } from "@/hooks/useVoiceRecorder";
+} from "@/hooks/ui";
+import { useClipboardAndDrop } from "@/hooks/ui";
+import type { SendImage, SendOptions } from "@/hooks/sessions";
+import { useVoiceRecorder, type VoiceRecorderErrorKey } from "@/hooks/ui";
 import type {
   CliAppInfo,
   GoalStateWsPayload,

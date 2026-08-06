@@ -39,7 +39,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { useProviderModels } from "@/hooks/useProviderModels";
+import { useProviderModels } from "@/hooks/settings";
 import { providerBrand, providerDisplayLabel } from "@/lib/constants/provider-brand";
 import { cn } from "@/lib/utils";
 import type { ProviderModelsPayload, SettingsPayload } from "@/lib/types";

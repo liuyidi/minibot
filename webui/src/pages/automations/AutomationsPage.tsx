@@ -9,7 +9,7 @@ import {
   AutomationDeleteDialog,
   AutomationEditDialog,
 } from "@/pages/automations/automations-ui";
-import { useAutomations } from "@/hooks/useAutomations";
+import { useAutomations } from "@/hooks/automations";
 import type { AutomationUpdatePayload, SessionAutomationJob } from "@/lib/types";
 
 export function AutomationsPage() {

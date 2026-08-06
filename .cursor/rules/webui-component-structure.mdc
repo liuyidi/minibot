@@ -38,7 +38,7 @@ webui/src/
 │   │   └── activity/
 │   └── *.tsx
 │
-├── hooks/                   # reusable React hooks
+├── hooks/                   # reusable hooks by domain — see `hooks/` layout below
 ├── lib/                     # no JSX — see `lib/` layout below
 ├── providers/               # React context providers
 ├── i18n/                    # i18n init + locales/<lang>/common.json
@@ -46,6 +46,21 @@ webui/src/
 ├── types/                   # ambient *.d.ts
 └── workers/                 # Web Workers
 ```
+
+## `hooks/` layout
+
+```text
+hooks/
+├── sessions/       # list / history / stream / pickers
+├── skills/         # skills list + hub catalog
+├── settings/       # settings, usage, workspaces, provider models
+├── channels/       # Feishu / Weixin
+├── automations/    # cron jobs
+├── ui/             # theme, sidebar, composer helpers
+└── index.ts        # re-exports (prefer `@/hooks/<domain>`)
+```
+
+Import from domain barrels (`@/hooks/sessions`, `@/hooks/settings`). Page-private hooks stay under `pages/<page>/`.
 
 ## `lib/` layout
 
@@ -80,7 +95,7 @@ Import from category paths (`@/lib/apis/api`, `@/lib/utils/format`). `@/lib/util
 | `stores/` | Zustand chrome / session-badge state | server session lists / WS client |
 | `components/ui/` | Button, Dialog, Input, Sheet, … | business copy / API logic |
 | `components/` (+ `settings/`, `thread/`) | UI reused by app layout or ≥2 pages | one-off page widgets |
-| `hooks/` | reusable `useXxx` | tiny helpers used in one file (keep local) |
+| `hooks/` | domain-grouped reusable `useXxx` (`@/hooks/sessions`, …) | page-private helpers (`pages/<page>/useXxx.ts`) |
 | `lib/` | categorized modules above | React components / JSX |
 | `providers/` | global Context | ordinary feature UI |
 | `i18n/` | locale JSON + i18n bootstrap | business logic |
@@ -101,7 +116,8 @@ Import from category paths (`@/lib/apis/api`, `@/lib/utils/format`). `@/lib/util
 4. App layout or ≥2 pages import UI? → `components/` (domain subfolder OK)
 5. Only this page? → `pages/<page>/components/`
 6. No JSX, testable pure logic? → `lib/` (`apis` / `configs` / `constants` / `utils` / `types` / `chat`)
-7. Reusable React state logic? → `hooks/` (or `stores/` for cross-tree chrome)
+7. Reusable React state logic? → `hooks/<domain>/` (or `stores/` for cross-tree chrome)
+8. Only this page's data lifecycle? → `pages/<page>/useXxx.ts`
 
 ```tsx
 // ❌ BAD — page-only widget in shared components/

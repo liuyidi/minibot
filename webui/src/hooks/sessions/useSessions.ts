@@ -15,9 +15,9 @@ import type {
   SessionDeleteResult,
   WorkspaceScopePayload,
 } from "@/lib/types";
-import { CHAT_CREATE_TIMEOUT_MS } from "@/hooks/useSessionsHelpers";
+import { CHAT_CREATE_TIMEOUT_MS } from "./useSessionsHelpers";
 
-export { useSessionHistory } from "@/hooks/useSessionHistory";
+export { useSessionHistory } from "./useSessionHistory";
 
 /** Sidebar state: fetches the full session list and exposes create / delete actions. */
 export function useSessions(): {

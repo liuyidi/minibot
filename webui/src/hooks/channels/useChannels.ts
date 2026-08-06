@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import {
   cancelSetup as cancelSetupApi,
@@ -31,6 +32,7 @@ function errMsg(err: unknown): string {
 }
 
 export function useChannels(token: string) {
+  const { t } = useTranslation();
   const [feishu, setFeishu] = useState<FeishuStatus | null>(null);
   const [weixin, setWeixin] = useState<WeixinStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -230,8 +232,11 @@ export function useChannels(token: string) {
 
   const removeChannel = useCallback(
     async (channel: ChannelKind) => {
-      const label = channel === "feishu" ? "飞书" : "微信";
-      if (!window.confirm(`确定移除${label}配置？凭证将被清除。`)) return;
+      const channelKey = channel === "feishu" ? "feishu" : "weixin";
+      const channelLabel = t(`settings.automations.channels.${channelKey}`);
+      if (!window.confirm(t("settings.imChannels.removeConfirm", { channel: channelLabel }))) {
+        return;
+      }
       setBusy(true);
       setError(null);
       try {
@@ -244,7 +249,7 @@ export function useChannels(token: string) {
         setBusy(false);
       }
     },
-    [token],
+    [t, token],
   );
 
   const cancelSetup = useCallback(() => {

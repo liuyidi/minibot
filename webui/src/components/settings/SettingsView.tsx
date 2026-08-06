@@ -69,7 +69,7 @@ import { AutomationsPage } from "@/pages/automations";
 import { ChannelsPage } from "@/pages/channels";
 import { ModelsPage, NewModelConfigurationDialog } from "@/pages/models";
 import { SkillsPage } from "@/pages/skills";
-import { useSettingsUsage } from "@/hooks/useSettingsUsage";
+import { useSettingsUsage } from "@/hooks/settings";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,

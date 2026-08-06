@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useSkillsCatalog } from "@/hooks/useSkillsCatalog";
+import { useSkillsCatalog } from "@/hooks/skills";
 import type { SkillSummary } from "@/lib/types";
 
 import {

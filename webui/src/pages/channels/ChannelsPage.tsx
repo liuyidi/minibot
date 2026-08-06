@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import QRCode from "qrcode";
+import { useTranslation } from "react-i18next";
 
-import { useChannels } from "@/hooks/useChannels";
+import { useChannels } from "@/hooks/channels";
 import type { WeixinSetupSession } from "@/lib/apis/channels";
 
 import { ChannelCard, ChannelPairingModal, ChannelSetupModal } from "./channels-ui";
@@ -12,6 +13,7 @@ function resolveBase64Qr(raw: string | null | undefined): string | null {
 }
 
 export function ChannelsPage({ token }: { token: string }) {
+  const { t } = useTranslation();
   const {
     feishu,
     weixin,
@@ -104,10 +106,8 @@ export function ChannelsPage({ token }: { token: string }) {
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-lg font-semibold">渠道</h2>
-        <p className="text-sm text-muted-foreground">
-          连接飞书、微信等即时通讯渠道，接收并回复消息。
-        </p>
+        <h2 className="text-lg font-semibold">{t("settings.imChannels.pageTitle")}</h2>
+        <p className="text-sm text-muted-foreground">{t("settings.imChannels.pageDescription")}</p>
       </div>
 
       {error ? <p className="text-sm text-destructive">{error}</p> : null}

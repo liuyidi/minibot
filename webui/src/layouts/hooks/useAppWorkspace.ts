@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { useWorkspaces } from "@/hooks/useWorkspaces";
+import { useWorkspaces } from "@/hooks/settings";
 import { normalizeWorkspaceScope } from "@/layouts/constants";
 import type {
   ChatSummary,

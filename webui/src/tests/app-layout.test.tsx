@@ -135,9 +135,9 @@ function baseSettingsPayload() {
   };
 }
 
-vi.mock("@/hooks/useSessions", async (importOriginal) => {
+vi.mock("@/hooks/sessions", async (importOriginal) => {
   const React = await import("react");
-  const actual = await importOriginal<typeof import("@/hooks/useSessions")>();
+  const actual = await importOriginal<typeof import("@/hooks/sessions")>();
   return {
     ...actual,
     useSessions: () => {
@@ -161,9 +161,11 @@ vi.mock("@/hooks/useSessions", async (importOriginal) => {
   };
 });
 
-vi.mock("@/hooks/useTheme", async () => {
+vi.mock("@/hooks/ui", async (importOriginal) => {
   const React = await import("react");
+  const actual = await importOriginal<typeof import("@/hooks/ui")>();
   return {
+    ...actual,
     ThemeProvider: ({ children }: { children: React.ReactNode }) =>
       React.createElement(React.Fragment, null, children),
     useTheme: () => ({

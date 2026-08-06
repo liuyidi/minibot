@@ -13,7 +13,7 @@ import {
   OLDER_HISTORY_PAGE_LIMIT,
   hasPendingToolCallsFromThread,
   persistedMessagesToUi,
-} from "@/hooks/useSessionsHelpers";
+} from "./useSessionsHelpers";
 
 /** Lazy-load a session's on-disk messages the first time the UI displays it. */
 export function useSessionHistory(key: string | null): {

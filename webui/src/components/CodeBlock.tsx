@@ -2,7 +2,7 @@ import { Suspense, lazy, useCallback, useState, type ReactNode } from "react";
 import { Check, Copy } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-import { useThemeValue } from "@/hooks/useTheme";
+import { useThemeValue } from "@/hooks/ui";
 import { hasAnsi, parseAnsiSegments, stripAnsi } from "@/lib/utils/ansi";
 import { cn } from "@/lib/utils";
 

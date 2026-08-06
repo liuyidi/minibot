@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import { CodeBlock } from "@/components/CodeBlock";
-import { ThemeProvider } from "@/hooks/useTheme";
+import { ThemeProvider } from "@/hooks/ui";
 
 const mockedStyles = vi.hoisted(() => ({
   dark: { pre: { background: "#111" } },

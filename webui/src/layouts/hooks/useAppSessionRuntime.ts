@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef } from "react";
 
 import { RESTART_STARTED_KEY } from "@/layouts/constants";
-import { useDeferredTitleRefresh } from "@/hooks/useDeferredTitleRefresh";
+import { useDeferredTitleRefresh } from "@/hooks/ui";
 import type { ChatSummary } from "@/lib/types";
 import { useClient } from "@/providers/ClientProvider";
 import { useSessionUiStore, useUiStore } from "@/stores";
