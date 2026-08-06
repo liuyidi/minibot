@@ -66,7 +66,8 @@
     "portalHome": "门户首页",
     "portalLangfuse": "可观测 (Langfuse)",
     "portalKnowledge": "知识库",
-    "portalDevui": "开发笔记 /ui"
+    "portalDevui": "开发笔记 /ui",
+    "downloadApp": "下载应用"
   },
   "settings": {
     "backToChat": "返回聊天",
@@ -666,7 +667,104 @@
         "minute": "分钟",
         "hour": "小时",
         "day": "天"
+      },
+      "templates": {
+        "aiNews": {
+          "title": "每日 AI 新闻推送",
+          "desc": "每天汇总值得关注的 AI 动态",
+          "prompt": "每天早上汇总昨天值得关注的 AI 新闻，用中文简洁推送。"
+        },
+        "english": {
+          "title": "每日 5 个英语单词",
+          "desc": "每天学习并复习 5 个单词",
+          "prompt": "每天教我 5 个实用英语单词，带例句和简单复习题。"
+        },
+        "story": {
+          "title": "每日儿童睡前故事",
+          "desc": "每晚讲一个温馨短故事",
+          "prompt": "每天晚上讲一个适合儿童的温馨睡前故事，控制在 400 字内。"
+        },
+        "weekly": {
+          "title": "每周工作周报",
+          "desc": "汇总本周进展与下周计划",
+          "prompt": "每周五帮我整理工作周报草稿：本周完成、风险、下周计划。"
+        },
+        "movie": {
+          "title": "经典电影推荐",
+          "desc": "推荐一部值得重看的经典片",
+          "prompt": "每周推荐一部经典电影，说明为什么适合今天看。"
+        },
+        "history": {
+          "title": "历史上的今天",
+          "desc": "回顾历史上的今天",
+          "prompt": "每天分享 3 条「历史上的今天」事件，附一句启发。"
+        },
+        "why": {
+          "title": "每日一个为什么",
+          "desc": "回答一个有趣的为什么",
+          "prompt": "每天回答一个有趣的「为什么」，用通俗语言解释。"
+        },
+        "parents": {
+          "title": "父母联系提醒",
+          "desc": "提醒给家人打个电话",
+          "prompt": "每周提醒我给父母打个电话，并给一句暖心开场白。"
+        },
+        "checkup": {
+          "title": "体检预约提醒",
+          "desc": "提醒安排年度体检",
+          "prompt": "每月提醒我确认体检预约进度，必要时给出行动清单。"
+        },
+        "interview": {
+          "title": "面试准备提醒",
+          "desc": "面试前整理要点",
+          "prompt": "在我约定时间前，提醒面试准备：公司背景、常见问题、自我介绍。"
+        },
+        "meeting": {
+          "title": "会议前准备",
+          "desc": "会前梳理议程与材料",
+          "prompt": "会前 30 分钟提醒我准备议程、材料与待确认问题。"
+        },
+        "wallpaper": {
+          "title": "可爱萌宠手机壁纸",
+          "desc": "每日一张萌宠灵感描述",
+          "prompt": "每天描述一张可爱萌宠手机壁纸构图，便于我去生成图片。"
+        }
       }
+    },
+    "imChannels": {
+      "pageTitle": "渠道",
+      "pageDescription": "连接飞书、微信等即时通讯渠道，接收并回复消息。",
+      "feishuDesc": "通过飞书机器人接收并回复用户消息",
+      "weixinDesc": "扫码登录个人微信，接收并回复文本消息",
+      "connected": "已连接",
+      "pairingManage": "配对管理",
+      "moreActions": "{{channel}}更多操作",
+      "editConfig": "编辑配置",
+      "removeConfig": "移除配置",
+      "enableChannel": "启用{{channel}}",
+      "configure": "配置",
+      "reconfigure": "重新配置",
+      "feishuSetupHint": "使用飞书扫描下方二维码，自动创建并配置机器人",
+      "weixinSetupHint": "使用微信扫描下方二维码登录并绑定机器人",
+      "loadingQr": "正在获取二维码…",
+      "setupSuccess": "配置成功！",
+      "botLabel": "机器人：{{name}}",
+      "userLabel": "用户：{{name}}",
+      "loggedIn": "已登录",
+      "currentBot": "当前机器人",
+      "rescanToReplace": "重新扫码可更换",
+      "loginInfo": "登录信息",
+      "scannerUser": "扫码用户：{{id}}",
+      "refreshQr": "刷新二维码",
+      "save": "保存",
+      "status": "状态：{{status}}",
+      "pairingTitle": "配对管理 · {{channel}}",
+      "pendingCount": "待处理 · {{count}}",
+      "noPending": "暂无待处理请求",
+      "dm": "私聊",
+      "ignore": "忽略",
+      "allow": "允许",
+      "removeConfirm": "确定移除{{channel}}配置？凭证将被清除。"
     },
     "oauth": {
       "authentication": "OAuth 认证",
@@ -1157,6 +1255,43 @@
     "copyAria": "复制代码",
     "copy": "复制",
     "copied": "已复制"
+  },
+  "imSessions": {
+    "myWeixin": "我的微信",
+    "feishuSession": "飞书会话",
+    "emptyAll": "暂无频道会话。在 IM 频道配置飞书或微信后，对话会出现在这里。",
+    "emptyFeishu": "暂无飞书会话",
+    "emptyWeixin": "暂无微信会话"
+  },
+  "approval": {
+    "ariaLabel": "操作审批",
+    "title": "需要你的审批",
+    "defaultReason": "该操作需要明确确认后才会执行。",
+    "processing": "处理中…",
+    "approve": "允许并继续",
+    "reject": "拒绝",
+    "expiresAt": "有效至 {{time}}"
+  },
+  "download": {
+    "eyebrow": "下载应用",
+    "title": "在所有设备上继续使用 minibot",
+    "subtitle": "Web、移动端和桌面端共用同一套身份与会话。移动端可连接 minibot-react-native，桌面端正在准备中。",
+    "primary": "打开 Web App",
+    "secondary": "返回聊天",
+    "mobileTitle": "移动 App",
+    "mobileBody": "支持 iOS 和 Android，可连接到 minibot-react-native 作为移动入口。",
+    "mobileNote": "可连接 minibot-react-native",
+    "mobileFooter": "连接到 minibot-react-native",
+    "desktopTitle": "桌面 App",
+    "desktopBody": "Mac 和 Windows 版本正在准备，当前尚未开放下载。",
+    "desktopNote": "即将开放",
+    "desktopFooter": "桌面应用尚未开放",
+    "footer": "移动端将对接 minibot-react-native，桌面端开放后会在这里提供下载。",
+    "tagline": "统一身份 · 统一会话 · 多端同步",
+    "platformStatusReady": "可用",
+    "platformStatusSoon": "待开放",
+    "platformAvailable": "可用",
+    "platformUnavailable": "待开放"
   },
   "common": {
     "dismiss": "关闭"

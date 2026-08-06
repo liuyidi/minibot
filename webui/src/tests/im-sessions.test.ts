@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { TFunction } from "i18next";
 
 import {
   bareSessionId,
@@ -8,6 +9,12 @@ import {
   isWebChatSession,
 } from "@/lib/utils/im-sessions";
 import type { ChatSummary } from "@/lib/types";
+
+const t = ((key: string) => {
+  if (key === "imSessions.myWeixin") return "我的微信";
+  if (key === "imSessions.feishuSession") return "飞书会话";
+  return key;
+}) as TFunction;
 
 function session(partial: Partial<ChatSummary> & Pick<ChatSummary, "key">): ChatSummary {
   const key = partial.key;
@@ -44,8 +51,8 @@ describe("im-sessions", () => {
     const grouped = groupImSessions(rows);
     expect(grouped.feishu).toHaveLength(1);
     expect(grouped.weixin).toHaveLength(1);
-    expect(imSessionLabel(grouped.feishu[0], "feishu")).toMatch(/^ou_42081ae/);
-    expect(imSessionLabel(grouped.weixin[0], "weixin")).toBe("我的微信");
+    expect(imSessionLabel(grouped.feishu[0], "feishu", t)).toMatch(/^ou_42081ae/);
+    expect(imSessionLabel(grouped.weixin[0], "weixin", t)).toBe("我的微信");
   });
 
   it("pins channel sessions, hides archived unless shown, and prefers title overrides", () => {
@@ -84,7 +91,7 @@ describe("im-sessions", () => {
     ]);
 
     expect(
-      imSessionLabel(newer, "feishu", {
+      imSessionLabel(newer, "feishu", t, {
         "websocket:feishu:ou_newer": "客户支持",
       }),
     ).toBe("客户支持");

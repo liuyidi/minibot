@@ -1,4 +1,5 @@
 import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -92,11 +93,12 @@ export function ChannelCard({
   onRemove: (channel: ChannelKind) => void;
   onSetEnabled: (channel: ChannelKind, enabled: boolean) => void;
 }) {
-  const title = channel === "feishu" ? "飞书" : "微信";
-  const desc =
-    channel === "feishu"
-      ? "通过飞书机器人接收并回复用户消息"
-      : "扫码登录个人微信，接收并回复文本消息";
+  const { t } = useTranslation();
+  const channelKey = channel === "feishu" ? "feishu" : "weixin";
+  const title = t(`settings.automations.channels.${channelKey}`);
+  const desc = t(
+    channel === "feishu" ? "settings.imChannels.feishuDesc" : "settings.imChannels.weixinDesc",
+  );
   const enabled = Boolean(status?.enabled);
   const pendingCount = status?.pending_pairing ?? 0;
 
@@ -114,7 +116,7 @@ export function ChannelCard({
           <span className="font-medium">{title}</span>
           {configured && enabled ? (
             <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs text-emerald-600">
-              已连接
+              {t("settings.imChannels.connected")}
             </span>
           ) : null}
         </div>
@@ -128,7 +130,7 @@ export function ChannelCard({
               className="relative text-sm text-primary hover:underline"
               onClick={() => onOpenPairing("feishu")}
             >
-              配对管理
+              {t("settings.imChannels.pairingManage")}
               {pendingCount > 0 ? (
                 <span className="absolute -right-3 -top-2 rounded-full bg-red-500 px-1.5 text-[10px] text-white">
                   {pendingCount}
@@ -143,7 +145,7 @@ export function ChannelCard({
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8"
-                aria-label={`${title}更多操作`}
+                aria-label={t("settings.imChannels.moreActions", { channel: title })}
                 disabled={busy}
               >
                 <MoreHorizontal className="h-4 w-4" />
@@ -152,21 +154,21 @@ export function ChannelCard({
             <DropdownMenuContent align="end">
               <DropdownMenuItem onSelect={() => onStartSetup(channel, { isEdit: true })}>
                 <Pencil className="h-3.5 w-3.5" />
-                编辑配置
+                {t("settings.imChannels.editConfig")}
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="text-destructive focus:text-destructive"
                 onSelect={() => onRemove(channel)}
               >
                 <Trash2 className="h-3.5 w-3.5" />
-                移除配置
+                {t("settings.imChannels.removeConfig")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
           <ChannelSwitch
             checked={enabled}
             disabled={busy}
-            label={`启用${title}`}
+            label={t("settings.imChannels.enableChannel", { channel: title })}
             onChange={(next) => onSetEnabled(channel, next)}
           />
         </div>
@@ -177,7 +179,7 @@ export function ChannelCard({
           disabled={busy}
           onClick={() => onStartSetup(channel)}
         >
-          配置
+          {t("settings.imChannels.configure")}
         </button>
       )}
     </div>

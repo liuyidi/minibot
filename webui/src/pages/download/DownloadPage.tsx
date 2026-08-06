@@ -9,49 +9,8 @@ type DownloadPageProps = {
   onOpenApp: () => void;
 };
 
-function isZh(locale: string | undefined): boolean {
-  return !!locale && locale.toLowerCase().startsWith("zh");
-}
-
 export function DownloadPage({ onOpenApp }: DownloadPageProps) {
-  const { i18n } = useTranslation();
-  const zh = isZh(i18n.resolvedLanguage);
-
-  const copy = zh
-    ? {
-        eyebrow: "下载应用",
-        title: "在所有设备上继续使用 minibot",
-        subtitle:
-          "Web、移动端和桌面端共用同一套身份与会话。移动端可连接 minibot-react-native，桌面端正在准备中。",
-        primary: "打开 Web App",
-        secondary: "返回聊天",
-        mobileTitle: "移动 App",
-        mobileBody: "支持 iOS 和 Android，可连接到 minibot-react-native 作为移动入口。",
-        mobileNote: "可连接 minibot-react-native",
-        desktopTitle: "桌面 App",
-        desktopBody: "Mac 和 Windows 版本正在准备，当前尚未开放下载。",
-        desktopNote: "即将开放",
-        footer: "移动端将对接 minibot-react-native，桌面端开放后会在这里提供下载。",
-        platformStatusReady: "可用",
-        platformStatusSoon: "待开放",
-      }
-    : {
-        eyebrow: "Download",
-        title: "Keep minibot with you on every device",
-        subtitle:
-          "Web, mobile, and desktop share the same identity and session. Mobile connects to minibot-react-native, while desktop apps are coming soon.",
-        primary: "Open Web App",
-        secondary: "Back to chat",
-        mobileTitle: "Mobile app",
-        mobileBody: "iOS and Android support, powered by minibot-react-native as the companion app.",
-        mobileNote: "Connects to minibot-react-native",
-        desktopTitle: "Desktop app",
-        desktopBody: "Mac and Windows builds are being prepared and are not open yet.",
-        desktopNote: "Coming soon",
-        footer: "Mobile apps connect through minibot-react-native, and desktop downloads will appear here when ready.",
-        platformStatusReady: "Ready",
-        platformStatusSoon: "Soon",
-      };
+  const { t } = useTranslation();
 
   const platforms: Array<{
     title: string;
@@ -66,9 +25,9 @@ export function DownloadPage({ onOpenApp }: DownloadPageProps) {
   }> = [
     {
       title: "iOS",
-      subtitle: copy.mobileBody,
-      note: copy.mobileNote,
-      status: copy.platformStatusReady,
+      subtitle: t("download.mobileBody"),
+      note: t("download.mobileNote"),
+      status: t("download.platformStatusReady"),
       icon: <Smartphone className="h-5 w-5" />,
       accent: "from-cyan-500/12 to-sky-500/6",
       border: "border-cyan-500/20",
@@ -77,9 +36,9 @@ export function DownloadPage({ onOpenApp }: DownloadPageProps) {
     },
     {
       title: "Android",
-      subtitle: copy.mobileBody,
-      note: copy.mobileNote,
-      status: copy.platformStatusReady,
+      subtitle: t("download.mobileBody"),
+      note: t("download.mobileNote"),
+      status: t("download.platformStatusReady"),
       icon: <Smartphone className="h-5 w-5" />,
       accent: "from-emerald-500/12 to-teal-500/6",
       border: "border-emerald-500/20",
@@ -88,9 +47,9 @@ export function DownloadPage({ onOpenApp }: DownloadPageProps) {
     },
     {
       title: "Mac",
-      subtitle: copy.desktopBody,
-      note: copy.desktopNote,
-      status: copy.platformStatusSoon,
+      subtitle: t("download.desktopBody"),
+      note: t("download.desktopNote"),
+      status: t("download.platformStatusSoon"),
       icon: <Monitor className="h-5 w-5" />,
       accent: "from-zinc-500/12 to-slate-500/6",
       border: "border-zinc-500/20",
@@ -99,9 +58,9 @@ export function DownloadPage({ onOpenApp }: DownloadPageProps) {
     },
     {
       title: "Windows",
-      subtitle: copy.desktopBody,
-      note: copy.desktopNote,
-      status: copy.platformStatusSoon,
+      subtitle: t("download.desktopBody"),
+      note: t("download.desktopNote"),
+      status: t("download.platformStatusSoon"),
       icon: <Monitor className="h-5 w-5" />,
       accent: "from-indigo-500/12 to-violet-500/6",
       border: "border-indigo-500/20",
@@ -116,15 +75,15 @@ export function DownloadPage({ onOpenApp }: DownloadPageProps) {
         <section className="rounded-3xl border border-border/70 bg-card/90 p-6 shadow-[0_20px_50px_-32px_rgb(0_0_0/0.25)] backdrop-blur md:p-8">
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
             <Download className="h-4 w-4 text-primary" />
-            <span>{copy.eyebrow}</span>
+            <span>{t("download.eyebrow")}</span>
           </div>
           <div className="mt-4 grid gap-5 md:grid-cols-[1.55fr_0.95fr] md:items-end">
             <div className="space-y-4">
               <h1 className="max-w-3xl text-4xl font-semibold tracking-tight md:text-6xl">
-                {copy.title}
+                {t("download.title")}
               </h1>
               <p className="max-w-2xl text-sm leading-7 text-muted-foreground md:text-base">
-                {copy.subtitle}
+                {t("download.subtitle")}
               </p>
             </div>
             <div className="flex flex-col gap-3 md:items-end">
@@ -133,14 +92,14 @@ export function DownloadPage({ onOpenApp }: DownloadPageProps) {
                 onClick={onOpenApp}
                 className="h-12 rounded-full px-5 text-sm font-medium shadow-lg shadow-primary/10"
               >
-                {copy.primary}
+                {t("download.primary")}
                 <ArrowUpRight className="h-4 w-4" />
               </Button>
               <a
                 href="/#/new"
                 className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
               >
-                {copy.secondary}
+                {t("download.secondary")}
                 <ExternalLink className="h-3.5 w-3.5" />
               </a>
             </div>
@@ -149,27 +108,27 @@ export function DownloadPage({ onOpenApp }: DownloadPageProps) {
 
         <section className="grid gap-5 lg:grid-cols-2">
           <FeatureCard
-            title={copy.mobileTitle}
-            body={copy.mobileBody}
-            note={copy.mobileNote}
-            status={copy.platformStatusReady}
+            title={t("download.mobileTitle")}
+            body={t("download.mobileBody")}
+            note={t("download.mobileNote")}
+            status={t("download.platformStatusReady")}
             icon={<Smartphone className="h-5 w-5" />}
             accent="from-cyan-500/10 to-sky-500/5"
             border="border-cyan-500/20"
             chip="bg-cyan-500/12 text-cyan-700 dark:text-cyan-300"
-            footer={zh ? "连接到 minibot-react-native" : "Powered by minibot-react-native"}
+            footer={t("download.mobileFooter")}
             available
           />
           <FeatureCard
-            title={copy.desktopTitle}
-            body={copy.desktopBody}
-            note={copy.desktopNote}
-            status={copy.platformStatusSoon}
+            title={t("download.desktopTitle")}
+            body={t("download.desktopBody")}
+            note={t("download.desktopNote")}
+            status={t("download.platformStatusSoon")}
             icon={<Monitor className="h-5 w-5" />}
             accent="from-zinc-500/10 to-slate-500/5"
             border="border-zinc-500/20"
             chip="bg-zinc-500/12 text-zinc-700 dark:text-zinc-300"
-            footer={zh ? "桌面应用尚未开放" : "Desktop apps are not open yet"}
+            footer={t("download.desktopFooter")}
             available={false}
           />
         </section>
@@ -209,7 +168,9 @@ export function DownloadPage({ onOpenApp }: DownloadPageProps) {
                       : "border-border/80 text-muted-foreground",
                   )}
                 >
-                  {platform.available ? (zh ? "可用" : "Ready") : (zh ? "待开放" : "Soon")}
+                  {platform.available
+                    ? t("download.platformAvailable")
+                    : t("download.platformUnavailable")}
                 </span>
               </div>
             </article>
@@ -219,10 +180,10 @@ export function DownloadPage({ onOpenApp }: DownloadPageProps) {
         <section className="flex flex-col gap-3 rounded-3xl border border-border/70 bg-card/80 p-5 text-sm text-muted-foreground shadow-[0_18px_40px_-28px_rgb(0_0_0/0.2)] backdrop-blur md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-3">
             <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-            <p>{copy.footer}</p>
+            <p>{t("download.footer")}</p>
           </div>
           <div className="text-xs uppercase tracking-[0.22em] text-muted-foreground/70">
-            {zh ? "统一身份 · 统一会话 · 多端同步" : "Single identity · Shared session · Multi-device"}
+            {t("download.tagline")}
           </div>
         </section>
       </div>

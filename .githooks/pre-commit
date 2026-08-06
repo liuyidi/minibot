@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# Block commits that introduce hard-coded CJK UI copy in webui/src.
+# Enable once per clone:  git config core.hooksPath .githooks
+set -euo pipefail
+
+ROOT="$(git rev-parse --show-toplevel)"
+cd "$ROOT"
+
+if ! git diff --cached --name-only --diff-filter=ACMR | grep -q '^webui/src/.*\.\(tsx\|ts\|jsx\|js\)$'; then
+  exit 0
+fi
+
+if [[ ! -f webui/scripts/check-no-cjk-copy.mjs ]]; then
+  echo "pre-commit: missing webui/scripts/check-no-cjk-copy.mjs" >&2
+  exit 1
+fi
+
+node webui/scripts/check-no-cjk-copy.mjs --staged

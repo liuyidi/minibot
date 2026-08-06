@@ -1,3 +1,5 @@
+import type { TFunction } from "i18next";
+
 import type { ChatSummary } from "@/lib/types";
 
 export type ImPlatform = "feishu" | "weixin";
@@ -45,6 +47,7 @@ function truncateMiddle(text: string, max = 16): string {
 export function imSessionLabel(
   session: ChatSummary,
   platform: ImPlatform,
+  t: TFunction,
   titleOverrides?: Record<string, string>,
 ): string {
   const fromOverride = (titleOverrides?.[session.key] || "").trim();
@@ -53,10 +56,10 @@ export function imSessionLabel(
   const peer = imPeerId(session, platform);
   if (platform === "weixin") {
     if (override && !override.startsWith("weixin:")) return override;
-    return "我的微信";
+    return t("imSessions.myWeixin");
   }
   if (override && !override.startsWith("feishu:")) return truncateMiddle(override, 18);
-  return truncateMiddle(peer || session.preview || "飞书会话", 18);
+  return truncateMiddle(peer || session.preview || t("imSessions.feishuSession"), 18);
 }
 
 export interface GroupImSessionsOptions {

@@ -66,7 +66,8 @@
     "portalHome": "Home",
     "portalLangfuse": "Observability",
     "portalKnowledge": "Knowledge",
-    "portalDevui": "Dev notes"
+    "portalDevui": "Dev notes",
+    "downloadApp": "Download app"
   },
   "settings": {
     "backToChat": "Back to chat",
@@ -666,7 +667,104 @@
         "minute": "Minutes",
         "hour": "Hours",
         "day": "Days"
+      },
+      "templates": {
+        "aiNews": {
+          "title": "Daily AI news digest",
+          "desc": "Summarize notable AI updates each day",
+          "prompt": "Every morning, summarize yesterday's notable AI news in a concise digest."
+        },
+        "english": {
+          "title": "5 English words a day",
+          "desc": "Learn and review 5 words daily",
+          "prompt": "Teach me 5 practical English words each day with example sentences and a quick review quiz."
+        },
+        "story": {
+          "title": "Daily bedtime story",
+          "desc": "A warm short story every evening",
+          "prompt": "Tell a warm bedtime story suitable for children each evening, under 400 words."
+        },
+        "weekly": {
+          "title": "Weekly work report",
+          "desc": "Summarize progress and next week's plan",
+          "prompt": "Every Friday, draft my weekly work report: completed work, risks, and next week's plan."
+        },
+        "movie": {
+          "title": "Classic movie pick",
+          "desc": "Recommend a classic worth rewatching",
+          "prompt": "Recommend one classic movie each week and explain why it's worth watching today."
+        },
+        "history": {
+          "title": "On this day in history",
+          "desc": "Look back at historical events",
+          "prompt": "Share 3 \"on this day in history\" events daily, each with a one-line takeaway."
+        },
+        "why": {
+          "title": "Daily why question",
+          "desc": "Answer an interesting why question",
+          "prompt": "Answer one interesting \"why\" question each day in plain language."
+        },
+        "parents": {
+          "title": "Call parents reminder",
+          "desc": "Reminder to call family",
+          "prompt": "Remind me weekly to call my parents and suggest a warm opening line."
+        },
+        "checkup": {
+          "title": "Health checkup reminder",
+          "desc": "Reminder to schedule annual checkup",
+          "prompt": "Remind me monthly to confirm my health checkup appointment and list action items if needed."
+        },
+        "interview": {
+          "title": "Interview prep reminder",
+          "desc": "Organize key points before interviews",
+          "prompt": "Before my scheduled interview time, remind me to prepare: company background, common questions, and self-intro."
+        },
+        "meeting": {
+          "title": "Pre-meeting prep",
+          "desc": "Review agenda and materials before meetings",
+          "prompt": "30 minutes before the meeting, remind me to prepare the agenda, materials, and open questions."
+        },
+        "wallpaper": {
+          "title": "Cute pet wallpaper idea",
+          "desc": "Daily cute pet wallpaper prompt",
+          "prompt": "Describe a cute pet phone wallpaper composition each day so I can generate the image."
+        }
       }
+    },
+    "imChannels": {
+      "pageTitle": "Channels",
+      "pageDescription": "Connect Feishu, WeChat, and other IM channels to receive and reply to messages.",
+      "feishuDesc": "Receive and reply to user messages via Feishu bot",
+      "weixinDesc": "Scan to log in with personal WeChat; receive and reply to text messages",
+      "connected": "Connected",
+      "pairingManage": "Pairing",
+      "moreActions": "More actions for {{channel}}",
+      "editConfig": "Edit configuration",
+      "removeConfig": "Remove configuration",
+      "enableChannel": "Enable {{channel}}",
+      "configure": "Configure",
+      "reconfigure": "Reconfigure",
+      "feishuSetupHint": "Scan with Feishu to auto-create and configure the bot",
+      "weixinSetupHint": "Scan with WeChat to log in and bind the bot",
+      "loadingQr": "Loading QR code…",
+      "setupSuccess": "Setup successful!",
+      "botLabel": "Bot: {{name}}",
+      "userLabel": "User: {{name}}",
+      "loggedIn": "Logged in",
+      "currentBot": "Current bot",
+      "rescanToReplace": "Scan again to replace",
+      "loginInfo": "Login info",
+      "scannerUser": "Scanner: {{id}}",
+      "refreshQr": "Refresh QR code",
+      "save": "Save",
+      "status": "Status: {{status}}",
+      "pairingTitle": "Pairing · {{channel}}",
+      "pendingCount": "Pending · {{count}}",
+      "noPending": "No pending requests",
+      "dm": "DM",
+      "ignore": "Ignore",
+      "allow": "Allow",
+      "removeConfirm": "Remove {{channel}} configuration? Credentials will be cleared."
     },
     "oauth": {
       "authentication": "OAuth authentication",
@@ -1157,6 +1255,43 @@
     "copyAria": "Copy code",
     "copy": "Copy",
     "copied": "Copied"
+  },
+  "imSessions": {
+    "myWeixin": "My WeChat",
+    "feishuSession": "Feishu session",
+    "emptyAll": "No channel sessions yet. Configure Feishu or WeChat under IM channels to see conversations here.",
+    "emptyFeishu": "No Feishu sessions",
+    "emptyWeixin": "No WeChat sessions"
+  },
+  "approval": {
+    "ariaLabel": "Action approval",
+    "title": "Your approval is required",
+    "defaultReason": "This action needs explicit confirmation before it runs.",
+    "processing": "Processing…",
+    "approve": "Allow and continue",
+    "reject": "Reject",
+    "expiresAt": "Valid until {{time}}"
+  },
+  "download": {
+    "eyebrow": "Download",
+    "title": "Keep minibot with you on every device",
+    "subtitle": "Web, mobile, and desktop share the same identity and session. Mobile connects to minibot-react-native, while desktop apps are coming soon.",
+    "primary": "Open Web App",
+    "secondary": "Back to chat",
+    "mobileTitle": "Mobile app",
+    "mobileBody": "iOS and Android support, powered by minibot-react-native as the companion app.",
+    "mobileNote": "Connects to minibot-react-native",
+    "mobileFooter": "Powered by minibot-react-native",
+    "desktopTitle": "Desktop app",
+    "desktopBody": "Mac and Windows builds are being prepared and are not open yet.",
+    "desktopNote": "Coming soon",
+    "desktopFooter": "Desktop apps are not open yet",
+    "footer": "Mobile apps connect through minibot-react-native, and desktop downloads will appear here when ready.",
+    "tagline": "Single identity · Shared session · Multi-device",
+    "platformStatusReady": "Ready",
+    "platformStatusSoon": "Soon",
+    "platformAvailable": "Ready",
+    "platformUnavailable": "Soon"
   },
   "common": {
     "dismiss": "Dismiss"

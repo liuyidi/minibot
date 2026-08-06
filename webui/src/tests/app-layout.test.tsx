@@ -1544,41 +1544,14 @@ describe("App layout", () => {
     expect(screen.getByRole("switch", { name: "Brand logos" })).toBeInTheDocument();
     fireEvent.click(within(settingsNav).getByRole("button", { name: "Models" }));
     expect(screen.queryByText("AI")).not.toBeInTheDocument();
-    expect(screen.getByText("Current configuration")).toBeInTheDocument();
+    // User BYOK configs are gated off (SETTINGS_SHOW_USER_MODEL_CONFIGS).
+    expect(screen.queryByText("Current configuration")).not.toBeInTheDocument();
+    expect(screen.queryByText("Your configurations")).not.toBeInTheDocument();
     expect(screen.queryByText("Presets")).not.toBeInTheDocument();
     expect(screen.queryByText("OpenRouter")).not.toBeInTheDocument();
     expect(screen.queryByText("Ant Ling")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Save provider" })).not.toBeInTheDocument();
-    fireEvent.pointerDown(screen.getByRole("button", { name: "Current configuration" }));
-    fireEvent.click(screen.getByRole("menuitem", { name: "Add configuration" }));
-    const modelDialog = await screen.findByRole("dialog", { name: "New model configuration" });
-    expect(within(modelDialog).getByText("Save a provider and model as a one-click option.")).toBeInTheDocument();
-    fireEvent.change(within(modelDialog).getByPlaceholderText("Fast writing"), {
-      target: { value: "Fast writing" },
-    });
-    fireEvent.change(within(modelDialog).getByPlaceholderText("openai/gpt-4.1"), {
-      target: { value: "openai/gpt-4.1-mini" },
-    });
-    expect(within(modelDialog).getByRole("button", { name: /OpenAI/ })).toBeInTheDocument();
-    expect(within(modelDialog).getByRole("button", { name: "Save" })).toBeEnabled();
-    fireEvent.click(within(modelDialog).getByRole("button", { name: "Cancel" }));
-    fireEvent.pointerDown(screen.getByRole("button", { name: /Auto/ }));
-    expect(screen.getAllByTestId("provider-picker-logo-openai").length).toBeGreaterThan(0);
-    fireEvent.click(screen.getByRole("menuitem", { name: /Auto/ }));
-    const openModelPicker = () => {
-      const modelButtons = screen.getAllByRole("button", { name: /openai\/gpt-4o/ });
-      fireEvent.pointerDown(modelButtons[modelButtons.length - 1]);
-    };
-    openModelPicker();
-    await screen.findByText("openai/gpt-4o-mini");
-    fireEvent.click(screen.getAllByText("openai/gpt-4o-mini")[0]);
-    expect(screen.getByText("Unsaved changes.").parentElement?.className).toContain(
-      "text-blue-600",
-    );
-    const updatedModelButtons = screen.getAllByRole("button", { name: /openai\/gpt-4o-mini/ });
-    fireEvent.pointerDown(updatedModelButtons[updatedModelButtons.length - 1]);
-    await screen.findByText("openai/gpt-4o");
-    fireEvent.click(screen.getAllByText("openai/gpt-4o")[0]);
+    expect(screen.queryByRole("button", { name: "Add configuration" })).not.toBeInTheDocument();
 
     fireEvent.click(within(settingsNav).getByRole("button", { name: "System" }));
     expect(screen.getByText("Bot name")).toBeInTheDocument();

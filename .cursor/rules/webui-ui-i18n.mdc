@@ -40,3 +40,16 @@ const { t } = useTranslation();
 ```
 
 Non-copy exceptions (OK without i18n): protocol identifiers, model IDs, provider API names, file paths, and other machine/config values shown as raw data.
+
+## Enforcement (mechanical)
+
+Hard-coded **CJK** (Han) literals in `webui/src` are blocked outside allowlisted paths (`i18n/locales`, `tests`, `i18n/config.ts` native labels, `lib/utils/format.ts` greeting tokens):
+
+| Gate | How |
+|------|-----|
+| ESLint | `minibot-i18n/no-cjk-copy` in `webui/eslint.config.js` |
+| Script | `cd webui && npm run lint:i18n` (`scripts/check-no-cjk-copy.mjs`) |
+| Git pre-commit | `.githooks/pre-commit` — enable with `bash scripts/install-git-hooks.sh` |
+| Cursor | `.cursor/hooks.json` → deny `git commit` when staged WebUI fails the same check |
+
+`npm run lint` runs ESLint then the CJK script. English literals are still guided by this rule; CJK is the commit-time hard gate.
