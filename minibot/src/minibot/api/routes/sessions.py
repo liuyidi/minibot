@@ -5,7 +5,7 @@ from __future__ import annotations
 from contextlib import suppress
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Query, status
 from pydantic import BaseModel, Field
 
 from minibot.api.deps import AuthDep, StateDep
@@ -239,15 +239,34 @@ async def get_file_preview(
 
 @router.delete("/{session_id}")
 @router.get("/{session_id}/delete")
-async def delete_session(_auth: AuthDep, state: StateDep, session_id: str) -> dict[str, Any]:
+async def delete_session(
+    _auth: AuthDep,
+    state: StateDep,
+    session_id: str,
+    delete_automations: bool = Query(default=False),
+) -> dict[str, Any]:
     sid = session_id.split(":", 1)[1] if session_id.startswith("websocket:") else session_id
+    linked: list[dict[str, Any]] = []
+    if state.cron is not None:
+        from minibot.api.routes.automations import _jobs_for_session
+
+        linked = _jobs_for_session(state, state.cron, sid)
+        if linked and not delete_automations:
+            return {
+                "deleted": False,
+                "blocked_by_automations": True,
+                "automations": linked,
+            }
+        if linked and delete_automations:
+            state.cron.remove_jobs_for_session(sid)
+
     ok = state.sessions.delete(sid)
     if not ok:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="session not found")
     if state.sandbox_backend is not None:
         with suppress(Exception):
             await state.sandbox_backend.close_session(sid)
-    return {"ok": True, "deleted": sid}
+    return {"ok": True, "deleted": True, "id": sid}
 
 
 @router.post("/{session_id}/turns")

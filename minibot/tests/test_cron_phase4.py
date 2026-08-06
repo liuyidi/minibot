@@ -59,7 +59,7 @@ def test_job_store_roundtrip(tmp_path: Path) -> None:
         assert raw["jobs"][0]["payload"]["message"] == "hi"
         assert svc.enable_job(job.id, True) is not None
         assert svc.get_job(job.id).enabled is True
-        assert svc.remove_job(job.id) is True
+        assert svc.remove_job(job.id) == "removed"
         await svc.stop()
 
     asyncio.run(_run())
@@ -140,6 +140,31 @@ def test_automations_api_crud(client: TestClient, auth_headers: dict[str, str]) 
     en = client.post(f"/api/webui/automations/{job_id}/enable", headers=auth_headers)
     assert en.status_code == 200
     assert en.json()["job"]["enabled"] is True
+    assert en.json()["job"]["origin"]["session_key"] == f"websocket:{sid}"
+    assert "jobs" in en.json()
+
+    updated = client.post(
+        f"/api/webui/automations/{job_id}",
+        headers=auth_headers,
+        json={
+            "name": "ping-renamed",
+            "message": "hello updated",
+            "schedule": {"kind": "every", "every_ms": 120000},
+        },
+    )
+    assert updated.status_code == 200, updated.text
+    assert updated.json()["job"]["name"] == "ping-renamed"
+    assert updated.json()["job"]["payload"]["message"] == "hello updated"
+
+    sess_jobs = client.get(f"/api/sessions/{sid}/automations", headers=auth_headers)
+    assert sess_jobs.status_code == 200
+    assert any(j["id"] == job_id for j in sess_jobs.json()["jobs"])
+
+    # Deleting session without cascade is blocked when jobs exist.
+    blocked = client.get(f"/api/sessions/{sid}/delete", headers=auth_headers)
+    assert blocked.status_code == 200
+    assert blocked.json()["blocked_by_automations"] is True
+    assert blocked.json()["deleted"] is False
 
     dis = client.post(f"/api/webui/automations/{job_id}/disable", headers=auth_headers)
     assert dis.status_code == 200
@@ -147,10 +172,14 @@ def test_automations_api_crud(client: TestClient, auth_headers: dict[str, str]) 
 
     deleted = client.delete(f"/api/webui/automations/{job_id}", headers=auth_headers)
     assert deleted.status_code == 200
+    assert "jobs" in deleted.json()
 
     snap = client.get("/api/dev/cron", headers=auth_headers).json()
     assert snap["ok"] is True
     assert "store_path" in snap
+    # User job removed; system heartbeat/dream may remain.
+    assert not any(j["id"] == job_id for j in snap["jobs"])
+    assert {j["id"] for j in snap["jobs"]} <= {"heartbeat", "dream"}
 
 
 def test_automations_run_now_via_bus(client: TestClient, auth_headers: dict[str, str]) -> None:

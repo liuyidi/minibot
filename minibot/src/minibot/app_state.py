@@ -181,13 +181,31 @@ def build_app_state() -> AppState:
     cron_path = settings.data_dir.expanduser() / "cron" / "jobs.json"
 
     async def _on_cron_job(job: CronJob) -> None:
+        from minibot.agent.dream import run_dream
+        from minibot.agent.heartbeat import run_heartbeat
         from minibot.bus.events import InboundMessage
+        from minibot.cron.types import is_system_job
 
         if state.usage_budget is not None and state.usage_budget.is_tripped():
             raise BudgetExceeded(
                 state.usage_budget.snapshot().get("tripped_reason") or "budget",
                 snapshot=state.usage_budget.snapshot(),
             )
+
+        if is_system_job(job) or job.id in {"heartbeat", "dream"}:
+            if job.id == "heartbeat" or job.name == "heartbeat":
+                await run_heartbeat(
+                    loop=state.loop,
+                    sessions=state.sessions,
+                    bus=state.bus,
+                    config=state.config,
+                )
+                return
+            if job.id == "dream" or job.name == "dream":
+                await run_dream(loop=state.loop, sessions=state.sessions)
+                return
+            return
+
         if state.sessions.get(job.session_id) is None:
             raise RuntimeError(f"unknown session_id={job.session_id}")
         # Bus → BusWorker → handle_turn(entry=cron); waiter completes when turn ends.

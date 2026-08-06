@@ -6,18 +6,31 @@ import asyncio
 import logging
 import uuid
 from collections.abc import Awaitable, Callable
-from typing import Any
-
+from typing import Any, Literal
 from minibot.cron.schedule import compute_next_run, now_ms, validate_schedule
 from minibot.cron.store import JobStore
-from minibot.cron.types import CronJob, CronJobState, CronPayload, CronRunRecord, CronSchedule, CronStoreFile
-
+from minibot.cron.types import (
+    CronJob,
+    CronJobState,
+    CronPayload,
+    CronRunRecord,
+    CronSchedule,
+    CronStoreFile,
+    is_system_job,
+)
 logger = logging.getLogger(__name__)
 
 OnJob = Callable[[CronJob], Awaitable[None]]
 
 _MAX_HISTORY = 20
 _MAX_SLEEP_S = 60.0
+
+
+def _bare_session_id(session_id: str) -> str:
+    sid = (session_id or "").strip()
+    if sid.startswith("websocket:"):
+        return sid.split(":", 1)[1]
+    return sid
 
 
 class CronService:
@@ -138,13 +151,49 @@ class CronService:
         self._persist_and_rearm()
         return job
 
-    def remove_job(self, job_id: str) -> bool:
-        before = len(self._store.jobs)
+    def remove_job(self, job_id: str) -> Literal["removed", "protected", "not_found"]:
+        job = self.get_job(job_id)
+        if job is None:
+            return "not_found"
+        if is_system_job(job):
+            logger.info("Cron: refused to remove protected system job %s", job_id)
+            return "protected"
         self._store.jobs = [j for j in self._store.jobs if j.id != job_id]
-        if len(self._store.jobs) == before:
-            return False
         self._persist_and_rearm()
-        return True
+        return "removed"
+
+    def register_system_job(self, job: CronJob) -> CronJob:
+        """Register or refresh an internal system job (idempotent on restart)."""
+        now = now_ms()
+        job.payload.kind = "system_event"
+        existing = self.get_job(job.id)
+        if existing is not None:
+            existing.name = job.name
+            existing.schedule = job.schedule
+            existing.enabled = job.enabled
+            existing.payload = job.payload
+            existing.session_id = job.session_id
+            existing.delete_after_run = False
+            existing.updated_at_ms = now
+            if existing.enabled:
+                existing.state.next_run_at_ms = compute_next_run(existing.schedule, now)
+            else:
+                existing.state.next_run_at_ms = None
+            self._persist_and_rearm()
+            logger.info("Cron: refreshed system job '%s' (%s)", existing.name, existing.id)
+            return existing
+        if not job.created_at_ms:
+            job.created_at_ms = now
+        job.updated_at_ms = now
+        job.delete_after_run = False
+        if job.enabled:
+            job.state.next_run_at_ms = compute_next_run(job.schedule, now)
+        else:
+            job.state.next_run_at_ms = None
+        self._store.jobs.append(job)
+        self._persist_and_rearm()
+        logger.info("Cron: registered system job '%s' (%s)", job.name, job.id)
+        return job
 
     def enable_job(self, job_id: str, enabled: bool = True) -> CronJob | None:
         job = self.get_job(job_id)
@@ -158,6 +207,58 @@ class CronService:
             job.state.next_run_at_ms = None
         self._persist_and_rearm()
         return job
+
+    def update_job(
+        self,
+        job_id: str,
+        *,
+        name: str | None = None,
+        message: str | None = None,
+        schedule: CronSchedule | None = None,
+    ) -> CronJob | Literal["not_found", "protected"]:
+        job = self.get_job(job_id)
+        if job is None:
+            return "not_found"
+        if is_system_job(job):
+            return "protected"
+        if name is not None:
+            cleaned = name.strip()
+            if cleaned:
+                job.name = cleaned
+        if message is not None:
+            cleaned_msg = message.strip()
+            if not cleaned_msg:
+                raise ValueError("message is required")
+            job.payload.message = cleaned_msg
+        if schedule is not None:
+            validate_schedule(schedule)
+            job.schedule = schedule
+            if schedule.kind == "at":
+                job.delete_after_run = True
+            if job.enabled:
+                job.state.next_run_at_ms = compute_next_run(schedule, now_ms())
+        job.updated_at_ms = now_ms()
+        self._persist_and_rearm()
+        return job
+
+    def remove_jobs_for_session(self, session_id: str) -> list[str]:
+        """Remove jobs linked to a session (bare id or ``websocket:id``)."""
+        target = _bare_session_id(session_id)
+        removed: list[str] = []
+        kept: list[CronJob] = []
+        for job in self._store.jobs:
+            if is_system_job(job):
+                kept.append(job)
+                continue
+            if _bare_session_id(job.session_id) == target:
+                removed.append(job.id)
+            else:
+                kept.append(job)
+        if not removed:
+            return []
+        self._store.jobs = kept
+        self._persist_and_rearm()
+        return removed
 
     async def run_job_now(self, job_id: str) -> CronJob | None:
         job = self.get_job(job_id)

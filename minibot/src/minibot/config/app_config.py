@@ -56,6 +56,21 @@ def _providers_public(config: AppConfig) -> list[dict[str, Any]]:
     return out
 
 
+class HeartbeatConfig(BaseModel):
+    """Protected heartbeat system job (reads workspace HEARTBEAT.md)."""
+
+    enabled: bool = True
+    interval_s: int = Field(default=3600, ge=60)  # default 1h
+    keep_recent_messages: int = Field(default=8, ge=2, le=100)
+
+
+class DreamConfig(BaseModel):
+    """Protected Dream system job (thin MEMORY.md consolidation)."""
+
+    enabled: bool = False  # default off (burns tokens)
+    interval_h: int = Field(default=48, ge=1)  # default every 2 days when enabled
+
+
 class AppConfig(BaseModel):
     model: str = "gpt-4o-mini"
     provider: str = "openai"
@@ -80,6 +95,8 @@ class AppConfig(BaseModel):
     feishu: FeishuPersistedConfig = Field(default_factory=FeishuPersistedConfig)
     # Phase 16: WeChat / weixin channel (QR login + text I/O)
     weixin: WeixinPersistedConfig = Field(default_factory=WeixinPersistedConfig)
+    heartbeat: HeartbeatConfig = Field(default_factory=HeartbeatConfig)
+    dream: DreamConfig = Field(default_factory=DreamConfig)
 
 
 def default_config_from_settings(settings: Settings | None = None) -> AppConfig:
@@ -310,11 +327,15 @@ def settings_public_payload(config: AppConfig) -> dict[str, Any]:
             "gateway_host": settings.host,
             "gateway_port": settings.port,
             "heartbeat": {
-                "enabled": False,
-                "interval_s": 0,
-                "keep_recent_messages": 0,
+                "enabled": bool(config.heartbeat.enabled),
+                "interval_s": int(config.heartbeat.interval_s),
+                "keep_recent_messages": int(config.heartbeat.keep_recent_messages),
             },
-            "dream": {"schedule": ""},
+            "dream": {
+                "enabled": bool(config.dream.enabled),
+                "interval_h": int(config.dream.interval_h),
+                "schedule": f"every {config.dream.interval_h}h",
+            },
             "unified_session": False,
         },
         "usage": {

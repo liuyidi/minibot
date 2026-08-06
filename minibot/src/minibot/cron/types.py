@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
-from typing import Any, Literal
+from typing import Any, Literal  # noqa: TC003 — used at runtime in helpers
 
 
 @dataclass
@@ -18,6 +18,7 @@ class CronSchedule:
 @dataclass
 class CronPayload:
     message: str = ""
+    kind: Literal["agent_turn", "system_event"] = "agent_turn"
 
 
 @dataclass
@@ -71,12 +72,26 @@ class CronJob:
             session_id=str(raw.get("session_id") or ""),
             enabled=bool(raw.get("enabled", True)),
             schedule=CronSchedule(**sched),
-            payload=CronPayload(message=str(payload.get("message") or "")),
+            payload=CronPayload(
+                message=str(payload.get("message") or ""),
+                kind=_payload_kind(payload.get("kind")),
+            ),
             state=CronJobState(**state_raw),
             created_at_ms=int(raw.get("created_at_ms") or 0),
             updated_at_ms=int(raw.get("updated_at_ms") or 0),
             delete_after_run=bool(raw.get("delete_after_run", False)),
         )
+
+
+def _payload_kind(raw: Any) -> Literal["agent_turn", "system_event"]:
+    kind = str(raw or "agent_turn").strip()
+    if kind == "system_event":
+        return "system_event"
+    return "agent_turn"
+
+
+def is_system_job(job: CronJob) -> bool:
+    return job.payload.kind == "system_event" or job.id in {"heartbeat", "dream"}
 
 
 @dataclass

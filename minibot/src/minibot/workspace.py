@@ -9,7 +9,7 @@ class WorkspaceError(ValueError):
     """Invalid workspace path."""
 
 
-_BOOTSTRAP_SEED_FILES = ("SOUL.md",)
+_BOOTSTRAP_SEED_FILES = ("SOUL.md", "HEARTBEAT.md")
 
 
 def _template_dir() -> Path:

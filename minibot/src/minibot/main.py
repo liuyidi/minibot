@@ -52,6 +52,9 @@ async def lifespan(app: FastAPI):
     if state.cron is not None:
         try:
             await state.cron.start()
+            from minibot.cron.system_jobs import ensure_system_cron_jobs
+
+            ensure_system_cron_jobs(state.cron, state.config)
         except Exception:  # noqa: BLE001 — never block boot on cron store
             pass
     try:

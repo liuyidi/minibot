@@ -16,8 +16,8 @@ minibot 已是可本地跑通的 **FastAPI agent 运行时 + 内嵌 Dev UI / 产
 - **流式** delta / reasoning / Stop；真实 coding 工具 + MCP + cron + memory/skills + compaction
 - **多 provider（已落地）**：registry、OpenAI-compat、Anthropic Messages、用户 model presets、**平台多 slot 内置模型（Approach A）**、**preset Fallback 链（6.5）**
 - mini-langfuse **软依赖旁路**（默认关）；minikb 只读转发 + Knowledge Dev UI
-- **未做 / 待做主线**：Composer / Phase 8 收尾、正式切换 WebUI（Phase 9）；平台 Auto **跨模型失败切换**仍未接线（见 §4.5）。**Phase 7 `/v1` 优先级最低（放最后）**
-- **已实现的安全暂停**：高风险工具 HITL 审批（持久化、REST / WS、Dev UI / WebUI 卡片）
+- **未做 / 待做主线**：**WebUI 露出表面闭环**（技能 / 定时任务 / 知识库期望 / 对话默认权限 / 附件扩面）→ Composer P0 / API GET→POST → Phase 8 余量。**Phase 7 `/v1` 最低。**
+- **已实现的安全暂停**：高风险工具 HITL 审批（持久化、REST / WS、Dev UI / WebUI 卡片）；**全局默认权限 UI 仍待补**
 
 默认监听：`http://127.0.0.1:8766` · Dev UI：`/ui/`
 
@@ -43,12 +43,16 @@ minibot 已是可本地跑通的 **FastAPI agent 运行时 + 内嵌 Dev UI / 产
   KB Dev UI（minikb 转发）
   Phase 11 核心 HITL
 
-【下一刀】
-  ① Composer P0 / API GET→POST 债（docs/plans/api-mutation-post-body.md）
-  ② Phase 8 收尾（commands /model…；8.1/8.3 已部分完成）
-  ③ Phase 9 / 12 / …（见 migration checklist）
-  （最后）Phase 7 /v1 chat completions
-  （可选）平台 Auto / catalog 失败时链式切换（目前仅 preset.fallback）
+【下一刀 · WebUI 表面优先（2026-08-06 重排）】
+  ✅ ① Automations：WebUI↔API 对齐（origin / POST mutate / 删会话级联；产品内新建仍缺）
+  ✅ Heartbeat（默认 1h）+ Dream 薄巩固（默认关 / 2d）系统 cron
+  ② Skills：详情 API + available / requires ✅
+  ③ Knowledge：外链/未配置态说清楚
+  ④ 对话默认权限：露出 Security + allow once/always
+  ⑤ 附件：Composer 扩 pdf/md/txt/csv…
+  ⑥ Composer P0 / API GET→POST / Phase 8 余量
+  （最后）Phase 7 /v1
+  详见 notes/webui-surface-priority.md
 ```
 
 阶段笔记：[`phases/`](./phases/)。平台模型设计：[`superpowers/specs/2026-08-06-platform-models-keys-design.md`](./superpowers/specs/2026-08-06-platform-models-keys-design.md)。统一客户端合同：[`client-api.md`](./client-api.md)。
