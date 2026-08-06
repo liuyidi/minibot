@@ -42,10 +42,10 @@ def test_sidebar_state_update_persists_archive_and_reload(
         },
         "updated_at": None,
     }
-    update = client.get(
+    update = client.post(
         "/api/webui/sidebar-state/update",
         headers=auth_headers,
-        params={"state": json.dumps(payload)},
+        json=payload,
     )
     assert update.status_code == 200
     saved = update.json()
@@ -60,6 +60,35 @@ def test_sidebar_state_update_persists_archive_and_reload(
     reload = client.get("/api/webui/sidebar-state", headers=auth_headers)
     assert reload.status_code == 200
     assert reload.json()["archived_keys"] == ["websocket:feishu:ou_peer"]
+
+
+def test_sidebar_state_update_legacy_get_query_still_works(
+    client: TestClient, auth_headers: dict[str, str], data_dir: Path
+) -> None:
+    payload = {
+        "schema_version": 1,
+        "pinned_keys": [],
+        "archived_keys": ["websocket:legacy"],
+        "title_overrides": {},
+        "project_name_overrides": {},
+        "tags_by_key": {},
+        "collapsed_groups": {},
+        "view": {
+            "density": "comfortable",
+            "show_previews": False,
+            "show_timestamps": False,
+            "show_archived": False,
+            "sort": "updated_desc",
+        },
+        "updated_at": None,
+    }
+    update = client.get(
+        "/api/webui/sidebar-state/update",
+        headers=auth_headers,
+        params={"state": json.dumps(payload)},
+    )
+    assert update.status_code == 200
+    assert update.json()["archived_keys"] == ["websocket:legacy"]
 
 
 def test_sidebar_state_update_rejects_missing_state(

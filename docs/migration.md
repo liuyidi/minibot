@@ -330,7 +330,7 @@ flowchart TB
 ### 当前执行顺序（v3.6）
 
 > **进度快照：** 0 → 1 → 1.5A → 3a → 3b → 5 → 6a → 4 → 2 → 6(registry/Anthropic/import) → **6.5 Fallback** ✅ → **平台多 slot / Auto 首可用** ✅（跨平台模型失败切换未接线，见 status §4.5）。
-> **下一主线：** Phase 7 `/v1` → …
+> **下一主线：** Phase 8 收尾 / Composer 体感 → …；**Phase 7 `/v1` 降为最低（放最后）**。
 
 ```text
 【已完成 ✅】
@@ -349,17 +349,17 @@ flowchart TB
   Phase 11 核心：HITL 审批（持久化 + REST / WS + Dev UI / WebUI）
 
 【未完成 · 推荐优先级 ↓】
-  ① Phase 7     /v1 chat completions  ← 下一刀
-  ② Composer P0 小插队（复制 / 重试…，可穿插）
-  ③ Phase 8     media / commands / /model…
-  ⑤ Phase 12    Long task / goal（需短计划）
-  ⑥ Phase 13    Session 导出/导入
-  ⑦ Phase 2.5   async subagent（依赖 Phase 2）
-  ⑧ Phase 9     正式切换 / legacy deprecated
-  ⑨ Phase 14+ / Next.js / 对标 15–20        （最低）
+  ① Composer P0 小插队（复制 / 重试 / 队列…）+ API GET→POST 债（见 docs/plans/）
+  ② Phase 8     media / commands / /model…（8.1/8.3 已部分完成）
+  ③ Phase 12    Long task / goal（需短计划）
+  ④ Phase 13    Session 导出/导入
+  ⑤ Phase 2.5   async subagent（依赖 Phase 2）
+  ⑥ Phase 9     正式切换 / legacy deprecated
+  ⑦ Phase 14+ / Next.js / 对标 15–20
+  ⑧ Phase 7     /v1 chat completions  ← **最低，放最后**
 ```
 
-**决策依据：** 先补「自动化 + 多后端」能力面；流式是切换门槛但体感后置过久，提到 6 余量之后；Langfuse 旁路已通，`observability.html` 已取消；正式切换（9）放到能力齐后再做。
+**决策依据：** 产品对话 / WebUI 对齐优先；OpenAI `/v1` 对外脚本入口价值有，但当前无急用，**排到全部产品主线之后**。
 
 ### 已落地
 
@@ -812,8 +812,8 @@ WS/REST/CLI → (Bus?) → AgentLoop(with session lock) → AgentRunner → Prov
 
 ### Phase 7 — OpenAI 兼容 `/v1`
 
-**目标：** 对齐 `nanobot serve` 能力。
-**MSV=7**
+**目标：** 对齐 `nanobot serve` 能力。  
+**MSV=7** · **优先级：最低（放最后）** — 2026-08-06 起不作为下一主线；产品 / Composer / Phase 8–9 之后再开。
 
 | 子步骤 | 改什么 | 模块影响 |
 |--------|--------|----------|
@@ -1040,7 +1040,7 @@ Testing Infra → 0.1…0.6 → 1.x → 1.5A → 3a → 3b → 5 → 6a
 （+ Context usage / UX-10 / mini-langfuse 旁路）
 
 【未完成 · 推荐序】
-7 /v1                    → 新入口，共用 Loop  ← 下一刀
+7 /v1                    → 新入口，共用 Loop（**优先级最低，放最后**）
 Composer P0 小插队       → 可穿插
 8 剩余表面 + /model
 12 Long task
@@ -1141,7 +1141,8 @@ minibot/src/minibot/
 
 #### B1. 下一主线
 
-- [ ] **① Phase 7**：`/v1/chat/completions` + `/v1/models` 【MSV=7】（+ v1-playground）
+- [ ] **① Composer P0 小插队** + [`plans/api-mutation-post-body.md`](./plans/api-mutation-post-body.md) GET→POST 债
+- [ ] **② Phase 8**：media / commands / workspaces / `/model` 等收尾 【MSV=8】（**不含** transcribe；8.1/8.3 已部分 ✅）
 
 #### B2. 可穿插 / 体感
 
@@ -1159,7 +1160,6 @@ minibot/src/minibot/
 
 #### B3. 能力收尾 → 正式切换
 
-- [ ] **⑧ Phase 8**：media / file-preview / commands / workspaces / sidebar / `/model` 【MSV=8】（**不含** transcribe）
 - [x] **⑨ Phase 11（核心）**：工具权限确认 【MSV=11】；全局策略配置待补
 - [ ] **⑩ Phase 12**：Long task / Sustained goal 【MSV=12】❗需短计划
 - [ ] **⑪ Phase 13**：Session 导出/导入 【MSV=13】
@@ -1168,6 +1168,7 @@ minibot/src/minibot/
 
 #### B4. 最低优先级
 
+- [ ] **⑧ Phase 7**：`/v1/chat/completions` + `/v1/models` 【MSV=7】（+ v1-playground）— **放最后**（2026-08-06）
 - [ ] **⑭ Phase 8.4 / UX-23**：transcribe（groq/openai/…）+ Composer 麦克风 —— WebUI 已 `UI_ENTRY.voice=false` 隐藏
 - [ ] **⑮ Phase 14**：多用户 / Pairing —— 独立评估，不承诺时间 【MSV=14】
 - [ ] **Dev UI Next.js 迁移**（延期；详见 [`devui-nextjs-migration.md`](./devui-nextjs-migration.md)）
@@ -1183,7 +1184,7 @@ minibot/src/minibot/
 
 ## 执行方式建议
 
-- **当前下一刀（v3.6+）：** **Phase 7** `/v1`。Phase 10 `observability.html` 已取消（2026-08-05）。
+- **当前下一刀（2026-08-06）：** Composer P0 / Phase 8 收尾 / API GET→POST 债。**Phase 7 `/v1` 降为最低（放最后）**。Phase 10 `observability.html` 已取消。
 - **Dev UI 框架：** 主线仍静态 HTML；Next.js 见延期计划，**优先级最低**
 - **学习优先**：阶段目标先问「理解了什么」，再问「功能齐了没有」
 - **Subagent-Driven**：一 Phase 一子代理，阶段末人工验收
@@ -1204,6 +1205,6 @@ minibot/src/minibot/
 | 流式 | 后置 | 后置 | **提到 6 余量之后（仍需短计划）** |
 | Langfuse | 未做 | 软依赖旁路 | **Phase 10 旁路 ✅；observability.html 取消（2026-08-05）** |
 | Checklist 结构 | 按编号混排 | 同左 | **A 已实现 / B 未实现（①…⑭）** |
-| 下一刀（现行） | — | — | **Phase 7 `/v1`**（不再做 observability.html） |
+| 下一刀（现行） | — | — | **Composer / Phase 8**（Phase 7 `/v1` 放最后） |
 
 > 更早版本以 git 历史为准；**v3.6 为唯一现行版本**（后补：取消 observability.html）。

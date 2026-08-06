@@ -23,17 +23,38 @@ async def sidebar_state(_auth: AuthDep, state: StateDep) -> dict[str, Any]:
     return read_webui_sidebar_state(state.settings.data_dir)
 
 
-@router.get("/api/webui/sidebar-state/update")
+def _persist_sidebar_state(data_dir: Any, decoded: dict[str, Any]) -> dict[str, Any]:
+    from minibot.webui.sidebar_state import write_webui_sidebar_state
+
+    try:
+        return write_webui_sidebar_state(data_dir, decoded)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    except OSError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="failed to write sidebar state",
+        ) from exc
+
+
 @router.post("/api/webui/sidebar-state/update")
-async def sidebar_state_update(
+async def sidebar_state_update_post(
+    _auth: AuthDep,
+    state: StateDep,
+    body: dict[str, Any],
+) -> dict[str, Any]:
+    """Persist sidebar workspace state via JSON body (preferred)."""
+    return _persist_sidebar_state(state.settings.data_dir, body)
+
+
+@router.get("/api/webui/sidebar-state/update")
+async def sidebar_state_update_get(
     _auth: AuthDep,
     state: StateDep,
     state_json: str | None = Query(default=None, alias="state"),
 ) -> dict[str, Any]:
-    """Persist sidebar workspace state (query ``state`` = JSON string)."""
+    """Legacy: state in query string. Prefer POST JSON body."""
     import json
-
-    from minibot.webui.sidebar_state import write_webui_sidebar_state
 
     if state_json is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="missing state")
@@ -47,15 +68,7 @@ async def sidebar_state_update(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="state must be an object"
         )
-    try:
-        return write_webui_sidebar_state(state.settings.data_dir, decoded)
-    except ValueError as exc:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
-    except OSError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="failed to write sidebar state",
-        ) from exc
+    return _persist_sidebar_state(state.settings.data_dir, decoded)
 
 
 @router.get("/api/webui/skills")

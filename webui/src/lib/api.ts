@@ -586,12 +586,11 @@ export async function updateSidebarState(
   state: SidebarStatePayload,
   base: string = "",
 ): Promise<SidebarStatePayload> {
-  const query = new URLSearchParams();
-  query.set("state", JSON.stringify(state));
-  return request<SidebarStatePayload>(
-    `${base}/api/webui/sidebar-state/update?${query}`,
-    token,
-  );
+  return request<SidebarStatePayload>(`${base}/api/webui/sidebar-state/update`, token, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(state),
+  });
 }
 
 export async function updateSettings(

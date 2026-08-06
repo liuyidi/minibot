@@ -83,7 +83,7 @@ migration 门票口径：MSV=2+6 可切 WebUI 后端；**MSV=4 后可称「和 n
 
 | 优先级 | 项 | 与 nanobot 关系 |
 |--------|----|-----------------|
-| 下一主线 | Phase 7 `/v1` | 对齐 `nanobot serve` |
+| 下一主线 | Composer / Phase 8（`/v1` 放最后） | 产品对话优先；`nanobot serve` 对齐后置 |
 | 体感 | Composer UX 剩余 | 对齐 WebUI 好用度 |
 | 收尾 | Phase 8 media/commands/… | **WebUI 对等关键路径** |
 | 收尾 | Phase 12 long goal | 对齐 goals |

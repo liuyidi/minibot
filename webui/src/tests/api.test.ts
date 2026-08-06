@@ -578,17 +578,17 @@ describe("webui API helpers", () => {
 
     await updateSidebarState("tok", state);
     const [url, init] = vi.mocked(fetch).mock.calls.at(-1)!;
-    expect(String(url).startsWith("/api/webui/sidebar-state/update?")).toBe(true);
-    expect(init).toEqual(expect.objectContaining({
-      headers: { Authorization: "Bearer tok" },
-    }));
-    const encodedState = new URLSearchParams(String(url).split("?", 2)[1]).get("state");
-    expect(encodedState).toBeTruthy();
-    expect(JSON.parse(encodedState ?? "{}")).toMatchObject({
-      pinned_keys: ["websocket:chat-1"],
-      title_overrides: { "websocket:chat-1": "Release" },
-      project_name_overrides: { "/Users/me/nanobot": "Core" },
-    });
+    expect(String(url)).toBe("/api/webui/sidebar-state/update");
+    expect(init).toEqual(
+      expect.objectContaining({
+        method: "POST",
+        headers: {
+          Authorization: "Bearer tok",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(state),
+      }),
+    );
   });
 
   it("fetches workspace project state", async () => {

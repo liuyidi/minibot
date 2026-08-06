@@ -132,6 +132,35 @@ def test_deliver_outbound_delta_event() -> None:
     assert frames[0]["text"] == "Hel"
 
 
+def test_deliver_outbound_tool_result_is_hint_not_assistant_message() -> None:
+    """tool_result must not dump raw output as a chat message / end the turn."""
+
+    async def _run() -> list[dict]:
+        sent: list[dict] = []
+
+        async def fake_send(chat_id: str, payload: dict) -> None:
+            sent.append(payload)
+
+        ws_mod.hub.send = fake_send  # type: ignore[method-assign]
+        await ws_mod.deliver_outbound(
+            OutboundMessage(
+                channel="websocket",
+                chat_id="c1",
+                content="No results (or DDG blocked the scrape).",
+                metadata={"kind": "tool_result", "name": "web_search"},
+            )
+        )
+        return sent
+
+    frames = asyncio.run(_run())
+    assert len(frames) == 1
+    assert frames[0]["event"] == "message"
+    assert frames[0]["kind"] == "tool_hint"
+    assert frames[0]["text"] == "tool done: web_search"
+    assert "No results" not in frames[0]["text"]
+    assert "turn_end" not in {f["event"] for f in frames}
+
+
 def test_deliver_outbound_turn_ok_skips_message_when_streamed() -> None:
     """Streamed turns must not re-send full assistant text (WebUI duplicate bubble)."""
 

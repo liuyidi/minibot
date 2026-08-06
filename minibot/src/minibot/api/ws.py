@@ -124,6 +124,21 @@ async def deliver_outbound(msg: OutboundMessage) -> None:
         )
         return
 
+    if kind == "tool_result":
+        # Must not fall through to the legacy assistant ``message`` path — that
+        # dumps raw tool output into the chat and falsely emits turn_end.
+        name = str(meta.get("name") or "tool")
+        await hub.send(
+            chat_id,
+            {
+                "event": "message",
+                "chat_id": chat_id,
+                "text": f"tool done: {name}",
+                "kind": "tool_hint",
+            },
+        )
+        return
+
     if kind == "stream_aborted":
         await hub.send(
             chat_id,

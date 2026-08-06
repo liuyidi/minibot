@@ -16,8 +16,8 @@ minibot 已是可本地跑通的 **FastAPI agent 运行时 + 内嵌 Dev UI / 产
 - **流式** delta / reasoning / Stop；真实 coding 工具 + MCP + cron + memory/skills + compaction
 - **多 provider（已落地）**：registry、OpenAI-compat、Anthropic Messages、用户 model presets、**平台多 slot 内置模型（Approach A）**、**preset Fallback 链（6.5）**
 - mini-langfuse **软依赖旁路**（默认关）；minikb 只读转发 + Knowledge Dev UI
+- **未做 / 待做主线**：Composer / Phase 8 收尾、正式切换 WebUI（Phase 9）；平台 Auto **跨模型失败切换**仍未接线（见 §4.5）。**Phase 7 `/v1` 优先级最低（放最后）**
 - **已实现的安全暂停**：高风险工具 HITL 审批（持久化、REST / WS、Dev UI / WebUI 卡片）
-- **未做 / 待做主线**：OpenAI `/v1`（Phase 7）、正式切换 WebUI 默认后端（Phase 9）；平台 Auto **跨模型失败切换**仍未接线（见 §4.5）
 
 默认监听：`http://127.0.0.1:8766` · Dev UI：`/ui/`
 
@@ -44,8 +44,10 @@ minibot 已是可本地跑通的 **FastAPI agent 运行时 + 内嵌 Dev UI / 产
   Phase 11 核心 HITL
 
 【下一刀】
-  ① Phase 7        /v1 chat completions
-  ② Composer P0 小插队 / Phase 8 media / Phase 12（短计划）…
+  ① Composer P0 / API GET→POST 债（docs/plans/api-mutation-post-body.md）
+  ② Phase 8 收尾（commands /model…；8.1/8.3 已部分完成）
+  ③ Phase 9 / 12 / …（见 migration checklist）
+  （最后）Phase 7 /v1 chat completions
   （可选）平台 Auto / catalog 失败时链式切换（目前仅 preset.fallback）
 ```
 
@@ -180,7 +182,7 @@ AppState.config + rebuild_provider() / MCP reconnect
 | `FallbackProvider` + preset.`fallback` | ✅ 6.5（见下表） |
 | Runtime 故障注入（soft/429/5xx/timeout/conn） | ✅ Dev UI Insight |
 | Azure / Bedrock / OAuth | stub |
-| OpenAI `/v1/chat/completions` | ❌ Phase 7 |
+| OpenAI `/v1/chat/completions` | ❌ Phase 7（**优先级最低，放最后**） |
 
 **失败切换 / 重试（边界）：**
 
@@ -260,7 +262,7 @@ minibot/
 ## 7. 和迁移计划的衔接
 
 1. **已完成至 MSV≈6.5 + 平台多 slot**（流式 + 多 provider + preset fallback + Approach A）；切换 nanobot WebUI 默认后端的门票仍见主计划（建议至少 MSV=2+6，正式切换 Phase 9）。
-2. **下一主线：** Phase 7 `/v1`。Phase 10 旁路已完成；`observability.html` 已取消。
+2. **下一主线：** Composer P0 / Phase 8 收尾。Phase 10 旁路已完成；`observability.html` 已取消。**Phase 7 `/v1` 放最后。**
 3. **多端统一合同：** [`client-api.md`](./client-api.md)（CLI / webui / desktop / RN）。
 4. Composer UX / media / long-goal 可穿插，但需短计划门槛的阶段不要整段抢跑。
 

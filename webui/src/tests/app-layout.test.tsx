@@ -954,16 +954,16 @@ describe("App layout", () => {
     };
     vi.stubGlobal(
       "fetch",
-      vi.fn().mockImplementation(async (url: string | URL | Request) => {
+      vi.fn().mockImplementation(async (url: string | URL | Request, init?: RequestInit) => {
         const href = String(url);
         if (href === "/api/webui/sidebar-state") {
           return { ok: true, json: async () => initialState };
         }
-        if (href.startsWith("/api/webui/sidebar-state/update?")) {
-          const encoded = new URLSearchParams(href.split("?", 2)[1]).get("state");
+        if (href === "/api/webui/sidebar-state/update") {
+          const body = typeof init?.body === "string" ? init.body : "";
           return {
             ok: true,
-            json: async () => JSON.parse(encoded ?? "{}"),
+            json: async () => (body ? JSON.parse(body) : {}),
           };
         }
         return { ok: false, status: 404 };
@@ -985,12 +985,13 @@ describe("App layout", () => {
       expect(within(sidebar).getByText("Archived")).toBeInTheDocument(),
     );
     expect(within(sidebar).getByRole("button", { name: /^First chat$/ })).toBeInTheDocument();
-    const updateUrl = vi.mocked(fetch).mock.calls
-      .map(([url]) => String(url))
-      .find((url) => url.startsWith("/api/webui/sidebar-state/update?"));
-    expect(updateUrl).toBeTruthy();
-    const encoded = new URLSearchParams(updateUrl?.split("?", 2)[1]).get("state");
-    expect(JSON.parse(encoded ?? "{}").view.show_archived).toBe(true);
+    const updateCall = vi.mocked(fetch).mock.calls.find(([reqUrl]) => {
+      return String(reqUrl) === "/api/webui/sidebar-state/update";
+    });
+    expect(updateCall).toBeTruthy();
+    const updateInit = updateCall?.[1] as RequestInit | undefined;
+    expect(updateInit?.method).toBe("POST");
+    expect(JSON.parse(String(updateInit?.body ?? "{}")).view.show_archived).toBe(true);
 
     expect(within(sidebar).queryByRole("button", { name: "View" })).not.toBeInTheDocument();
   });
