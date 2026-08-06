@@ -62,7 +62,7 @@ src/
 │
 ├── components/              # shared business UI (2+ consumers)
 │   ├── ui/                  # atomic primitives (shadcn / Radix)
-│   ├── shell/               # sidebar, session lists, chrome dialogs
+│   ├── sidebar/               # sidebar, session lists, chrome dialogs
 │   ├── thread/              # chat / session domain (+ activity/)
 │   ├── markdown/            # MarkdownText / CodeBlock pipeline
 │   └── settings/            # settings-domain shared chrome
@@ -119,7 +119,7 @@ Import from the category path, e.g. `@/lib/apis/api`, `@/lib/utils/format`. Fold
 |------|----------|-----------------|
 | `pages/<page>/` | page entry, orchestration, page-only `components/` | atomic controls; multi-page business blocks |
 | `components/ui/` | Button, Dialog, Input, Sheet, … | business copy / API logic |
-| `components/shell/` | sidebar, chat list, chrome dialogs, language switcher | chat bubbles / markdown |
+| `components/sidebar/` | sidebar, chat list, chrome dialogs, language switcher | chat bubbles / markdown |
 | `components/thread/` | chat surface, messages, activity, file preview | settings forms; sidebar |
 | `components/markdown/` | MarkdownText, CodeBlock renderer | page-private widgets |
 | `components/settings/` | settings-domain shared chrome | one-off page widgets |

@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { SessionSearchDialog } from "@/components/shell/SessionSearchDialog";
+import { SessionSearchDialog } from "@/components/sidebar/SessionSearchDialog";
 import type { ChatSummary } from "@/lib/types";
 
 function session(index: number): ChatSummary {
