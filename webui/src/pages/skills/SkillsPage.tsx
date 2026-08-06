@@ -34,6 +34,7 @@ export function SkillsPage() {
     applyTemplate,
     installSkill,
     upsertMcp,
+    importMcpConfig,
   } = useSkillsCatalog();
 
   const [tab, setTab] = useState<HubTab>("skills");
@@ -74,7 +75,9 @@ export function SkillsPage() {
   );
 
   const installedCount =
-    skills.filter((s) => s.source === "workspace").length + presets.length;
+    tab === "skills"
+      ? skills.filter((s) => s.source === "workspace").length
+      : presets.length;
 
   return (
     <div className="space-y-6">
@@ -117,10 +120,15 @@ export function SkillsPage() {
           </div>
           <div className="flex items-center gap-2">
             <span className="hidden whitespace-nowrap rounded-full bg-muted px-3 py-2 text-[12px] font-medium text-muted-foreground sm:inline-flex">
-              {t("settings.skills.installedCount", {
-                count: installedCount,
-                defaultValue: "Installed {{count}}",
-              })}
+              {tab === "skills"
+                ? t("settings.skills.installedSkillsCount", {
+                    count: installedCount,
+                    defaultValue: "Installed {{count}}",
+                  })
+                : t("settings.skills.installedConnectorsCount", {
+                    count: installedCount,
+                    defaultValue: "Installed {{count}}",
+                  })}
             </span>
             <Button
               type="button"
@@ -265,8 +273,9 @@ export function SkillsPage() {
       <AddConnectorDialog
         open={addOpen && tab === "connectors"}
         onOpenChange={setAddOpen}
-        busy={busyKey === "upsert-mcp"}
+        busy={busyKey === "upsert-mcp" || busyKey === "import-mcp"}
         onSave={upsertMcp}
+        onImport={importMcpConfig}
       />
     </div>
   );

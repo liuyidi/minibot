@@ -27,7 +27,6 @@ function documentTitleForView({
 }): string {
   const utilityTitles: Partial<Record<ShellView, string>> = {
     settings: t("settings.sidebar.title"),
-    apps: t("settings.nav.apps", { defaultValue: "Apps" }),
     automations: t("settings.nav.automations", { defaultValue: "Automations" }),
     skills: t("settings.nav.skills", { defaultValue: "Skills · Connectors" }),
     channels: t("settings.nav.channels", { defaultValue: "IM channels" }),
@@ -76,8 +75,7 @@ export function useAppUtilityNav({
       navigate({
         view: utility,
         activeKey,
-        // Only Apps still maps through the settings section registry.
-        settingsSection: utility === "apps" ? "apps" : "overview",
+        settingsSection: "overview",
       });
       setMobileSidebarOpen(false);
     },

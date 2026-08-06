@@ -13,20 +13,24 @@ export const UI_ENTRY = {
   settings: true,
 } as const;
 
-/** Settings sidebar sections enabled for the slim demo Settings surface. */
+/** Settings sidebar sections (full surface). */
 export const SETTINGS_SECTIONS = [
   "overview",
   "appearance",
   "models",
+  // "image",
+  // "voice",
+  "browser",
   "runtime",
+  "advanced",
 ] as const;
 
 export type EnabledSettingsSection = (typeof SETTINGS_SECTIONS)[number];
 
-/** Multi-provider / OAuth panel under Models — hidden until backend parity. */
+/** Multi-provider / OAuth panel under Models. */
 export const SETTINGS_SHOW_PROVIDERS_PANEL = false;
 
-/** BYOK / personal model configurations under Models — temporarily hidden. */
+/** BYOK / personal model configurations under Models. */
 export const SETTINGS_SHOW_USER_MODEL_CONFIGS = false;
 
 export function isEnabledSettingsSection(

@@ -105,13 +105,13 @@ export function AppMain({
         >
           <ChannelsPage />
         </UtilityPageFrame>
-      ) : view === "settings" || view === "apps" ? (
+      ) : view === "settings" ? (
         <div className="absolute inset-0 flex flex-col">
           <SettingsPage
             theme={theme}
             initialSection={settingsInitialSection}
             initialSettings={workspace.settingsSnapshot}
-            showSidebar={view === "settings"}
+            showSidebar
             onToggleTheme={toggle}
             onBackToChat={utilityNav.onBackToChat}
             onModelNameChange={host.onModelNameChange}

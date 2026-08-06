@@ -17,7 +17,6 @@ import {
   fetchSkills,
   fetchWebuiThread,
   fetchWorkspaces,
-  importMcpConfig,
   installSkill,
   listSessions,
   listSlashCommands,
@@ -25,13 +24,10 @@ import {
   logoutProviderOAuth,
   runAutomationAction,
   runCliAppAction,
-  runMcpPresetAction,
-  saveCustomMcpServer,
   updateAutomation,
   updateSidebarState,
   updateImageGenerationSettings,
   updateModelConfiguration,
-  updateMcpServerTools,
   updateNetworkSafetySettings,
   updateProviderSettings,
   updateSettings,
@@ -514,87 +510,40 @@ describe("webui API helpers", () => {
     );
   });
 
-  it("reads MCP presets and serializes actions", async () => {
+  it("maps minibot MCP list payloads into catalog rows for mentions", async () => {
     vi.mocked(fetch).mockResolvedValueOnce({
       ok: true,
       json: async () => ({
-        presets: [],
-        installed_count: 0,
+        presets: [
+          {
+            id: "context7",
+            label: "Context7",
+            enabled: true,
+            type: "stdio",
+            command: "npx",
+          },
+        ],
+        runtime: { servers: [] },
+        templates: [],
       }),
     } as Response);
 
-    await expect(fetchMcpPresets("tok")).resolves.toMatchObject({ presets: [] });
+    await expect(fetchMcpPresets("tok")).resolves.toMatchObject({
+      presets: [
+        expect.objectContaining({
+          name: "context7",
+          display_name: "Context7",
+          required_fields: [],
+          installed: true,
+          configured: true,
+        }),
+      ],
+      installed_count: 1,
+    });
     expect(fetch).toHaveBeenCalledWith(
       "/api/settings/mcp-presets",
       expect.objectContaining({
         headers: { Authorization: "Bearer tok" },
-      }),
-    );
-
-    await runMcpPresetAction("tok", "enable", "browserbase", {
-      browserbase_api_key: "bb_live_test",
-    });
-    expect(fetch).toHaveBeenCalledWith(
-      "/api/settings/mcp-presets/enable?name=browserbase",
-      expect.objectContaining({
-        headers: expect.objectContaining({
-          Authorization: "Bearer tok",
-          "X-Minibot-MCP-Values": JSON.stringify({
-            browserbase_api_key: "bb_live_test",
-          }),
-        }),
-      }),
-    );
-  });
-
-  it("serializes custom MCP, mcp.json import, and tool allowlist actions", async () => {
-    await saveCustomMcpServer("tok", {
-      name: "docs",
-      transport: "stdio",
-      command: "npx",
-      args: '["-y","docs-mcp"]',
-      env: '{"API_KEY":"secret"}',
-    });
-    expect(fetch).toHaveBeenCalledWith(
-      "/api/settings/mcp-presets/custom",
-      expect.objectContaining({
-        headers: expect.objectContaining({
-          Authorization: "Bearer tok",
-          "X-Minibot-MCP-Values": JSON.stringify({
-            name: "docs",
-            transport: "stdio",
-            command: "npx",
-            args: '["-y","docs-mcp"]',
-            env: '{"API_KEY":"secret"}',
-          }),
-        }),
-      }),
-    );
-
-    await importMcpConfig("tok", '{"mcpServers":{"docs":{"command":"npx"}}}');
-    expect(fetch).toHaveBeenCalledWith(
-      "/api/settings/mcp-presets/import",
-      expect.objectContaining({
-        headers: expect.objectContaining({
-          Authorization: "Bearer tok",
-          "X-Minibot-MCP-Values": JSON.stringify({
-            config: '{"mcpServers":{"docs":{"command":"npx"}}}',
-          }),
-        }),
-      }),
-    );
-
-    await updateMcpServerTools("tok", "docs", ["search", "fetch"]);
-    expect(fetch).toHaveBeenCalledWith(
-      "/api/settings/mcp-presets/tools",
-      expect.objectContaining({
-        headers: expect.objectContaining({
-          Authorization: "Bearer tok",
-          "X-Minibot-MCP-Values": JSON.stringify({
-            name: "docs",
-            enabled_tools: ["search", "fetch"],
-          }),
-        }),
       }),
     );
   });

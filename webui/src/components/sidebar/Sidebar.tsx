@@ -13,7 +13,6 @@ import {
   Search,
   Settings,
   SquarePen,
-  Blocks,
   Activity,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -30,6 +29,7 @@ import type {
   ChatSummary,
   SidebarViewState,
 } from "@/lib/types";
+import type { SettingsSectionKey } from "@/pages/settings";
 import type { SidebarUtilityKey } from "@/routes";
 import { cn } from "@/lib/utils";
 
@@ -48,10 +48,10 @@ interface SidebarProps {
   onToggleGroup: (groupId: string) => void;
   onRequestRenameProject: (projectKey: string, label: string) => void;
   onNewChatInProject: (projectPath: string, projectName: string) => void;
-  onOpenSettings: () => void;
+  onOpenSettings: (section?: SettingsSectionKey) => void;
   onOpenUtility: (utility: SidebarUtilityKey) => void;
   onOpenSearch: () => void;
-  activeUtility?: "apps" | "skills" | "automations" | "channels" | null;
+  activeUtility?: SidebarUtilityKey | null;
   onToggleArchived: () => void;
   onCollapse: () => void;
   onExpand?: () => void;
@@ -190,15 +190,6 @@ export function Sidebar(props: SidebarProps) {
           onClick={props.onOpenSearch}
           icon={<Search className="h-4 w-4" />}
         />
-        {UI_ENTRY.apps ? (
-          <SidebarActionButton
-            collapsed={collapsed}
-            label={t("sidebar.apps")}
-            onClick={() => props.onOpenUtility("apps")}
-            active={props.activeUtility === "apps"}
-            icon={<Blocks className="h-4 w-4" />}
-          />
-        ) : null}
         {UI_ENTRY.channels ? (
           <SidebarActionButton
             collapsed={collapsed}

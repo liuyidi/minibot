@@ -149,26 +149,9 @@ function autoDynamicProviderPayload(
   };
 }
 
-const installedAnyGen = {
-  name: "anygen",
-  display_name: "AnyGen",
-  category: "generation",
-  description: "Generate docs, slides, websites and more via AnyGen cloud API",
-  requires: "ANYGEN_API_KEY",
-  source: "harness",
-  entry_point: "cli-anything-anygen",
-  install_supported: true,
-  installed: true,
-  available: true,
-  status: "installed",
-  logo_url: "https://www.google.com/s2/favicons?domain=anygen.io&sz=64",
-  brand_color: "#111827",
-  skill_installed: true,
-};
-
 function renderSettingsView(
   options: {
-    initialSection?: "overview" | "apps" | "advanced" | "models";
+    initialSection?: "overview" | "advanced" | "models";
     initialSettings?: SettingsPayload;
     showSidebar?: boolean;
     onSettingsChange?: (payload: SettingsPayload) => void;
@@ -179,7 +162,7 @@ function renderSettingsView(
     <ClientProvider client={{} as never} token="tok">
       <SettingsView
         theme="light"
-        initialSection={options.initialSection ?? "apps"}
+        initialSection={options.initialSection ?? "overview"}
         initialSettings={options.initialSettings}
         showSidebar={options.showSidebar}
         onToggleTheme={() => {}}
@@ -192,7 +175,7 @@ function renderSettingsView(
   );
 }
 
-describe("SettingsView Apps catalog", () => {
+describe("SettingsView", () => {
   afterEach(() => {
     vi.useRealTimers();
     vi.unstubAllGlobals();
@@ -214,61 +197,6 @@ describe("SettingsView Apps catalog", () => {
 
     expect(await screen.findByText("Start your first automation")).toBeInTheDocument();
     expect(screen.queryByText("Settings")).not.toBeInTheDocument();
-  });
-
-  it("shows a visible uninstall button for installed CLI apps and calls uninstall", async () => {
-    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
-      const url = String(input);
-      if (url === "/api/settings") {
-        return jsonResponse(settingsPayload());
-      }
-      if (url === "/api/settings/cli-apps") {
-        return jsonResponse({
-          apps: [installedAnyGen],
-          installed_count: 1,
-          catalog_updated_at: "2026-04-18",
-        });
-      }
-      if (url === "/api/settings/mcp-presets") {
-        return jsonResponse({ presets: [], installed_count: 0 });
-      }
-      if (url === "/api/settings/cli-apps/uninstall?name=anygen") {
-        return jsonResponse({
-          apps: [{ ...installedAnyGen, installed: false, status: "available" }],
-          installed_count: 0,
-          catalog_updated_at: "2026-04-18",
-          last_action: {
-            ok: true,
-            message: "Uninstalled CLI for AnyGen.",
-            still_available: false,
-          },
-        });
-      }
-      return { ok: false, status: 404, json: async () => ({}) } as Response;
-    });
-    vi.stubGlobal("fetch", fetchMock);
-
-    renderSettingsView();
-
-    expect(await screen.findByRole("heading", { name: "Apps" })).toBeInTheDocument();
-    expect(await screen.findByText("AnyGen")).toBeInTheDocument();
-    const uninstall = screen.getByRole("button", { name: "Uninstall CLI" });
-
-    fireEvent.click(uninstall);
-
-    await waitFor(() =>
-      expect(fetchMock).toHaveBeenCalledWith(
-        "/api/settings/cli-apps/uninstall?name=anygen",
-        expect.objectContaining({
-          headers: { Authorization: "Bearer tok" },
-        }),
-      ),
-    );
-    expect(await screen.findByText("Uninstalled CLI for AnyGen.")).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: "Dismiss" }));
-
-    expect(screen.queryByText("Uninstalled CLI for AnyGen.")).not.toBeInTheDocument();
   });
 
   it("publishes the latest settings payload to the shell", async () => {
@@ -321,7 +249,7 @@ describe("SettingsView Apps catalog", () => {
     expect(screen.queryByText("Voice input")).not.toBeInTheDocument();
   });
 
-  it("limits settings nav to the slim section set", async () => {
+  it("exposes the enabled settings nav section set", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(async (input: RequestInfo | URL) => {
@@ -343,10 +271,12 @@ describe("SettingsView Apps catalog", () => {
     expect(within(settingsNav).getByRole("button", { name: "Overview" })).toBeInTheDocument();
     expect(within(settingsNav).getByRole("button", { name: "Appearance" })).toBeInTheDocument();
     expect(within(settingsNav).getByRole("button", { name: "Models" })).toBeInTheDocument();
+    expect(within(settingsNav).getByRole("button", { name: "Web" })).toBeInTheDocument();
     expect(within(settingsNav).getByRole("button", { name: "System" })).toBeInTheDocument();
+    expect(within(settingsNav).getByRole("button", { name: "Security" })).toBeInTheDocument();
+    expect(within(settingsNav).queryByRole("button", { name: "Apps" })).not.toBeInTheDocument();
     expect(within(settingsNav).queryByRole("button", { name: "Image" })).not.toBeInTheDocument();
-    expect(within(settingsNav).queryByRole("button", { name: "Web" })).not.toBeInTheDocument();
-    expect(within(settingsNav).queryByRole("button", { name: "Security" })).not.toBeInTheDocument();
+    expect(within(settingsNav).queryByRole("button", { name: "Voice" })).not.toBeInTheDocument();
   });
 
   it("shows context window options in model settings", async () => {

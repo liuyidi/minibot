@@ -281,12 +281,12 @@ describe("App layout", () => {
 
     await waitFor(() => expect(connectSpy).toHaveBeenCalled());
     const sidebar = screen.getByRole("navigation", { name: "Sidebar navigation" });
-    expect(within(sidebar).queryByRole("button", { name: "Apps" })).not.toBeInTheDocument();
     expect(within(sidebar).getByRole("button", { name: "IM channels" })).toBeInTheDocument();
     expect(within(sidebar).getByRole("button", { name: "Scheduled tasks" })).toBeInTheDocument();
     expect(within(sidebar).getByRole("button", { name: "Skills · Connectors" })).toBeInTheDocument();
     expect(within(sidebar).getByRole("link", { name: "Knowledge" })).toBeInTheDocument();
     expect(within(sidebar).getByRole("button", { name: "Settings" })).toBeInTheDocument();
+    expect(within(sidebar).queryByRole("button", { name: "Apps" })).not.toBeInTheDocument();
     expect(within(sidebar).queryByRole("button", { name: "Show archived" })).not.toBeInTheDocument();
   });
 
@@ -1509,9 +1509,9 @@ describe("App layout", () => {
     await waitFor(() => expect(connectSpy).toHaveBeenCalled());
     const sidebar = screen.getByRole("navigation", { name: "Sidebar navigation" });
     expect(within(sidebar).getByRole("button", { name: "Search" })).toBeInTheDocument();
-    expect(within(sidebar).queryByRole("button", { name: "Apps" })).not.toBeInTheDocument();
     expect(within(sidebar).getByRole("button", { name: "Skills · Connectors" })).toBeInTheDocument();
     expect(within(sidebar).getByRole("button", { name: "Scheduled tasks" })).toBeInTheDocument();
+    expect(within(sidebar).queryByRole("button", { name: "Apps" })).not.toBeInTheDocument();
     fireEvent.click(within(sidebar).getByRole("button", { name: "Settings" }));
 
     expect(await screen.findByRole("heading", { name: "Overview" })).toBeInTheDocument();
@@ -1531,12 +1531,12 @@ describe("App layout", () => {
     );
     expect(within(settingsNav).getByRole("button", { name: "Models" })).toBeInTheDocument();
     expect(within(settingsNav).getByRole("button", { name: "Appearance" })).toBeInTheDocument();
+    expect(within(settingsNav).getByRole("button", { name: "Web" })).toBeInTheDocument();
     expect(within(settingsNav).getByRole("button", { name: "System" })).toBeInTheDocument();
-    expect(within(settingsNav).queryByRole("button", { name: "Providers" })).not.toBeInTheDocument();
-    expect(within(settingsNav).queryByRole("button", { name: "Image" })).not.toBeInTheDocument();
-    expect(within(settingsNav).queryByRole("button", { name: "Web" })).not.toBeInTheDocument();
-    expect(within(settingsNav).queryByRole("button", { name: "Security" })).not.toBeInTheDocument();
+    expect(within(settingsNav).getByRole("button", { name: "Security" })).toBeInTheDocument();
     expect(within(settingsNav).queryByRole("button", { name: "Apps" })).not.toBeInTheDocument();
+    expect(within(settingsNav).queryByRole("button", { name: "Image" })).not.toBeInTheDocument();
+    expect(within(settingsNav).queryByRole("button", { name: "Voice" })).not.toBeInTheDocument();
     expect(within(settingsNav).queryByRole("button", { name: "IM channels" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Sign out" })).toBeInTheDocument();
     fireEvent.click(within(settingsNav).getByRole("button", { name: "Appearance" }));
@@ -1544,14 +1544,9 @@ describe("App layout", () => {
     expect(screen.getByRole("switch", { name: "Brand logos" })).toBeInTheDocument();
     fireEvent.click(within(settingsNav).getByRole("button", { name: "Models" }));
     expect(screen.queryByText("AI")).not.toBeInTheDocument();
-    // User BYOK configs are gated off (SETTINGS_SHOW_USER_MODEL_CONFIGS).
     expect(screen.queryByText("Current configuration")).not.toBeInTheDocument();
     expect(screen.queryByText("Your configurations")).not.toBeInTheDocument();
     expect(screen.queryByText("Presets")).not.toBeInTheDocument();
-    expect(screen.queryByText("OpenRouter")).not.toBeInTheDocument();
-    expect(screen.queryByText("Ant Ling")).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Save provider" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Add configuration" })).not.toBeInTheDocument();
 
     fireEvent.click(within(settingsNav).getByRole("button", { name: "System" }));
     expect(screen.getByText("Bot name")).toBeInTheDocument();
@@ -1569,6 +1564,17 @@ describe("App layout", () => {
     fireEvent.click(screen.getByRole("menuitem", { name: /Asia\/Shanghai/ }));
     expect(screen.getByRole("button", { name: "Asia/Shanghai" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Save" })).toBeEnabled();
+  });
+
+  it("falls back to overview when an unknown settings section is in the URL hash", async () => {
+    mockFetchRoutes({ "/api/settings": baseSettingsPayload() });
+    window.history.replaceState(null, "", "/#/settings/not-a-real-section");
+
+    render(<App />);
+
+    await waitFor(() => expect(connectSpy).toHaveBeenCalled());
+    expect(await screen.findByRole("heading", { name: "Overview" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Voice input" })).not.toBeInTheDocument();
   });
 
   it("falls back to overview when a disabled settings section is in the URL hash", async () => {
@@ -1613,21 +1619,6 @@ describe("App layout", () => {
 
     await waitFor(() => expect(connectSpy).toHaveBeenCalled());
     expect(await screen.findByRole("heading", { name: "Appearance" })).toBeInTheDocument();
-  });
-
-  it("keeps Apps hidden from the main sidebar until UI_ENTRY.apps is enabled", async () => {
-    mockFetchRoutes({
-      "/api/settings": baseSettingsPayload(),
-      "/api/settings/cli-apps": { apps: [], installed_count: 0, catalog_updated_at: "2026-04-18" },
-      "/api/settings/mcp-presets": { presets: [], installed_count: 0 },
-    });
-
-    render(<App />);
-
-    await waitFor(() => expect(connectSpy).toHaveBeenCalled());
-    const sidebar = screen.getByRole("navigation", { name: "Sidebar navigation" });
-    expect(within(sidebar).queryByRole("button", { name: "Apps" })).not.toBeInTheDocument();
-    expect(within(sidebar).getByRole("button", { name: "Settings" })).toBeInTheDocument();
   });
 
   it("returns from settings to the blank start page when no session was active", async () => {

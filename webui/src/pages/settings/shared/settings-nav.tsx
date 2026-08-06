@@ -40,10 +40,7 @@ const SETTINGS_NAV_ITEMS = ALL_SETTINGS_NAV_ITEMS.filter((item) =>
 
 
 export function titleForSection(section: SettingsSectionKey): string {
-  const fromNav = SETTINGS_NAV_ITEMS.find((item) => item.key === section)?.fallback;
-  if (fromNav) return fromNav;
-  if (section === "apps") return "Apps";
-  return "Settings";
+  return SETTINGS_NAV_ITEMS.find((item) => item.key === section)?.fallback ?? "Settings";
 }
 
 export function SettingsSidebar({

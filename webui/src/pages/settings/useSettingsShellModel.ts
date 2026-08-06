@@ -58,7 +58,7 @@ export function useSettingsShellModel({
   const [localPrefs, setLocalPrefs] = useState<LocalPreferences>(() => readLocalPreferences());
 
   useEffect(() => {
-    // Keep forced initialSection (tests / utility routes like apps) even when
+    // Keep forced initialSection (tests / utility routes) even when
     // the slim Settings nav hides that section.
     setActiveSection(initialSection);
   }, [initialSection]);

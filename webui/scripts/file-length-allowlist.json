@@ -63,16 +63,16 @@
     "max": 557,
     "reason": "legacy debt; do not grow — split toward ≤350"
   },
-  "pages/settings/apps/apps-ui.tsx": {
-    "max": 890,
-    "reason": "legacy debt; do not grow — split toward ≤350"
-  },
   "pages/settings/models/ProvidersSettings.tsx": {
     "max": 439,
     "reason": "legacy debt; do not grow — split toward ≤350"
   },
   "pages/skills/skills-ui.tsx": {
-    "max": 665,
+    "max": 560,
     "reason": "legacy debt; do not grow — split toward ≤350"
+  },
+  "pages/skills/AddConnectorDialog.tsx": {
+    "max": 360,
+    "reason": "connector custom+import dialog; split further if it grows"
   }
 }

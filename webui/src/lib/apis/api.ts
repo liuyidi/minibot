@@ -6,6 +6,7 @@ import type {
   CliAppsPayload,
   FilePreviewPayload,
   ImageGenerationSettingsUpdate,
+  McpPresetInfo,
   McpPresetsPayload,
   ModelConfigurationCreate,
   ModelConfigurationUpdate,
@@ -74,21 +75,6 @@ export async function request<T>(
     );
   }
   return (await res.json()) as T;
-}
-
-function mcpValuesHeader(values: Record<string, unknown>): HeadersInit | undefined {
-  const payload: Record<string, unknown> = {};
-  Object.entries(values).forEach(([key, value]) => {
-    if (value === null || value === undefined) return;
-    if (typeof value === "string") {
-      const trimmed = value.trim();
-      if (trimmed) payload[key] = trimmed;
-      return;
-    }
-    payload[key] = value;
-  });
-  if (!Object.keys(payload).length) return undefined;
-  return { "X-Minibot-MCP-Values": JSON.stringify(payload) };
 }
 
 function splitKey(key: string): { channel: string; chatId: string } {
@@ -438,19 +424,22 @@ export async function applyMcpTemplate(
   return fetchMinibotMcpList(token, base);
 }
 
+export type UpsertMcpPresetBody = {
+  id?: string;
+  label?: string;
+  enabled?: boolean;
+  type?: string;
+  command?: string;
+  args?: string[];
+  url?: string;
+  headers?: Record<string, string>;
+  env?: Record<string, string>;
+  tool_timeout?: number;
+};
+
 export async function upsertMcpPresetJson(
   token: string,
-  body: {
-    id?: string;
-    label?: string;
-    enabled?: boolean;
-    type?: string;
-    command?: string;
-    args?: string[];
-    url?: string;
-    headers?: Record<string, string>;
-    env?: Record<string, string>;
-  },
+  body: UpsertMcpPresetBody,
   base: string = "",
 ): Promise<MinibotMcpListPayload> {
   await request(`${base}/api/settings/mcp-presets`, token, {
@@ -569,16 +558,38 @@ export async function runCliAppAction(
   return request<CliAppsPayload>(`${base}/api/settings/cli-apps/${action}?${query}`, token);
 }
 
+/** Catalog-shaped MCP list for Thread mentions (maps minibot runtime presets). */
 export async function fetchMcpPresets(
   token: string,
   base: string = "",
 ): Promise<McpPresetsPayload> {
-  return request<McpPresetsPayload>(
-    `${base}/api/settings/mcp-presets`,
-    token,
-    undefined,
-    API_READ_TIMEOUT_MS,
-  );
+  const list = await fetchMinibotMcpList(token, base);
+  const presets: McpPresetInfo[] = list.presets.map((preset) => {
+    const transport = String(preset.inferred_type || preset.type || "stdio");
+    return {
+      name: preset.id,
+      display_name: preset.label || preset.id,
+      category: "mcp",
+      description: preset.command || preset.url || "",
+      docs_url: "",
+      transport,
+      requires: "",
+      note: "",
+      install_supported: true,
+      installed: preset.enabled,
+      configured: true,
+      available: true,
+      status: preset.enabled ? "configured" : "not_installed",
+      required_fields: [],
+      connection_summary: transport,
+      enabled_tools: ["*"],
+      source: "custom",
+    };
+  });
+  return {
+    presets,
+    installed_count: presets.filter((preset) => preset.installed && preset.configured).length,
+  };
 }
 
 export async function fetchProviderModels(
@@ -593,59 +604,6 @@ export async function fetchProviderModels(
     token,
     undefined,
     API_READ_TIMEOUT_MS,
-  );
-}
-
-export async function runMcpPresetAction(
-  token: string,
-  action: "enable" | "remove" | "test",
-  name: string,
-  values: Record<string, string> = {},
-  base: string = "",
-): Promise<McpPresetsPayload> {
-  const query = new URLSearchParams();
-  query.set("name", name);
-  return request<McpPresetsPayload>(
-    `${base}/api/settings/mcp-presets/${action}?${query}`,
-    token,
-    { headers: mcpValuesHeader(values) },
-  );
-}
-
-export async function saveCustomMcpServer(
-  token: string,
-  values: Record<string, string>,
-  base: string = "",
-): Promise<McpPresetsPayload> {
-  return request<McpPresetsPayload>(
-    `${base}/api/settings/mcp-presets/custom`,
-    token,
-    { headers: mcpValuesHeader(values) },
-  );
-}
-
-export async function importMcpConfig(
-  token: string,
-  config: string,
-  base: string = "",
-): Promise<McpPresetsPayload> {
-  return request<McpPresetsPayload>(
-    `${base}/api/settings/mcp-presets/import`,
-    token,
-    { headers: mcpValuesHeader({ config }) },
-  );
-}
-
-export async function updateMcpServerTools(
-  token: string,
-  name: string,
-  enabledTools: string[],
-  base: string = "",
-): Promise<McpPresetsPayload> {
-  return request<McpPresetsPayload>(
-    `${base}/api/settings/mcp-presets/tools`,
-    token,
-    { headers: mcpValuesHeader({ name, enabled_tools: enabledTools }) },
   );
 }
 

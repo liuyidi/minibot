@@ -6,7 +6,6 @@ import type {
 } from "@/lib/types";
 
 import type {
-  CustomMcpForm,
   LocalPreferences,
   PendingRestartSections,
   ProviderApiType,
@@ -74,17 +73,6 @@ export const EMPTY_PENDING_RESTART_SECTIONS: PendingRestartSections = {
   runtime: false,
   browser: false,
   image: false,
-};
-
-export const DEFAULT_CUSTOM_MCP_FORM: CustomMcpForm = {
-  name: "",
-  transport: "stdio",
-  command: "",
-  args: "",
-  url: "",
-  env: "",
-  headers: "",
-  toolTimeout: "30",
 };
 
 export const DEFAULT_WEB_SEARCH_FORM: WebSearchSettingsUpdate = {

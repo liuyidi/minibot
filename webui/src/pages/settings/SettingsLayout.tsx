@@ -12,7 +12,6 @@ import {
 import { cn } from "@/lib/utils";
 import { AdvancedPage } from "./advanced/AdvancedPage";
 import { AppearancePage } from "./appearance/AppearancePage";
-import { AppsPage } from "./apps/AppsPage";
 import { BrowserPage } from "./browser/BrowserPage";
 import { ImagePage } from "./image/ImagePage";
 import { ModelsSettingsPage } from "./models/ModelsSettingsPage";
@@ -33,7 +32,6 @@ const SETTINGS_SECTION_PAGES: Record<SettingsSectionKey, ComponentType> = {
   image: ImagePage,
   voice: VoicePage,
   browser: BrowserPage,
-  apps: AppsPage,
   runtime: RuntimePage,
   advanced: AdvancedPage,
 };

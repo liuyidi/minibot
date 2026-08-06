@@ -1,4 +1,4 @@
-import type { CliAppInfo, McpPresetInfo, SettingsPayload } from "@/lib/types";
+import type { SettingsPayload } from "@/lib/types";
 
 export type SettingsSectionKey =
   | "overview"
@@ -7,16 +7,11 @@ export type SettingsSectionKey =
   | "image"
   | "voice"
   | "browser"
-  | "apps"
   | "runtime"
   | "advanced";
 
 export type LocalDensity = "comfortable" | "compact";
 export type LocalActivityMode = "auto" | "expanded";
-export type AppsKindFilter = "all" | "cli" | "mcp";
-export type AppsCatalogItem =
-  | { id: string; kind: "cli"; app: CliAppInfo }
-  | { id: string; kind: "mcp"; preset: McpPresetInfo };
 
 export interface LocalPreferences {
   density: LocalDensity;
@@ -35,18 +30,6 @@ export type RestartAwarePayload = {
 };
 export type ProviderApiType = "auto" | "chat_completions" | "responses";
 export type ProviderForm = { apiKey: string; apiBase: string; apiType: ProviderApiType };
-export type CustomMcpTransport = "stdio" | "streamableHttp" | "sse";
-
-export interface CustomMcpForm {
-  name: string;
-  transport: CustomMcpTransport;
-  command: string;
-  args: string;
-  url: string;
-  env: string;
-  headers: string;
-  toolTimeout: string;
-}
 
 export type SettingsPageProps = {
   theme: "light" | "dark";

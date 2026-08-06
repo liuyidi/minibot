@@ -4,7 +4,6 @@ import { isEnabledSettingsSection } from "@/lib/configs/ui-entry";
 export type ShellView =
   | "chat"
   | "settings"
-  | "apps"
   | "automations"
   | "skills"
   | "channels"
@@ -13,7 +12,7 @@ export type ShellView =
 /** Sidebar utility hubs (standalone top-level routes; not settings sections). */
 export type SidebarUtilityKey = Extract<
   ShellView,
-  "apps" | "automations" | "skills" | "channels"
+  "automations" | "skills" | "channels"
 >;
 
 export type ShellRoute = {
@@ -34,7 +33,6 @@ const SETTINGS_SECTION_KEYS: SettingsSectionKey[] = [
   "image",
   "voice",
   "browser",
-  "apps",
   "runtime",
   "advanced",
 ];
@@ -47,8 +45,8 @@ export function defaultShellRoute(): ShellRoute {
   return { view: "chat", activeKey: null, settingsSection: "overview" };
 }
 
-export function shellViewForSettingsSection(section: SettingsSectionKey): ShellView {
-  if (section === "apps") return "apps";
+export function shellViewForSettingsSection(_section: SettingsSectionKey): ShellView {
+  void _section;
   return "settings";
 }
 
@@ -80,19 +78,14 @@ export function shellRouteFromLocation(location: ShellLocation): ShellRoute {
       };
     }
     const parsedSection = isSettingsSectionKey(rawSection) ? rawSection : "overview";
-    const settingsSection =
-      shellViewForSettingsSection(parsedSection) === "settings" &&
-      !isEnabledSettingsSection(parsedSection)
-        ? "overview"
-        : parsedSection;
+    const settingsSection = isEnabledSettingsSection(parsedSection)
+      ? parsedSection
+      : "overview";
     return {
-      view: shellViewForSettingsSection(settingsSection),
+      view: "settings",
       activeKey,
       settingsSection,
     };
-  }
-  if (pathname === "/apps") {
-    return { view: "apps", activeKey, settingsSection: "apps" };
   }
   if (pathname === "/automations") {
     return { view: "automations", activeKey, settingsSection: "overview" };
@@ -144,7 +137,6 @@ export function shellRouteToLocation(route: ShellRoute): ShellLocation {
 
   // Utility hubs keep top-level paths; settings sections are nested pages.
   if (
-    route.view === "apps" ||
     route.view === "automations" ||
     route.view === "skills" ||
     route.view === "channels"

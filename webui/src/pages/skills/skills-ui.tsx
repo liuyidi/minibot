@@ -23,11 +23,12 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
-import type { UpsertMcpBody } from "@/hooks/skills";
 import type { SkillDetail, SkillSummary } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 import { useSkillDetail } from "./useSkillDetail";
+
+export { AddConnectorDialog } from "./AddConnectorDialog";
 
 export function TabButton({
   active,
@@ -295,114 +296,6 @@ export function AddSkillDialog({
           <Button type="button" disabled={busy || !markdown.trim()} onClick={() => void submit()}>
             {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
             {t("settings.skills.install", { defaultValue: "Install" })}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-export function AddConnectorDialog({
-  open,
-  onOpenChange,
-  busy,
-  onSave,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  busy: boolean;
-  onSave: (body: UpsertMcpBody) => Promise<string | null>;
-}) {
-  const { t } = useTranslation();
-  const [label, setLabel] = useState("");
-  const [transport, setTransport] = useState<"stdio" | "streamableHttp" | "sse">("stdio");
-  const [command, setCommand] = useState("npx");
-  const [argsText, setArgsText] = useState("-y @modelcontextprotocol/server-filesystem /tmp");
-  const [url, setUrl] = useState("");
-  const [error, setError] = useState<string | null>(null);
-
-  const submit = async () => {
-    setError(null);
-    const message = await onSave({
-      label: label.trim() || undefined,
-      enabled: true,
-      type: transport,
-      command: transport === "stdio" ? command.trim() : "",
-      args:
-        transport === "stdio"
-          ? argsText
-              .split(/\s+/)
-              .map((part) => part.trim())
-              .filter(Boolean)
-          : [],
-      url: transport === "stdio" ? "" : url.trim(),
-    });
-    if (!message) {
-      setLabel("");
-      onOpenChange(false);
-      return;
-    }
-    setError(message);
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle>
-            {t("settings.skills.addConnector", { defaultValue: "Add connector" })}
-          </DialogTitle>
-          <DialogDescription>
-            {t("settings.skills.addConnectorHint", {
-              defaultValue: "Add a custom MCP server (stdio or HTTP).",
-            })}
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-3">
-          <Input
-            value={label}
-            onChange={(e) => setLabel(e.target.value)}
-            placeholder={t("settings.skills.connectorLabel", { defaultValue: "Label" })}
-          />
-          <div className="flex gap-2">
-            {(["stdio", "streamableHttp", "sse"] as const).map((value) => (
-              <Button
-                key={value}
-                type="button"
-                size="sm"
-                variant={transport === value ? "default" : "outline"}
-                className="rounded-full"
-                onClick={() => setTransport(value)}
-              >
-                {value}
-              </Button>
-            ))}
-          </div>
-          {transport === "stdio" ? (
-            <>
-              <Input
-                value={command}
-                onChange={(e) => setCommand(e.target.value)}
-                placeholder="command"
-              />
-              <Input
-                value={argsText}
-                onChange={(e) => setArgsText(e.target.value)}
-                placeholder="args (space-separated)"
-              />
-            </>
-          ) : (
-            <Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://…" />
-          )}
-          {error ? <p className="text-[13px] text-destructive">{error}</p> : null}
-        </div>
-        <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-            {t("common.cancel", { defaultValue: "Cancel" })}
-          </Button>
-          <Button type="button" disabled={busy} onClick={() => void submit()}>
-            {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
-            {t("settings.skills.saveConnector", { defaultValue: "Save" })}
           </Button>
         </DialogFooter>
       </DialogContent>

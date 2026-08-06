@@ -7,23 +7,15 @@ import {
   upsertMcpPresetJson,
   type MinibotMcpPreset,
   type MinibotMcpTemplate,
+  type UpsertMcpPresetBody,
 } from "@/lib/apis/api";
+import { parseMcpConfigImport } from "@/lib/skills/mcp-config-import";
 import type { SkillSummary } from "@/lib/types";
 import { useClient } from "@/providers/ClientProvider";
 
 import { useSkills } from "./useSkills";
 
-export type UpsertMcpBody = {
-  id?: string;
-  label?: string;
-  enabled?: boolean;
-  type?: string;
-  command?: string;
-  args?: string[];
-  url?: string;
-  headers?: Record<string, string>;
-  env?: Record<string, string>;
-};
+export type UpsertMcpBody = UpsertMcpPresetBody;
 
 function toErrorMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
@@ -47,6 +39,8 @@ export function useSkillsCatalog(): {
   installSkill: (body: { markdown: string; name?: string }) => Promise<string | null>;
   /** Returns null on success, or an error message on failure. */
   upsertMcp: (body: UpsertMcpBody) => Promise<string | null>;
+  /** Parse mcp.json and upsert each server. Returns null on success. */
+  importMcpConfig: (raw: string) => Promise<string | null>;
 } {
   const { token } = useClient();
   const {
@@ -155,6 +149,27 @@ export function useSkillsCatalog(): {
     [token],
   );
 
+  const importMcpConfig = useCallback(
+    async (raw: string) => {
+      setBusyKey("import-mcp");
+      try {
+        const bodies = parseMcpConfigImport(raw);
+        let payload = await upsertMcpPresetJson(token, bodies[0]!);
+        for (const body of bodies.slice(1)) {
+          payload = await upsertMcpPresetJson(token, body);
+        }
+        setPresets(payload.presets ?? []);
+        setTemplates(payload.templates ?? []);
+        return null;
+      } catch (err) {
+        return toErrorMessage(err);
+      } finally {
+        setBusyKey(null);
+      }
+    },
+    [token],
+  );
+
   return {
     skills,
     skillsLoading,
@@ -170,5 +185,6 @@ export function useSkillsCatalog(): {
     applyTemplate,
     installSkill,
     upsertMcp,
+    importMcpConfig,
   };
 }
