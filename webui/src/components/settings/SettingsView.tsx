@@ -42,7 +42,7 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-import { LanguageSwitcher } from "@/components/sidebar/LanguageSwitcher";
+import { LanguageSwitcher } from "@/components/settings/LanguageSwitcher";
 import {
   agentDraftFromPayload,
   DEFAULT_AGENT_SETTINGS_DRAFT,

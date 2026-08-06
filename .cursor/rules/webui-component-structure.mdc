@@ -94,7 +94,7 @@ Import from category paths (`@/lib/apis/api`, `@/lib/utils/format`). `@/lib/util
 | `routes/` | URL ↔ `ShellRoute`, `useShellNavigate`, `HashChangeSync` | layout JSX; feature UI |
 | `stores/` | Zustand chrome / session-badge state | server session lists / WS client |
 | `components/ui/` | Button, Dialog, Input, Sheet, … | business copy / API logic |
-| `components/sidebar/` | sidebar, chat list, chrome dialogs, language switcher | chat bubbles / markdown |
+| `components/sidebar/` | sidebar, chat list, chrome dialogs, | chat bubbles / markdown |
 | `components/thread/` | chat surface, messages, activity, file preview | settings forms; sidebar |
 | `components/markdown/` | MarkdownText, CodeBlock renderer | page-private widgets |
 | `components/settings/` | settings-domain shared chrome | one-off page widgets |
