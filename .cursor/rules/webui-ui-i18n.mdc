@@ -1,0 +1,42 @@
+---
+description: minibot WebUI icons (lucide-react) and i18n requirements
+globs: webui/**/*.{ts,tsx,json}
+alwaysApply: false
+---
+
+# WebUI icons and copy
+
+## Icons
+
+- Use **`lucide-react` only** for icons. Do not add other icon packs (Font Awesome, heroicons, custom SVG icon sets, emoji-as-icons for chrome, etc.).
+- Import named icons from `lucide-react` and keep sizing/stroke consistent with nearby UI.
+- Prefer existing lucide icons over one-off inline SVGs for UI chrome.
+
+```tsx
+// ✅ GOOD
+import { ChevronLeft, Loader2 } from "lucide-react";
+
+// ❌ BAD — new icon library
+import { FaChevronLeft } from "react-icons/fa";
+```
+
+## Internationalization
+
+- All **user-facing copy** must go through i18n (`react-i18next` / `useTranslation`).
+- Add or update keys in `webui/src/i18n/locales/<locale>/common.json` (keep locales in sync; at minimum update `en` and `zh-CN` when changing copy).
+- Prefer stable nested keys (`settings.models.platformModels`) over ad-hoc English strings in JSX.
+- Avoid hardcoding labels, buttons, empty states, errors, tooltips, and aria labels in components.
+- `defaultValue` in `t(key, { defaultValue })` is only a temporary fallback while keys land — still add the real locale entries in the same change when practical.
+
+```tsx
+// ❌ BAD
+<button>Save</button>
+<span>No configured providers</span>
+
+// ✅ GOOD
+const { t } = useTranslation();
+<button>{t("settings.actions.save")}</button>
+<span>{t("settings.byok.noConfiguredProviders")}</span>
+```
+
+Non-copy exceptions (OK without i18n): protocol identifiers, model IDs, provider API names, file paths, and other machine/config values shown as raw data.

@@ -1,0 +1,117 @@
+---
+description: minibot WebUI src directory layout, file size, and component placement
+globs: webui/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# WebUI `src/` directory structure
+
+Alias: `@/` → `webui/src/`.
+
+## Tree
+
+```text
+webui/src/
+├── main.tsx                 # entry: mount, i18n, global CSS
+├── App.tsx                  # shell: hash routes, auth, layout (keep thin)
+├── globals.css
+│
+├── pages/                   # route-level pages (one folder per feature)
+│   ├── index.ts
+│   └── <page>/
+│       ├── index.ts         # export { XxxPage }
+│       ├── XxxPage.tsx      # data / state / handlers + compose UI
+│       ├── xxx-ui.tsx       # optional large presentational split
+│       └── components/      # page-private UI only
+│
+├── components/              # shared business UI (2+ consumers or app shell)
+│   ├── ui/                  # atomic primitives (shadcn / Radix)
+│   ├── settings/            # settings-domain shared chrome
+│   ├── thread/              # chat / session domain
+│   │   └── activity/
+│   └── *.tsx
+│
+├── hooks/                   # reusable React hooks
+├── lib/                     # no JSX — see `lib/` layout below
+├── providers/               # React context providers
+├── i18n/                    # i18n init + locales/<lang>/common.json
+├── tests/                   # Vitest + Testing Library
+├── types/                   # ambient *.d.ts
+└── workers/                 # Web Workers
+```
+
+## `lib/` layout
+
+```text
+lib/
+├── apis/           # REST / WS / bootstrap HTTP
+├── configs/        # feature flags & runtime/host config
+├── constants/      # static maps (e.g. provider-brand)
+├── utils/          # pure helpers (cn, format, media, …)
+├── types/          # shared TypeScript types
+└── chat/           # session/message-domain logic
+```
+
+| Path | Put here | Do not put here |
+|------|----------|-----------------|
+| `lib/apis/` | HTTP/WS clients, fetch helpers | UI, pure formatters |
+| `lib/configs/` | env/build flags, host runtime adapters | API call implementations |
+| `lib/constants/` | static tables / brand maps | logic with side effects |
+| `lib/utils/` | general pure helpers | chat-turn domain pipelines |
+| `lib/types/` | shared DTOs / UI message types | runtime code |
+| `lib/chat/` | activity timeline, tool traces, display scrubbers | generic `cn` / date format |
+
+Import from category paths (`@/lib/apis/api`, `@/lib/utils/format`). `@/lib/utils` / `@/lib/types` resolve via folder barrels.
+
+## Layer responsibilities
+
+| Path | Put here | Do not put here |
+|------|----------|-----------------|
+| `pages/<page>/` | page entry, orchestration, `components/` used only by this page | atomic Button/Dialog; multi-page business blocks |
+| `components/ui/` | Button, Dialog, Input, Sheet, … | business copy / API logic |
+| `components/` (+ `settings/`, `thread/`) | UI reused by app shell or ≥2 pages | one-off page widgets |
+| `hooks/` | reusable `useXxx` | tiny helpers used in one file (keep local) |
+| `lib/` | categorized modules above | React components / JSX |
+| `providers/` | global Context | ordinary feature UI |
+| `i18n/` | locale JSON + i18n bootstrap | business logic |
+| `tests/` | `*.test.ts(x)` | production code |
+
+## File size
+
+- Prefer **≤ ~350 lines** per file.
+- Over that: split page shell / UI sections / hooks / helpers.
+- Prefer extraction over growing mega-files; thin re-exports only for migration compatibility.
+- Legacy giants (`App.tsx`, `SettingsView.tsx`): new work should land in `pages/` or `components/<domain>/`, not keep appending.
+
+## Placement checklist
+
+1. Primitive control? → `components/ui`
+2. App shell or ≥2 pages import it? → `components/` (domain subfolder OK)
+3. Only this page? → `pages/<page>/components/`
+4. No JSX, testable pure logic? → `lib/` (`apis` / `configs` / `constants` / `utils` / `types` / `chat`)
+5. Reusable React state logic? → `hooks/`
+
+```tsx
+// ❌ BAD — page-only widget in shared components/
+import { FeishuQrPanel } from "@/components/FeishuQrPanel";
+
+// ✅ GOOD — colocated with the only consumer
+import { FeishuQrPanel } from "@/pages/channels/components/FeishuQrPanel";
+
+// ✅ GOOD — atomic / shared business
+import { Button } from "@/components/ui/button";
+import { MessageBubble } from "@/components/MessageBubble";
+```
+
+## Page folder convention
+
+```text
+pages/channels/
+  index.ts                 # export { ChannelsPage } from "./ChannelsPage"
+  ChannelsPage.tsx
+  components/              # channels-only
+```
+
+Public import: `import { ChannelsPage } from "@/pages/channels"`.
+
+Do not add full page implementations under `components/settings/`.

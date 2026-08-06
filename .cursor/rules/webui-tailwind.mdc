@@ -1,0 +1,23 @@
+---
+description: minibot WebUI Tailwind CSS and className composition
+globs: webui/**/*.{ts,tsx,css}
+alwaysApply: false
+---
+
+# WebUI Tailwind
+
+- Style with **Tailwind utility classes** in JSX. Prefer existing design tokens / CSS variables already used in the app (`hsl(var(--…))`, `bg-background`, `text-muted-foreground`, etc.).
+- Compose conditional classes with **`cn()`** from `@/lib/utils` (clsx + tailwind-merge). Do not hand-roll string concatenation for class lists.
+- Prefer extending `components/ui` primitives (and `class-variance-authority` variants there) over one-off styled `<div>` chrome when building controls.
+- Avoid new CSS modules / large custom stylesheets unless Tailwind cannot express the need (e.g. third-party widget overrides).
+- Avoid inline `style={{}}` for colors/spacing that Tailwind already covers; inline styles are OK for dynamic measured values (width from layout, CSS variables set at runtime).
+
+```tsx
+import { cn } from "@/lib/utils";
+
+// ❌ BAD
+<div className={"row " + (active ? "bg-muted" : "")} style={{ marginTop: 12 }} />
+
+// ✅ GOOD
+<div className={cn("flex items-center gap-2 mt-3", active && "bg-muted/30")} />
+```

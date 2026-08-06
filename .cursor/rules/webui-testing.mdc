@@ -1,0 +1,26 @@
+---
+description: minibot WebUI Vitest + Testing Library conventions
+globs: webui/**/*.{test,spec}.{ts,tsx}
+alwaysApply: false
+---
+
+# WebUI testing
+
+- Runner: **Vitest** + **Testing Library** (`@testing-library/react`, `user-event`). Tests live under `webui/src/tests/` (follow existing files).
+- Assert **user-visible behavior**: roles, labels, text, and `data-testid` only when roles/labels are insufficient.
+- Prefer `screen.getByRole` / `findByRole` over brittle CSS class or DOM structure queries.
+- Mock network/gateway at the API/client boundary; do not assert private component internals or implementation details.
+- Wrap interactions that update state with Testing Library patterns (`userEvent`, `await findBy…`); avoid manual `act` unless necessary.
+- Keep tests focused; add coverage when changing behavior users can observe (routing, settings save, empty states, errors).
+
+```tsx
+// ❌ BAD
+expect(container.querySelector(".rounded-full")?.textContent).toBe("Save");
+
+// ✅ GOOD
+expect(screen.getByRole("button", { name: /save/i })).toBeEnabled();
+await user.click(screen.getByRole("button", { name: /save/i }));
+expect(await screen.findByText(/up to date/i)).toBeInTheDocument();
+```
+
+Run: `cd webui && npm test` (or `npm test -- --run path/to/file.test.tsx`).

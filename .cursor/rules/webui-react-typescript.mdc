@@ -1,0 +1,35 @@
+---
+description: minibot WebUI React + TypeScript conventions (Vite SPA)
+globs: webui/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# WebUI React + TypeScript
+
+Stack: **Vite SPA** + React 18 + TypeScript. Do **not** apply Next.js / App Router / RSC / Server Actions patterns.
+
+## TypeScript
+
+- Prefer explicit props types (`type FooProps = { … }` or `interface`) above the component.
+- Avoid `any`; use `unknown` and narrow. Prefer types from `@/lib/types` for API payloads.
+- Prefer named exports for components and helpers (page entrypoints may re-export from `index.ts`).
+
+## React
+
+- Functional components + hooks only (class components only for rare error boundaries).
+- Derive values during render; do not use `useEffect` to sync derived state into `useState`.
+- Do not add `useMemo` / `useCallback` by default — only when profiling or an existing pattern requires it.
+- Keep event handlers and effects focused; extract hooks (`useX`) when logic is reused or crowds the component.
+- Lists: stable keys (ids), never array index for reorderable lists.
+
+```tsx
+// ❌ BAD — Next/RSC mindset or derived-state effect
+export default async function Page() { /* server component */ }
+useEffect(() => setFullName(`${first} ${last}`), [first, last]);
+
+// ✅ GOOD — Vite SPA client component
+export function ChannelRow({ channel }: ChannelRowProps) {
+  const fullName = `${channel.botName} · ${channel.id}`;
+  return <div>{fullName}</div>;
+}
+```
