@@ -70,9 +70,5 @@
   "pages/skills/skills-ui.tsx": {
     "max": 560,
     "reason": "legacy debt; do not grow — split toward ≤350"
-  },
-  "pages/skills/AddConnectorDialog.tsx": {
-    "max": 360,
-    "reason": "connector custom+import dialog; split further if it grows"
   }
 }
