@@ -106,10 +106,23 @@ Import from category paths (`@/lib/apis/api`, `@/lib/utils/format`). `@/lib/util
 
 ## File size
 
-- Prefer **≤ ~350 lines** per file.
-- Over that: split page shell / UI sections / hooks / helpers.
+- Prefer **≤ 350 lines** per production `.ts`/`.tsx` file.
+- **351–400**: allowed only when a split is genuinely awkward; do not treat this band as normal headroom.
+- **> 400**: must split. Existing debt may sit in `webui/scripts/file-length-allowlist.json` with a frozen `max` (must not grow; remove the entry once ≤400).
+- **Out of scope**: `webui/src/tests/**` (and locale JSON).
 - Prefer extraction over growing mega-files; thin re-exports only for migration compatibility.
-- Legacy giants (`App.tsx`, `SettingsView.tsx`): new work should land in `pages/` or `components/<domain>/`, not keep appending.
+- Legacy giants: new work should land in `pages/` or `components/<domain>/`, not keep appending.
+
+### Enforcement (mechanical)
+
+| Gate | How |
+|------|-----|
+| Script | `cd webui && npm run lint:file-length` (`scripts/check-file-length.mjs`) |
+| Combined | `npm run lint:gates` (CJK + file length); `npm run lint` includes gates |
+| Git pre-commit | `.githooks/pre-commit` → `check-webui-gates.mjs --staged` |
+| Cursor | `.cursor/hooks.json` → deny `git commit` when staged WebUI fails the same gates |
+
+Do not raise allowlist `max` values — only lower or remove them after splits.
 
 ## Placement checklist
 

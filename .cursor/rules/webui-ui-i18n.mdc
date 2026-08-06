@@ -49,7 +49,8 @@ Hard-coded **CJK** (Han) literals in `webui/src` are blocked outside allowlisted
 |------|-----|
 | ESLint | `minibot-i18n/no-cjk-copy` in `webui/eslint.config.js` |
 | Script | `cd webui && npm run lint:i18n` (`scripts/check-no-cjk-copy.mjs`) |
+| Combined | `npm run lint:gates` (CJK + file length) |
 | Git pre-commit | `.githooks/pre-commit` — enable with `bash scripts/install-git-hooks.sh` |
-| Cursor | `.cursor/hooks.json` → deny `git commit` when staged WebUI fails the same check |
+| Cursor | `.cursor/hooks.json` → deny `git commit` when staged WebUI fails gates |
 
-`npm run lint` runs ESLint then the CJK script. English literals are still guided by this rule; CJK is the commit-time hard gate.
+`npm run lint` runs ESLint then the WebUI gates (CJK + file length). English literals are still guided by this rule; CJK is a commit-time hard gate. File length rules live in `webui-component-structure.mdc`.

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Block commits that introduce hard-coded CJK UI copy in webui/src.
+# Block commits that violate WebUI gates (CJK copy / file length).
 # Enable once per clone:  git config core.hooksPath .githooks
 set -euo pipefail
 
@@ -10,9 +10,9 @@ if ! git diff --cached --name-only --diff-filter=ACMR | grep -q '^webui/src/.*\.
   exit 0
 fi
 
-if [[ ! -f webui/scripts/check-no-cjk-copy.mjs ]]; then
-  echo "pre-commit: missing webui/scripts/check-no-cjk-copy.mjs" >&2
+if [[ ! -f webui/scripts/check-webui-gates.mjs ]]; then
+  echo "pre-commit: missing webui/scripts/check-webui-gates.mjs" >&2
   exit 1
 fi
 
-node webui/scripts/check-no-cjk-copy.mjs --staged
+node webui/scripts/check-webui-gates.mjs --staged

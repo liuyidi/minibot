@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
- * Cursor beforeShellExecution: deny `git commit` when staged webui has CJK copy.
+ * Cursor beforeShellExecution: deny `git commit` when staged webui fails gates
+ * (CJK i18n + file length).
  * Input: JSON on stdin. Output: { permission, user_message?, agent_message? }
  */
 import { spawnSync } from "node:child_process";
@@ -35,7 +36,7 @@ if (!/\bgit(?:\s+-C\s+\S+)?\s+commit\b/.test(command)) {
   process.exit(0);
 }
 
-const script = path.join(REPO_ROOT, "webui/scripts/check-no-cjk-copy.mjs");
+const script = path.join(REPO_ROOT, "webui/scripts/check-webui-gates.mjs");
 if (!fs.existsSync(script)) {
   reply({ permission: "allow" });
   process.exit(0);
@@ -55,7 +56,7 @@ const detail = `${result.stderr || ""}${result.stdout || ""}`.trim().slice(0, 20
 reply({
   permission: "deny",
   user_message:
-    "Commit blocked: hard-coded CJK in webui/src. Use react-i18next (.cursor/rules/webui-ui-i18n.mdc).",
-  agent_message: detail || "i18n CJK check failed",
+    "Commit blocked: WebUI gate failed (i18n CJK or file length). See .cursor/rules/webui-ui-i18n.mdc and webui-component-structure.mdc.",
+  agent_message: detail || "webui gates failed",
 });
 process.exit(0);

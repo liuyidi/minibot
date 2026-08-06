@@ -1,0 +1,82 @@
+{
+  "components/markdown/MarkdownTextRenderer.tsx": {
+    "max": 609,
+    "reason": "legacy debt; do not grow — split toward ≤350"
+  },
+  "components/settings/model-pickers.tsx": {
+    "max": 729,
+    "reason": "legacy debt; do not grow — split toward ≤350"
+  },
+  "components/sidebar/ChatList.tsx": {
+    "max": 551,
+    "reason": "legacy debt; do not grow — split toward ≤350"
+  },
+  "components/sidebar/Sidebar.tsx": {
+    "max": 519,
+    "reason": "legacy debt; do not grow — split toward ≤350"
+  },
+  "components/thread/AgentActivityCluster.tsx": {
+    "max": 1878,
+    "reason": "legacy debt; do not grow — split toward ≤350"
+  },
+  "components/thread/MessageBubble.tsx": {
+    "max": 828,
+    "reason": "legacy debt; do not grow — split toward ≤350"
+  },
+  "components/thread/ThreadComposer.tsx": {
+    "max": 2698,
+    "reason": "legacy debt; do not grow — split toward ≤350"
+  },
+  "components/thread/ThreadShell.tsx": {
+    "max": 1053,
+    "reason": "legacy debt; do not grow — split toward ≤350"
+  },
+  "components/thread/ThreadViewport.tsx": {
+    "max": 532,
+    "reason": "legacy debt; do not grow — split toward ≤350"
+  },
+  "hooks/sessions/useMinibotStream.ts": {
+    "max": 1174,
+    "reason": "legacy debt; do not grow — split toward ≤350"
+  },
+  "hooks/ui/useVoiceRecorder.ts": {
+    "max": 422,
+    "reason": "legacy debt; do not grow — split toward ≤350"
+  },
+  "lib/apis/api.ts": {
+    "max": 889,
+    "reason": "legacy debt; do not grow — split toward ≤350"
+  },
+  "lib/apis/minibot-client.ts": {
+    "max": 676,
+    "reason": "legacy debt; do not grow — split toward ≤350"
+  },
+  "lib/chat/activity-timeline.ts": {
+    "max": 417,
+    "reason": "legacy debt; do not grow — split toward ≤350"
+  },
+  "pages/automations/automations-ui.tsx": {
+    "max": 2368,
+    "reason": "legacy debt; do not grow — split toward ≤350"
+  },
+  "pages/models/ModelsPage.tsx": {
+    "max": 557,
+    "reason": "legacy debt; do not grow — split toward ≤350"
+  },
+  "pages/settings/SettingsPage.tsx": {
+    "max": 1285,
+    "reason": "legacy debt; do not grow — split toward ≤350"
+  },
+  "pages/settings/apps/apps-ui.tsx": {
+    "max": 890,
+    "reason": "legacy debt; do not grow — split toward ≤350"
+  },
+  "pages/settings/models/ProvidersSettings.tsx": {
+    "max": 439,
+    "reason": "legacy debt; do not grow — split toward ≤350"
+  },
+  "pages/skills/skills-ui.tsx": {
+    "max": 665,
+    "reason": "legacy debt; do not grow — split toward ≤350"
+  }
+}
