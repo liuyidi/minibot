@@ -1,0 +1,166 @@
+# WebUI 异步请求维护规则
+
+适用范围：`minibot/webui` 中所有新增或重构的异步请求、页面数据加载、写操作、刷新逻辑。
+
+## 1. 分层原则
+
+- `src/lib/apis/` 只放纯请求封装
+  - 只负责 `fetch`、参数拼装、响应解析、错误归一化
+  - 不放 React state
+  - 不放页面级副作用
+  - 不把 loading / error / retry 逻辑写进 API 层
+
+- `src/hooks/` 只放领域级异步编排
+  - 负责 `loading`、`error`、`refresh`、`cancel`、乐观更新
+  - 负责把多个 API 调用组合成一个页面能力
+  - 允许管理一个业务域的远端数据生命周期
+
+- `src/stores/` 只放 UI / shell 状态
+  - 例如 sidebar、弹窗、搜索面板、toast、临时交互态
+  - 不长期存放 server state
+  - 不把远端数据当作全局缓存桶
+
+- `src/pages/` 只做页面编排
+  - 页面组件不直接堆请求细节
+  - 页面优先消费 hook 输出
+  - 页面只处理展示和少量事件转发
+
+## 2. 异步请求统一模式
+
+所有新请求优先遵循这套结构：
+
+```ts
+// 1) api 层：纯函数
+export async function fetchXxx(token: string, base = ""): Promise<XxxPayload> {
+  return request<XxxPayload>(`${base}/api/xxx`, token, undefined, API_READ_TIMEOUT_MS);
+}
+
+// 2) hook 层：管理生命周期
+export function useXxx() {
+  const { token } = useClient();
+  const [data, setData] = useState<XxxPayload | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const refresh = useCallback(async () => {
+    try {
+      setLoading(true);
+      const payload = await fetchXxx(token);
+      setData(payload);
+      setError(null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setLoading(false);
+    }
+  }, [token]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        setLoading(true);
+        const payload = await fetchXxx(token);
+        if (!cancelled) setData(payload);
+      } catch (e) {
+        if (!cancelled) setError(e instanceof Error ? e.message : String(e));
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
+
+  return { data, loading, error, refresh };
+}
+```
+
+## 3. 页面级维护规则
+
+- 页面不要直接散写大量 `fetch`
+- 页面如果需要请求，优先先抽到 `lib/apis`，再由 hook 组织
+- 一个页面一个业务域时，优先给它独立的 hook
+- 多页面复用的数据加载逻辑，优先抽成公共 hook
+- 短期只用一次且很小的请求，可以临时写在页面，但后续要回收进 hook
+
+## 4. 状态归属规则
+
+- `useState`
+  - 适合单页面、单次请求、局部交互态
+  - 例如弹窗开关、表单输入、局部 loading
+
+- `Zustand`
+  - 适合跨组件共享的 UI 状态
+  - 例如 sidebar 开关、全局 toast、待确认删除、待确认重命名
+  - 不适合长期承载服务端数据
+
+- `API / hook`
+  - 适合远端数据、轮询刷新、乐观更新、错误重试
+  - 数据来源以服务端为准
+
+## 5. 错误处理规则
+
+- `lib/apis` 统一抛 `ApiError` 或可识别的错误对象
+- hook 层把错误转换成用户可展示的 `string`
+- 页面只展示消息，不重复解析底层错误
+- 401 / 403 / 404 / HTML fallback 这类“结构性错误”要保留明确提示
+
+## 6. 刷新与竞态规则
+
+- 所有列表刷新都要允许显式 `refresh()`
+- 关键页面在以下时机刷新：
+  - 初始化挂载
+  - token 变化
+  - websocket / client 事件通知
+  - 写操作成功后
+- 对可能过期的请求要做取消保护
+- 对乐观插入 / 删除要保留回滚或下一次刷新纠正的路径
+
+## 7. 维护优先级
+
+新增功能时优先顺序如下：
+
+1. 先补 `src/lib/apis/`
+2. 再补对应领域 hook
+3. 再接页面
+4. 最后才考虑是否需要扩展 `Zustand`
+
+## 8. 这套规则的判断标准
+
+如果一个新状态满足下面任一条，就不要放进 Zustand：
+
+- 它来自服务端
+- 它需要缓存或失效刷新
+- 它需要和其它页面共享请求结果
+- 它需要重试、去重、轮询或竞态控制
+
+如果一个新状态满足下面任一条，就适合放进 Zustand：
+
+- 它只影响 UI 展示
+- 它需要多个组件共享
+- 它和远端数据无关
+- 它更像“交互上下文”而不是“业务数据”
+
+## 9. 推荐落地方式
+
+- 现有代码继续保持 `lib/apis + hooks + stores` 的分工
+- 新的服务端数据先从 hook 开始，不直接进 store
+- 如果某个业务域的请求越来越多，再考虑按领域拆 `useXxx` 系列 hook
+- 只有当 server state 复杂到明显失控时，再评估专门的数据请求库
+
+## 10. 直接结论
+
+语言 / 外观 / 时区可以放 store
+适合偏好设置型状态
+
+模型不要做成独立全局 store 的唯一数据源
+以 settings 接口为准，运行时状态再单独传递
+
+对话列表名称先本地更新，后刷新接口
+不建议只靠 store，不建议只靠定时拉，也不建议双真相
+
+skills / mcp一般不需要长期放 store
+进入 chat 或变更后 refresh 更稳
+如果未来要强缓存，再考虑轻量 cache 层

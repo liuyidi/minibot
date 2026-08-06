@@ -10,6 +10,12 @@ export type ShellView =
   | "channels"
   | "download";
 
+/** Sidebar utility hubs: view key equals settingsSection. */
+export type SidebarUtilityKey = Extract<
+  ShellView,
+  "apps" | "automations" | "skills" | "channels"
+>;
+
 export type ShellRoute = {
   view: ShellView;
   activeKey: string | null;

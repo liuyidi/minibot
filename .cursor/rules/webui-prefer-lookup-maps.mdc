@@ -1,0 +1,47 @@
+---
+description: Prefer lookup maps/enums over repetitive similar if-else chains in WebUI
+globs: webui/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Prefer lookup maps over similar if-else
+
+When several branches only differ by a **key → value** (or key → title/label/handler), do **not** grow a long `if` / `else if` ladder. Extract a map (or enum + map) and look up.
+
+## Do
+
+```tsx
+const utilityTitles: Partial<Record<ShellView, string>> = {
+  settings: t("settings.sidebar.title"),
+  apps: t("settings.nav.apps", { defaultValue: "Apps" }),
+  download: downloadTitle,
+};
+const utilityTitle = utilityTitles[view];
+if (utilityTitle != null) {
+  return t("app.documentTitle.chat", { title: utilityTitle });
+}
+// fallback for chat / unknown
+```
+
+## Don't
+
+```tsx
+if (view === "settings") { /* … */ return; }
+if (view === "apps") { /* … */ return; }
+if (view === "download") { /* … */ return; }
+// …repeated nearly identical bodies
+```
+
+## When this applies
+
+- Same shape of work in each branch (set title, pick label, pick icon, pick route segment, etc.)
+- Discriminant is a string/union/`enum`-like view or status key
+- Adding a new case should mean **one map entry**, not another `if` block
+
+## When if-else is fine
+
+- Branches have **different control flow** (early return vs throw vs side effects that are not isomorphic)
+- Only **2** short branches and a map would be harder to read
+- Conditions are not keyed by a stable discriminant (complex boolean logic)
+
+Prefer `Partial<Record<UnionKey, T>>`, `Map`, or a small helper (`resolveX(key)`) colocated with the call site or in a domain constants module.

@@ -30,6 +30,7 @@ import type {
   ChatSummary,
   SidebarViewState,
 } from "@/lib/types";
+import type { SidebarUtilityKey } from "@/routes";
 import { cn } from "@/lib/utils";
 
 type SessionListTab = "chats" | "channels";
@@ -48,10 +49,7 @@ interface SidebarProps {
   onRequestRenameProject: (projectKey: string, label: string) => void;
   onNewChatInProject: (projectPath: string, projectName: string) => void;
   onOpenSettings: () => void;
-  onOpenApps: () => void;
-  onOpenSkills: () => void;
-  onOpenAutomations: () => void;
-  onOpenChannels: () => void;
+  onOpenUtility: (utility: SidebarUtilityKey) => void;
   onOpenSearch: () => void;
   activeUtility?: "apps" | "skills" | "automations" | "channels" | null;
   onToggleArchived: () => void;
@@ -202,7 +200,7 @@ export function Sidebar(props: SidebarProps) {
           <SidebarActionButton
             collapsed={collapsed}
             label={t("sidebar.apps")}
-            onClick={props.onOpenApps}
+            onClick={() => props.onOpenUtility("apps")}
             active={props.activeUtility === "apps"}
             icon={<Blocks className="h-4 w-4" />}
           />
@@ -211,7 +209,7 @@ export function Sidebar(props: SidebarProps) {
           <SidebarActionButton
             collapsed={collapsed}
             label={t("sidebar.channels", { defaultValue: "IM channels" })}
-            onClick={props.onOpenChannels}
+            onClick={() => props.onOpenUtility("channels")}
             active={props.activeUtility === "channels"}
             icon={<MessageSquare className="h-4 w-4" />}
           />
@@ -220,7 +218,7 @@ export function Sidebar(props: SidebarProps) {
           <SidebarActionButton
             collapsed={collapsed}
             label={t("sidebar.automations", { defaultValue: "Scheduled tasks" })}
-            onClick={props.onOpenAutomations}
+            onClick={() => props.onOpenUtility("automations")}
             active={props.activeUtility === "automations"}
             icon={<CalendarClock className="h-4 w-4" />}
           />
@@ -229,7 +227,7 @@ export function Sidebar(props: SidebarProps) {
           <SidebarActionButton
             collapsed={collapsed}
             label={t("sidebar.skills.title")}
-            onClick={props.onOpenSkills}
+            onClick={() => props.onOpenUtility("skills")}
             active={props.activeUtility === "skills"}
             icon={<Brain className="h-4 w-4" />}
           />

@@ -8,8 +8,8 @@ import {
 import { useTranslation } from "react-i18next";
 import { HashRouter, Route, Routes } from "react-router-dom";
 
-import { Shell } from "@/components/shell";
-import { HashChangeSync } from "@/components/shell/HashChangeSync";
+import { AppLayout } from "@/layouts";
+import { HashChangeSync } from "@/routes";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -292,7 +292,7 @@ export default function App() {
             element={
               <>
                 <HashChangeSync />
-                <Shell
+                <AppLayout
                   runtimeSurface={state.runtimeSurface}
                   onModelNameChange={handleModelNameChange}
                   onLogout={handleLogout}

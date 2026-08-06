@@ -13,7 +13,14 @@ Alias: `@/` → `webui/src/`.
 ```text
 webui/src/
 ├── main.tsx                 # entry: mount, i18n, global CSS
-├── App.tsx                  # shell: hash routes, auth, layout (keep thin)
+├── App.tsx                  # boot / auth; HashRouter + AppLayout when ready
+├── stores/                  # Zustand (ui chrome, session badges)
+├── routes/                  # URL ↔ ShellRoute + useShellNavigate + HashChangeSync
+├── layouts/                 # app chrome — see `layouts/README.md`
+│   ├── AppLayout.tsx        # thin composer
+│   ├── constants.ts
+│   ├── chrome/              # HostChrome, sidebar, main, dialogs
+│   └── hooks/               # useAppLayoutModel + domain hooks
 ├── globals.css
 │
 ├── pages/                   # route-level pages (one folder per feature)
@@ -24,7 +31,7 @@ webui/src/
 │       ├── xxx-ui.tsx       # optional large presentational split
 │       └── components/      # page-private UI only
 │
-├── components/              # shared business UI (2+ consumers or app shell)
+├── components/              # shared business UI (2+ consumers)
 │   ├── ui/                  # atomic primitives (shadcn / Radix)
 │   ├── settings/            # settings-domain shared chrome
 │   ├── thread/              # chat / session domain
@@ -68,8 +75,11 @@ Import from category paths (`@/lib/apis/api`, `@/lib/utils/format`). `@/lib/util
 | Path | Put here | Do not put here |
 |------|----------|-----------------|
 | `pages/<page>/` | page entry, orchestration, `components/` used only by this page | atomic Button/Dialog; multi-page business blocks |
+| `layouts/` | app chrome (`AppLayout`; `chrome/` UI + `hooks/` model — see `layouts/README.md`) | feature pages; route URL helpers |
+| `routes/` | URL ↔ `ShellRoute`, `useShellNavigate`, `HashChangeSync` | layout JSX; feature UI |
+| `stores/` | Zustand chrome / session-badge state | server session lists / WS client |
 | `components/ui/` | Button, Dialog, Input, Sheet, … | business copy / API logic |
-| `components/` (+ `settings/`, `thread/`) | UI reused by app shell or ≥2 pages | one-off page widgets |
+| `components/` (+ `settings/`, `thread/`) | UI reused by app layout or ≥2 pages | one-off page widgets |
 | `hooks/` | reusable `useXxx` | tiny helpers used in one file (keep local) |
 | `lib/` | categorized modules above | React components / JSX |
 | `providers/` | global Context | ordinary feature UI |
@@ -86,10 +96,12 @@ Import from category paths (`@/lib/apis/api`, `@/lib/utils/format`). `@/lib/util
 ## Placement checklist
 
 1. Primitive control? → `components/ui`
-2. App shell or ≥2 pages import it? → `components/` (domain subfolder OK)
-3. Only this page? → `pages/<page>/components/`
-4. No JSX, testable pure logic? → `lib/` (`apis` / `configs` / `constants` / `utils` / `types` / `chat`)
-5. Reusable React state logic? → `hooks/`
+2. App chrome / layout frame? → `layouts/`
+3. URL / navigate helpers? → `routes/`
+4. App layout or ≥2 pages import UI? → `components/` (domain subfolder OK)
+5. Only this page? → `pages/<page>/components/`
+6. No JSX, testable pure logic? → `lib/` (`apis` / `configs` / `constants` / `utils` / `types` / `chat`)
+7. Reusable React state logic? → `hooks/` (or `stores/` for cross-tree chrome)
 
 ```tsx
 // ❌ BAD — page-only widget in shared components/

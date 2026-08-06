@@ -59,14 +59,13 @@ import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
 import { SegmentedControl, ToggleButton } from "@/components/settings/controls";
-import { listSessions } from "@/lib/apis/api";
 import { fmtDateTime, relativeTime } from "@/lib/utils/format";
 import { bareSessionId } from "@/lib/utils/im-sessions";
 import { cn } from "@/lib/utils";
+import { useSessionOptions } from "@/hooks/useSessionOptions";
 import type {
   AutomationsPayload,
   AutomationUpdatePayload,
-  ChatSummary,
   SessionAutomationJob,
 } from "@/lib/types";
 
@@ -1253,14 +1252,12 @@ function cronExprFromDailyTime(dailyTime: string): string | null {
 export function AutomationCreateDialog({
   open,
   prefill,
-  token,
   saving,
   onOpenChange,
   onSave,
 }: {
   open: boolean;
   prefill: { name?: string; message?: string } | null;
-  token: string;
   saving: boolean;
   onOpenChange: (open: boolean) => void;
   onSave: (values: {
@@ -1277,8 +1274,7 @@ export function AutomationCreateDialog({
   const [draft, setDraft] = useState<AutomationCreateDraft>(() =>
     automationCreateDraftFromPrefill(prefill),
   );
-  const [sessions, setSessions] = useState<ChatSummary[]>([]);
-  const [sessionsLoading, setSessionsLoading] = useState(false);
+  const { sessions, loading: sessionsLoading, error: sessionsError } = useSessionOptions(open);
   const [tipVisible, setTipVisible] = useState(true);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -1287,33 +1283,28 @@ export function AutomationCreateDialog({
     setDraft(automationCreateDraftFromPrefill(prefill));
     setTipVisible(true);
     setSubmitError(null);
-    let cancelled = false;
-    setSessionsLoading(true);
-    void listSessions(token)
-      .then((rows) => {
-        if (cancelled) return;
-        const sorted = [...rows].sort((a, b) =>
-          (b.updatedAt || b.createdAt || "").localeCompare(a.updatedAt || a.createdAt || ""),
-        );
-        setSessions(sorted);
-        setDraft((prev) => {
-          if (prev.sessionId && sorted.some((row) => bareSessionId(row) === prev.sessionId)) {
-            return prev;
-          }
-          const first = sorted[0];
-          return first ? { ...prev, sessionId: bareSessionId(first) } : prev;
-        });
-      })
-      .catch((err) => {
-        if (!cancelled) setSubmitError((err as Error).message);
-      })
-      .finally(() => {
-        if (!cancelled) setSessionsLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [open, prefill, token]);
+  }, [open, prefill]);
+
+  useEffect(() => {
+    if (!open || !sessionsLoading) return;
+    setSubmitError(null);
+  }, [open, sessionsLoading]);
+
+  useEffect(() => {
+    if (!open) return;
+    if (sessionsError) {
+      setSubmitError(sessionsError);
+      return;
+    }
+    if (!sessions.length) return;
+    setDraft((prev) => {
+      if (prev.sessionId && sessions.some((row) => bareSessionId(row) === prev.sessionId)) {
+        return prev;
+      }
+      const first = sessions[0];
+      return first ? { ...prev, sessionId: bareSessionId(first) } : prev;
+    });
+  }, [open, prefill, sessions, sessionsError]);
 
   const scheduleOptions = [
     { value: "cron", label: tx("settings.automations.scheduleTypes.periodic", "Periodic") },

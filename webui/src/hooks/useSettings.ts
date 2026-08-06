@@ -1,30 +1,31 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type Dispatch, type SetStateAction } from "react";
 
-import { fetchSkills } from "@/lib/apis/api";
-import type { SkillSummary } from "@/lib/types";
+import { fetchSettings } from "@/lib/apis/api";
+import type { SettingsPayload } from "@/lib/types";
 import { useClient } from "@/providers/ClientProvider";
 
-export function useSkills(): {
-  skills: SkillSummary[];
+export function useSettings(): {
+  settings: SettingsPayload | null;
   loading: boolean;
   error: string | null;
-  refresh: () => Promise<SkillSummary[]>;
+  refresh: () => Promise<SettingsPayload | null>;
+  setSettings: Dispatch<SetStateAction<SettingsPayload | null>>;
 } {
   const { token } = useClient();
-  const [skills, setSkills] = useState<SkillSummary[]>([]);
+  const [settings, setSettings] = useState<SettingsPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     try {
       setLoading(true);
-      const { skills: next } = await fetchSkills(token);
-      setSkills(next);
+      const payload = await fetchSettings(token);
+      setSettings(payload);
       setError(null);
-      return next;
+      return payload;
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
-      return [];
+      return null;
     } finally {
       setLoading(false);
     }
@@ -35,14 +36,14 @@ export function useSkills(): {
     void (async () => {
       try {
         setLoading(true);
-        const { skills: next } = await fetchSkills(token);
+        const payload = await fetchSettings(token);
         if (!cancelled) {
-          setSkills(next);
+          setSettings(payload);
           setError(null);
         }
       } catch (e) {
         if (!cancelled) {
-          setSkills([]);
+          setSettings(null);
           setError(e instanceof Error ? e.message : String(e));
         }
       } finally {
@@ -54,5 +55,5 @@ export function useSkills(): {
     };
   }, [token]);
 
-  return { skills, loading, error, refresh };
+  return { settings, loading, error, refresh, setSettings };
 }

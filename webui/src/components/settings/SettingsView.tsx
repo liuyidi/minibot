@@ -69,6 +69,7 @@ import { AutomationsPage } from "@/pages/automations";
 import { ChannelsPage } from "@/pages/channels";
 import { ModelsPage, NewModelConfigurationDialog } from "@/pages/models";
 import { SkillsPage } from "@/pages/skills";
+import { useSettingsUsage } from "@/hooks/useSettingsUsage";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -83,7 +84,6 @@ import {
   createModelConfiguration,
   activatePlatformModel,
   fetchSettings,
-  fetchSettingsUsage,
   fetchCliApps,
   fetchMcpPresets,
   importMcpConfig,
@@ -124,7 +124,6 @@ import type {
   McpPresetsPayload,
   NetworkSafetySettingsUpdate,
   SettingsPayload,
-  SkillSummary,
   TranscriptionSettingsUpdate,
   WebSearchSettingsUpdate,
   WebuiDefaultAccessMode,
@@ -254,7 +253,8 @@ interface SettingsViewProps {
   onBackToChat: () => void;
   onModelNameChange: (modelName: string | null) => void;
   onSettingsChange?: (payload: SettingsPayload) => void;
-  skills?: SkillSummary[];
+  /** Refresh settings via shared domain hook (preferred over local fetchSettings). */
+  onRefreshSettings?: () => Promise<SettingsPayload | null>;
   onWorkspaceSettingsChange?: () => void | Promise<void>;
   onSectionChange?: (section: SettingsSectionKey) => void;
   onLogout?: () => void;
@@ -390,7 +390,7 @@ export function SettingsView({
   onBackToChat,
   onModelNameChange,
   onSettingsChange,
-  skills = [],
+  onRefreshSettings,
   onWorkspaceSettingsChange,
   onSectionChange,
   onLogout,
@@ -508,51 +508,34 @@ export function SettingsView({
     let cancelled = false;
     const showLoading = settings === null;
     if (showLoading) setLoading(true);
-    fetchSettings(token)
-      .then((payload) => {
-        if (!cancelled) {
+    void (async () => {
+      try {
+        const payload = onRefreshSettings
+          ? await onRefreshSettings()
+          : await fetchSettings(token);
+        if (!cancelled && payload) {
           applyPayload(payload);
           setError(null);
         }
-      })
-      .catch((err) => {
+      } catch (err) {
         if (!cancelled && showLoading) setError((err as Error).message);
-      })
-      .finally(() => {
+      } finally {
         if (!cancelled) setLoading(false);
-      });
+      }
+    })();
     return () => {
       cancelled = true;
     };
-  }, [applyPayload, token]);
+  }, [applyPayload, onRefreshSettings, token]);
 
   const hasSettings = settings !== null;
+  const { usage: polledUsage } = useSettingsUsage(
+    activeSection === "overview" && hasSettings,
+  );
   useEffect(() => {
-    if (activeSection !== "overview" || !hasSettings) return;
-    let cancelled = false;
-    const refresh = () => {
-      fetchSettingsUsage(token)
-        .then((usage) => {
-          if (cancelled) return;
-          setSettings((current) => (current ? { ...current, usage } : current));
-        })
-        .catch(() => {});
-    };
-    void refresh();
-    const interval = window.setInterval(refresh, 5000);
-    const onFocus = () => refresh();
-    const onVisibilityChange = () => {
-      if (document.visibilityState === "visible") refresh();
-    };
-    window.addEventListener("focus", onFocus);
-    document.addEventListener("visibilitychange", onVisibilityChange);
-    return () => {
-      cancelled = true;
-      window.clearInterval(interval);
-      window.removeEventListener("focus", onFocus);
-      document.removeEventListener("visibilitychange", onVisibilityChange);
-    };
-  }, [activeSection, hasSettings, token]);
+    if (!polledUsage) return;
+    setSettings((current) => (current ? { ...current, usage: polledUsage } : current));
+  }, [polledUsage]);
 
   useEffect(() => {
     if (activeSection !== "apps") return;
@@ -1443,7 +1426,7 @@ export function SettingsView({
       case "automations":
         return <AutomationsPage />;
       case "skills":
-        return <SkillsPage skills={skills} />;
+        return <SkillsPage />;
       case "channels":
         return <ChannelsPage token={token} />;
       case "runtime":

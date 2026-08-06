@@ -39,7 +39,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { fetchProviderModels } from "@/lib/apis/api";
+import { useProviderModels } from "@/hooks/useProviderModels";
 import { providerBrand, providerDisplayLabel } from "@/lib/constants/provider-brand";
 import { cn } from "@/lib/utils";
 import type { ProviderModelsPayload, SettingsPayload } from "@/lib/types";
@@ -138,7 +138,7 @@ export function ProviderPicker({
 }
 
 export function ModelIdPicker({
-  token,
+  token: _token,
   settings,
   provider,
   value,
@@ -156,9 +156,6 @@ export function ModelIdPicker({
   const tx = (key: string, fallback: string) => t(key, { defaultValue: fallback });
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [payload, setPayload] = useState<ProviderModelsPayload | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const effectiveProvider =
     provider === "auto" ? settings.agent.resolved_provider ?? provider : provider;
   const hasConcreteProvider = Boolean(effectiveProvider && effectiveProvider !== "auto");
@@ -170,6 +167,16 @@ export function ModelIdPicker({
   const canFetchModels =
     hasConcreteProvider && providerConfigured && !providerUsesManualModelIds;
   const normalizedQuery = query.trim().toLowerCase();
+  const defersModelList = DEFERRED_MODEL_LIST_PROVIDERS.has(effectiveProvider);
+  const hasDeferredSearchQuery =
+    normalizedQuery.length >= DEFERRED_MODEL_LIST_QUERY_MIN_LENGTH;
+  const shouldFetchModels =
+    canFetchModels && (!defersModelList || hasDeferredSearchQuery);
+  const {
+    models: payload,
+    loading,
+    error,
+  } = useProviderModels(effectiveProvider, open && shouldFetchModels);
   const providerModels = payload?.models ?? [];
   const visibleModels = providerModels
     .filter((model) => {
@@ -179,11 +186,6 @@ export function ModelIdPicker({
     })
     .slice(0, 80);
   const isCatalog = payload?.catalog_kind === "catalog";
-  const defersModelList = DEFERRED_MODEL_LIST_PROVIDERS.has(effectiveProvider);
-  const hasDeferredSearchQuery =
-    normalizedQuery.length >= DEFERRED_MODEL_LIST_QUERY_MIN_LENGTH;
-  const shouldFetchModels =
-    canFetchModels && (!defersModelList || hasDeferredSearchQuery);
   const waitingForModelSearch =
     open && canFetchModels && defersModelList && !hasDeferredSearchQuery;
   const hasModelList = payload?.status === "available";
@@ -198,32 +200,6 @@ export function ModelIdPicker({
     if (!open) return;
     setQuery(providerUsesManualModelIds || !hasConcreteProvider ? value : "");
   }, [open, effectiveProvider, hasConcreteProvider, providerUsesManualModelIds, value]);
-
-  useEffect(() => {
-    if (!open || !shouldFetchModels) {
-      setPayload(null);
-      setError(null);
-      setLoading(false);
-      return;
-    }
-    let cancelled = false;
-    setPayload(null);
-    setError(null);
-    setLoading(true);
-    fetchProviderModels(token, effectiveProvider)
-      .then((nextPayload) => {
-        if (!cancelled) setPayload(nextPayload);
-      })
-      .catch((err) => {
-        if (!cancelled) setError((err as Error).message);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [effectiveProvider, open, shouldFetchModels, token]);
 
   const selectModel = (model: string) => {
     onChange(model);

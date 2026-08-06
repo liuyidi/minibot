@@ -30,7 +30,10 @@ minibot/web/dist/      build output served by the gateway
 ```
 
 Agent-facing Cursor rules for the same conventions live under
-[`.cursor/rules/`](../.cursor/rules/) (especially `webui-component-structure.mdc`).
+[`.cursor/rules/`](../.cursor/rules/) — especially `webui-component-structure.mdc`
+and **`webui-async-rules.mdc`** (apis → domain hooks → pages; Zustand is UI-only).
+For list-style server domains, follow `hooks/useSessions.ts` as the gold pattern:
+`{ data, loading, error, refresh }` plus cancel on unmount and refresh after writes.
 
 ### `src/` directory structure
 
@@ -39,8 +42,14 @@ Path alias: `@/` → `src/`.
 ```text
 src/
 ├── main.tsx                 # entry: mount, i18n, global CSS
-├── App.tsx                  # boot / auth; HashRouter + Shell when ready
+├── App.tsx                  # boot / auth; HashRouter + AppLayout when ready
 ├── stores/                  # Zustand (ui chrome, session badges)
+├── routes/                  # URL ↔ ShellRoute + useShellNavigate + HashChangeSync
+├── layouts/                 # app chrome — see `layouts/README.md`
+│   ├── AppLayout.tsx        # thin composer
+│   ├── constants.ts
+│   ├── chrome/              # HostChrome, sidebar, main, dialogs
+│   └── hooks/               # useAppLayoutModel + domain hooks
 ├── globals.css
 │
 ├── pages/                   # route-level pages (one folder per feature)
@@ -51,7 +60,7 @@ src/
 │       ├── xxx-ui.tsx       # optional large presentational split
 │       └── components/      # page-private UI only
 │
-├── components/              # shared business UI (2+ consumers or app shell)
+├── components/              # shared business UI (2+ consumers)
 │   ├── ui/                  # atomic primitives (shadcn / Radix)
 │   ├── settings/            # settings-domain shared chrome
 │   ├── thread/              # chat / session domain
