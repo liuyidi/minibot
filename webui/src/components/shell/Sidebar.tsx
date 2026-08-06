@@ -18,9 +18,9 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-import { ChannelSessionTree } from "@/components/ChannelSessionTree";
-import { ChatList } from "@/components/ChatList";
-import { ConnectionBadge } from "@/components/ConnectionBadge";
+import { ChannelSessionTree } from "./ChannelSessionTree";
+import { ChatList } from "./ChatList";
+import { ConnectionBadge } from "./ConnectionBadge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { isImSession, isWebChatSession } from "@/lib/utils/im-sessions";
@@ -88,16 +88,14 @@ function newChatShortcutLabel(): string {
 }
 
 export function Sidebar(props: SidebarProps) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const [menuPortalContainer, setMenuPortalContainer] =
     useState<HTMLElement | null>(null);
   const [sessionTab, setSessionTab] = useState<SessionListTab>("chats");
   const collapsed = Boolean(props.collapsed);
   const toggleLabel = t("thread.header.toggleSidebar");
   const newChatShortcut = newChatShortcutLabel();
-  const downloadAppLabel = t("sidebar.downloadApp", {
-    defaultValue: i18n.resolvedLanguage?.startsWith("zh") ? "下载应用" : "Download app",
-  });
+  const downloadAppLabel = t("sidebar.downloadApp");
   const webChatSessions = useMemo(
     () => props.sessions.filter(isWebChatSession),
     [props.sessions],
@@ -184,11 +182,7 @@ export function Sidebar(props: SidebarProps) {
           shortcut={newChatShortcut}
           ariaKeyShortcuts="Meta+Shift+O Control+Shift+O"
           disabled={!collapsed && sessionTab === "channels"}
-          disabledHint={t("sidebar.newChatChannelsHint", {
-            defaultValue: i18n.resolvedLanguage?.startsWith("zh")
-              ? "频道会话由飞书 / 微信产生，请切换到「对话」新建"
-              : "Channel chats come from Feishu / WeChat. Switch to Chats to create one.",
-          })}
+          disabledHint={t("sidebar.newChatChannelsHint")}
         />
         <SidebarActionButton
           collapsed={collapsed}

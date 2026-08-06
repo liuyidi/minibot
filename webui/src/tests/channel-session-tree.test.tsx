@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import { ChannelSessionTree } from "@/components/ChannelSessionTree";
+import { ChannelSessionTree } from "@/components/shell/ChannelSessionTree";
 import type { ChatSummary } from "@/lib/types";
 
 function session(partial: Partial<ChatSummary> & Pick<ChatSummary, "key">): ChatSummary {

@@ -2,7 +2,7 @@ import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
-import { CodeBlock } from "@/components/CodeBlock";
+import { CodeBlock } from "@/components/markdown/CodeBlock";
 import { ThemeProvider } from "@/hooks/ui";
 
 const mockedStyles = vi.hoisted(() => ({

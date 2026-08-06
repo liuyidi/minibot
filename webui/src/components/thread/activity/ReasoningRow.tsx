@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Check, CircleDashed } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-import { MarkdownText, preloadMarkdownText } from "@/components/MarkdownText";
+import { MarkdownText, preloadMarkdownText } from "@/components/markdown/MarkdownText";
 import { cn } from "@/lib/utils";
 
 import { ActivityStep } from "./ActivityStep";

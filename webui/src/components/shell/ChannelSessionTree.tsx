@@ -27,17 +27,17 @@ const ACTION_MENU_ITEM_CLASS = "grid w-[7.75rem] grid-cols-[1rem_minmax(0,1fr)] 
 
 const PLATFORM_META: Record<
   ImPlatform,
-  { title: string; logo: string; empty: string }
+  { titleKey: string; logo: string; emptyKey: string }
 > = {
   feishu: {
-    title: "飞书",
+    titleKey: "settings.automations.channels.feishu",
     logo: "/brand/feishu.svg",
-    empty: "暂无飞书会话",
+    emptyKey: "imSessions.emptyFeishu",
   },
   weixin: {
-    title: "微信",
+    titleKey: "settings.automations.channels.weixin",
     logo: "/brand/wechat.svg",
-    empty: "暂无微信会话",
+    emptyKey: "imSessions.emptyWeixin",
   },
 };
 
@@ -87,7 +87,7 @@ export function ChannelSessionTree({
   if (platforms.length === 0) {
     return (
       <div className="px-4 py-6 text-center text-xs text-muted-foreground">
-        暂无频道会话。在 IM 频道配置飞书或微信后，对话会出现在这里。
+        {t("imSessions.emptyAll")}
       </div>
     );
   }
@@ -106,14 +106,14 @@ export function ChannelSessionTree({
                 className="h-5 w-5 shrink-0 object-contain"
                 draggable={false}
               />
-              <span>{meta.title}</span>
+              <span>{t(meta.titleKey)}</span>
             </div>
             <div className="relative ml-[0.85rem] border-l border-sidebar-border/70 pl-3">
               {rows.map((session) => {
                 const active = session.key === activeKey;
                 const running = runningChatIds.includes(session.chatId);
                 const updated = updatedChatIds.includes(session.chatId);
-                const label = imSessionLabel(session, platform, titleOverrides);
+                const label = imSessionLabel(session, platform, t, titleOverrides);
                 const isPinned = pinned.has(session.key);
                 const isArchived = archived.has(session.key);
                 return (

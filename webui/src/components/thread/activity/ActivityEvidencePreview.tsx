@@ -1,4 +1,4 @@
-import { AttachmentTile } from "@/components/AttachmentTile";
+import { AttachmentTile } from "../AttachmentTile";
 import { cn } from "@/lib/utils";
 import type { ActivityEvidence } from "@/lib/chat/activity-timeline";
 

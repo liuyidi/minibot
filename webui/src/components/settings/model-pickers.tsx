@@ -152,6 +152,7 @@ export function ModelIdPicker({
   showProviderLogos: boolean;
   onChange: (model: string) => void;
 }) {
+  void _token;
   const { t } = useTranslation();
   const tx = (key: string, fallback: string) => t(key, { defaultValue: fallback });
   const [open, setOpen] = useState(false);

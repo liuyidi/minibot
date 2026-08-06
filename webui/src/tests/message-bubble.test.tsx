@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import { MessageBubble } from "@/components/MessageBubble";
+import { MessageBubble } from "@/components/thread/MessageBubble";
 import type { CliAppInfo, McpPresetInfo, UIMessage } from "@/lib/types";
 
 const CLI_APPS: CliAppInfo[] = [
@@ -466,7 +466,7 @@ describe("MessageBubble", () => {
   });
 
   it("renders reasoning body as markdown so headings are not left as raw ###", async () => {
-    await import("@/components/MarkdownTextRenderer");
+    await import("@/components/markdown/MarkdownTextRenderer");
     const message: UIMessage = {
       id: "a-reasoning-md",
       role: "assistant",
@@ -487,7 +487,7 @@ describe("MessageBubble", () => {
   });
 
   it("renders inline file paths as compact file references", async () => {
-    await import("@/components/MarkdownTextRenderer");
+    await import("@/components/markdown/MarkdownTextRenderer");
     const message: UIMessage = {
       id: "a-file-path",
       role: "assistant",

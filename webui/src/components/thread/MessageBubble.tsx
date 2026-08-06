@@ -19,10 +19,10 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-import { AttachmentTile } from "@/components/AttachmentTile";
-import { CliAppMentionText } from "@/components/CliAppMentionText";
-import { ImageLightbox } from "@/components/ImageLightbox";
-import { MarkdownText, preloadMarkdownText } from "@/components/MarkdownText";
+import { AttachmentTile } from "./AttachmentTile";
+import { CliAppMentionText } from "./CliAppMentionText";
+import { ImageLightbox } from "./ImageLightbox";
+import { MarkdownText, preloadMarkdownText } from "@/components/markdown/MarkdownText";
 import {
   Tooltip,
   TooltipContent,

@@ -9,7 +9,7 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
 } from "react";
 
-import { MarkdownText, preloadMarkdownText } from "@/components/MarkdownText";
+import { MarkdownText, preloadMarkdownText } from "@/components/markdown/MarkdownText";
 import { ContextUsageButton } from "@/components/thread/ContextUsageButton";
 import {
   CliAppMentionToken,
@@ -18,7 +18,7 @@ import {
   mcpPresetInitials,
   splitCapabilityMentionSegments,
   type CapabilityMentionSegment,
-} from "@/components/CliAppMentionText";
+} from "./CliAppMentionText";
 import {
   Activity,
   ArrowUp,

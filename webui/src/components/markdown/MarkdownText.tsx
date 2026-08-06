@@ -19,7 +19,7 @@ interface MarkdownTextProps {
   onOpenFilePreview?: (path: string) => void;
 }
 
-const loadMarkdownRenderer = () => import("@/components/MarkdownTextRenderer");
+const loadMarkdownRenderer = () => import("@/components/markdown/MarkdownTextRenderer");
 const LazyMarkdownRenderer = lazy(loadMarkdownRenderer);
 
 const MemoizedMarkdownRenderer = memo(function MemoizedMarkdownRenderer({

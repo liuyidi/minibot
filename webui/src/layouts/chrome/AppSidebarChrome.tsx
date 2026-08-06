@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 
-import { SessionSearchDialog } from "@/components/SessionSearchDialog";
-import { Sidebar } from "@/components/Sidebar";
+import { SessionSearchDialog } from "@/components/shell/SessionSearchDialog";
+import { Sidebar } from "@/components/shell/Sidebar";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { MOBILE_SIDEBAR_WIDTH, SIDEBAR_WIDTH } from "@/layouts/constants";
 import type { AppLayoutModel } from "@/layouts/hooks/useAppLayoutModel";

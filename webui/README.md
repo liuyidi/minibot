@@ -62,10 +62,10 @@ src/
 │
 ├── components/              # shared business UI (2+ consumers)
 │   ├── ui/                  # atomic primitives (shadcn / Radix)
-│   ├── settings/            # settings-domain shared chrome
-│   ├── thread/              # chat / session domain
-│   │   └── activity/
-│   └── *.tsx
+│   ├── shell/               # sidebar, session lists, chrome dialogs
+│   ├── thread/              # chat / session domain (+ activity/)
+│   ├── markdown/            # MarkdownText / CodeBlock pipeline
+│   └── settings/            # settings-domain shared chrome
 │
 ├── hooks/                   # reusable hooks by domain (sessions, skills, …)
 ├── lib/                     # no JSX — see `lib/` layout below
@@ -119,7 +119,10 @@ Import from the category path, e.g. `@/lib/apis/api`, `@/lib/utils/format`. Fold
 |------|----------|-----------------|
 | `pages/<page>/` | page entry, orchestration, page-only `components/` | atomic controls; multi-page business blocks |
 | `components/ui/` | Button, Dialog, Input, Sheet, … | business copy / API logic |
-| `components/` (+ `settings/`, `thread/`) | UI used by app shell or ≥2 pages | one-off page widgets |
+| `components/shell/` | sidebar, chat list, chrome dialogs, language switcher | chat bubbles / markdown |
+| `components/thread/` | chat surface, messages, activity, file preview | settings forms; sidebar |
+| `components/markdown/` | MarkdownText, CodeBlock renderer | page-private widgets |
+| `components/settings/` | settings-domain shared chrome | one-off page widgets |
 | `hooks/` | domain-grouped reusable `useXxx` (`@/hooks/sessions`, …) | page-private helpers (keep under `pages/<page>/`) |
 | `lib/` | categorized modules above | React components / JSX |
 | `providers/` | global Context | ordinary feature UI |

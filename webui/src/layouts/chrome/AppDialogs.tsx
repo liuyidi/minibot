@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 
-import { DeleteConfirm } from "@/components/DeleteConfirm";
-import { RenameChatDialog } from "@/components/RenameChatDialog";
+import { DeleteConfirm } from "@/components/shell/DeleteConfirm";
+import { RenameChatDialog } from "@/components/shell/RenameChatDialog";
 import type { AppLayoutModel } from "@/layouts/hooks/useAppLayoutModel";
 
 export function AppDialogs({ model }: { model: AppLayoutModel }) {

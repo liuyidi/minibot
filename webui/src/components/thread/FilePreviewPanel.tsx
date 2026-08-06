@@ -3,8 +3,8 @@ import type { CSSProperties, PointerEvent as ReactPointerEvent } from "react";
 import { AlertCircle, ChevronRight, FileText, Loader2, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-import { CodeBlock } from "@/components/CodeBlock";
-import { splitFilePath } from "@/components/FileReferenceChip";
+import { CodeBlock } from "@/components/markdown/CodeBlock";
+import { splitFilePath } from "./FileReferenceChip";
 import { ApiError, fetchFilePreview } from "@/lib/apis/api";
 import type { FilePreviewPayload } from "@/lib/types";
 import { cn } from "@/lib/utils";

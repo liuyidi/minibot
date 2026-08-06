@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import MarkdownTextRenderer from "@/components/MarkdownTextRenderer";
+import MarkdownTextRenderer from "@/components/markdown/MarkdownTextRenderer";
 
 describe("MarkdownTextRenderer", () => {
   it("renders clickable markdown links in blue", () => {

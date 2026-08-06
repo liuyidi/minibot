@@ -2,7 +2,7 @@ import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
-import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { LanguageSwitcher } from "@/components/shell/LanguageSwitcher";
 import { ThreadComposer } from "@/components/thread/ThreadComposer";
 import { resources } from "@/i18n";
 import { LOCALE_STORAGE_KEY, resolveInitialLocale } from "@/i18n/config";

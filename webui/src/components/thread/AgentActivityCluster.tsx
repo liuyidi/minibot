@@ -13,9 +13,9 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-import { cliAppInitials, mcpPresetInitials } from "@/components/CliAppMentionText";
-import { FileReferenceChip } from "@/components/FileReferenceChip";
-import { StreamingLabelSheen } from "@/components/MessageBubble";
+import { cliAppInitials, mcpPresetInitials } from "./CliAppMentionText";
+import { FileReferenceChip } from "./FileReferenceChip";
+import { StreamingLabelSheen } from "./MessageBubble";
 import { ActivityEvidencePreview } from "@/components/thread/activity/ActivityEvidencePreview";
 import { ActivityGroup } from "@/components/thread/activity/ActivityGroup";
 import { ActivityStep } from "@/components/thread/activity/ActivityStep";

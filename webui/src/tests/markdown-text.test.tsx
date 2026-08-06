@@ -1,11 +1,11 @@
 import { act, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import { MarkdownText } from "@/components/MarkdownText";
+import { MarkdownText } from "@/components/markdown/MarkdownText";
 
 const rendererSpy = vi.hoisted(() => vi.fn());
 
-vi.mock("@/components/MarkdownTextRenderer", () => ({
+vi.mock("@/components/markdown/MarkdownTextRenderer", () => ({
   default: ({
     children,
     highlightCode,
