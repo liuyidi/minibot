@@ -34,14 +34,14 @@ import {
   upsertMcpPresetJson,
   type MinibotMcpPreset,
   type MinibotMcpTemplate,
-} from "@/lib/api";
+} from "@/lib/apis/api";
 import type { SkillDetail, SkillSummary } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useClient } from "@/providers/ClientProvider";
 
 type HubTab = "skills" | "connectors";
 
-export function SkillsCatalogSettings({ skills: initialSkills }: { skills: SkillSummary[] }) {
+export function SkillsPage({ skills: initialSkills }: { skills: SkillSummary[] }) {
   const { t } = useTranslation();
   const { token } = useClient();
   const [tab, setTab] = useState<HubTab>("skills");

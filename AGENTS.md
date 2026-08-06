@@ -50,4 +50,5 @@ Config / data default under `~/.minibot/` (`MINIBOT_SERVER_DATA_DIR`).
 
 - WebUI static resolve: `MINIBOT_WEBUI_DIST` or `webui/dist` / Docker `/app/webui-dist`.
 - Auth header: `X-Minibot-Auth` (or Bearer token).
+- WebUI coding conventions (`.cursor/rules/`): component structure, i18n/icons, React/TS, Tailwind, Vitest.
 - ECS demo deploy skill: `.claude/skills/aliyun-ecs-demo-deploy/SKILL.md`.

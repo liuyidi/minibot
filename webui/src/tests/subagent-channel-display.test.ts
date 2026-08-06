@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { scrubSubagentAnnounceBody, scrubSubagentUiMessages } from "@/lib/subagent-channel-display";
+import { scrubSubagentAnnounceBody, scrubSubagentUiMessages } from "@/lib/chat/subagent-channel-display";
 import type { UIMessage } from "@/lib/types";
 
 describe("subagent-channel-display", () => {

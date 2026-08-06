@@ -79,7 +79,7 @@ function wrap(client: ReturnType<typeof fakeClient>["client"]) {
   return function Wrapper({ children }: { children: ReactNode }) {
     return (
       <ClientProvider
-        client={client as unknown as import("@/lib/minibot-client").MinibotClient}
+        client={client as unknown as import("@/lib/apis/minibot-client").MinibotClient}
         token="tok"
       >
         {children}

@@ -91,8 +91,8 @@ import {
   inferProviderFromModelName,
   logoFallbackUrls,
   providerBrand,
-} from "@/lib/provider-brand";
-import { UI_ENTRY } from "@/lib/ui-entry";
+} from "@/lib/constants/provider-brand";
+import { UI_ENTRY } from "@/lib/configs/ui-entry";
 import { cn } from "@/lib/utils";
 
 /** ``<input accept>``: aligned with the server's MIME whitelist. SVG is

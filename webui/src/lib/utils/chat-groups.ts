@@ -1,6 +1,6 @@
-import { deriveTitle } from "@/lib/format";
+import { deriveTitle } from "@/lib/utils/format";
 import type { ChatSummary, SidebarSortMode } from "@/lib/types";
-import { normalizeWorkspacePath, projectNameFromPath, sameWorkspacePath } from "@/lib/workspace";
+import { normalizeWorkspacePath, projectNameFromPath, sameWorkspacePath } from "@/lib/utils/workspace";
 
 export const COLLAPSED_CHATS_VISIBLE_COUNT = 8;
 

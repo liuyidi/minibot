@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { normalizeLegacyLongTaskMessages } from "@/lib/thread-display-compat";
+import { normalizeLegacyLongTaskMessages } from "@/lib/chat/thread-display-compat";
 import type { UIMessage } from "@/lib/types";
 
 describe("normalizeLegacyLongTaskMessages", () => {

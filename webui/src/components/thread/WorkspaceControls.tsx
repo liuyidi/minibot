@@ -15,7 +15,7 @@ import type {
   WorkspaceScopePayload,
   WorkspacesPayload,
 } from "@/lib/types";
-import { getHostApi } from "@/lib/runtime";
+import { getHostApi } from "@/lib/configs/runtime";
 import { cn } from "@/lib/utils";
 import {
   isAbsoluteWorkspacePath,
@@ -23,7 +23,7 @@ import {
   scopeWithAccessMode,
   selectedProjectScope,
   shortWorkspacePath,
-} from "@/lib/workspace";
+} from "@/lib/utils/workspace";
 
 export function WorkspaceProjectPicker({
   isHero,

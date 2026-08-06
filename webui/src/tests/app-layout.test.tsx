@@ -174,7 +174,7 @@ vi.mock("@/hooks/useTheme", async () => {
   };
 });
 
-vi.mock("@/lib/bootstrap", () => ({
+vi.mock("@/lib/apis/bootstrap", () => ({
   fetchBootstrap: vi.fn().mockResolvedValue({
     token: "tok",
     ws_path: "/",
@@ -186,7 +186,7 @@ vi.mock("@/lib/bootstrap", () => ({
   clearSavedSecret: vi.fn(),
 }));
 
-vi.mock("@/lib/minibot-client", () => {
+vi.mock("@/lib/apis/minibot-client", () => {
   class MockClient {
     status = "idle" as const;
     defaultChatId: string | null = null;
@@ -215,7 +215,7 @@ vi.mock("@/lib/minibot-client", () => {
   return { MinibotClient: MockClient };
 });
 
-import { deriveWsUrl, fetchBootstrap } from "@/lib/bootstrap";
+import { deriveWsUrl, fetchBootstrap } from "@/lib/apis/bootstrap";
 import App from "@/App";
 
 describe("App layout", () => {

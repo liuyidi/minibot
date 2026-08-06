@@ -1,4 +1,4 @@
-import { toMediaAttachment } from "@/lib/media";
+import { toMediaAttachment } from "@/lib/utils/media";
 import type { ToolProgressEvent, UIMediaAttachment, UIMessage } from "@/lib/types";
 
 export type ActivityItemType = "reasoning" | "tool" | "cli" | "mcp" | "file_edit" | "media";

@@ -1,4 +1,4 @@
-import type { BootstrapResponse } from "./types";
+import type { BootstrapResponse } from "@/lib/types";
 import { fetchWithTimeout } from "./http";
 
 const SECRET_STORAGE_KEY = "minibot-webui.bootstrap-secret";

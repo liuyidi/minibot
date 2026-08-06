@@ -23,7 +23,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { deriveTitle, relativeTime } from "@/lib/format";
+import { deriveTitle, relativeTime } from "@/lib/utils/format";
 import {
   COLLAPSED_CHATS_VISIBLE_COUNT,
   displayTitle,
@@ -34,7 +34,7 @@ import {
   limitGroups,
   visibleSessionsForGroup,
   type ChatGroupLabels,
-} from "@/lib/chat-groups";
+} from "@/lib/utils/chat-groups";
 import { cn } from "@/lib/utils";
 import type { ChatSummary, SidebarDensity, SidebarSortMode } from "@/lib/types";
 

@@ -1,4 +1,4 @@
-import type { RuntimeCapabilities, RuntimeSurface } from "./types";
+import type { RuntimeCapabilities, RuntimeSurface } from "@/lib/types";
 
 export interface RuntimeHost {
   surface: RuntimeSurface;

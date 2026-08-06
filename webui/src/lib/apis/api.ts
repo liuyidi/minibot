@@ -26,7 +26,7 @@ import type {
   WebuiThreadPersistedPayload,
   WorkspaceScopePayload,
   ContextUsagePayload,
-} from "./types";
+} from "@/lib/types";
 import { fetchWithTimeout } from "./http";
 
 const API_READ_TIMEOUT_MS = 20_000;

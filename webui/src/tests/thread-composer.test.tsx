@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { ThreadComposer } from "@/components/thread/ThreadComposer";
 import type { CliAppInfo, McpPresetInfo, SlashCommand } from "@/lib/types";
 
-vi.mock("@/lib/imageEncode", () => ({
+vi.mock("@/lib/utils/imageEncode", () => ({
   encodeImage: vi.fn(async (file: File) => ({
     ok: true,
     dataUrl: `data:${file.type || "image/png"};base64,aW1hZ2U=`,
@@ -13,8 +13,8 @@ vi.mock("@/lib/imageEncode", () => ({
   })),
 }));
 
-vi.mock("@/lib/ui-entry", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/lib/ui-entry")>();
+vi.mock("@/lib/configs/ui-entry", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/configs/ui-entry")>();
   return {
     ...actual,
     UI_ENTRY: {

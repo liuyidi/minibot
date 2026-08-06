@@ -8,9 +8,9 @@ import {
   fetchSessionAutomations,
   fetchWebuiThread,
   listSessions,
-} from "@/lib/api";
-import { hasPendingAgentActivity } from "@/lib/activity-timeline";
-import { deriveTitle } from "@/lib/format";
+} from "@/lib/apis/api";
+import { hasPendingAgentActivity } from "@/lib/chat/activity-timeline";
+import { deriveTitle } from "@/lib/utils/format";
 import type {
   ChatSummary,
   SessionAutomationJob,

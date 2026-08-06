@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { fetchSessionAutomations } from "@/lib/api";
+import { fetchSessionAutomations } from "@/lib/apis/api";
 import type { SessionAutomationJob } from "@/lib/types";
 
 const AUTOMATIONS_REFRESH_MS = 3000;

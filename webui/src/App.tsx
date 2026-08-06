@@ -9,7 +9,7 @@ import {
 import { Moon, PanelLeft, Sun } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { DeleteConfirm } from "@/components/DeleteConfirm";
-import { DownloadPage } from "@/components/DownloadPage";
+import { DownloadPage } from "@/pages/download";
 import { RenameChatDialog } from "@/components/RenameChatDialog";
 import { Sidebar } from "@/components/Sidebar";
 import { SessionSearchDialog } from "@/components/SessionSearchDialog";
@@ -29,10 +29,10 @@ import {
   fetchBootstrap,
   loadSavedSecret,
   saveSecret,
-} from "@/lib/bootstrap";
-import { displayTitle } from "@/lib/chat-groups";
-import { deriveTitle } from "@/lib/format";
-import { MinibotClient } from "@/lib/minibot-client";
+} from "@/lib/apis/bootstrap";
+import { displayTitle } from "@/lib/utils/chat-groups";
+import { deriveTitle } from "@/lib/utils/format";
+import { MinibotClient } from "@/lib/apis/minibot-client";
 import { ClientProvider, useClient } from "@/providers/ClientProvider";
 import type {
   ChatSummary,
@@ -44,14 +44,14 @@ import type {
 } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { fetchSettings, fetchWorkspaces } from "@/lib/api";
-import { isEnabledSettingsSection } from "@/lib/ui-entry";
+import { fetchSettings, fetchWorkspaces } from "@/lib/apis/api";
+import { isEnabledSettingsSection } from "@/lib/configs/ui-entry";
 import {
   createRuntimeHost,
   getHostApi,
   toRuntimeSurface,
-} from "@/lib/runtime";
-import { projectNameFromPath } from "@/lib/workspace";
+} from "@/lib/configs/runtime";
+import { projectNameFromPath } from "@/lib/utils/workspace";
 
 type BootState =
   | { status: "loading" }

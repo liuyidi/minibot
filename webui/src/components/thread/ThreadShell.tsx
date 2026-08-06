@@ -35,19 +35,19 @@ import {
   submitSessionFeedbackDetail,
   submitSessionScore,
   updateSettings,
-} from "@/lib/api";
+} from "@/lib/apis/api";
 import {
   CLI_APPS_CHANGED_EVENT,
   installedCliAppsFromPayload,
   isCliAppsPayload,
-} from "@/lib/cli-app-events";
+} from "@/lib/chat/cli-app-events";
 import {
   MCP_PRESETS_CHANGED_EVENT,
   installedMcpPresetsFromPayload,
   isMcpPresetsPayload,
-} from "@/lib/mcp-preset-events";
-import { inferProviderFromModelName, providerDisplayLabel } from "@/lib/provider-brand";
-import { SETTINGS_SHOW_USER_MODEL_CONFIGS } from "@/lib/ui-entry";
+} from "@/lib/chat/mcp-preset-events";
+import { inferProviderFromModelName, providerDisplayLabel } from "@/lib/constants/provider-brand";
+import { SETTINGS_SHOW_USER_MODEL_CONFIGS } from "@/lib/configs/ui-entry";
 import type {
   ChatSummary,
   SettingsPayload,
@@ -56,8 +56,8 @@ import type {
   WorkspaceScopePayload,
   WorkspacesPayload,
 } from "@/lib/types";
-import { normalizeLegacyLongTaskMessages } from "@/lib/thread-display-compat";
-import { scrubSubagentUiMessages } from "@/lib/subagent-channel-display";
+import { normalizeLegacyLongTaskMessages } from "@/lib/chat/thread-display-compat";
+import { scrubSubagentUiMessages } from "@/lib/chat/subagent-channel-display";
 import { useClient } from "@/providers/ClientProvider";
 
 function projectWebuiThreadMessages(messages: UIMessage[]): UIMessage[] {

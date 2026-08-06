@@ -30,9 +30,9 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { copyTextToClipboard } from "@/lib/clipboard";
-import { formatTurnLatency } from "@/lib/format";
-import { toMediaAttachment } from "@/lib/media";
+import { copyTextToClipboard } from "@/lib/utils/clipboard";
+import { formatTurnLatency } from "@/lib/utils/format";
+import { toMediaAttachment } from "@/lib/utils/media";
 import type {
   CliAppInfo,
   McpPresetInfo,

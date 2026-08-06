@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { deriveWsUrl, fetchBootstrap } from "@/lib/bootstrap";
+import { deriveWsUrl, fetchBootstrap } from "@/lib/apis/bootstrap";
 
 describe("bootstrap helpers", () => {
   afterEach(() => {

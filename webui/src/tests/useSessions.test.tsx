@@ -3,11 +3,11 @@ import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { sessionTitle, useSessionHistory, useSessions } from "@/hooks/useSessions";
-import * as api from "@/lib/api";
+import * as api from "@/lib/apis/api";
 import { ClientProvider } from "@/providers/ClientProvider";
 
-vi.mock("@/lib/api", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/lib/api")>();
+vi.mock("@/lib/apis/api", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/apis/api")>();
   return {
     ...actual,
     listSessions: vi.fn(),
@@ -46,7 +46,7 @@ function wrap(client: ReturnType<typeof fakeClient>) {
   return function Wrapper({ children }: { children: ReactNode }) {
     return (
       <ClientProvider
-        client={client as unknown as import("@/lib/minibot-client").MinibotClient}
+        client={client as unknown as import("@/lib/apis/minibot-client").MinibotClient}
         token="tok"
       >
         {children}

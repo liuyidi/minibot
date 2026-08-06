@@ -4,7 +4,7 @@ import { useClient } from "@/providers/ClientProvider";
 import {
   fetchSidebarState,
   updateSidebarState as persistSidebarState,
-} from "@/lib/api";
+} from "@/lib/apis/api";
 import type { ChatSummary, SidebarStatePayload } from "@/lib/types";
 
 export const DEFAULT_SIDEBAR_STATE: SidebarStatePayload = {

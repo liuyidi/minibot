@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ThreadShell } from "@/components/thread/ThreadShell";
-import { CLI_APPS_CHANGED_EVENT } from "@/lib/cli-app-events";
+import { CLI_APPS_CHANGED_EVENT } from "@/lib/chat/cli-app-events";
 import { ClientProvider } from "@/providers/ClientProvider";
 import type { CliAppsPayload, SettingsPayload, UIMessage } from "@/lib/types";
 
@@ -70,7 +70,7 @@ function makeClient() {
 function wrap(client: ReturnType<typeof makeClient>, children: ReactNode, modelName?: string | null) {
   return (
     <ClientProvider
-      client={client as unknown as import("@/lib/minibot-client").MinibotClient}
+      client={client as unknown as import("@/lib/apis/minibot-client").MinibotClient}
       token="tok"
       modelName={modelName ?? null}
     >

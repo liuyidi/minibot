@@ -36,7 +36,7 @@ import {
   updateProviderSettings,
   updateSettings,
   updateWebSearchSettings,
-} from "@/lib/api";
+} from "@/lib/apis/api";
 
 describe("webui API helpers", () => {
   beforeEach(() => {

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { encodeImage, type EncodeFailure } from "@/lib/imageEncode";
+import { encodeImage, type EncodeFailure } from "@/lib/utils/imageEncode";
 
 /** Lifecycle stages of one attachment:
  *

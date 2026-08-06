@@ -28,9 +28,9 @@ import {
   isAgentActivityMember,
   isReasoningOnlyAssistant,
   type ActivityEvidence,
-} from "@/lib/activity-timeline";
-import { faviconUrls, logoFallbackUrls } from "@/lib/provider-brand";
-import { formatToolCallTrace } from "@/lib/tool-traces";
+} from "@/lib/chat/activity-timeline";
+import { faviconUrls, logoFallbackUrls } from "@/lib/constants/provider-brand";
+import { formatToolCallTrace } from "@/lib/chat/tool-traces";
 import { cn } from "@/lib/utils";
 import type { CliAppInfo, McpPresetInfo, ToolProgressEvent, UIFileEdit, UIMessage } from "@/lib/types";
 

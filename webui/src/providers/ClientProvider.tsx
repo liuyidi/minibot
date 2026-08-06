@@ -1,6 +1,6 @@
 import { createContext, useContext, type ReactNode } from "react";
 
-import type { MinibotClient } from "@/lib/minibot-client";
+import type { MinibotClient } from "@/lib/apis/minibot-client";
 
 interface ClientContextValue {
   client: MinibotClient;

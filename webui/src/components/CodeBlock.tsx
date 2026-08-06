@@ -3,7 +3,7 @@ import { Check, Copy } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { useThemeValue } from "@/hooks/useTheme";
-import { hasAnsi, parseAnsiSegments, stripAnsi } from "@/lib/ansi";
+import { hasAnsi, parseAnsiSegments, stripAnsi } from "@/lib/utils/ansi";
 import { cn } from "@/lib/utils";
 
 interface CodeBlockProps {

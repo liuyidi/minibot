@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 
-import { logoFallbackUrls } from "@/lib/provider-brand";
+import { logoFallbackUrls } from "@/lib/constants/provider-brand";
 import type { CliAppInfo, McpPresetInfo } from "@/lib/types";
 import { cn } from "@/lib/utils";
 

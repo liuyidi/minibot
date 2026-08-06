@@ -1,8 +1,8 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@/lib/ui-entry", async () => {
-  const actual = await vi.importActual<typeof import("@/lib/ui-entry")>("@/lib/ui-entry");
+vi.mock("@/lib/configs/ui-entry", async () => {
+  const actual = await vi.importActual<typeof import("@/lib/configs/ui-entry")>("@/lib/configs/ui-entry");
   return {
     ...actual,
     // Keep BYOK settings tests covering the still-wired implementation.
@@ -213,7 +213,7 @@ describe("SettingsView Apps catalog", () => {
     });
 
     expect(screen.getByRole("heading", { name: "Scheduled tasks" })).toBeInTheDocument();
-    expect(await screen.findByText("No automations yet.")).toBeInTheDocument();
+    expect(await screen.findByText("Start your first automation")).toBeInTheDocument();
     expect(screen.queryByText("Settings")).not.toBeInTheDocument();
   });
 

@@ -8,8 +8,8 @@ import type {
   OutboundMedia,
   GoalStateWsPayload,
   WorkspaceScopePayload,
-} from "./types";
-import { createHostWebSocket } from "./runtime";
+} from "@/lib/types";
+import { createHostWebSocket } from "@/lib/configs/runtime";
 
 /** WebSocket readyState constants, referenced by value to stay portable
  * across runtimes that don't expose a global ``WebSocket`` (tests, SSR). */

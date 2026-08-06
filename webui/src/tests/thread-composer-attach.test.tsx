@@ -8,12 +8,12 @@ import {
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ThreadComposer } from "@/components/thread/ThreadComposer";
-import type { EncodeResponse } from "@/lib/imageEncode";
+import type { EncodeResponse } from "@/lib/utils/imageEncode";
 
 const encodeImage = vi.fn<(file: File) => Promise<EncodeResponse>>();
 
-vi.mock("@/lib/imageEncode", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/lib/imageEncode")>();
+vi.mock("@/lib/utils/imageEncode", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/utils/imageEncode")>();
   return {
     ...actual,
     encodeImage: (file: File) => encodeImage(file),

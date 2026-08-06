@@ -28,6 +28,85 @@ webui/                 source tree (this directory)
 minibot/web/dist/      build output served by the gateway
 ```
 
+Agent-facing Cursor rules for the same conventions live under
+[`.cursor/rules/`](../.cursor/rules/) (especially `webui-component-structure.mdc`).
+
+### `src/` directory structure
+
+Path alias: `@/` → `src/`.
+
+```text
+src/
+├── main.tsx                 # entry: mount, i18n, global CSS
+├── App.tsx                  # shell: hash routes, auth, layout (keep thin)
+├── globals.css
+│
+├── pages/                   # route-level pages (one folder per feature)
+│   ├── index.ts
+│   └── <page>/
+│       ├── index.ts         # export { XxxPage }
+│       ├── XxxPage.tsx      # data / state / handlers + compose UI
+│       ├── xxx-ui.tsx       # optional large presentational split
+│       └── components/      # page-private UI only
+│
+├── components/              # shared business UI (2+ consumers or app shell)
+│   ├── ui/                  # atomic primitives (shadcn / Radix)
+│   ├── settings/            # settings-domain shared chrome
+│   ├── thread/              # chat / session domain
+│   │   └── activity/
+│   └── *.tsx
+│
+├── hooks/                   # reusable React hooks
+├── lib/                     # no JSX — see `lib/` layout below
+├── providers/               # React context providers
+├── i18n/                    # i18n init + locales/<lang>/common.json
+├── tests/                   # Vitest + Testing Library
+├── types/                   # ambient *.d.ts
+└── workers/                 # Web Workers
+```
+
+### `lib/` layout
+
+```text
+lib/
+├── apis/           # REST / WS / bootstrap HTTP (api, http, minibot-client, bootstrap)
+├── configs/        # feature flags & runtime/host config (ui-entry, portal, runtime)
+├── constants/      # static maps (provider-brand)
+├── utils/          # pure helpers (cn, format, ansi, media, workspace, …)
+├── types/          # shared TypeScript types
+└── chat/           # session/message-domain logic (activity-timeline, tool-traces, …)
+```
+
+| Path | Put here | Do not put here |
+|------|----------|-----------------|
+| `lib/apis/` | HTTP/WS clients, fetch helpers | UI, pure formatters |
+| `lib/configs/` | env/build flags, host runtime adapters | API call implementations |
+| `lib/constants/` | static tables / brand maps | logic with side effects |
+| `lib/utils/` | general pure helpers | chat-turn domain pipelines |
+| `lib/types/` | shared DTOs / UI message types | runtime code |
+| `lib/chat/` | activity timeline, tool traces, display scrubbers | generic `cn` / date format |
+
+Import from the category path, e.g. `@/lib/apis/api`, `@/lib/utils/format`. Folder barrels also work for `@/lib/utils` and `@/lib/types`.
+
+| Path | Put here | Do not put here |
+|------|----------|-----------------|
+| `pages/<page>/` | page entry, orchestration, page-only `components/` | atomic controls; multi-page business blocks |
+| `components/ui/` | Button, Dialog, Input, Sheet, … | business copy / API logic |
+| `components/` (+ `settings/`, `thread/`) | UI used by app shell or ≥2 pages | one-off page widgets |
+| `hooks/` | reusable `useXxx` | tiny one-file helpers (keep local) |
+| `lib/` | categorized modules above | React components / JSX |
+| `providers/` | global Context | ordinary feature UI |
+| `i18n/` | locale JSON + bootstrap | business logic |
+| `tests/` | `*.test.ts(x)` | production code |
+
+**Placement checklist:** primitive → `components/ui`; shared business → `components/`; page-only → `pages/<page>/components/`; pure logic → `lib/`; reusable hooks → `hooks/`.
+
+**File size:** prefer ≤ ~350 lines per file; split page shell / UI / hooks / helpers when larger. Prefer extracting into `pages/` or `components/<domain>/` over growing `App.tsx` / `SettingsView.tsx`.
+
+**Page imports:** `import { ChannelsPage } from "@/pages/channels"`. Do not add full pages under `components/settings/`.
+
+Migrated / in-progress page folders: `pages/automations`, `channels`, `skills`, `download`, `models`.
+
 ## Develop the WebUI (Vite HMR)
 
 ### 1. Install minibot from source

@@ -7,7 +7,7 @@ import type { ContextUsagePayload } from "@/lib/types";
 
 const fetchContextUsage = vi.fn();
 
-vi.mock("@/lib/api", () => ({
+vi.mock("@/lib/apis/api", () => ({
   fetchContextUsage: (...args: unknown[]) => fetchContextUsage(...args),
 }));
 

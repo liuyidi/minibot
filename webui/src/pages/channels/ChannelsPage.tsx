@@ -9,7 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ApiError } from "@/lib/api";
+import { ApiError } from "@/lib/apis/api";
 import { cn } from "@/lib/utils";
 
 type FeishuStatus = {
@@ -178,7 +178,7 @@ function ChannelSwitch({
   );
 }
 
-export function ChannelsSettings({ token }: { token: string }) {
+export function ChannelsPage({ token }: { token: string }) {
   const [feishu, setFeishu] = useState<FeishuStatus | null>(null);
   const [weixin, setWeixin] = useState<WeixinStatus | null>(null);
   const [error, setError] = useState<string | null>(null);

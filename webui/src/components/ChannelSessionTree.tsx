@@ -20,7 +20,7 @@ import {
   groupImSessions,
   imSessionLabel,
   type ImPlatform,
-} from "@/lib/im-sessions";
+} from "@/lib/utils/im-sessions";
 
 const ACTION_MENU_CONTENT_CLASS = "w-[8.5rem] min-w-[8.5rem]";
 const ACTION_MENU_ITEM_CLASS = "grid w-[7.75rem] grid-cols-[1rem_minmax(0,1fr)] items-center gap-2";

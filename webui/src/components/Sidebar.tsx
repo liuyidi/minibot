@@ -23,9 +23,9 @@ import { ChatList } from "@/components/ChatList";
 import { ConnectionBadge } from "@/components/ConnectionBadge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { isImSession, isWebChatSession } from "@/lib/im-sessions";
-import { PORTAL } from "@/lib/portal";
-import { UI_ENTRY } from "@/lib/ui-entry";
+import { isImSession, isWebChatSession } from "@/lib/utils/im-sessions";
+import { PORTAL } from "@/lib/configs/portal";
+import { UI_ENTRY } from "@/lib/configs/ui-entry";
 import type {
   ChatSummary,
   SidebarViewState,

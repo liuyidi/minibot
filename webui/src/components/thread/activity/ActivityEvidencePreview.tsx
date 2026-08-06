@@ -1,6 +1,6 @@
 import { AttachmentTile } from "@/components/AttachmentTile";
 import { cn } from "@/lib/utils";
-import type { ActivityEvidence } from "@/lib/activity-timeline";
+import type { ActivityEvidence } from "@/lib/chat/activity-timeline";
 
 interface ActivityEvidencePreviewProps {
   evidence: ActivityEvidence[];

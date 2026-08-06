@@ -6,7 +6,7 @@ import {
   SETTINGS_SHOW_USER_MODEL_CONFIGS,
   UI_ENTRY,
   isEnabledSettingsSection,
-} from "@/lib/ui-entry";
+} from "@/lib/configs/ui-entry";
 
 describe("ui-entry gates", () => {
   it("enables primary sidebar utilities and keeps apps and voice hidden", () => {

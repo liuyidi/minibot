@@ -1,16 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useClient } from "@/providers/ClientProvider";
-import { fetchPendingApprovals } from "@/lib/api";
-import { toMediaAttachment } from "@/lib/media";
+import { fetchPendingApprovals } from "@/lib/apis/api";
+import { toMediaAttachment } from "@/lib/utils/media";
 import {
   mergeToolProgressEvents,
   mergeUniqueToolTraceLines,
   normalizeToolProgressEvents,
   toolTraceLinesFromEvents,
-} from "@/lib/tool-traces";
-import { hasPendingAgentActivity } from "@/lib/activity-timeline";
-import type { StreamError } from "@/lib/minibot-client";
+} from "@/lib/chat/tool-traces";
+import { hasPendingAgentActivity } from "@/lib/chat/activity-timeline";
+import type { StreamError } from "@/lib/apis/minibot-client";
 import type {
   InboundEvent,
   OutboundCliAppMention,

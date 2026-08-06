@@ -8,7 +8,7 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { fetchContextUsage } from "@/lib/api";
+import { fetchContextUsage } from "@/lib/apis/api";
 import type { ContextUsageCategory, ContextUsagePayload } from "@/lib/types";
 import { cn } from "@/lib/utils";
 

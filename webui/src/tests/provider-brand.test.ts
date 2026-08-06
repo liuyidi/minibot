@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { faviconUrls, logoFallbackUrls, providerBrand } from "@/lib/provider-brand";
+import { faviconUrls, logoFallbackUrls, providerBrand } from "@/lib/constants/provider-brand";
 
 describe("provider brand logos", () => {
   it("uses multiple favicon sources before falling back to initials", () => {

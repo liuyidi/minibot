@@ -6,7 +6,7 @@ import {
   imPlatformFromSession,
   imSessionLabel,
   isWebChatSession,
-} from "@/lib/im-sessions";
+} from "@/lib/utils/im-sessions";
 import type { ChatSummary } from "@/lib/types";
 
 function session(partial: Partial<ChatSummary> & Pick<ChatSummary, "key">): ChatSummary {

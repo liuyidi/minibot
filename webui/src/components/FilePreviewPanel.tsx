@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 
 import { CodeBlock } from "@/components/CodeBlock";
 import { splitFilePath } from "@/components/FileReferenceChip";
-import { ApiError, fetchFilePreview } from "@/lib/api";
+import { ApiError, fetchFilePreview } from "@/lib/apis/api";
 import type { FilePreviewPayload } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -24,11 +24,6 @@ type PreviewState =
   | { status: "error"; message: string }
   | { status: "ready"; payload: FilePreviewPayload };
 
-function supportsHoverCloseControl(): boolean {
-  if (typeof window === "undefined" || typeof window.matchMedia !== "function") return false;
-  return window.matchMedia("(hover: hover) and (pointer: fine)").matches;
-}
-
 export function FilePreviewPanel({
   sessionKey,
   path,
@@ -41,24 +36,10 @@ export function FilePreviewPanel({
   const { t } = useTranslation();
   const [state, setState] = useState<PreviewState>({ status: "loading" });
   const [entered, setEntered] = useState(false);
-  const [supportsHoverClose, setSupportsHoverClose] = useState(supportsHoverCloseControl);
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => setEntered(true));
     return () => window.cancelAnimationFrame(frame);
-  }, []);
-
-  useEffect(() => {
-    if (typeof window.matchMedia !== "function") return undefined;
-    const query = window.matchMedia("(hover: hover) and (pointer: fine)");
-    const update = () => setSupportsHoverClose(query.matches);
-    update();
-    if (typeof query.addEventListener === "function") {
-      query.addEventListener("change", update);
-      return () => query.removeEventListener("change", update);
-    }
-    query.addListener(update);
-    return () => query.removeListener(update);
   }, []);
 
   useEffect(() => {
@@ -145,64 +126,28 @@ export function FilePreviewPanel({
         ) : null}
         <div className="flex min-h-0 flex-1 flex-col">
           <div className="flex h-12 shrink-0 items-center gap-2 border-b border-border/60 px-3">
-            {supportsHoverClose ? (
-              <div
-                className={cn(
-                  "group inline-flex max-w-full min-w-0 items-center gap-2 rounded-[12px]",
-                  "bg-muted/70 px-2.5 py-1.5 text-sm font-medium",
-                )}
-                title={name || displayPath}
-              >
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className={cn(
-                    "relative inline-flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded-full",
-                    "text-muted-foreground/75 transition-[background-color,color,opacity] duration-150 ease-out",
-                    "group-hover:bg-foreground group-hover:text-background group-hover:opacity-100",
-                    "group-focus-within:bg-foreground group-focus-within:text-background",
-                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                  )}
-                  aria-label={t("filePreview.close", { defaultValue: "Close file preview" })}
-                >
-                  <FileText
-                    className={cn(
-                      "absolute h-4 w-4 transition-all duration-150 ease-out",
-                      "opacity-100 group-hover:scale-75 group-hover:opacity-0",
-                      "group-focus-within:scale-75 group-focus-within:opacity-0",
-                    )}
-                    aria-hidden
-                  />
-                  <X
-                    className={cn(
-                      "absolute h-3.5 w-3.5 scale-75 opacity-0 transition-all duration-150 ease-out",
-                      "group-hover:scale-100 group-hover:opacity-100",
-                      "group-focus-within:scale-100 group-focus-within:opacity-100",
-                    )}
-                    aria-hidden
-                  />
-                </button>
-                <span className="min-w-0 truncate">{name || displayPath}</span>
-              </div>
-            ) : (
-              <>
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className={cn(
-                    "inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full",
-                    "text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
-                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                  )}
-                  aria-label={t("filePreview.close", { defaultValue: "Close file preview" })}
-                >
-                  <X className="h-5 w-5" aria-hidden />
-                </button>
-                <span className="min-w-0 truncate text-sm font-medium">
-                  {name || displayPath}
-                </span>
-              </>
-            )}
+            <div
+              className={cn(
+                "inline-flex min-w-0 flex-1 items-center gap-2 rounded-[12px]",
+                "bg-muted/70 px-2.5 py-1.5 text-sm font-medium",
+              )}
+              title={name || displayPath}
+            >
+              <FileText className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+              <span className="min-w-0 truncate">{name || displayPath}</span>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className={cn(
+                "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full",
+                "text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              )}
+              aria-label={t("filePreview.close", { defaultValue: "Close file preview" })}
+            >
+              <X className="h-4 w-4" aria-hidden />
+            </button>
           </div>
 
           <div className="flex min-h-0 flex-1 flex-col">

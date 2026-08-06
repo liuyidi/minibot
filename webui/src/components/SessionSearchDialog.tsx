@@ -8,7 +8,7 @@ import {
   DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { deriveTitle } from "@/lib/format";
+import { deriveTitle } from "@/lib/utils/format";
 import { cn } from "@/lib/utils";
 import type { ChatSummary } from "@/lib/types";
 

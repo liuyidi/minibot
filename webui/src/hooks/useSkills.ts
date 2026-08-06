@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { fetchSkills } from "@/lib/api";
+import { fetchSkills } from "@/lib/apis/api";
 import type { SkillSummary } from "@/lib/types";
 
 export function useSkills(token: string): SkillSummary[] {

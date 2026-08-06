@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { MinibotClient } from "@/lib/minibot-client";
+import { MinibotClient } from "@/lib/apis/minibot-client";
 
 /**
  * Minimal fake WebSocket implementing the subset MinibotClient touches.

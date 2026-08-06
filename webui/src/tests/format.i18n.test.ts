@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { setAppLanguage } from "@/i18n";
-import { fmtDateTime, formatTurnLatency, relativeTime } from "@/lib/format";
+import { fmtDateTime, formatTurnLatency, relativeTime } from "@/lib/utils/format";
 
 describe("localized format helpers", () => {
   beforeEach(() => {

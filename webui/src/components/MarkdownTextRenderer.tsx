@@ -22,9 +22,9 @@ import {
   isFilePatternReference,
   isLikelyFilePath,
 } from "@/components/FileReferenceChip";
-import { inferMediaKind } from "@/lib/media";
-import { faviconUrls } from "@/lib/provider-brand";
-import { remarkTexMath } from "@/lib/remark-tex-math";
+import { inferMediaKind } from "@/lib/utils/media";
+import { faviconUrls } from "@/lib/constants/provider-brand";
+import { remarkTexMath } from "@/lib/chat/remark-tex-math";
 import { cn } from "@/lib/utils";
 
 import "katex/dist/katex.min.css";
