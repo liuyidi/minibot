@@ -4,7 +4,6 @@ import {
   useMemo,
   useRef,
   useState,
-  type LucideIcon,
 } from "react";
 import {
   Activity,
@@ -18,6 +17,7 @@ import {
   Square,
   SquarePen,
   Undo2,
+  type LucideIcon,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 

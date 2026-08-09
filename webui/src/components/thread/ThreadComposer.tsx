@@ -92,7 +92,6 @@ import type {
 } from "@/lib/types";
 import {
   inferProviderFromModelName,
-  logoFallbackUrls,
   providerBrand,
 } from "@/lib/constants/provider-brand";
 import { UI_ENTRY } from "@/lib/configs/ui-entry";
