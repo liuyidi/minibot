@@ -190,12 +190,8 @@ describe("MessageBubble", () => {
     render(<MessageBubble message={message} cliApps={CLI_APPS} />);
 
     const token = screen.getByTestId("message-cli-mention-zoom");
-    expect(token).toHaveTextContent("@zoom");
+    expect(token).toHaveTextContent("zoom");
     expect(token).toHaveAttribute("title", "CLI app: Zoom");
-    expect(token.className).not.toContain("rounded");
-    expect(token.className).not.toContain("px-");
-    expect(token.getAttribute("style")).toContain("color: #0B5CFF");
-    expect(token.getAttribute("style")).toContain("text-shadow");
     expect(screen.getByTestId("message-cli-mention-logo-zoom")).toBeInTheDocument();
     expect(screen.queryByTestId("message-cli-mention-krita")).not.toBeInTheDocument();
     expect(screen.getByText(/not @krita/)).toBeInTheDocument();
@@ -236,10 +232,7 @@ describe("MessageBubble", () => {
     render(<MessageBubble message={message} cliApps={[]} />);
 
     const token = screen.getByTestId("message-cli-mention-drawio");
-    expect(token).toHaveTextContent("@drawio");
-    expect(token.className).not.toContain("rounded");
-    expect(token.className).not.toContain("px-");
-    expect(token.getAttribute("style")).toContain("color: #F08705");
+    expect(token).toHaveTextContent("drawio");
     expect(screen.getByTestId("message-cli-mention-logo-drawio")).toBeInTheDocument();
   });
 
@@ -254,9 +247,8 @@ describe("MessageBubble", () => {
     render(<MessageBubble message={message} mcpPresets={MCP_PRESETS} />);
 
     const token = screen.getByTestId("message-mcp-mention-browserbase");
-    expect(token).toHaveTextContent("@browserbase");
+    expect(token).toHaveTextContent("browserbase");
     expect(token).toHaveAttribute("title", "MCP server: Browserbase");
-    expect(token.getAttribute("style")).toContain("color: #111827");
     expect(screen.getByTestId("message-mcp-mention-logo-browserbase")).toBeInTheDocument();
   });
 

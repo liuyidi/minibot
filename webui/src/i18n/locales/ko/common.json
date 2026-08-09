@@ -1003,8 +1003,8 @@
       }
     },
     "composer": {
-      "placeholderThread": "메시지를 입력하세요…",
-      "placeholderHero": "무슨 생각을 하고 있나요?",
+      "placeholderThread": "메시지 입력… @ 앱 멘션, / 스킬과 명령",
+      "placeholderHero": "무엇을 도와드릴까요? @ 앱 멘션, / 스킬과 명령",
       "placeholderOpening": "새 채팅을 여는 중…",
       "placeholderStreaming": "모델이 응답 중입니다…",
       "inputAria": "메시지 입력",
@@ -1121,7 +1121,8 @@
         },
         "badges": {
           "current": "현재",
-          "recent": "최근"
+          "recent": "최근",
+          "skill": "스킬"
         },
         "details": {
           "goalActive": "목표 실행 중",

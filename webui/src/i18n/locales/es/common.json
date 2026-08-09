@@ -1003,8 +1003,8 @@
       }
     },
     "composer": {
-      "placeholderThread": "Escribe tu mensaje…",
-      "placeholderHero": "¿Qué tienes en mente?",
+      "placeholderThread": "Escribe… @ apps, / habilidades y comandos",
+      "placeholderHero": "¿En qué puedo ayudarte? @ apps, / habilidades y comandos",
       "placeholderOpening": "Abriendo un nuevo chat…",
       "placeholderStreaming": "El modelo está respondiendo…",
       "inputAria": "Entrada de mensaje",
@@ -1121,7 +1121,8 @@
         },
         "badges": {
           "current": "Actual",
-          "recent": "Reciente"
+          "recent": "Reciente",
+          "skill": "Habilidad"
         },
         "details": {
           "goalActive": "El objetivo está en curso",

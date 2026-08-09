@@ -7,6 +7,5 @@ export { useSessionOptions } from "./useSessionOptions";
 export { useSessionAutomationJobs } from "./useSessionAutomationJobs";
 export {
   useMinibotStream,
-  type SendImage,
-  type SendOptions,
 } from "./useMinibotStream";
+export type { SendImage, SendOptions } from "./send-types";

@@ -1003,8 +1003,8 @@
       }
     },
     "composer": {
-      "placeholderThread": "输入消息…",
-      "placeholderHero": "问任何问题...",
+      "placeholderThread": "输入消息… @ 引用能力，/ 调用技能与指令",
+      "placeholderHero": "今天帮你做些什么？@ 引用能力，/ 调用技能与指令",
       "placeholderOpening": "正在打开新对话…",
       "placeholderStreaming": "模型正在回复…",
       "inputAria": "消息输入框",
@@ -1081,7 +1081,8 @@
         "closeHint": "Esc 关闭",
         "badges": {
           "current": "当前",
-          "recent": "最近"
+          "recent": "最近",
+          "skill": "技能"
         },
         "details": {
           "goalActive": "目标正在运行",

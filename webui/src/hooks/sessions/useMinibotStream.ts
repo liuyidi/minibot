@@ -11,20 +11,15 @@ import {
 } from "@/lib/chat/tool-traces";
 import { hasPendingAgentActivity } from "@/lib/chat/activity-timeline";
 import type { StreamError } from "@/lib/apis/minibot-client";
+import { type SendImage, type SendOptions } from "./send-types";
 import type {
   InboundEvent,
-  OutboundCliAppMention,
-  OutboundImageGeneration,
-  OutboundMcpPresetMention,
-  OutboundMedia,
   GoalStateWsPayload,
   PendingApproval,
   ToolProgressEvent,
-  UIImage,
   UIFileEdit,
   UIMessage,
   UITurnPhase,
-  WorkspaceScopePayload,
 } from "@/lib/types";
 
 interface StreamBuffer {
@@ -424,23 +419,7 @@ function findFileEditTraceIndex(
  * separately (e.g. via ``fetchWebuiThread``) since the server only replays
  * live events.
  */
-/** Payload passed to ``send`` when the user attaches one or more images.
- *
- * ``media`` is handed to the wire client verbatim; ``preview`` powers the
- * optimistic user bubble (blob URLs so the preview appears before the server
- * acks the frame). Keeping the two separate lets the bubble re-use the local
- * blob URL even after the server persists the file under a different name. */
-export interface SendImage {
-  media: OutboundMedia;
-  preview: UIImage;
-}
-
-export interface SendOptions {
-  imageGeneration?: OutboundImageGeneration;
-  cliApps?: OutboundCliAppMention[];
-  mcpPresets?: OutboundMcpPresetMention[];
-  workspaceScope?: WorkspaceScopePayload | null;
-}
+export type { SendImage, SendOptions } from "./send-types";
 
 export function useMinibotStream(
   chatId: string | null,

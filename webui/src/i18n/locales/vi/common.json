@@ -1003,8 +1003,8 @@
       }
     },
     "composer": {
-      "placeholderThread": "Nhập tin nhắn…",
-      "placeholderHero": "Bạn đang nghĩ gì?",
+      "placeholderThread": "Nhập tin nhắn… @ nhắc app, / kỹ năng & lệnh",
+      "placeholderHero": "Tôi có thể giúp gì? @ nhắc app, / kỹ năng & lệnh",
       "placeholderOpening": "Đang mở cuộc trò chuyện mới…",
       "placeholderStreaming": "Mô hình đang trả lời…",
       "inputAria": "Ô nhập tin nhắn",
@@ -1121,7 +1121,8 @@
         },
         "badges": {
           "current": "Hiện tại",
-          "recent": "Gần đây"
+          "recent": "Gần đây",
+          "skill": "Kỹ năng"
         },
         "details": {
           "goalActive": "Mục tiêu đang chạy",

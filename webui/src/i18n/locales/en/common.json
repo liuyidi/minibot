@@ -1003,8 +1003,8 @@
       }
     },
     "composer": {
-      "placeholderThread": "Type your message…",
-      "placeholderHero": "Ask anything...",
+      "placeholderThread": "Type a message… @ mention apps, / skills & commands",
+      "placeholderHero": "How can I help? @ mention apps, / skills & commands",
       "placeholderOpening": "Opening a new chat…",
       "placeholderStreaming": "Model is responding…",
       "inputAria": "Message input",
@@ -1082,7 +1082,8 @@
         "closeHint": "Esc Close",
         "badges": {
           "current": "Current",
-          "recent": "Recent"
+          "recent": "Recent",
+          "skill": "Skill"
         },
         "details": {
           "goalActive": "Goal is running",

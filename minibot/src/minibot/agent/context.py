@@ -103,6 +103,7 @@ def build_system_prompt(
     workspace: Path | str | None,
     identity: str,
     session_summary: str = "",
+    user_message: str = "",
 ) -> BuiltSystemPrompt:
     """Assemble system prompt for a turn."""
     parts: list[str] = [identity.strip()]
@@ -131,14 +132,19 @@ def build_system_prompt(
         skills = registry.list_skills()
         skills_count = len(skills)
         always = registry.always_skills()
-        always_body = registry.load_always_bodies()
-        if always_body:
-            parts.append(f"# Active Skills\n\n{always_body}")
-        catalog = registry.build_skills_summary(exclude={s.name for s in always})
+        active_names = [s.name for s in always]
+        for name in registry.get_explicitly_invoked_skills(user_message):
+            if name not in active_names:
+                active_names.append(name)
+        active_body = registry.load_skills_for_context(active_names)
+        if active_body:
+            parts.append(f"# Active Skills\n\n{active_body}")
+        catalog = registry.build_skills_summary(exclude=set(active_names))
         if catalog:
             parts.append(
                 "# Skills\n\n"
-                "These skills may apply. Follow a skill's guidance when the task matches.\n\n"
+                "These skills may apply. Follow a skill's guidance when the task matches.\n"
+                "Invoke a skill explicitly with `/skill-name` in your message.\n\n"
                 f"{catalog}"
             )
 

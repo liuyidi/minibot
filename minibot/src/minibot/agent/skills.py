@@ -14,6 +14,22 @@ import yaml
 
 BUILTIN_SKILLS_DIR = Path(__file__).resolve().parent.parent / "skills"
 _SKILL_NAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$")
+# Cursor-style `/skill-name` at start of message or after whitespace (not URL paths).
+_SLASH_SKILL_RE = re.compile(r"(?:^|(?<=\s))/([A-Za-z0-9][A-Za-z0-9_-]{0,63})\b")
+# Builtin control commands that must not be treated as skills.
+RESERVED_SLASH_COMMAND_NAMES = frozenset({
+    "stop",
+    "restart",
+    "new",
+    "history",
+    "model",
+    "goal",
+    "help",
+    "clear",
+    "compact",
+    "status",
+    "skills",
+})
 
 
 @dataclass(frozen=True)
@@ -180,13 +196,41 @@ class SkillsRegistry:
             lines.append(f"- **{skill.name}** ({skill.source}): {desc}")
         return "\n".join(lines)
 
-    def load_always_bodies(self) -> str:
-        parts = [
-            f"### Skill: {s.name}\n\n{s.body}"
-            for s in self.always_skills()
-            if s.body
-        ]
+    def get_explicitly_invoked_skills(self, text: str) -> list[str]:
+        """Resolve ``/skill-name`` references to available skills."""
+        if not text:
+            return []
+        available = {
+            skill.name
+            for skill in self.list_skills()
+            if self.is_available(skill)
+        }
+        invoked: list[str] = []
+        for match in _SLASH_SKILL_RE.finditer(text):
+            name = match.group(1)
+            key = name.lower()
+            if key in RESERVED_SLASH_COMMAND_NAMES:
+                continue
+            # Match catalog names case-insensitively but preserve canonical casing.
+            canonical = next((n for n in available if n.lower() == key), None)
+            if canonical is None or canonical in invoked:
+                continue
+            invoked.append(canonical)
+        return invoked
+
+    def load_skills_for_context(self, skill_names: list[str]) -> str:
+        """Load specific skills for inclusion in agent context."""
+        by_name = {skill.name: skill for skill in self.list_skills()}
+        parts: list[str] = []
+        for name in skill_names:
+            skill = by_name.get(name)
+            if skill is None or not skill.body or not self.is_available(skill):
+                continue
+            parts.append(f"### Skill: {skill.name}\n\n{skill.body}")
         return "\n\n---\n\n".join(parts)
+
+    def load_always_bodies(self) -> str:
+        return self.load_skills_for_context([s.name for s in self.always_skills()])
 
     def webui_summary(self, skill: SkillInfo) -> dict[str, Any]:
         available = self.is_available(skill)

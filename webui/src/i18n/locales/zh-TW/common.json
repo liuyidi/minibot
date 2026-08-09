@@ -1003,8 +1003,8 @@
       }
     },
     "composer": {
-      "placeholderThread": "輸入訊息…",
-      "placeholderHero": "你在想什麼？",
+      "placeholderThread": "輸入訊息… @ 引用能力，/ 呼叫技能與指令",
+      "placeholderHero": "今天要幫你做什麼？@ 引用能力，/ 呼叫技能與指令",
       "placeholderOpening": "正在開啟新對話…",
       "placeholderStreaming": "模型正在回覆…",
       "inputAria": "訊息輸入框",
@@ -1121,7 +1121,8 @@
         },
         "badges": {
           "current": "目前",
-          "recent": "最近"
+          "recent": "最近",
+          "skill": "技能"
         },
         "details": {
           "goalActive": "目標正在執行",

@@ -1003,8 +1003,8 @@
       }
     },
     "composer": {
-      "placeholderThread": "メッセージを入力…",
-      "placeholderHero": "何を考えていますか？",
+      "placeholderThread": "メッセージを入力… @ でアプリ、/ でスキルとコマンド",
+      "placeholderHero": "何をお手伝いしますか？@ でアプリ、/ でスキルとコマンド",
       "placeholderOpening": "新しいチャットを開いています…",
       "placeholderStreaming": "モデルが応答しています…",
       "inputAria": "メッセージ入力欄",
@@ -1121,7 +1121,8 @@
         },
         "badges": {
           "current": "現在",
-          "recent": "最近"
+          "recent": "最近",
+          "skill": "スキル"
         },
         "details": {
           "goalActive": "目標が実行中",

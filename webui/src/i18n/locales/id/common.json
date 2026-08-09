@@ -1003,8 +1003,8 @@
       }
     },
     "composer": {
-      "placeholderThread": "Ketik pesan Anda…",
-      "placeholderHero": "Apa yang sedang Anda pikirkan?",
+      "placeholderThread": "Ketik pesan… @ sebutkan app, / skill & perintah",
+      "placeholderHero": "Ada yang bisa dibantu? @ sebutkan app, / skill & perintah",
       "placeholderOpening": "Membuka obrolan baru…",
       "placeholderStreaming": "Model sedang merespons…",
       "inputAria": "Input pesan",
@@ -1121,7 +1121,8 @@
         },
         "badges": {
           "current": "Saat ini",
-          "recent": "Terbaru"
+          "recent": "Terbaru",
+          "skill": "Skill"
         },
         "details": {
           "goalActive": "Tujuan sedang berjalan",

@@ -1,8 +1,28 @@
-import { useEffect, useMemo, useState } from "react";
+import { RESERVED_SLASH_COMMAND_NAMES } from "@/lib/chat/slashSkills";
+import type { CliAppInfo, McpPresetInfo, SkillSummary } from "@/lib/types";
 
-import { logoFallbackUrls } from "@/lib/constants/provider-brand";
-import type { CliAppInfo, McpPresetInfo } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import {
+  CliAppMentionToken,
+  McpPresetMentionToken,
+  SkillMentionToken,
+} from "./MentionTokens";
+
+export {
+  CliAppMentionToken,
+  McpPresetMentionToken,
+  SkillMentionToken,
+  cliAppInitials,
+  mcpPresetInitials,
+} from "./MentionTokens";
+
+function syntheticSkill(name: string): SkillSummary {
+  return {
+    name,
+    description: "",
+    source: "unknown",
+    available: true,
+  };
+}
 
 export type CliAppMentionSegment =
   | { kind: "text"; text: string }
@@ -10,76 +30,31 @@ export type CliAppMentionSegment =
 
 export type CapabilityMentionSegment =
   | CliAppMentionSegment
-  | { kind: "mcp"; text: string; preset: McpPresetInfo };
+  | { kind: "mcp"; text: string; preset: McpPresetInfo }
+  | { kind: "skill"; text: string; skill: SkillSummary };
 
-export function cliAppInitials(app: CliAppInfo): string {
-  const value = app.display_name || app.name;
-  return (
-    value
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((part) => part[0]?.toUpperCase())
-      .join("") || app.name.slice(0, 2).toUpperCase()
-  );
-}
-
-export function mcpPresetInitials(preset: Pick<McpPresetInfo, "name" | "display_name">): string {
-  const value = preset.display_name || preset.name;
-  return (
-    value
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((part) => part[0]?.toUpperCase())
-      .join("") || preset.name.slice(0, 2).toUpperCase()
-  );
-}
+type TokenHit =
+  | { kind: "cli"; start: number; end: number; app: CliAppInfo }
+  | { kind: "mcp"; start: number; end: number; preset: McpPresetInfo }
+  | { kind: "skill"; start: number; end: number; skill: SkillSummary };
 
 export function splitCliAppMentionSegments(
   value: string,
   cliApps: CliAppInfo[],
 ): CliAppMentionSegment[] {
-  if (!value || cliApps.length === 0) return value ? [{ kind: "text", text: value }] : [];
-  const appsByName = new Map(
-    cliApps
-      .filter((app) => app.installed)
-      .map((app) => [app.name.toLowerCase(), app]),
+  return splitCapabilityMentionSegments(value, cliApps).filter(
+    (segment): segment is CliAppMentionSegment =>
+      segment.kind === "text" || segment.kind === "cli",
   );
-  if (appsByName.size === 0) return [{ kind: "text", text: value }];
-
-  const segments: CliAppMentionSegment[] = [];
-  const mentionRe = /(^|[\s([{])@([a-z0-9_-]+)\b/gi;
-  let cursor = 0;
-  let match: RegExpExecArray | null;
-  while ((match = mentionRe.exec(value)) !== null) {
-    const prefix = match[1] ?? "";
-    const name = match[2] ?? "";
-    const app = appsByName.get(name.toLowerCase());
-    if (!app) continue;
-
-    const mentionStart = match.index + prefix.length;
-    const mentionEnd = mentionStart + name.length + 1;
-    if (mentionStart > cursor) {
-      segments.push({ kind: "text", text: value.slice(cursor, mentionStart) });
-    }
-    segments.push({ kind: "cli", text: value.slice(mentionStart, mentionEnd), app });
-    cursor = mentionEnd;
-  }
-  if (cursor < value.length) {
-    segments.push({ kind: "text", text: value.slice(cursor) });
-  }
-  return segments.length ? segments : [{ kind: "text", text: value }];
 }
 
 export function splitCapabilityMentionSegments(
   value: string,
   cliApps: CliAppInfo[],
   mcpPresets: McpPresetInfo[] = [],
+  skills: SkillSummary[] = [],
 ): CapabilityMentionSegment[] {
-  if (!value || (cliApps.length === 0 && mcpPresets.length === 0)) {
-    return value ? [{ kind: "text", text: value }] : [];
-  }
+  if (!value) return [];
   const cliAppsByName = new Map(
     cliApps
       .filter((app) => app.installed)
@@ -90,13 +65,15 @@ export function splitCapabilityMentionSegments(
       .filter((preset) => preset.installed && preset.configured)
       .map((preset) => [preset.name.toLowerCase(), preset]),
   );
-  if (cliAppsByName.size === 0 && mcpPresetsByName.size === 0) {
-    return [{ kind: "text", text: value }];
-  }
+  const skillsByName = new Map(
+    skills
+      .filter((skill) => skill.available !== false)
+      .filter((skill) => !RESERVED_SLASH_COMMAND_NAMES.has(skill.name.toLowerCase()))
+      .map((skill) => [skill.name.toLowerCase(), skill]),
+  );
 
-  const segments: CapabilityMentionSegment[] = [];
+  const hits: TokenHit[] = [];
   const mentionRe = /(^|[\s([{])@([a-z0-9_-]+)\b/gi;
-  let cursor = 0;
   let match: RegExpExecArray | null;
   while ((match = mentionRe.exec(value)) !== null) {
     const prefix = match[1] ?? "";
@@ -105,18 +82,46 @@ export function splitCapabilityMentionSegments(
     const app = cliAppsByName.get(key);
     const preset = app ? null : mcpPresetsByName.get(key);
     if (!app && !preset) continue;
+    const start = match.index + prefix.length;
+    const end = start + name.length + 1;
+    if (app) hits.push({ kind: "cli", start, end, app });
+    else if (preset) hits.push({ kind: "mcp", start, end, preset });
+  }
 
-    const mentionStart = match.index + prefix.length;
-    const mentionEnd = mentionStart + name.length + 1;
-    if (mentionStart > cursor) {
-      segments.push({ kind: "text", text: value.slice(cursor, mentionStart) });
+  // When the skills catalog is unavailable, still chip non-reserved `/name` tokens
+  // so message bubbles can render Cursor-style skill pills.
+  const allowSyntheticSkills = skills.length === 0;
+  const skillRe = /(^|[\s([{])\/([A-Za-z0-9][A-Za-z0-9_-]{0,63})\b/g;
+  while ((match = skillRe.exec(value)) !== null) {
+    const prefix = match[1] ?? "";
+    const name = match[2] ?? "";
+    const key = name.toLowerCase();
+    if (RESERVED_SLASH_COMMAND_NAMES.has(key)) continue;
+    const skill = skillsByName.get(key)
+      ?? (allowSyntheticSkills ? syntheticSkill(name) : undefined);
+    if (!skill) continue;
+    const start = match.index + prefix.length;
+    const end = start + name.length + 1;
+    hits.push({ kind: "skill", start, end, skill });
+  }
+
+  if (hits.length === 0) {
+    return [{ kind: "text", text: value }];
+  }
+
+  hits.sort((a, b) => a.start - b.start || a.end - b.end);
+  const segments: CapabilityMentionSegment[] = [];
+  let cursor = 0;
+  for (const hit of hits) {
+    if (hit.start < cursor) continue;
+    if (hit.start > cursor) {
+      segments.push({ kind: "text", text: value.slice(cursor, hit.start) });
     }
-    if (app) {
-      segments.push({ kind: "cli", text: value.slice(mentionStart, mentionEnd), app });
-    } else if (preset) {
-      segments.push({ kind: "mcp", text: value.slice(mentionStart, mentionEnd), preset });
-    }
-    cursor = mentionEnd;
+    const text = value.slice(hit.start, hit.end);
+    if (hit.kind === "cli") segments.push({ kind: "cli", text, app: hit.app });
+    else if (hit.kind === "mcp") segments.push({ kind: "mcp", text, preset: hit.preset });
+    else segments.push({ kind: "skill", text, skill: hit.skill });
+    cursor = hit.end;
   }
   if (cursor < value.length) {
     segments.push({ kind: "text", text: value.slice(cursor) });
@@ -128,31 +133,45 @@ export function CliAppMentionText({
   text,
   cliApps,
   mcpPresets = [],
+  skills = [],
 }: {
   text: string;
   cliApps: CliAppInfo[];
   mcpPresets?: McpPresetInfo[];
+  skills?: SkillSummary[];
 }) {
-  const segments = splitCapabilityMentionSegments(text, cliApps, mcpPresets);
-  if (!segments.some((segment) => segment.kind === "cli" || segment.kind === "mcp")) return <>{text}</>;
+  const segments = splitCapabilityMentionSegments(text, cliApps, mcpPresets, skills);
+  if (!segments.some((segment) => segment.kind !== "text")) return <>{text}</>;
   return (
     <>
       {segments.map((segment, index) => {
         if (segment.kind === "text") {
           return <span key={`text-${index}`}>{segment.text}</span>;
         }
-        if (segment.kind === "cli") return (
-          <CliAppMentionToken
-            key={`cli-${segment.app.name}-${index}`}
-            app={segment.app}
-            label={segment.text}
-            variant="message"
-          />
-        );
+        if (segment.kind === "cli") {
+          return (
+            <CliAppMentionToken
+              key={`cli-${segment.app.name}-${index}`}
+              app={segment.app}
+              label={segment.text}
+              variant="message"
+            />
+          );
+        }
+        if (segment.kind === "mcp") {
+          return (
+            <McpPresetMentionToken
+              key={`mcp-${segment.preset.name}-${index}`}
+              preset={segment.preset}
+              label={segment.text}
+              variant="message"
+            />
+          );
+        }
         return (
-          <McpPresetMentionToken
-            key={`mcp-${segment.preset.name}-${index}`}
-            preset={segment.preset}
+          <SkillMentionToken
+            key={`skill-${segment.skill.name}-${index}`}
+            skill={segment.skill}
             label={segment.text}
             variant="message"
           />
@@ -160,132 +179,4 @@ export function CliAppMentionText({
       })}
     </>
   );
-}
-
-export function CliAppMentionToken({
-  app,
-  label,
-  variant,
-  isHero = false,
-}: {
-  app: CliAppInfo;
-  label: string;
-  variant: "composer" | "message";
-  isHero?: boolean;
-}) {
-  const [logoIndex, setLogoIndex] = useState(0);
-  const color = app.brand_color || "hsl(var(--primary))";
-  const mentionName = label.startsWith("@") ? label.slice(1) : label;
-  const logoUrls = useMemo(() => logoFallbackUrls(app.logo_url), [app.logo_url]);
-  const logoUrl = logoUrls[logoIndex];
-  const showLogo = Boolean(logoUrl);
-  const testIdPrefix = variant === "composer" ? "composer" : "message";
-
-  useEffect(() => setLogoIndex(0), [app.logo_url]);
-
-  return (
-    <span
-      data-testid={`${testIdPrefix}-cli-mention-${app.name}`}
-      title={`CLI app: ${app.display_name || app.name}`}
-      className="relative inline transition-[color,text-shadow] duration-150"
-      style={{
-        color,
-        textShadow: `0 0 10px ${alphaColor(color, 24)}`,
-      }}
-    >
-      <span
-        className={cn("relative inline-block", showLogo && "text-transparent")}
-        style={{ lineHeight: "inherit" }}
-      >
-        @
-        {showLogo ? (
-          <span
-            data-testid={`${testIdPrefix}-cli-mention-logo-${app.name}`}
-            className={cn(
-              "absolute left-1/2 top-1/2 grid place-items-center overflow-hidden rounded-[3px]",
-              "-translate-x-1/2 -translate-y-1/2",
-              isHero ? "h-[0.74em] w-[0.74em]" : "h-[0.72em] w-[0.72em]",
-            )}
-          >
-            <img
-              src={logoUrl ?? ""}
-              alt=""
-              className="h-full w-full object-contain"
-              onError={() => setLogoIndex((index) => index + 1)}
-            />
-          </span>
-        ) : null}
-      </span>
-      {mentionName}
-    </span>
-  );
-}
-
-export function McpPresetMentionToken({
-  preset,
-  label,
-  variant,
-  isHero = false,
-}: {
-  preset: McpPresetInfo;
-  label: string;
-  variant: "composer" | "message";
-  isHero?: boolean;
-}) {
-  const [logoIndex, setLogoIndex] = useState(0);
-  const color = preset.brand_color || "hsl(var(--primary))";
-  const mentionName = label.startsWith("@") ? label.slice(1) : label;
-  const logoUrls = useMemo(() => logoFallbackUrls(preset.logo_url), [preset.logo_url]);
-  const logoUrl = logoUrls[logoIndex];
-  const showLogo = Boolean(logoUrl);
-  const testIdPrefix = variant === "composer" ? "composer" : "message";
-
-  useEffect(() => setLogoIndex(0), [preset.logo_url]);
-
-  return (
-    <span
-      data-testid={`${testIdPrefix}-mcp-mention-${preset.name}`}
-      title={`MCP server: ${preset.display_name || preset.name}`}
-      className="relative inline transition-[color,text-shadow] duration-150"
-      style={{
-        color,
-        textShadow: `0 0 10px ${alphaColor(color, 24)}`,
-      }}
-    >
-      <span
-        className={cn("relative inline-block", showLogo && "text-transparent")}
-        style={{ lineHeight: "inherit" }}
-      >
-        @
-        {showLogo ? (
-          <span
-            data-testid={`${testIdPrefix}-mcp-mention-logo-${preset.name}`}
-            className={cn(
-              "absolute left-1/2 top-1/2 grid place-items-center overflow-hidden rounded-[3px]",
-              "-translate-x-1/2 -translate-y-1/2",
-              isHero ? "h-[0.74em] w-[0.74em]" : "h-[0.72em] w-[0.72em]",
-            )}
-          >
-            <img
-              src={logoUrl ?? ""}
-              alt=""
-              className="h-full w-full object-contain"
-              onError={() => setLogoIndex((index) => index + 1)}
-            />
-          </span>
-        ) : null}
-      </span>
-      {mentionName}
-    </span>
-  );
-}
-
-function alphaColor(color: string, percent: number): string {
-  if (/^#[0-9a-f]{6}$/i.test(color)) {
-    const alpha = Math.round((percent / 100) * 255)
-      .toString(16)
-      .padStart(2, "0");
-    return `${color}${alpha}`;
-  }
-  return `color-mix(in srgb, ${color} ${percent}%, transparent)`;
 }

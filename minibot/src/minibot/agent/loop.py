@@ -468,6 +468,7 @@ class AgentLoop:
                 workspace=session.workspace_path,
                 identity=self.system_prompt,
                 session_summary=session.summary,
+                user_message=content if isinstance(content, str) else "",
             )
             system_text = built.text
             context_meta = built.to_trace_meta(session.workspace_path)

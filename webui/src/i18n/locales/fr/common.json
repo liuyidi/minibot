@@ -1003,8 +1003,8 @@
       }
     },
     "composer": {
-      "placeholderThread": "Saisissez votre message…",
-      "placeholderHero": "Qu’avez-vous en tête ?",
+      "placeholderThread": "Écrivez… @ apps, / compétences et commandes",
+      "placeholderHero": "Comment puis-je aider ? @ apps, / compétences et commandes",
       "placeholderOpening": "Ouverture d’une nouvelle discussion…",
       "placeholderStreaming": "Le modèle est en train de répondre…",
       "inputAria": "Champ de message",
@@ -1121,7 +1121,8 @@
         },
         "badges": {
           "current": "Actuel",
-          "recent": "Récent"
+          "recent": "Récent",
+          "skill": "Compétence"
         },
         "details": {
           "goalActive": "L’objectif est en cours",

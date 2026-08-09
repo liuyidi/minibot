@@ -2,7 +2,25 @@ import { act, fireEvent, render, screen, waitFor, within } from "@testing-librar
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ThreadComposer } from "@/components/thread/ThreadComposer";
+import { MENTION_SLASH_CHIP_CARET_PAD, withMentionChipSuffix } from "@/lib/chat/mentionAtoms";
 import type { CliAppInfo, McpPresetInfo, SlashCommand } from "@/lib/types";
+
+vi.mock("@/lib/apis/api", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/apis/api")>();
+  return {
+    ...actual,
+    fetchSkills: vi.fn(async () => ({
+      skills: [
+        {
+          name: "skill-creator",
+          description: "Create or update a skill",
+          source: "builtin",
+          available: true,
+        },
+      ],
+    })),
+  };
+});
 
 vi.mock("@/lib/utils/imageEncode", () => ({
   encodeImage: vi.fn(async (file: File) => ({
@@ -793,6 +811,57 @@ describe("ThreadComposer", () => {
     expect(screen.queryByRole("listbox", { name: "Slash commands" })).not.toBeInTheDocument();
   });
 
+  it("lists skills in the slash palette and inserts a skill chip token", async () => {
+    render(
+      <ThreadComposer
+        onSend={vi.fn()}
+        placeholder="Type your message..."
+        authToken="tok"
+        slashCommands={COMMANDS}
+      />,
+    );
+
+    const input = screen.getByLabelText("Message input") as HTMLTextAreaElement;
+    await waitFor(() => {
+      fireEvent.change(input, { target: { value: "/skill", selectionStart: 6, selectionEnd: 6 } });
+      expect(screen.getByRole("option", { name: /skill-creator/i })).toBeInTheDocument();
+    });
+
+    fireEvent.keyDown(input, { key: "Enter" });
+    const inserted = withMentionChipSuffix("/skill-creator");
+    expect(input).toHaveValue(inserted);
+    expect(input.selectionStart).toBe(inserted.length);
+    expect(input.selectionEnd).toBe(inserted.length);
+    expect(inserted.endsWith(`${MENTION_SLASH_CHIP_CARET_PAD} `)).toBe(true);
+    expect(screen.getByTestId("composer-skill-mention-skill-creator")).toHaveTextContent(
+      "skill-creator",
+    );
+  });
+
+  it("deletes a skill chip as one atomic block on Backspace", async () => {
+    render(
+      <ThreadComposer
+        onSend={vi.fn()}
+        placeholder="Type your message..."
+        authToken="tok"
+        slashCommands={COMMANDS}
+      />,
+    );
+
+    const input = screen.getByLabelText("Message input") as HTMLTextAreaElement;
+    await waitFor(() => {
+      fireEvent.change(input, { target: { value: "/skill", selectionStart: 6, selectionEnd: 6 } });
+      expect(screen.getByRole("option", { name: /skill-creator/i })).toBeInTheDocument();
+    });
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(input).toHaveValue(withMentionChipSuffix("/skill-creator"));
+    expect(screen.getByTestId("composer-skill-mention-skill-creator")).toBeInTheDocument();
+
+    fireEvent.keyDown(input, { key: "Backspace" });
+    expect(input).toHaveValue("");
+    expect(screen.queryByTestId("composer-skill-mention-skill-creator")).not.toBeInTheDocument();
+  });
+
   it("renders slash commands as direct actions with current status", () => {
     render(
       <ThreadComposer
@@ -932,8 +1001,8 @@ describe("ThreadComposer", () => {
     );
     fireEvent.keyDown(input, { key: "Enter" });
 
-    expect(input).toHaveValue("@blender ");
-    expect(screen.getByTestId("composer-cli-mention-blender")).toHaveTextContent("@blender");
+    expect(input).toHaveValue(withMentionChipSuffix("@blender"));
+    expect(screen.getByTestId("composer-cli-mention-blender")).toHaveTextContent("blender");
     expect(screen.queryByTestId("composer-cli-app-tray")).not.toBeInTheDocument();
     expect(onSend).not.toHaveBeenCalled();
     expect(screen.queryByRole("listbox", { name: "Apps" })).not.toBeInTheDocument();
@@ -941,6 +1010,18 @@ describe("ThreadComposer", () => {
     fireEvent.click(screen.getByRole("button", { name: "Send message" }));
 
     expect(onSend).toHaveBeenCalledWith("@blender", undefined, {
+      attachments: [{
+        type: "cli",
+        id: "blender",
+        name: "blender",
+        label: "Blender",
+        meta: {
+          category: "3d",
+          entry_point: "cli-anything-blender",
+          logo_url: null,
+          brand_color: "#E87D0D",
+        },
+      }],
       cliApps: [{
         name: "blender",
         display_name: "Blender",
@@ -1014,8 +1095,8 @@ describe("ThreadComposer", () => {
 
     fireEvent.keyDown(input, { key: "Tab" });
 
-    expect(input).toHaveValue("use @blender ");
-    expect(screen.getByTestId("composer-cli-mention-blender")).toHaveTextContent("@blender");
+    expect(input).toHaveValue(`use ${withMentionChipSuffix("@blender")}`);
+    expect(screen.getByTestId("composer-cli-mention-blender")).toHaveTextContent("blender");
   });
 
   it("shows configured MCP presets in the mention palette and submits metadata", () => {
@@ -1039,12 +1120,26 @@ describe("ThreadComposer", () => {
 
     fireEvent.keyDown(input, { key: "Tab" });
 
-    expect(input).toHaveValue("use @browserbase ");
-    expect(screen.getByTestId("composer-mcp-mention-browserbase")).toHaveTextContent("@browserbase");
+    expect(input).toHaveValue(`use ${withMentionChipSuffix("@browserbase")}`);
+    expect(screen.getByTestId("composer-mcp-mention-browserbase")).toHaveTextContent("browserbase");
 
     fireEvent.click(screen.getByRole("button", { name: "Send message" }));
 
     expect(onSend).toHaveBeenCalledWith("use @browserbase", undefined, {
+      attachments: [{
+        type: "mcp",
+        id: "browserbase",
+        name: "browserbase",
+        label: "Browserbase",
+        meta: {
+          category: "browser",
+          transport: "streamableHttp",
+          status: "configured",
+          configured: true,
+          logo_url: "https://example.invalid/browserbase.svg",
+          brand_color: "#111827",
+        },
+      }],
       mcpPresets: [{
         name: "browserbase",
         display_name: "Browserbase",
@@ -1097,7 +1192,7 @@ describe("ThreadComposer", () => {
 
     fireEvent.keyDown(input, { key: "Tab" });
 
-    expect(input).toHaveValue("use @blender tonight");
+    expect(input).toHaveValue(`use ${withMentionChipSuffix("@blender", { trailingSpace: false })} tonight`);
   });
 
   it("renders a CLI app mention logo inline without moving the text cursor slot", () => {
@@ -1116,18 +1211,10 @@ describe("ThreadComposer", () => {
 
     expect(input).toHaveValue("meeting in @gimp");
     const token = screen.getByTestId("composer-cli-mention-gimp");
-    expect(token).toHaveTextContent("@gimp");
-    expect(token.className).not.toContain("font-semibold");
-    expect(token.className).not.toContain("zoom-in");
-    expect(token.className).not.toContain("px-");
-    expect(token.className).not.toContain("mx-");
-    expect(token.getAttribute("style")).toContain("color: #5C5543");
-    expect(token.getAttribute("style")).toContain("text-shadow");
+    expect(token).toHaveTextContent("gimp");
+    expect(token).toHaveAttribute("title", "CLI app: GIMP");
     expect(screen.queryByTestId("composer-cli-app-tray")).not.toBeInTheDocument();
-    const logo = screen.getByTestId("composer-cli-mention-logo-gimp");
-    expect(logo.className).toContain("top-1/2");
-    expect(logo.className).toContain("left-1/2");
-    expect(logo.className).not.toContain("-top-");
+    expect(screen.getByTestId("composer-cli-mention-logo-gimp")).toBeInTheDocument();
   });
 
   it("opens the slash command palette downward when there is more room below", async () => {

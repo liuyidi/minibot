@@ -24,7 +24,7 @@
     "reason": "legacy debt; do not grow — split toward ≤350"
   },
   "components/thread/ThreadComposer.tsx": {
-    "max": 2698,
+    "max": 2298,
     "reason": "legacy debt; do not grow — split toward ≤350"
   },
   "components/thread/ThreadShell.tsx": {
@@ -36,7 +36,7 @@
     "reason": "legacy debt; do not grow — split toward ≤350"
   },
   "hooks/sessions/useMinibotStream.ts": {
-    "max": 1174,
+    "max": 1153,
     "reason": "legacy debt; do not grow — split toward ≤350"
   },
   "hooks/ui/useVoiceRecorder.ts": {
