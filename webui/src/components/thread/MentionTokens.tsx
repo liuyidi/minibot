@@ -29,19 +29,39 @@ export function mcpPresetInitials(preset: Pick<McpPresetInfo, "name" | "display_
   );
 }
 
+const chipChrome =
+  "inline-flex max-w-full items-center gap-1 rounded-full bg-muted px-1.5 py-0.5 text-foreground shadow-[inset_0_0_0_1px_rgba(15,23,42,0.06)] dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]";
+
 function MentionChipShell({
   children,
   className,
   title,
   testId,
   label,
+  variant,
 }: {
   children: ReactNode;
   className?: string;
   title: string;
   testId: string;
   label: string;
+  variant: "composer" | "message";
 }) {
+  // Message bubbles are read-only: lay out in normal flow so following text
+  // cannot sit under the wider pill. Composer keeps an absolute overlay so the
+  // caret can stay aligned with the underlying textarea glyphs + caret pad.
+  if (variant === "message") {
+    return (
+      <span
+        data-testid={testId}
+        title={title}
+        className={cn(chipChrome, "mx-0.5 align-middle", className)}
+      >
+        {children}
+      </span>
+    );
+  }
+
   return (
     <span className="relative inline-flex align-baseline" data-testid={testId} title={title}>
       <span className="invisible whitespace-pre" aria-hidden>
@@ -49,9 +69,8 @@ function MentionChipShell({
       </span>
       <span
         className={cn(
-          "absolute left-0 top-1/2 inline-flex -translate-y-1/2 items-center gap-1",
-          "rounded-full bg-muted px-1.5 py-0.5 text-foreground",
-          "shadow-[inset_0_0_0_1px_rgba(15,23,42,0.06)] dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]",
+          "absolute left-0 top-1/2 -translate-y-1/2",
+          chipChrome,
           className,
         )}
       >
@@ -82,6 +101,7 @@ export function CliAppMentionToken({
 
   return (
     <MentionChipShell
+      variant={variant}
       testId={`${testIdPrefix}-cli-mention-${app.name}`}
       title={`CLI app: ${app.display_name || app.name}`}
       label={label}
@@ -133,6 +153,7 @@ export function McpPresetMentionToken({
 
   return (
     <MentionChipShell
+      variant={variant}
       testId={`${testIdPrefix}-mcp-mention-${preset.name}`}
       title={`MCP server: ${preset.display_name || preset.name}`}
       label={label}
@@ -178,6 +199,7 @@ export function SkillMentionToken({
   const testIdPrefix = variant === "composer" ? "composer" : "message";
   return (
     <MentionChipShell
+      variant={variant}
       testId={`${testIdPrefix}-skill-mention-${skill.name}`}
       title={`Skill: ${skill.name}`}
       label={label}
