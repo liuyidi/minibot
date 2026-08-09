@@ -35,6 +35,72 @@ export function stripMentionChipPads(text: string): string {
   return text.replaceAll("\u2002", "");
 }
 
+function countLeadingEnSpaces(text: string): number {
+  let n = 0;
+  while (text[n] === "\u2002") n += 1;
+  return n;
+}
+
+/**
+ * Ensure every recognized `@` / `/` chip has caret pads after it.
+ * Palette inserts already include pads; paste / typed plain text often does not,
+ * which lets the absolute pill cover the following glyph.
+ */
+export function ensureMentionChipPadsWithCaret(
+  value: string,
+  caret: number,
+  cliApps: CliAppInfo[],
+  mcpPresets: McpPresetInfo[],
+  skills: SkillSummary[],
+): { value: string; caret: number } {
+  const segments = splitCapabilityMentionSegments(value, cliApps, mcpPresets, skills);
+  if (!segments.some((segment) => segment.kind !== "text")) {
+    return { value, caret };
+  }
+
+  let out = "";
+  let origin = 0;
+  let nextCaret = caret;
+
+  const shiftCaret = (atOrigin: number, delta: number) => {
+    if (delta === 0) return;
+    // Insertions at/after the caret that belong after the chip should land the
+    // caret past the pads so typing continues after the pill.
+    if (caret >= atOrigin) nextCaret += delta;
+  };
+
+  for (let i = 0; i < segments.length; i += 1) {
+    const segment = segments[i]!;
+    if (segment.kind === "text") {
+      out += segment.text;
+      origin += segment.text.length;
+      continue;
+    }
+
+    out += segment.text;
+    origin += segment.text.length;
+    const pad = mentionChipCaretPadForToken(segment.text);
+    const next = segments[i + 1];
+    if (next?.kind === "text") {
+      const leading = countLeadingEnSpaces(next.text);
+      const rest = next.text.slice(leading);
+      shiftCaret(origin, pad.length - leading);
+      out += pad + rest;
+      origin += next.text.length;
+      i += 1;
+      continue;
+    }
+
+    shiftCaret(origin, pad.length);
+    out += pad;
+  }
+
+  return {
+    value: out,
+    caret: Math.max(0, Math.min(out.length, nextCaret)),
+  };
+}
+
 export function findAtomicMentionDeleteRange(
   value: string,
   caret: number,

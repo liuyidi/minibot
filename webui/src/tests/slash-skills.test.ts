@@ -41,7 +41,7 @@ describe("slashSkills", () => {
     expect(commands.map((c) => c.command)).toEqual(["/skill-creator", "/summarize"]);
     expect(commands[0]).toMatchObject({
       title: "skill-creator",
-      icon: "sparkles",
+      icon: "hammer",
     });
   });
 

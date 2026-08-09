@@ -30,7 +30,7 @@ export function mcpPresetInitials(preset: Pick<McpPresetInfo, "name" | "display_
 }
 
 const chipChrome =
-  "inline-flex max-w-full items-center gap-1 rounded-full bg-muted px-1.5 py-0.5 text-foreground shadow-[inset_0_0_0_1px_rgba(15,23,42,0.06)] dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]";
+  "inline-flex items-center gap-1 rounded-full bg-muted px-1.5 py-0.5 text-foreground shadow-[inset_0_0_0_1px_rgba(15,23,42,0.06)] dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]";
 
 function MentionChipShell({
   children,
@@ -55,13 +55,16 @@ function MentionChipShell({
       <span
         data-testid={testId}
         title={title}
-        className={cn(chipChrome, "mx-0.5 align-middle", className)}
+        className={cn(chipChrome, "max-w-full mx-0.5 align-middle", className)}
       >
         {children}
       </span>
     );
   }
 
+  // Do not put max-w-full on the absolute pill: that clamps it to the invisible
+  // `/name` / `@name` spacer and truncates labels to a few glyphs. Caret pads
+  // after the token reserve room for icon + padding overflow.
   return (
     <span className="relative inline-flex align-baseline" data-testid={testId} title={title}>
       <span className="invisible whitespace-pre" aria-hidden>

@@ -270,8 +270,6 @@ When creating a new skill from scratch, always run the `init_skill.py` script. T
 
 For `minibot`, custom skills should live under the active workspace `skills/` directory so they can be discovered automatically at runtime (for example, `<workspace>/skills/my-skill/SKILL.md`).
 
-Builtin copy of this skill (with helper scripts) lives at `minibot/skills/skill-creator/`. When running helpers via `exec`, prefer the absolute path of the skill's `scripts/` under the installed package or workspace override.
-
 Usage:
 
 ```bash

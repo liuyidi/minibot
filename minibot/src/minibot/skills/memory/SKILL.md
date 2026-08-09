@@ -1,6 +1,6 @@
 ---
 name: memory
-description: Long-term memory via memory/MEMORY.md and read_memory / write_memory tools.
+description: Long-term memory via memory/MEMORY.md and read_memory / write_memory tools. Dream may also consolidate MEMORY.md periodically.
 always: true
 ---
 
@@ -21,6 +21,6 @@ always: true
 Persist durable facts the user wants remembered across sessions (names, prefs, recurring constraints).
 Do **not** dump full chat transcripts into MEMORY.md.
 
-## Note
+## Dream
 
-minibot does not run Dream consolidation yet; you own MEMORY.md via these tools.
+minibot may run a periodic Dream consolidation pass that also updates MEMORY.md via `write_memory`. Prefer concise durable bullets; Dream will merge later if needed.

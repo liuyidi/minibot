@@ -51,7 +51,7 @@ def _as_str_list(value: object) -> list[str]:
     return [item.strip() for item in value if isinstance(item, str) and item.strip()]
 
 
-def _parse_nanobot_metadata(raw: object) -> dict[str, Any]:
+def _parse_skill_metadata(raw: object) -> dict[str, Any]:
     if isinstance(raw, str):
         try:
             raw = json.loads(raw)
@@ -59,14 +59,14 @@ def _parse_nanobot_metadata(raw: object) -> dict[str, Any]:
             return {}
     if not isinstance(raw, dict):
         return {}
-    payload = raw.get("nanobot", raw.get("openclaw", {}))
+    payload = raw.get("minibot", raw.get("openclaw", {}))
     return payload if isinstance(payload, dict) else {}
 
 
 def _extract_requires(meta: dict[str, Any]) -> tuple[tuple[str, ...], tuple[str, ...]]:
     requires = meta.get("requires")
     if not isinstance(requires, dict):
-        nested = _parse_nanobot_metadata(meta.get("metadata")).get("requires")
+        nested = _parse_skill_metadata(meta.get("metadata")).get("requires")
         requires = nested if isinstance(nested, dict) else {}
     bins = _as_str_list(requires.get("bins") if isinstance(requires, dict) else None)
     env = _as_str_list(requires.get("env") if isinstance(requires, dict) else None)

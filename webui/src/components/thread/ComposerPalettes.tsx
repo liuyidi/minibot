@@ -10,6 +10,7 @@ import {
   BookOpen,
   Brain,
   CircleHelp,
+  Hammer,
   History,
   RotateCw,
   Shield,
@@ -54,6 +55,7 @@ const COMMAND_ICONS: Record<string, LucideIcon> = {
   "book-open": BookOpen,
   brain: Brain,
   "circle-help": CircleHelp,
+  hammer: Hammer,
   history: History,
   "rotate-cw": RotateCw,
   shield: Shield,
@@ -349,7 +351,7 @@ export function SlashCommandPalette({
                 <Icon className="h-4 w-4" />
               </span>
               <span className="flex min-w-0 flex-1 flex-col gap-0.5 sm:flex-row sm:items-baseline sm:gap-2">
-                <span className="min-w-0 truncate text-[13.5px] font-semibold tracking-normal text-foreground">
+                <span className="shrink-0 text-[13.5px] font-semibold tracking-normal text-foreground">
                   {title}
                 </span>
                 <span className="min-w-0 truncate text-[13px] text-muted-foreground">

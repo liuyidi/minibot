@@ -61,7 +61,7 @@ def test_skill_missing_bin_is_unavailable(tmp_path: Path) -> None:
     assert "definitely-not-a-real-cli-xyz" in req["missing_bins"]
 
 
-def test_skill_nanobot_metadata_requires_env(tmp_path: Path, monkeypatch) -> None:
+def test_skill_minibot_metadata_requires_env(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.delenv("MINIBOT_TEST_SKILL_TOKEN", raising=False)
     _write_skill(
         tmp_path,
@@ -69,7 +69,7 @@ def test_skill_nanobot_metadata_requires_env(tmp_path: Path, monkeypatch) -> Non
         frontmatter=(
             "name: needs-env\n"
             "description: Needs env.\n"
-            'metadata: {"nanobot":{"requires":{"env":["MINIBOT_TEST_SKILL_TOKEN"]}}}\n'
+            'metadata: {"minibot":{"requires":{"env":["MINIBOT_TEST_SKILL_TOKEN"]}}}\n'
         ),
     )
     reg = SkillsRegistry(tmp_path, builtin_dir=tmp_path / "no-builtin")

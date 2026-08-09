@@ -1209,7 +1209,11 @@ describe("ThreadComposer", () => {
       target: { value: "meeting in @gimp", selectionStart: 16 },
     });
 
-    expect(input).toHaveValue("meeting in @gimp");
+    // Plain typed/pasted mentions get caret pads so the absolute pill does not cover
+    // following glyphs; chip-at-end still pads for the caret.
+    expect(input).toHaveValue(
+      `meeting in ${withMentionChipSuffix("@gimp", { trailingSpace: false })}`,
+    );
     const token = screen.getByTestId("composer-cli-mention-gimp");
     expect(token).toHaveTextContent("gimp");
     expect(token).toHaveAttribute("title", "CLI app: GIMP");

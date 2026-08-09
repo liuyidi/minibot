@@ -80,6 +80,10 @@ import {
 import { stripMentionChipPads, withMentionChipSuffix } from "@/lib/chat/mentionAtoms";
 import { mergeSlashPaletteCommands } from "@/lib/chat/slashSkills";
 import { handleComposerKeyDown } from "./composerKeyDown";
+import {
+  commitComposerMentionPadChange,
+  useEnsureComposerMentionPads,
+} from "./useEnsureComposerMentionPads";
 import { usePendingComposerSelection } from "./usePendingComposerSelection";
 import type {
   CliAppInfo,
@@ -963,7 +967,7 @@ export function ThreadComposer({
           detail = t("thread.composer.slash.details.stopRunning");
         } else if (command.command === "/history") {
           detail = t("thread.composer.slash.details.history");
-        } else if (command.icon === "sparkles") {
+        } else if (command.icon === "hammer") {
           badge = t("thread.composer.slash.badges.skill", { defaultValue: "Skill" });
         }
         return {
@@ -1025,6 +1029,15 @@ export function ThreadComposer({
   );
   const hasMentionDecorations = mentionSegments.some(
     (segment) => segment.kind === "cli" || segment.kind === "mcp" || segment.kind === "skill",
+  );
+  useEnsureComposerMentionPads(
+    value,
+    setValue,
+    setCursorPosition,
+    textareaRef,
+    cliApps,
+    mcpPresets,
+    skills,
   );
   const activeMentionAttachments = useMemo(
     () => attachmentsFromCapabilitySegments(mentionSegments),
@@ -1219,7 +1232,7 @@ export function ThreadComposer({
 
       // Skills get caret-pad spacers so the caret sits past the pill shadow;
       // arg-bearing commands keep a normal trailing space.
-      const nextValue = command.icon === "sparkles"
+      const nextValue = command.icon === "hammer"
         ? withMentionChipSuffix(command.command)
         : command.argHint
           ? `${command.command} `
@@ -1620,10 +1633,18 @@ export function ThreadComposer({
             ref={textareaRef}
             value={value}
             onChange={(e) => {
-              setValue(e.target.value);
+              commitComposerMentionPadChange(
+                e.target.value,
+                e.target.selectionStart ?? e.target.value.length,
+                cliApps,
+                mcpPresets,
+                skills,
+                textareaRef,
+                setValue,
+                setCursorPosition,
+              );
               setSlashMenuDismissed(false);
               setCliAppMenuDismissed(false);
-              setCursorPosition(e.target.selectionStart ?? e.target.value.length);
             }}
             onInput={onInput}
             onKeyDown={onKeyDown}

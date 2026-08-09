@@ -32,7 +32,7 @@ export function skillsToSlashCommands(
       command: `/${skill.name}`,
       title: skill.name,
       description: skill.description || skill.name,
-      icon: "sparkles",
+      icon: "hammer",
       argHint: "",
     }));
 }

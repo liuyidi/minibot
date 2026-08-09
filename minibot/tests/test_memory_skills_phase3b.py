@@ -45,6 +45,9 @@ def test_builtin_skills_loaded() -> None:
     assert "github" in names
     assert "summarize" in names
     assert "skill-creator" in names
+    assert "weather" in names
+    assert "tmux" in names
+    assert "clawhub" in names
     always = {s.name for s in reg.always_skills()}
     assert "memory" in always
 
