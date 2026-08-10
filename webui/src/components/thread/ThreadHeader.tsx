@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
 import { onHostChromeDragMouseDown } from "@/lib/host-window-drag";
+import { HOST_CHROME_TITLE_INSET_CLASS } from "@/layouts/constants";
 import { cn } from "@/lib/utils";
 
 interface ThreadHeaderProps {
@@ -44,8 +45,8 @@ export function ThreadHeader({
         "relative z-10 flex items-center justify-between gap-3 px-3 pt-1 pb-2",
         minimal && "h-11",
         hostChromeDrag && "host-drag-region",
-        // Collapsed native chrome: traffic lights (~70) + gap + 3×28 icons + gaps ≈ 174.
-        !minimal && hostChromeTitleInset && "lg:pl-[180px]",
+        // Keep title clear of traffic lights + fixed native icon cluster (all widths).
+        !minimal && hostChromeTitleInset && HOST_CHROME_TITLE_INSET_CLASS,
       )}
     >
       <div className="relative flex min-w-0 flex-1 items-center gap-2">
@@ -56,7 +57,8 @@ export function ThreadHeader({
           onClick={onToggleSidebar}
           className={cn(
             "host-no-drag h-7 w-7 shrink-0 rounded-md text-muted-foreground hover:bg-accent/35 hover:text-foreground",
-            (hideSidebarToggleForHostChrome || hostChromeTitleInset) && "lg:hidden",
+            // Desktop native chrome already has sidebar/search/new-chat — never show this.
+            hideSidebarToggleForHostChrome && "hidden",
           )}
         >
           <Menu className="h-3.5 w-3.5" />

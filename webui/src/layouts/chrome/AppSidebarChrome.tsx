@@ -42,7 +42,10 @@ export function AppSidebarChrome({ model }: { model: AppLayoutModel }) {
         <aside
           data-testid="host-sidebar-flow"
           className={cn(
-            "relative z-20 hidden shrink-0 overflow-hidden lg:block",
+            "relative z-20 shrink-0 overflow-hidden",
+            // Host chrome: sidebar must work at any window width (native icons toggle it).
+            // Browser: keep the classic lg breakpoint + mobile sheet.
+            showHostChrome ? "block" : "hidden lg:block",
             "transition-[width] duration-300 ease-out",
           )}
           style={{
@@ -73,7 +76,10 @@ export function AppSidebarChrome({ model }: { model: AppLayoutModel }) {
       {showHostSidebarPreview ? (
         <aside
           data-testid="host-sidebar-preview"
-          className="absolute inset-y-0 left-0 z-30 hidden overflow-hidden lg:block animate-in fade-in-0 slide-in-from-left-2 duration-150"
+          className={cn(
+            "absolute inset-y-0 left-0 z-30 overflow-hidden animate-in fade-in-0 slide-in-from-left-2 duration-150",
+            showHostChrome ? "block" : "hidden lg:block",
+          )}
           style={{ width: showHostChrome ? NATIVE_SIDEBAR_WIDTH : SIDEBAR_WIDTH }}
           onMouseEnter={openHostSidebarPreview}
           onMouseLeave={scheduleHostSidebarPreviewClose}
@@ -89,7 +95,7 @@ export function AppSidebarChrome({ model }: { model: AppLayoutModel }) {
         </aside>
       ) : null}
 
-      {showMainSidebar ? (
+      {showMainSidebar && !showHostChrome ? (
         <Sheet
           open={mobileSidebarOpen}
           onOpenChange={setMobileSidebarOpen}

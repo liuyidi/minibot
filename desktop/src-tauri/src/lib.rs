@@ -40,9 +40,17 @@ struct AppState {
 static RECREATING_WINDOW: AtomicBool = AtomicBool::new(false);
 
 const WINDOW_LABEL: &str = "main";
-/// macOS traffic lights; keep in sync with `tauri.conf.json` `trafficLightPosition`.
-const TRAFFIC_LIGHT_X: f64 = 22.0;
-const TRAFFIC_LIGHT_Y: f64 = 22.0;
+/// Overlay traffic-light inset (logical px). Single source for
+/// `WindowBuilder::traffic_light_position` and post-chrome AppKit layout.
+///
+/// - **x**: close-button `origin.x`（越大越靠右）
+/// - **y**: titlebar 容器高度增量（`按钮高 + y`），主要影响可点/可拖区域厚度，
+///   **不是**整组上下位置的旋钮
+/// - **CHROME_DOWN**: 红绿灯 + 三个图标整体下移（越大越靠下）
+pub(crate) const TRAFFIC_LIGHT_X: f64 = 18.0;
+pub(crate) const TRAFFIC_LIGHT_Y: f64 = 20.0;
+/// Positive = move traffic lights and titlebar icons down together (logical px).
+pub(crate) const CHROME_DOWN: f64 = 4.0;
 
 fn install_native_chrome_on_main(app: &tauri::AppHandle, window: &tauri::WebviewWindow) {
     let app2 = app.clone();

@@ -8,11 +8,19 @@ use std::time::{Duration, Instant};
 use serde::{Deserialize, Serialize};
 use url::Url;
 
-/// Local WebUI Vite (HMR). Override with `MINIBOT_API_BASE=https://bot.liuyidi.me`.
-pub const DEFAULT_API_BASE: &str = "http://127.0.0.1:5173";
+/// Production WebUI (release builds). Override anytime with `MINIBOT_API_BASE`.
+pub const PRODUCTION_HTTPS_API_BASE: &str = "https://bot.liuyidi.me";
+/// Local WebUI Vite (debug / `cargo`/`tauri` dev). Override with `MINIBOT_API_BASE`.
+pub const LOCAL_DEV_API_BASE: &str = "http://127.0.0.1:5173";
 /// Legacy demo HTTP fallback when HTTPS probe fails (ECS :8766).
 pub const FALLBACK_HTTP_API_BASE: &str = "http://116.62.35.76:8766";
-pub const PRODUCTION_HTTPS_API_BASE: &str = "https://bot.liuyidi.me";
+
+/// Default api_base: local Vite in debug, production HTTPS in release.
+pub const DEFAULT_API_BASE: &str = if cfg!(debug_assertions) {
+    LOCAL_DEV_API_BASE
+} else {
+    PRODUCTION_HTTPS_API_BASE
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
@@ -309,13 +317,6 @@ fn resolve_initial_api_base(config_path: &Path) -> Result<String, String> {
             .map_err(|e| format!("read server.json: {e}"))?;
         if let Ok(cfg) = serde_json::from_str::<ServerConfig>(&raw) {
             if let Ok(normalized) = normalize_api_base(&cfg.api_base) {
-                // Prefer local Vite for desktop HMR while developing.
-                if normalized == FALLBACK_HTTP_API_BASE
-                    || normalized == PRODUCTION_HTTPS_API_BASE
-                {
-                    let _ = persist_server_config(config_path, DEFAULT_API_BASE);
-                    return Ok(DEFAULT_API_BASE.to_string());
-                }
                 return Ok(normalized);
             }
         }

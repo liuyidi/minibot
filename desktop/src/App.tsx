@@ -9,7 +9,9 @@ type UiState =
   | { phase: "connecting"; message: string }
   | { phase: "error"; message: string };
 
-const DEFAULT_API_BASE = "http://127.0.0.1:5173";
+const DEFAULT_API_BASE = import.meta.env.DEV
+  ? "http://127.0.0.1:5173"
+  : "https://bot.liuyidi.me";
 
 export default function App() {
   const [state, setState] = useState<UiState>({

@@ -1,15 +1,22 @@
 # minibot Desktop（远程薄壳）
 
-Tauri 2 桌面应用直接连接远程 minibot 服务（默认 [`https://bot.liuyidi.me`](https://bot.liuyidi.me/)），注入 `window.minibotHost`，并打开服务端 WebUI。
+Tauri 2 桌面应用连接 minibot WebUI，注入 `window.minibotHost`。
+
+| 构建 | 默认 `api_base` |
+|------|----------------|
+| `npm run dev` / debug | `http://127.0.0.1:5173`（本地 Vite） |
+| `npm run build` / release | [`https://bot.liuyidi.me`](https://bot.liuyidi.me/) |
+
+可用 `MINIBOT_API_BASE` 或启动页覆盖；配置写入应用 data 目录下的 `server.json`。
 
 ## 架构
 
 ```text
 Tauri App
-  ├─ 读取 api_base（MINIBOT_API_BASE → server.json → 默认）
+  ├─ 读取 api_base（MINIBOT_API_BASE → server.json → 构建默认）
   ├─ 探测 /webui/bootstrap（HTTPS 失败时可回退 HTTP IP）
   ├─ 注入 window.minibotHost
-  └─ navigate → https://bot.liuyidi.me/
+  └─ navigate → api_base/
 ```
 
 不拉起本机 Python / minibot 进程。
@@ -19,16 +26,20 @@ Tauri App
 ```bash
 cd desktop
 npm install
+# 需本机 WebUI：cd ../webui && npm run dev
 npm run dev
 ```
 
-本地调试可指向本机服务：
+指向线上或其他地址：
 
 ```bash
+MINIBOT_API_BASE=https://bot.liuyidi.me npm run dev
 MINIBOT_API_BASE=http://127.0.0.1:8766 npm run dev
 ```
 
-连接失败时可在启动页修改服务地址；配置写入应用 data 目录下的 `server.json`。
+本地 Vite 顶栏会显示 `local-webui` 调试角标；生产域名不会。
+
+连接失败时可在启动页修改服务地址。
 
 ## Host API（已注入）
 

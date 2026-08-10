@@ -43,6 +43,14 @@ function useNativeChromeControls(): boolean {
 /** Absolute top for web fallback chrome actions (tests / non-native). */
 const CHROME_ACTIONS_TOP = 16;
 
+/** Vite / localhost only — never on production hosts like bot.liuyidi.me. */
+function showLocalWebuiDebugMark(): boolean {
+  if (typeof window === "undefined") return false;
+  if (import.meta.env.DEV) return true;
+  const host = window.location.hostname;
+  return host === "localhost" || host === "127.0.0.1" || host === "[::1]";
+}
+
 export function HostChrome({
   onToggleSidebar,
   onOpenSearch,
@@ -65,6 +73,7 @@ export function HostChrome({
   // Desktop installs AppKit buttons; keep web controls only as fallback (e.g. Vitest).
   const showChromeActions = !nativeChrome && Boolean(onToggleSidebar || onOpenSearch);
   const actionsTop = CHROME_ACTIONS_TOP;
+  const showDebugMark = showLocalWebuiDebugMark();
 
   return (
     <header className="pointer-events-none absolute inset-x-0 top-0 z-40 h-12 bg-transparent text-foreground/90">
@@ -76,6 +85,14 @@ export function HostChrome({
         className="host-drag-region pointer-events-auto absolute inset-y-0"
         style={{ left: nativeChrome ? 168 : 0, right: 112 }}
       />
+      {showDebugMark ? (
+        <div
+          data-testid="host-chrome-debug-mark"
+          className="host-no-drag pointer-events-none absolute left-1/2 top-[10px] z-50 -translate-x-1/2 rounded bg-red-600 px-2 py-0.5 text-[11px] font-semibold tracking-wide text-white"
+        >
+          local-webui
+        </div>
+      ) : null}
       {showChromeActions ? (
         <div
           data-testid="host-chrome-actions"
