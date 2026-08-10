@@ -1303,7 +1303,10 @@
     "platformStatusReady": "可用",
     "platformStatusSoon": "待开放",
     "platformAvailable": "可用",
-    "platformUnavailable": "待开放"
+    "platformUnavailable": "待开放",
+    "downloadNow": "立即下载",
+    "currentVersion": "当前版本",
+    "scanToDownload": "扫码下载"
   },
   "common": {
     "dismiss": "关闭"

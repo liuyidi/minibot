@@ -1303,7 +1303,10 @@
     "platformStatusReady": "Ready",
     "platformStatusSoon": "Soon",
     "platformAvailable": "Ready",
-    "platformUnavailable": "Soon"
+    "platformUnavailable": "Soon",
+    "downloadNow": "Download now",
+    "currentVersion": "Current version",
+    "scanToDownload": "Scan to download"
   },
   "common": {
     "dismiss": "Dismiss"

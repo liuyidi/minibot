@@ -3,18 +3,18 @@
   "product": "minibot",
   "android": {
     "version": "1.0.4",
-    "fileName": "minibot-android-v1.0.4.apk",
+    "fileName": "minibot-android-1.0.4-release.apk",
     "size": "80 MB",
-    "url": null
+    "url": "https://downloads.liuyidi.me/minibot-android-1.0.4-release.apk"
   },
   "ios": {
     "version": null,
     "url": null
   },
   "macos": {
-    "version": "0.1.0",
-    "fileName": "minibot-0.1.0-aarch64.dmg",
-    "url": null
+    "version": "1.0.0-beta.1",
+    "fileName": "minibot_1.0.0-beta.1_aarch64.dmg",
+    "url": "https://downloads.liuyidi.me/minibot_1.0.0-beta.1_aarch64.dmg"
   },
   "windows": {
     "version": null,

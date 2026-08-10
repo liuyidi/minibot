@@ -96,6 +96,7 @@ nano.*.save
 !.env.models.example
 .env.runtime
 .env.models
+scripts/oss-release.env
 
 # Logs & temp
 *.log
