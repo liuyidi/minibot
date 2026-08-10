@@ -25,13 +25,13 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
 use remote::{EngineStatus, HostRuntimeInfo, RemoteServer};
-use tauri::{
-    Emitter, LogicalPosition, Manager, RunEvent, State, TitleBarStyle, WebviewUrl,
-    WebviewWindowBuilder,
-};
+use tauri::{Emitter, Manager, RunEvent, Runtime, State, WebviewUrl, WebviewWindowBuilder};
 use tauri_plugin_dialog::DialogExt;
 use tauri_plugin_opener::OpenerExt;
 use url::Url;
+
+#[cfg(target_os = "macos")]
+use tauri::{LogicalPosition, TitleBarStyle};
 
 struct AppState {
     server: Arc<RemoteServer>,
@@ -194,24 +194,40 @@ fn remote_url(api_base: &str) -> Result<Url, String> {
     Url::parse(&format!("{}/", api_base.trim_end_matches('/'))).map_err(|e| e.to_string())
 }
 
+/// Overlay titlebar / traffic lights exist only on macOS.
+fn with_platform_chrome<R: Runtime, M: Manager<R>>(
+    builder: WebviewWindowBuilder<'_, R, M>,
+) -> WebviewWindowBuilder<'_, R, M> {
+    #[cfg(target_os = "macos")]
+    {
+        builder
+            .title_bar_style(TitleBarStyle::Overlay)
+            .traffic_light_position(LogicalPosition::new(TRAFFIC_LIGHT_X, TRAFFIC_LIGHT_Y))
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        builder
+    }
+}
+
 fn open_splash(app: &tauri::AppHandle) -> Result<(), String> {
     if app.get_webview_window(WINDOW_LABEL).is_some() {
         return Ok(());
     }
-    WebviewWindowBuilder::new(app, WINDOW_LABEL, WebviewUrl::App("index.html".into()))
-        .title("")
-        .on_document_title_changed(|window, _title| {
-            let _ = window.set_title("");
-        })
-        .inner_size(1180.0, 760.0)
-        .min_inner_size(860.0, 560.0)
-        .resizable(true)
-        .center()
-        .title_bar_style(TitleBarStyle::Overlay)
-        .traffic_light_position(LogicalPosition::new(TRAFFIC_LIGHT_X, TRAFFIC_LIGHT_Y))
-        .initialization_script(host_bridge_script())
-        .build()
-        .map_err(|e| format!("create splash failed: {e}"))?;
+    with_platform_chrome(
+        WebviewWindowBuilder::new(app, WINDOW_LABEL, WebviewUrl::App("index.html".into()))
+            .title("")
+            .on_document_title_changed(|window, _title| {
+                let _ = window.set_title("");
+            })
+            .inner_size(1180.0, 760.0)
+            .min_inner_size(860.0, 560.0)
+            .resizable(true)
+            .center(),
+    )
+    .initialization_script(host_bridge_script())
+    .build()
+    .map_err(|e| format!("create splash failed: {e}"))?;
     // Do NOT install AppKit chrome on the splash: sibling views on contentView
     // during the later navigate→http load can blank WKWebView permanently.
     Ok(())
@@ -245,22 +261,22 @@ fn open_remote_webui(app: &tauri::AppHandle, api_base: &str) -> Result<(), Strin
     }
 
     RECREATING_WINDOW.store(true, Ordering::SeqCst);
-    let built = WebviewWindowBuilder::new(app, WINDOW_LABEL, WebviewUrl::External(parsed))
-        .title("")
-        .on_document_title_changed(|window, _title| {
-            let _ = window.set_title("");
-        })
-        .inner_size(1180.0, 760.0)
-        .min_inner_size(860.0, 560.0)
-        .resizable(true)
-        .center()
-        .title_bar_style(TitleBarStyle::Overlay)
-        .traffic_light_position(LogicalPosition::new(TRAFFIC_LIGHT_X, TRAFFIC_LIGHT_Y))
-        .initialization_script(boot)
-        .initialization_script(host_bridge_script())
-        .initialization_script(host_chrome_polish_script())
-        .build()
-        .map_err(|e| format!("create remote window failed: {e}"));
+    let built = with_platform_chrome(
+        WebviewWindowBuilder::new(app, WINDOW_LABEL, WebviewUrl::External(parsed))
+            .title("")
+            .on_document_title_changed(|window, _title| {
+                let _ = window.set_title("");
+            })
+            .inner_size(1180.0, 760.0)
+            .min_inner_size(860.0, 560.0)
+            .resizable(true)
+            .center(),
+    )
+    .initialization_script(boot)
+    .initialization_script(host_bridge_script())
+    .initialization_script(host_chrome_polish_script())
+    .build()
+    .map_err(|e| format!("create remote window failed: {e}"));
 
     match &built {
         Ok(win) => {

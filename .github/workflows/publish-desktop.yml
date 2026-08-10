@@ -83,4 +83,7 @@ jobs:
             Windows SmartScreen may warn until code-signed.
           releaseDraft: true
           prerelease: true
+          # No updater signing keys in CI yet — don't require .sig / updater JSON.
+          uploadUpdaterJson: false
+          uploadUpdaterSignatures: false
           args: ${{ matrix.args }}

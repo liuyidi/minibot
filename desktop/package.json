@@ -5,14 +5,14 @@
   "description": "Tauri thin shell for minibot WebUI",
   "type": "module",
   "scripts": {
-    "dev": "PATH=\"$HOME/.cargo/bin:/opt/homebrew/bin:$PATH\" tauri dev",
+    "dev": "./scripts/run-tauri.sh dev",
     "dev:renderer": "vite",
-    "build": "PATH=\"$HOME/.cargo/bin:/opt/homebrew/bin:$PATH\" tauri build --bundles app,dmg && ./scripts/collect-bundle.sh",
-    "build:app": "PATH=\"$HOME/.cargo/bin:/opt/homebrew/bin:$PATH\" tauri build --bundles app && ./scripts/collect-bundle.sh",
+    "build": "./scripts/run-tauri.sh build --bundles app,dmg && ./scripts/collect-bundle.sh",
+    "build:app": "./scripts/run-tauri.sh build --bundles app && ./scripts/collect-bundle.sh",
     "collect-bundle": "./scripts/collect-bundle.sh",
     "build:renderer": "tsc -p tsconfig.json --noEmit && vite build",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "tauri": "PATH=\"$HOME/.cargo/bin:/opt/homebrew/bin:$PATH\" tauri"
+    "tauri": "tauri"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.8.0",
