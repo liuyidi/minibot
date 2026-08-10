@@ -6,7 +6,9 @@ usage() {
 Usage:
   source scripts/oss-release.env
   export OSS_ACCESS_KEY_ID=... OSS_ACCESS_KEY_SECRET=...
-  scripts/publish-oss-releases.sh --version 1.0.4 [--android /path/app.apk] [--macos /path/app.dmg] [--dry-run]
+  scripts/publish-oss-releases.sh --version 1.0.4 \
+    [--android /path/app.apk] [--macos /path/app.dmg] \
+    [--windows /path/setup.exe] [--linux /path/app.deb] [--dry-run]
 
 Required environment: OSS_BUCKET, OSS_REGION, OSS_ENDPOINT, OSS_PUBLIC_BASE_URL.
 Optional environment: OSS_PREFIX=minibot, OSS_OBJECT_ACL=public-read.
@@ -16,6 +18,8 @@ EOF
 version=""
 android_file=""
 macos_file=""
+windows_file=""
+linux_file=""
 dry_run=false
 
 while [[ $# -gt 0 ]]; do
@@ -23,6 +27,8 @@ while [[ $# -gt 0 ]]; do
     --version) version="${2:?missing value for --version}"; shift 2 ;;
     --android) android_file="${2:?missing value for --android}"; shift 2 ;;
     --macos) macos_file="${2:?missing value for --macos}"; shift 2 ;;
+    --windows) windows_file="${2:?missing value for --windows}"; shift 2 ;;
+    --linux) linux_file="${2:?missing value for --linux}"; shift 2 ;;
     --dry-run) dry_run=true; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown argument: $1" >&2; usage >&2; exit 2 ;;
@@ -36,7 +42,7 @@ for name in OSS_BUCKET OSS_REGION OSS_ENDPOINT OSS_PUBLIC_BASE_URL; do
   fi
 done
 
-if [[ -z "$version" || (-z "$android_file" && -z "$macos_file") ]]; then
+if [[ -z "$version" || (-z "$android_file" && -z "$macos_file" && -z "$windows_file" && -z "$linux_file") ]]; then
   usage >&2
   exit 2
 fi
@@ -63,8 +69,12 @@ upload() {
 
 android_name=""
 macos_name=""
+windows_name=""
+linux_name=""
 android_size=""
 macos_size=""
+windows_size=""
+linux_size=""
 
 if [[ -n "$android_file" ]]; then
   [[ -f "$android_file" && "$android_file" == *.apk ]] || { echo "--android must be an APK file" >&2; exit 2; }
@@ -80,9 +90,31 @@ if [[ -n "$macos_file" ]]; then
   upload "$macos_file" "${prefix}/macos/${macos_name}"
 fi
 
+if [[ -n "$windows_file" ]]; then
+  [[ -f "$windows_file" && ( "$windows_file" == *.exe || "$windows_file" == *.msi ) ]] || {
+    echo "--windows must be a .exe or .msi installer" >&2
+    exit 2
+  }
+  windows_name="minibot-${version}-$(basename "$windows_file")"
+  windows_size="$(du -h "$windows_file" | awk '{print $1}')"
+  upload "$windows_file" "${prefix}/windows/${windows_name}"
+fi
+
+if [[ -n "$linux_file" ]]; then
+  [[ -f "$linux_file" && ( "$linux_file" == *.deb || "$linux_file" == *.AppImage || "$linux_file" == *.rpm ) ]] || {
+    echo "--linux must be a .deb, .AppImage, or .rpm file" >&2
+    exit 2
+  }
+  linux_name="minibot-${version}-$(basename "$linux_file")"
+  linux_size="$(du -h "$linux_file" | awk '{print $1}')"
+  upload "$linux_file" "${prefix}/linux/${linux_name}"
+fi
+
 manifest_command=(node scripts/update-oss-release-manifest.mjs --manifest "$manifest" --public-base-url "$OSS_PUBLIC_BASE_URL" --prefix "$prefix")
 [[ -n "$android_name" ]] && manifest_command+=(--android "$android_name" --android-version "$version" --android-size "$android_size")
 [[ -n "$macos_name" ]] && manifest_command+=(--macos "$macos_name" --macos-version "$version" --macos-size "$macos_size")
+[[ -n "$windows_name" ]] && manifest_command+=(--windows "$windows_name" --windows-version "$version" --windows-size "$windows_size")
+[[ -n "$linux_name" ]] && manifest_command+=(--linux "$linux_name" --linux-version "$version" --linux-size "$linux_size")
 
 if [[ "$dry_run" == true ]]; then
   printf 'DRY RUN:'; printf ' %q' "${manifest_command[@]}"; printf '\n'

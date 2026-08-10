@@ -19,5 +19,9 @@
   "windows": {
     "version": null,
     "url": null
+  },
+  "linux": {
+    "version": null,
+    "url": null
   }
 }

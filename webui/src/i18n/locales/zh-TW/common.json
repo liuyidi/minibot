@@ -1337,6 +1337,8 @@
     "downloadNow": "立即下載",
     "currentVersion": "目前版本",
     "scanToDownload": "掃碼下載",
-    "icp": "浙ICP备2026062548号-1"
+    "icp": "浙ICP备2026062548号-1",
+    "linuxBody": "Linux x64 packages (.deb preferred).",
+    "linuxFooter": "Install the downloaded package with your distro's package manager."
   }
 }

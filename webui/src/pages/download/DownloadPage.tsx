@@ -22,7 +22,7 @@ type DownloadPageProps = {
   onOpenApp: () => void;
 };
 
-type Platform = "windows" | "macos" | "ios" | "android";
+type Platform = "windows" | "macos" | "linux" | "ios" | "android";
 type Release = { version: string | null; fileName?: string; size?: string; url: string | null };
 type ReleaseManifest = Record<Platform, Release>;
 
@@ -31,6 +31,7 @@ const EMPTY_MANIFEST: ReleaseManifest = {
   ios: { version: null, url: null },
   macos: { version: null, url: null },
   windows: { version: null, url: null },
+  linux: { version: null, url: null },
 };
 
 export function DownloadPage({ onOpenApp }: DownloadPageProps) {
@@ -150,6 +151,7 @@ function useReleaseManifest() {
             ios: { ...EMPTY_MANIFEST.ios, ...payload.ios },
             macos: { ...EMPTY_MANIFEST.macos, ...payload.macos },
             windows: { ...EMPTY_MANIFEST.windows, ...payload.windows },
+            linux: { ...EMPTY_MANIFEST.linux, ...payload.linux },
           });
         }
       })
@@ -189,13 +191,30 @@ function detectPreferredPlatform(): Platform {
   if (/android/.test(userAgent)) return "android";
   if (/iphone|ipad|ipod/.test(userAgent)) return "ios";
   if (/windows/.test(userAgent)) return "windows";
+  if (/linux/.test(userAgent)) return "linux";
   return "macos";
+}
+
+function platformLabel(platform: Platform): string {
+  switch (platform) {
+    case "macos":
+      return "macOS";
+    case "windows":
+      return "Windows";
+    case "linux":
+      return "Linux";
+    case "ios":
+      return "iOS";
+    case "android":
+      return "Android";
+  }
 }
 
 function PlatformTabs({ activePlatform, onChange }: { activePlatform: Platform; onChange: (platform: Platform) => void }) {
   const platforms: Array<{ id: Platform; label: string; icon: ReactNode; includesLabel?: boolean }> = [
     { id: "windows", label: "Windows", icon: <WindowsIcon /> },
     { id: "macos", label: "macOS", icon: <Laptop /> },
+    { id: "linux", label: "Linux", icon: <LinuxIcon /> },
     {
       id: "ios",
       label: "iOS",
@@ -206,7 +225,7 @@ function PlatformTabs({ activePlatform, onChange }: { activePlatform: Platform; 
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-4" role="tablist">
+    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5 sm:gap-3" role="tablist">
       {platforms.map((platform) => {
         const active = platform.id === activePlatform;
         return (
@@ -218,7 +237,7 @@ function PlatformTabs({ activePlatform, onChange }: { activePlatform: Platform; 
             aria-label={platform.label}
             onClick={() => onChange(platform.id)}
             className={cn(
-              "flex h-20 items-center justify-center gap-3 rounded-t-[1.35rem] px-4 text-lg font-medium transition-colors md:h-24 md:text-2xl",
+              "flex h-20 items-center justify-center gap-2 rounded-t-[1.35rem] px-3 text-base font-medium transition-colors md:h-24 md:gap-3 md:px-4 md:text-xl",
               active
                 ? "bg-white text-slate-950 shadow-[0_-8px_24px_-20px_rgba(15,36,48,0.45)] dark:bg-[#111e30] dark:text-white"
                 : "text-slate-400 hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-300",
@@ -237,21 +256,25 @@ function PlatformPanel({ platform, release }: { platform: Platform; release: Rel
   const { t } = useTranslation();
   const qrDataUrl = useQrCode(release.url);
   const isMobile = platform === "ios" || platform === "android";
-  const title = `${platform === "macos" ? "macOS" : platform === "ios" ? "iOS" : platform === "android" ? "Android" : "Windows"} ${isMobile ? t("download.mobileTitle") : t("download.desktopTitle")}`;
+  const title = `${platformLabel(platform)} ${isMobile ? t("download.mobileTitle") : t("download.desktopTitle")}`;
   const body = isMobile
     ? platform === "ios"
       ? t("download.iosBody")
       : t("download.androidBody")
     : platform === "macos"
       ? t("download.macosBody")
-      : t("download.windowsBody");
+      : platform === "linux"
+        ? t("download.linuxBody")
+        : t("download.windowsBody");
   const companion = isMobile
     ? platform === "ios"
       ? t("download.iosFooter")
       : t("download.androidFooter")
     : platform === "macos"
       ? t("download.macosFooter")
-      : t("download.windowsFooter");
+      : platform === "linux"
+        ? t("download.linuxFooter")
+        : t("download.windowsFooter");
   const version = release.version ? `v ${release.version}` : null;
 
   return (
@@ -318,6 +341,14 @@ function WindowsIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
       <path d="M2.5 3.8 10.7 2.7v8.6H2.5V3.8Zm9.8-1.3L21.5 1v10.3h-9.2V2.5ZM2.5 12.7h8.2v8.6l-8.2-1.1v-7.5Zm9.8 0h9.2V23l-9.2-1.3v-9Z" />
+    </svg>
+  );
+}
+
+function LinuxIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M12 2c-1.4 0-2.6 1.4-2.6 3.2 0 1.3.5 2.4 1.2 3.1-.9.2-1.7.8-2.2 1.6C7.4 11.3 7.2 13 8 14.3c.4.7 1.1 1.2 1.9 1.5-.1.5 0 1 .3 1.5.6 1 1.8 1.5 2.9 1.2.2 0 .4-.1.6-.2.2.1.4.2.6.2 1.1.3 2.3-.2 2.9-1.2.3-.5.4-1 .3-1.5.8-.3 1.5-.8 1.9-1.5.8-1.3.6-3-.4-4.4-.5-.8-1.3-1.4-2.2-1.6.7-.7 1.2-1.8 1.2-3.1C14.6 3.4 13.4 2 12 2Zm0 1.5c.7 0 1.1.8 1.1 1.7S12.7 7 12 7s-1.1-.9-1.1-1.8.4-1.7 1.1-1.7ZM9.8 16.8c-.4-.1-.8-.4-1-.8-.3-.6-.2-1.3.2-1.8.3-.3.3-.7.1-1-.4-.5-.6-1.1-.5-1.8.2-1.2 1.1-2 2.2-2.2.3 0 .5-.2.6-.5.2-.6.6-1.1 1.1-1.4.5.3.9.8 1.1 1.4.1.3.3.5.6.5 1.1.2 2 1 2.2 2.2.1.7-.1 1.3-.5 1.8-.2.3-.2.7.1 1 .4.5.5 1.2.2 1.8-.2.4-.6.7-1 .8-.3.1-.5.3-.5.6 0 .5-.3.9-.7 1.1-.4.2-.9.1-1.2-.2-.2-.2-.5-.3-.8-.1-.3.2-.8.3-1.2.1-.4-.2-.7-.6-.7-1.1 0-.3-.2-.5-.5-.6Z" />
     </svg>
   );
 }

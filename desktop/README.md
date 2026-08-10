@@ -76,7 +76,12 @@ xattr -dr com.apple.quarantine /Applications/minibot.app
 
 GitHub Actions 工作流：[`.github/workflows/publish-desktop.yml`](../.github/workflows/publish-desktop.yml)。
 
+- **自动**：`main` 上变更 `desktop/**`（或本 workflow 文件）并 push  
 - **手动**：Actions → **Publish Desktop** → Run workflow  
 - **打 tag**：`git tag desktop-v1.0.0-beta.1 && git push origin desktop-v1.0.0-beta.1`
 
 会在 `macos-latest`（arm64 + x64）、`ubuntu-22.04`、`windows-latest` 上并行 `tauri build`，并创建 **draft** GitHub Release（`desktop-v__VERSION__`，版本取自 `src-tauri/tauri.conf.json`）。未配置签名/公证；正式分发前请在 Release 里核对产物后再发布。
+
+发布 Release 后，工作流 **Sync Desktop Release to OSS** 会把 macOS / Windows / Linux 安装包同步到阿里云 OSS，并更新下载页读取的 `releases.json`（需配置仓库 Variables/Secrets，见 `docs/download-releases.md`）。
+
+Windows MSI（WiX）只接受数字版号。应用仍用 semver（如 `1.0.0-beta.1`），但 `tauri.conf.json` 里 `bundle.windows.wix.version` 需同步为数字形式（当前 `1.0.0.1`）。升到 `beta.N` 时把该字段改成 `1.0.0.N`。

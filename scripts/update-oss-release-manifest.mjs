@@ -17,7 +17,9 @@ const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
 const publicBaseUrl = options.get("public-base-url")?.replace(/\/$/, "");
 const prefix = options.get("prefix")?.replace(/^\/+|\/+$/g, "");
 
-for (const platform of ["android", "macos"]) {
+const DESKTOP_PLATFORMS = ["android", "macos", "windows", "linux"];
+
+for (const platform of DESKTOP_PLATFORMS) {
   const file = options.get(platform);
   if (!file) continue;
   const version = options.get(`${platform}-version`);
