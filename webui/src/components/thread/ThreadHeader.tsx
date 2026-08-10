@@ -57,7 +57,7 @@ export function ThreadHeader({
           onClick={onToggleSidebar}
           className={cn(
             "host-no-drag h-7 w-7 shrink-0 rounded-md text-muted-foreground hover:bg-accent/35 hover:text-foreground",
-            // Desktop native chrome already has sidebar/search/new-chat — never show this.
+            // Native titlebar chrome, or sidebar already open (brand header has collapse).
             hideSidebarToggleForHostChrome && "hidden",
           )}
         >

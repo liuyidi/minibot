@@ -64,7 +64,10 @@ export function AppMain({
           onTurnEnd={sessionRuntime.onTurnEnd}
           theme={theme}
           onToggleTheme={toggle}
-          hideSidebarToggleForHostChrome={showHostChrome}
+          // Host chrome uses native/titlebar controls; when the sidebar is open the
+          // brand-header collapse control is enough — hide this so two Menus do not
+          // sit on either side of the sidebar/main divider.
+          hideSidebarToggleForHostChrome={showHostChrome || hostSidebarOpen}
           hostChromeTitleInset={showHostChrome && !hostSidebarOpen}
           hideHeader={false}
           workspaceScope={workspace.activeWorkspaceScope}
