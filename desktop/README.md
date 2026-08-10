@@ -52,7 +52,7 @@ MINIBOT_API_BASE=http://127.0.0.1:8766 npm run dev
 | `openLogs` | 打开桌面端日志目录 |
 | `exportDiagnostics` | 导出诊断文本 |
 
-## 打包（macOS）
+## 打包（macOS 本地）
 
 ```bash
 cd desktop
@@ -71,3 +71,12 @@ npm run build          # 产出 .app + .dmg，并复制到 dist-bundle/
 ```bash
 xattr -dr com.apple.quarantine /Applications/minibot.app
 ```
+
+## 打包（CI：macOS / Windows / Linux）
+
+GitHub Actions 工作流：[`.github/workflows/publish-desktop.yml`](../.github/workflows/publish-desktop.yml)。
+
+- **手动**：Actions → **Publish Desktop** → Run workflow  
+- **打 tag**：`git tag desktop-v1.0.0-beta.1 && git push origin desktop-v1.0.0-beta.1`
+
+会在 `macos-latest`（arm64 + x64）、`ubuntu-22.04`、`windows-latest` 上并行 `tauri build`，并创建 **draft** GitHub Release（`desktop-v__VERSION__`，版本取自 `src-tauri/tauri.conf.json`）。未配置签名/公证；正式分发前请在 Release 里核对产物后再发布。
