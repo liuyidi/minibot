@@ -19,8 +19,15 @@ class Settings(BaseSettings):
     host: str = "127.0.0.1"
     port: int = 8766
     auth_secret: str = ""
+    auth_provider: str = "local"
     token_ttl_s: int = 86_400
     require_auth: bool = False
+
+    mini_auth_base_url: str = "http://127.0.0.1:8000"
+    mini_auth_client_id: str = "minibot"
+    mini_auth_scope: str = "openid profile email"
+    mini_auth_callback_path: str = "/auth/mini-auth/callback"
+    mini_auth_timeout_s: float = 20.0
 
     openai_api_key: str = ""
     openai_base_url: str = "https://api.openai.com/v1"
@@ -92,6 +99,10 @@ class Settings(BaseSettings):
     def normalized_exec_backend(self) -> str:
         value = (self.exec_backend or "local").strip().lower()
         return value if value in {"local", "e2b"} else "local"
+
+    def normalized_auth_provider(self) -> str:
+        value = (self.auth_provider or "local").strip().lower().replace("-", "_")
+        return value if value in {"local", "mini_auth"} else "local"
 
 
 @lru_cache

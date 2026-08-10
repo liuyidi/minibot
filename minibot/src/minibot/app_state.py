@@ -8,6 +8,7 @@ import secrets
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 from minibot.agent.approval import ApprovalStore
 from minibot.agent.loop import AgentLoop
@@ -40,6 +41,13 @@ class TokenRecord:
 
 
 @dataclass
+class MiniAuthLoginRecord:
+    code_verifier: str
+    next_url: str
+    expires_at: float
+
+
+@dataclass
 class AppState:
     settings: Settings
     bus: MessageBus
@@ -56,11 +64,15 @@ class AppState:
     sandbox_backend: SandboxBackend | None = None
     channels: ChannelManager | None = None
     tokens: dict[str, TokenRecord] = field(default_factory=dict)
+    mini_auth_logins: dict[str, MiniAuthLoginRecord] = field(default_factory=dict)
     fallback_stats: FallbackStats = field(default_factory=FallbackStats)
     fault_controller: FaultController = field(default_factory=FaultController)
     score_queue: ScoreQueue = field(default_factory=ScoreQueue)
     media_gateway: Any | None = None
     started_at: float = field(default_factory=time.time)
+
+    def is_mini_auth_enabled(self) -> bool:
+        return self.settings.normalized_auth_provider() == "mini_auth"
 
     def rebuild_provider(self) -> None:
         # Platform keys stay in env; do not copy them into config.json.
@@ -72,16 +84,39 @@ class AppState:
         self.runner = AgentRunner(provider)
         self.loop.runner = self.runner
 
-    def issue_token(self) -> str:
+    def issue_token(self, ttl_s: int | None = None) -> str:
         token = secrets.token_urlsafe(24)
+        expires_in = self.settings.token_ttl_s if ttl_s is None else max(1, int(ttl_s))
         self.tokens[token] = TokenRecord(
             token=token,
-            expires_at=time.time() + self.settings.token_ttl_s,
+            expires_at=time.time() + expires_in,
         )
         return token
 
+    def revoke_token(self, token: str | None) -> None:
+        if token:
+            self.tokens.pop(token, None)
+
+    def begin_mini_auth_login(self, next_url: str) -> tuple[str, str]:
+        login_state = secrets.token_urlsafe(24)
+        code_verifier = secrets.token_urlsafe(64)
+        self.mini_auth_logins[login_state] = MiniAuthLoginRecord(
+            code_verifier=code_verifier,
+            next_url=next_url or "/",
+            expires_at=time.time() + 600,
+        )
+        return login_state, code_verifier
+
+    def consume_mini_auth_login(self, login_state: str) -> MiniAuthLoginRecord | None:
+        record = self.mini_auth_logins.pop(login_state, None)
+        if record is None:
+            return None
+        if record.expires_at < time.time():
+            return None
+        return record
+
     def check_token(self, token: str | None) -> bool:
-        if not self.settings.require_auth and not self.settings.auth_secret:
+        if not self.is_mini_auth_enabled() and not self.settings.require_auth and not self.settings.auth_secret:
             return True
         if not token:
             return False
