@@ -3,23 +3,18 @@ import {
   Archive,
   Brain,
   CalendarClock,
-  Download,
   ExternalLink,
-  FlaskConical,
-  Home,
   Library,
-  Menu,
   MessageSquare,
   Search,
-  Settings,
   SquarePen,
-  Activity,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { ChannelSessionTree } from "./ChannelSessionTree";
 import { ChatList } from "./ChatList";
-import { ConnectionBadge } from "./ConnectionBadge";
+import { SidebarAccountFooter } from "./SidebarAccountFooter";
+import { SidebarBrandHeader } from "./SidebarBrandHeader";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { isImSession, isWebChatSession } from "@/lib/utils/im-sessions";
@@ -93,9 +88,7 @@ export function Sidebar(props: SidebarProps) {
     useState<HTMLElement | null>(null);
   const [sessionTab, setSessionTab] = useState<SessionListTab>("chats");
   const collapsed = Boolean(props.collapsed);
-  const toggleLabel = t("thread.header.toggleSidebar");
   const newChatShortcut = newChatShortcutLabel();
-  const downloadAppLabel = t("sidebar.downloadApp");
   const webChatSessions = useMemo(
     () => props.sessions.filter(isWebChatSession),
     [props.sessions],
@@ -122,51 +115,12 @@ export function Sidebar(props: SidebarProps) {
         !props.hostChromeInset && "border-r border-sidebar-border/60",
       )}
     >
-      <div
-        className={cn(
-          "flex items-center px-3 pb-2.5",
-          props.hostChromeInset ? "pt-[3.75rem]" : "pt-3",
-          collapsed ? "w-14 justify-start" : "justify-between",
-        )}
-      >
-        <button
-          type="button"
-          aria-label={collapsed ? toggleLabel : t("app.brand")}
-          aria-hidden={collapsed ? undefined : true}
-          title={collapsed ? toggleLabel : t("app.brand")}
-          onClick={collapsed ? props.onExpand : undefined}
-          tabIndex={collapsed ? 0 : -1}
-          className={cn(
-            "flex h-9 shrink-0 items-center justify-center overflow-hidden rounded-xl transition-colors",
-            collapsed
-              ? "-ml-0.5 w-9 hover:bg-sidebar-accent/75"
-              : "pointer-events-none -ml-0.5 gap-2 px-1",
-          )}
-        >
-          <span
-            className="flex h-8 w-8 items-center justify-center rounded-lg bg-sidebar-foreground/90 text-[13px] font-semibold tracking-tight text-sidebar"
-            aria-hidden
-          >
-            M
-          </span>
-          {!collapsed ? (
-            <span className="max-w-[7rem] truncate text-[13px] font-semibold tracking-tight text-sidebar-foreground">
-              {t("app.brand")}
-            </span>
-          ) : null}
-        </button>
-        {!collapsed && !props.hostChromeInset && (
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label={t("sidebar.collapse")}
-            onClick={props.onCollapse}
-            className="h-7 w-7 rounded-lg text-muted-foreground/85 hover:bg-sidebar-accent/75 hover:text-sidebar-foreground"
-          >
-            <Menu className="h-3.5 w-3.5" />
-          </Button>
-        )}
-      </div>
+      <SidebarBrandHeader
+        collapsed={collapsed}
+        hostChromeInset={props.hostChromeInset}
+        onCollapse={props.onCollapse}
+        onExpand={props.onExpand}
+      />
 
       <div
         className={cn(
@@ -184,12 +138,14 @@ export function Sidebar(props: SidebarProps) {
           disabled={!collapsed && sessionTab === "channels"}
           disabledHint={t("sidebar.newChatChannelsHint")}
         />
-        <SidebarActionButton
-          collapsed={collapsed}
-          label={t("sidebar.searchAria")}
-          onClick={props.onOpenSearch}
-          icon={<Search className="h-4 w-4" />}
-        />
+        {!props.hostChromeInset ? (
+          <SidebarActionButton
+            collapsed={collapsed}
+            label={t("sidebar.searchAria")}
+            onClick={props.onOpenSearch}
+            icon={<Search className="h-4 w-4" />}
+          />
+        ) : null}
         {UI_ENTRY.channels ? (
           <SidebarActionButton
             collapsed={collapsed}
@@ -329,57 +285,12 @@ export function Sidebar(props: SidebarProps) {
           </>
         )}
       </div>
-      <Separator className="bg-sidebar-border/50" />
-      <div
-        className={cn(
-          "flex flex-col gap-1 px-2.5 py-2 text-xs",
-          collapsed && "w-14 items-center px-0",
-        )}
-      >
-        <SidebarExternalLink
-          collapsed={collapsed}
-          label={downloadAppLabel}
-          href="/#/download/"
-          icon={<Download className="h-4 w-4" />}
-          newTab
-        />
-        <SidebarExternalLink
-          collapsed={collapsed}
-          label={t("sidebar.portalHome")}
-          href={PORTAL.home}
-          icon={<Home className="h-4 w-4" />}
-        />
-        <SidebarExternalLink
-          collapsed={collapsed}
-          label={t("sidebar.portalLangfuse")}
-          href={PORTAL.langfuse}
-          icon={<Activity className="h-4 w-4" />}
-        />
-        <SidebarExternalLink
-          collapsed={collapsed}
-          label={t("sidebar.portalDevui")}
-          href={PORTAL.devui}
-          icon={<FlaskConical className="h-4 w-4" />}
-        />
-      </div>
-      <Separator className="bg-sidebar-border/50" />
-      <div
-        className={cn(
-          "flex items-center gap-1 px-2.5 py-2.5 text-xs",
-          collapsed && "w-14 flex-col px-0",
-        )}
-      >
-        {UI_ENTRY.settings ? (
-          <SidebarActionButton
-            collapsed={collapsed}
-            label={t("sidebar.settings")}
-            onClick={props.onOpenSettings}
-            className={collapsed ? undefined : "flex-1"}
-            icon={<Settings className="h-4 w-4" />}
-          />
-        ) : null}
-        <ConnectionBadge />
-      </div>
+      {!collapsed ? (
+        <>
+          <Separator className="bg-sidebar-border/50" />
+          <SidebarAccountFooter onOpenSettings={props.onOpenSettings} />
+        </>
+      ) : null}
     </nav>
   );
 }

@@ -67,7 +67,9 @@
     "portalLangfuse": "可观测 (Langfuse)",
     "portalKnowledge": "知识库",
     "portalDevui": "开发笔记 /ui",
-    "downloadApp": "下载应用"
+    "downloadApp": "下载应用",
+    "accountDisplayName": "minibot",
+    "accountMenuAria": "账号菜单"
   },
   "settings": {
     "backToChat": "返回聊天",
@@ -1279,6 +1281,15 @@
     "subtitle": "Web、移动端和桌面端共用同一套身份与会话。移动端可连接 minibot-react-native，桌面端正在准备中。",
     "primary": "打开 Web App",
     "secondary": "返回聊天",
+    "benefitNoInstall": "无需安装",
+    "benefitSync": "会话持续同步",
+    "benefitPrivate": "连接自己的 minibot",
+    "availableEyebrow": "选择你的入口",
+    "platformTitle": "从任意设备开始",
+    "platformSubtitle": "Web App 现已可用；移动端作为 companion 连接，桌面安装包正在准备中。",
+    "previewPrompt": "帮我整理今天的工作重点",
+    "previewResponse": "已完成整理，并同步到你的会话。",
+    "previewRunning": "Agent 正在执行",
     "mobileTitle": "移动 App",
     "mobileBody": "支持 iOS 和 Android，可连接到 minibot-react-native 作为移动入口。",
     "mobileNote": "可连接 minibot-react-native",

@@ -45,6 +45,20 @@ function mockFetchRoutes(routes: Record<string, unknown>): void {
   );
 }
 
+async function openSidebarAccountMenu(sidebar: HTMLElement = screen.getByRole("navigation", { name: "Sidebar navigation" })) {
+  fireEvent.pointerDown(within(sidebar).getByRole("button", { name: "Account menu" }), {
+    button: 0,
+  });
+  expect(await screen.findByRole("menu")).toBeInTheDocument();
+}
+
+async function openSettingsFromSidebarAccount(
+  sidebar: HTMLElement = screen.getByRole("navigation", { name: "Sidebar navigation" }),
+) {
+  await openSidebarAccountMenu(sidebar);
+  fireEvent.click(await screen.findByRole("menuitem", { name: "Settings" }));
+}
+
 function baseSettingsPayload() {
   return {
     agent: {
@@ -285,7 +299,7 @@ describe("App layout", () => {
     expect(within(sidebar).getByRole("button", { name: "Scheduled tasks" })).toBeInTheDocument();
     expect(within(sidebar).getByRole("button", { name: "Skills · Connectors" })).toBeInTheDocument();
     expect(within(sidebar).getByRole("link", { name: "Knowledge" })).toBeInTheDocument();
-    expect(within(sidebar).getByRole("button", { name: "Settings" })).toBeInTheDocument();
+    expect(within(sidebar).getByRole("button", { name: "Account menu" })).toBeInTheDocument();
     expect(within(sidebar).queryByRole("button", { name: "Apps" })).not.toBeInTheDocument();
     expect(within(sidebar).queryByRole("button", { name: "Show archived" })).not.toBeInTheDocument();
   });
@@ -361,7 +375,8 @@ describe("App layout", () => {
     await waitFor(() => expect(connectSpy).toHaveBeenCalled());
 
     const sidebar = screen.getByRole("navigation", { name: "Sidebar navigation" });
-    const downloadLink = within(sidebar).getByRole("link", { name: "Download app" });
+    await openSidebarAccountMenu(sidebar);
+    const downloadLink = await screen.findByRole("menuitem", { name: "Download app" });
     expect(downloadLink).toHaveAttribute("href", "/#/download/");
     expect(downloadLink).toHaveAttribute("target", "_blank");
 
@@ -709,10 +724,17 @@ describe("App layout", () => {
     await waitFor(() => expect(connectSpy).toHaveBeenCalled());
     const flowSidebar = screen.getByTestId("host-sidebar-flow");
     const toggle = screen.getByTestId("host-sidebar-toggle");
-    expect(flowSidebar).toHaveStyle({ width: "272px" });
+    expect(flowSidebar).toHaveStyle({ width: "240px" });
+    expect(screen.getByTestId("host-sidebar-search")).toBeInTheDocument();
     expect(
       screen.getByRole("navigation", { name: "Sidebar navigation" }),
     ).toBeInTheDocument();
+    // Desktop host moves search into HostChrome; sidebar row is hidden.
+    expect(
+      within(
+        screen.getByRole("navigation", { name: "Sidebar navigation" }),
+      ).queryByRole("button", { name: "Search" }),
+    ).not.toBeInTheDocument();
 
     fireEvent.click(toggle);
     await waitFor(() => expect(flowSidebar).toHaveStyle({ width: "0px" }));
@@ -723,7 +745,7 @@ describe("App layout", () => {
     fireEvent.mouseEnter(toggle);
     const previewSidebar = await screen.findByTestId("host-sidebar-preview");
     expect(flowSidebar).toHaveStyle({ width: "0px" });
-    expect(previewSidebar).toHaveStyle({ width: "272px" });
+    expect(previewSidebar).toHaveStyle({ width: "240px" });
     expect(
       within(previewSidebar).getByRole("navigation", {
         name: "Sidebar navigation",
@@ -734,7 +756,7 @@ describe("App layout", () => {
     await waitFor(() =>
       expect(screen.queryByTestId("host-sidebar-preview")).not.toBeInTheDocument(),
     );
-    expect(flowSidebar).toHaveStyle({ width: "272px" });
+    expect(flowSidebar).toHaveStyle({ width: "240px" });
     expect(
       screen.getByRole("navigation", { name: "Sidebar navigation" }),
     ).toBeInTheDocument();
@@ -1512,7 +1534,7 @@ describe("App layout", () => {
     expect(within(sidebar).getByRole("button", { name: "Skills · Connectors" })).toBeInTheDocument();
     expect(within(sidebar).getByRole("button", { name: "Scheduled tasks" })).toBeInTheDocument();
     expect(within(sidebar).queryByRole("button", { name: "Apps" })).not.toBeInTheDocument();
-    fireEvent.click(within(sidebar).getByRole("button", { name: "Settings" }));
+    await openSettingsFromSidebarAccount(sidebar);
 
     expect(await screen.findByRole("heading", { name: "Overview" })).toBeInTheDocument();
     expect(document.title).toBe("Settings · minibot");
@@ -1595,7 +1617,7 @@ describe("App layout", () => {
 
     await waitFor(() => expect(connectSpy).toHaveBeenCalled());
     const sidebar = screen.getByRole("navigation", { name: "Sidebar navigation" });
-    fireEvent.click(within(sidebar).getByRole("button", { name: "Settings" }));
+    await openSettingsFromSidebarAccount(sidebar);
     expect(await screen.findByRole("heading", { name: "Overview" })).toBeInTheDocument();
     expect(window.location.hash).toBe("#/settings/overview");
 
@@ -1758,7 +1780,7 @@ describe("App layout", () => {
     fireEvent.click(within(sidebar).getByRole("button", { name: "New chat" }));
     await waitFor(() => expect(document.title).toBe("minibot"));
 
-    fireEvent.click(within(sidebar).getByRole("button", { name: "Settings" }));
+    await openSettingsFromSidebarAccount(sidebar);
     expect(await screen.findByRole("heading", { name: "Overview" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Back to chat" }));
 
@@ -2030,7 +2052,7 @@ describe("App layout", () => {
     expect(screen.getByText(HERO_GREETING_PATTERN)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Start a new chat" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Toggle theme from header" })).toBeInTheDocument();
-    expect(within(sidebar).getByRole("button", { name: "Settings" })).toBeInTheDocument();
+    expect(within(sidebar).getByRole("button", { name: "Account menu" })).toBeInTheDocument();
 
     expect(within(sidebar).getByText("Existing chat")).toBeInTheDocument();
   });

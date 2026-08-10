@@ -70,7 +70,7 @@ export function SessionInfoPopover({ sessionKey, token, title }: SessionInfoPopo
           size="icon"
           aria-label={t("thread.header.sessionInfo")}
           className={cn(
-            "host-no-drag h-8 w-8 rounded-full text-muted-foreground/85",
+            "host-no-drag h-8 w-8 rounded-full text-muted-foreground/85 dark:text-foreground/90",
             "hover:bg-accent/40 hover:text-foreground",
           )}
         >

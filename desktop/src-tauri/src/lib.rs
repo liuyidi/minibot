@@ -1,5 +1,25 @@
 mod remote;
 
+#[cfg(target_os = "macos")]
+mod macos_chrome;
+
+#[cfg(not(target_os = "macos"))]
+mod macos_chrome {
+    use tauri::{AppHandle, WebviewWindow};
+
+    pub fn install_native_chrome(_app: &AppHandle, _window: &WebviewWindow) -> Result<(), String> {
+        Ok(())
+    }
+
+    pub fn set_sidebar_open(_window: &WebviewWindow, _open: bool) -> Result<(), String> {
+        Ok(())
+    }
+
+    pub fn set_dark_appearance(_dark: bool) -> Result<(), String> {
+        Ok(())
+    }
+}
+
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
@@ -20,6 +40,21 @@ struct AppState {
 static RECREATING_WINDOW: AtomicBool = AtomicBool::new(false);
 
 const WINDOW_LABEL: &str = "main";
+/// macOS traffic lights; keep in sync with `tauri.conf.json` `trafficLightPosition`.
+const TRAFFIC_LIGHT_X: f64 = 22.0;
+const TRAFFIC_LIGHT_Y: f64 = 22.0;
+
+fn install_native_chrome_on_main(app: &tauri::AppHandle, window: &tauri::WebviewWindow) {
+    let app2 = app.clone();
+    let win2 = window.clone();
+    let _ = app.run_on_main_thread(move || {
+        if let Err(err) = macos_chrome::install_native_chrome(&app2, &win2) {
+            eprintln!("minibot-desktop native chrome: {err}");
+        } else {
+            eprintln!("minibot-desktop: native titlebar accessory chrome installed");
+        }
+    });
+}
 
 fn host_bridge_script() -> String {
     r#"
@@ -37,7 +72,46 @@ fn host_bridge_script() -> String {
     openLogs: () => invoke("host_open_logs"),
     exportDiagnostics: () => invoke("host_export_diagnostics"),
     openInBrowser: () => invoke("open_in_browser"),
+    startWindowDrag: () => {
+      const getCurrentWindow = window.__TAURI__?.window?.getCurrentWindow;
+      if (typeof getCurrentWindow === "function") {
+        return getCurrentWindow().startDragging();
+      }
+      return invoke("plugin:window|start_dragging");
+    },
   };
+})();
+"#
+    .to_string()
+}
+
+/// Keep window title blank (page `<title>` otherwise repaints next to traffic lights)
+/// and lock document scroll in the embedded WKWebView.
+fn host_chrome_polish_script() -> String {
+    r#"
+(() => {
+  try { document.title = ""; } catch (_) {}
+  const id = "minibot-host-chrome-polish";
+  if (document.getElementById(id)) return;
+  const style = document.createElement("style");
+  style.id = id;
+  style.textContent = `
+    html, body, #root {
+      height: 100% !important;
+      max-height: 100% !important;
+      overflow: hidden !important;
+      overscroll-behavior: none !important;
+    }
+    body {
+      position: fixed !important;
+      inset: 0 !important;
+      width: 100% !important;
+    }
+    html.native-host nav[aria-label] > div:first-child {
+      padding-top: 3.75rem !important;
+    }
+  `;
+  document.documentElement.appendChild(style);
 })();
 "#
     .to_string()
@@ -117,47 +191,85 @@ fn open_splash(app: &tauri::AppHandle) -> Result<(), String> {
         return Ok(());
     }
     WebviewWindowBuilder::new(app, WINDOW_LABEL, WebviewUrl::App("index.html".into()))
-        .title("minibot")
+        .title("")
+        .on_document_title_changed(|window, _title| {
+            let _ = window.set_title("");
+        })
         .inner_size(1180.0, 760.0)
         .min_inner_size(860.0, 560.0)
         .resizable(true)
         .center()
         .title_bar_style(TitleBarStyle::Overlay)
-        .traffic_light_position(LogicalPosition::new(12.0, 10.0))
+        .traffic_light_position(LogicalPosition::new(TRAFFIC_LIGHT_X, TRAFFIC_LIGHT_Y))
+        .initialization_script(host_bridge_script())
         .build()
         .map_err(|e| format!("create splash failed: {e}"))?;
+    // Do NOT install AppKit chrome on the splash: sibling views on contentView
+    // during the later navigate→http load can blank WKWebView permanently.
     Ok(())
 }
 
 /// Top-level navigation to remote WebUI (iframe from asset:// is blank on WKWebView).
+/// Prefer `navigate` on the existing window — close+recreate races with ExitRequested
+/// and can quit the whole app when the splash is the only window.
 fn open_remote_webui(app: &tauri::AppHandle, api_base: &str) -> Result<(), String> {
     let parsed = remote_url(api_base)?;
     let boot = boot_overlay_script(api_base);
-    RECREATING_WINDOW.store(true, Ordering::SeqCst);
 
-    if let Some(existing) = app.get_webview_window(WINDOW_LABEL) {
-        let _ = existing.close();
+    if let Some(win) = app.get_webview_window(WINDOW_LABEL) {
+        let _ = win.set_title("");
+        eprintln!("minibot-desktop: navigate → {parsed}");
+        win.navigate(parsed)
+            .map_err(|e| format!("navigate to remote WebUI failed: {e}"))?;
+        let _ = win.show();
+        let _ = win.set_focus();
+        // Bridge / polish / native chrome install happen in on_page_load (Finished).
+        // Boot overlay is also injected there; keep a delayed fallback in case
+        // Finished races ahead of first paint.
+        let win2 = win.clone();
+        let boot2 = boot;
+        std::thread::spawn(move || {
+            std::thread::sleep(std::time::Duration::from_millis(600));
+            let _ = win2.eval(&boot2);
+            let _ = win2.set_title("");
+        });
+        return Ok(());
     }
 
-    let built = WebviewWindowBuilder::new(app, WINDOW_LABEL, WebviewUrl::External(parsed.clone()))
-        .title("minibot")
+    RECREATING_WINDOW.store(true, Ordering::SeqCst);
+    let built = WebviewWindowBuilder::new(app, WINDOW_LABEL, WebviewUrl::External(parsed))
+        .title("")
+        .on_document_title_changed(|window, _title| {
+            let _ = window.set_title("");
+        })
         .inner_size(1180.0, 760.0)
         .min_inner_size(860.0, 560.0)
         .resizable(true)
         .center()
         .title_bar_style(TitleBarStyle::Overlay)
-        .traffic_light_position(LogicalPosition::new(12.0, 10.0))
+        .traffic_light_position(LogicalPosition::new(TRAFFIC_LIGHT_X, TRAFFIC_LIGHT_Y))
         .initialization_script(boot)
         .initialization_script(host_bridge_script())
+        .initialization_script(host_chrome_polish_script())
         .build()
         .map_err(|e| format!("create remote window failed: {e}"));
 
-    if let Ok(ref win) = built {
-        let _ = win.show();
-        let _ = win.set_focus();
+    match &built {
+        Ok(win) => {
+            let _ = win.show();
+            let _ = win.set_focus();
+            // Native chrome: only after PageLoad Finished (see on_page_load).
+            let _ = win;
+            std::thread::spawn(|| {
+                std::thread::sleep(std::time::Duration::from_millis(500));
+                RECREATING_WINDOW.store(false, Ordering::SeqCst);
+            });
+        }
+        Err(_) => {
+            RECREATING_WINDOW.store(false, Ordering::SeqCst);
+        }
     }
 
-    RECREATING_WINDOW.store(false, Ordering::SeqCst);
     built.map(|_| ())
 }
 
@@ -246,6 +358,33 @@ fn set_api_base(
     state.server.set_api_base(&api_base)
 }
 
+#[tauri::command]
+fn host_set_native_chrome_sidebar_open(
+    app: tauri::AppHandle,
+    open: bool,
+) -> Result<(), String> {
+    let Some(win) = app.get_webview_window(WINDOW_LABEL) else {
+        return Ok(());
+    };
+    let win2 = win.clone();
+    app.run_on_main_thread(move || {
+        if let Err(err) = macos_chrome::set_sidebar_open(&win2, open) {
+            eprintln!("minibot-desktop native chrome reposition: {err}");
+        }
+    })
+    .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn host_set_native_chrome_dark(app: tauri::AppHandle, dark: bool) -> Result<(), String> {
+    app.run_on_main_thread(move || {
+        if let Err(err) = macos_chrome::set_dark_appearance(dark) {
+            eprintln!("minibot-desktop native chrome tint: {err}");
+        }
+    })
+    .map_err(|e| e.to_string())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -253,10 +392,26 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .on_page_load(|webview, payload| {
             if matches!(payload.event(), tauri::webview::PageLoadEvent::Finished) {
+                let url = payload.url().to_string();
+                eprintln!("minibot-desktop: page load finished {url}");
                 let _ = webview.eval(&host_bridge_script());
+                let _ = webview.eval(&host_chrome_polish_script());
+                // Only overlay AppKit chrome after the remote WebUI document is ready.
+                // Installing during splash/navigate blanks WKWebView on macOS.
+                let is_remote_http = url.starts_with("http://") || url.starts_with("https://");
+                if is_remote_http {
+                    let boot = boot_overlay_script(url.trim_end_matches('/'));
+                    let _ = webview.eval(&boot);
+                    let app = webview.app_handle().clone();
+                    if let Some(win) = app.get_webview_window(WINDOW_LABEL) {
+                        install_native_chrome_on_main(&app, &win);
+                    }
+                }
             }
         })
         .setup(|app| {
+            eprintln!("minibot-desktop: setup begin");
+            let _ = std::io::Write::flush(&mut std::io::stderr());
             let version = app.package_info().version.to_string();
             let data_dir = app
                 .path()
@@ -269,10 +424,40 @@ pub fn run() {
                     return Err(std::io::Error::new(std::io::ErrorKind::Other, err).into());
                 }
             };
+            let server = Arc::new(server);
             app.manage(AppState {
-                server: Arc::new(server),
+                server: Arc::clone(&server),
             });
             open_splash(&app.handle())?;
+            eprintln!("minibot-desktop: splash opened");
+            let _ = std::io::Write::flush(&mut std::io::stderr());
+
+            // Don't rely on splash React invoke — Cursor/agent launches sometimes
+            // leave the asset:// splash blank. Connect + navigate from Rust.
+            let handle = app.handle().clone();
+            std::thread::spawn(move || {
+                std::thread::sleep(std::time::Duration::from_millis(250));
+                match server.connect() {
+                    Ok(info) => {
+                        eprintln!(
+                            "minibot-desktop: auto-connect ok → {}",
+                            info.api_base
+                        );
+                        let _ = std::io::Write::flush(&mut std::io::stderr());
+                        let api_base = info.api_base.clone();
+                        let handle2 = handle.clone();
+                        let _ = handle.run_on_main_thread(move || {
+                            if let Err(err) = open_remote_webui(&handle2, &api_base) {
+                                eprintln!("minibot-desktop: open_remote_webui failed: {err}");
+                            }
+                        });
+                    }
+                    Err(err) => {
+                        eprintln!("minibot-desktop: auto-connect failed: {err}");
+                        let _ = std::io::Write::flush(&mut std::io::stderr());
+                    }
+                }
+            });
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -285,6 +470,8 @@ pub fn run() {
             host_pick_folder,
             host_open_logs,
             host_export_diagnostics,
+            host_set_native_chrome_sidebar_open,
+            host_set_native_chrome_dark,
         ])
         .build(tauri::generate_context!())
         .expect("error while building minibot desktop")

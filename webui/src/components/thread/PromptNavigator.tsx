@@ -52,7 +52,7 @@ export function PromptNavigator({
         variant="ghost"
         size="icon"
         className={cn(
-          "host-no-drag h-8 w-8 rounded-full text-muted-foreground/80",
+          "host-no-drag h-8 w-8 rounded-full text-muted-foreground/80 dark:text-foreground/90",
           "hover:bg-accent/40 hover:text-foreground",
         )}
         aria-label={t("thread.promptNavigator.open")}

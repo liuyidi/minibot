@@ -3,6 +3,8 @@ import type { WorkspaceScopePayload } from "@/lib/types";
 
 export const RESTART_STARTED_KEY = "minibot-webui.restartStartedAt";
 export const SIDEBAR_WIDTH = 272;
+/** Native/desktop host sidebar — aligned closer to WorkBuddy. */
+export const NATIVE_SIDEBAR_WIDTH = 240;
 export const SIDEBAR_RAIL_WIDTH = 56;
 export const MOBILE_SIDEBAR_WIDTH = `min(${SIDEBAR_WIDTH}px, calc(100vw - 0.75rem))`;
 

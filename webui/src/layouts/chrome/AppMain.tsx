@@ -64,7 +64,7 @@ export function AppMain({
           onTurnEnd={sessionRuntime.onTurnEnd}
           theme={theme}
           onToggleTheme={toggle}
-          hideSidebarToggleForHostChrome
+          hideSidebarToggleForHostChrome={showHostChrome}
           hostChromeTitleInset={showHostChrome && !hostSidebarOpen}
           hideHeader={false}
           workspaceScope={workspace.activeWorkspaceScope}

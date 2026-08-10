@@ -20,6 +20,7 @@
     "core:window:allow-toggle-maximize",
     "core:webview:default",
     "opener:default",
-    "dialog:default"
+    "dialog:default",
+    "allow-host"
   ]
 }

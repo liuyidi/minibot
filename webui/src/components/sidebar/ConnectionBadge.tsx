@@ -5,56 +5,70 @@ import { cn } from "@/lib/utils";
 import { useClient } from "@/providers/ClientProvider";
 import type { ConnectionStatus } from "@/lib/types";
 
-const COPY: Record<ConnectionStatus, { color: string }> = {
-  idle: { color: "text-muted-foreground" },
-  connecting: {
-    color: "text-amber-700 dark:text-amber-300",
-  },
-  open: {
-    color: "text-emerald-700 dark:text-emerald-400",
-  },
-  reconnecting: {
-    color: "text-amber-700 dark:text-amber-300",
-  },
-  closed: {
-    color: "text-muted-foreground",
-  },
-  error: {
-    color: "text-destructive",
-  },
+const DOT_BG: Record<ConnectionStatus, string> = {
+  idle: "bg-muted-foreground",
+  connecting: "bg-amber-500",
+  open: "bg-emerald-500",
+  reconnecting: "bg-amber-500",
+  closed: "bg-muted-foreground",
+  error: "bg-destructive",
 };
 
-export function ConnectionBadge() {
+/** Compact connection indicator (e.g. avatar corner status). */
+export function ConnectionStatusDot({
+  className,
+  ringClassName = "ring-2 ring-sidebar",
+}: {
+  className?: string;
+  ringClassName?: string;
+}) {
   const { t } = useTranslation();
   const { client } = useClient();
   const [status, setStatus] = useState<ConnectionStatus>(client.status);
 
   useEffect(() => client.onStatus(setStatus), [client]);
 
-  const meta = COPY[status];
   const pulsing =
     status === "connecting" ||
     status === "reconnecting" ||
     status === "error";
   const label = t(`connection.${status}`);
+
   return (
     <span
-      className={cn(
-        "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors",
-        "text-muted-foreground/70 hover:bg-sidebar-accent/65",
-        meta.color,
-      )}
+      className={cn("relative flex h-2.5 w-2.5 shrink-0", className)}
       aria-live="polite"
       role="status"
       title={label}
+      aria-label={label}
     >
-      <span className="relative flex h-2 w-2" aria-hidden>
-        {pulsing && (
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-current opacity-75" />
+      {pulsing ? (
+        <span
+          className={cn(
+            "absolute inline-flex h-full w-full animate-ping rounded-full opacity-75",
+            DOT_BG[status],
+          )}
+          aria-hidden
+        />
+      ) : null}
+      <span
+        className={cn(
+          "relative inline-flex h-2.5 w-2.5 rounded-full",
+          DOT_BG[status],
+          ringClassName,
         )}
-        <span className="relative inline-flex h-2 w-2 rounded-full bg-current" />
-      </span>
+        aria-hidden
+      />
       <span className="sr-only">{label}</span>
+    </span>
+  );
+}
+
+/** Standalone badge used historically in the sidebar footer. */
+export function ConnectionBadge() {
+  return (
+    <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground/70 hover:bg-sidebar-accent/65">
+      <ConnectionStatusDot ringClassName="" />
     </span>
   );
 }

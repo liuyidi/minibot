@@ -4,4 +4,5 @@ export { ChannelSessionTree } from "./ChannelSessionTree";
 export { SessionSearchDialog } from "./SessionSearchDialog";
 export { DeleteConfirm } from "./DeleteConfirm";
 export { RenameChatDialog } from "./RenameChatDialog";
-export { ConnectionBadge } from "./ConnectionBadge";
+export { ConnectionBadge, ConnectionStatusDot } from "./ConnectionBadge";
+export { SidebarAccountFooter } from "./SidebarAccountFooter";

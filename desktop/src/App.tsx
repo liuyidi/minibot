@@ -9,7 +9,7 @@ type UiState =
   | { phase: "connecting"; message: string }
   | { phase: "error"; message: string };
 
-const DEFAULT_API_BASE = "http://116.62.35.76:8766";
+const DEFAULT_API_BASE = "http://127.0.0.1:5173";
 
 export default function App() {
   const [state, setState] = useState<UiState>({

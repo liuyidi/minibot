@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useWorkspaces } from "@/hooks/settings";
 import { normalizeWorkspaceScope } from "@/layouts/constants";
+import { getHostApi } from "@/lib/configs/runtime";
 import type {
   ChatSummary,
   RuntimeSurface,
@@ -11,6 +12,25 @@ import type {
 import { useClient } from "@/providers/ClientProvider";
 import { useSessionUiStore } from "@/stores";
 import type { Dispatch, SetStateAction } from "react";
+
+function useHasMinibotHost(): boolean {
+  const [present, setPresent] = useState(() => getHostApi() !== null);
+  useEffect(() => {
+    if (present) return;
+    const id = window.setInterval(() => {
+      if (getHostApi() !== null) {
+        setPresent(true);
+        window.clearInterval(id);
+      }
+    }, 50);
+    const stop = window.setTimeout(() => window.clearInterval(id), 5_000);
+    return () => {
+      window.clearInterval(id);
+      window.clearTimeout(stop);
+    };
+  }, [present]);
+  return present;
+}
 
 export type SettingsApi = {
   settings: SettingsPayload | null;
@@ -61,8 +81,11 @@ export function useAppWorkspace({
   const [workspaceOverrides, setWorkspaceOverrides] =
     useState<Record<string, WorkspaceScopePayload>>({});
 
-  const effectiveRuntimeSurface =
-    settingsSnapshot?.surface ?? settingsSnapshot?.runtime_surface ?? runtimeSurface;
+  const hasMinibotHost = useHasMinibotHost();
+  // Desktop injects `window.minibotHost` after navigate; bootstrap/settings still say browser/minibot.
+  const effectiveRuntimeSurface: RuntimeSurface = hasMinibotHost
+    ? "native"
+    : (settingsSnapshot?.surface ?? settingsSnapshot?.runtime_surface ?? runtimeSurface);
   const showHostChrome = effectiveRuntimeSurface === "native";
   const showMainSidebar = view !== "settings" && view !== "download";
 

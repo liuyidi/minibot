@@ -67,7 +67,9 @@
     "portalDevui": "開發筆記",
     "channels": "IM 頻道",
     "newChatChannelsHint": "Channel chats come from Feishu / WeChat. Switch to Chats to create one.",
-    "downloadApp": "Download app"
+    "downloadApp": "Download app",
+    "accountDisplayName": "minibot",
+    "accountMenuAria": "Account menu"
   },
   "settings": {
     "backToChat": "返回聊天",
@@ -1301,6 +1303,15 @@
     "subtitle": "Web, mobile, and desktop share the same identity and session. Mobile connects to minibot-react-native, while desktop apps are coming soon.",
     "primary": "Open Web App",
     "secondary": "Back to chat",
+    "benefitNoInstall": "免安裝",
+    "benefitSync": "工作階段持續同步",
+    "benefitPrivate": "連接你的 minibot",
+    "availableEyebrow": "選擇你的入口",
+    "platformTitle": "從任意裝置開始",
+    "platformSubtitle": "Web App 現已可用；行動版作為 companion 連接，桌面安裝程式準備中。",
+    "previewPrompt": "幫我整理今天的工作重點",
+    "previewResponse": "已完成整理，並同步到你的工作階段。",
+    "previewRunning": "Agent 正在執行",
     "mobileTitle": "Mobile app",
     "mobileBody": "iOS and Android support, powered by minibot-react-native as the companion app.",
     "mobileNote": "Connects to minibot-react-native",

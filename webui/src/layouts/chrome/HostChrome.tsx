@@ -1,45 +1,134 @@
-import type { ReactNode } from "react";
-import { PanelLeft } from "lucide-react";
+import { useEffect, useState, type ReactNode } from "react";
+import { PanelLeft, Search } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
+import { NATIVE_SIDEBAR_WIDTH } from "@/layouts/constants";
+import { onHostChromeDragMouseDown } from "@/lib/host-window-drag";
+import { cn } from "@/lib/utils";
+
+declare global {
+  interface Window {
+    minibotNativeChrome?: boolean;
+  }
+}
+
+function useNativeChromeControls(): boolean {
+  const [native, setNative] = useState(
+    () => typeof window !== "undefined" && Boolean(window.minibotNativeChrome),
+  );
+  useEffect(() => {
+    if (window.minibotNativeChrome) {
+      setNative(true);
+      return;
+    }
+    const onReady = () => setNative(true);
+    window.addEventListener("minibot:native-chrome-ready", onReady);
+    const id = window.setInterval(() => {
+      if (window.minibotNativeChrome) {
+        setNative(true);
+        window.clearInterval(id);
+      }
+    }, 50);
+    const stop = window.setTimeout(() => window.clearInterval(id), 5_000);
+    return () => {
+      window.removeEventListener("minibot:native-chrome-ready", onReady);
+      window.clearInterval(id);
+      window.clearTimeout(stop);
+    };
+  }, []);
+  return native;
+}
+
+/** Absolute top for web fallback chrome actions (tests / non-native). */
+const CHROME_ACTIONS_TOP = 16;
 
 export function HostChrome({
   onToggleSidebar,
+  onOpenSearch,
   onSidebarPreviewEnter,
   onSidebarPreviewLeave,
   sidebarOpen = true,
+  sidebarWidth = NATIVE_SIDEBAR_WIDTH,
   rightAction,
 }: {
   onToggleSidebar?: () => void;
+  onOpenSearch?: () => void;
   onSidebarPreviewEnter?: () => void;
   onSidebarPreviewLeave?: () => void;
   sidebarOpen?: boolean;
+  sidebarWidth?: number;
   rightAction?: ReactNode;
 }) {
   const { t } = useTranslation();
+  const nativeChrome = useNativeChromeControls();
+  // Desktop installs AppKit buttons; keep web controls only as fallback (e.g. Vitest).
+  const showChromeActions = !nativeChrome && Boolean(onToggleSidebar || onOpenSearch);
+  const actionsTop = CHROME_ACTIONS_TOP;
 
   return (
-    <header className="host-drag-region pointer-events-none absolute inset-x-0 top-0 z-40 h-11 bg-transparent text-foreground/90">
-      {onToggleSidebar ? (
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          aria-label={t("thread.header.toggleSidebar")}
-          data-testid="host-sidebar-toggle"
-          onClick={onToggleSidebar}
-          onFocus={!sidebarOpen ? onSidebarPreviewEnter : undefined}
-          onBlur={!sidebarOpen ? onSidebarPreviewLeave : undefined}
-          onMouseEnter={!sidebarOpen ? onSidebarPreviewEnter : undefined}
-          onMouseLeave={!sidebarOpen ? onSidebarPreviewLeave : undefined}
-          className="host-no-drag pointer-events-auto absolute left-[70px] top-[10px] h-6 w-6 rounded-md bg-transparent text-muted-foreground/85 shadow-none hover:bg-transparent hover:text-foreground"
+    <header className="pointer-events-none absolute inset-x-0 top-0 z-40 h-12 bg-transparent text-foreground/90">
+      {/* Drag strip: leave traffic lights + native chrome cluster + right actions clear. */}
+      <div
+        aria-hidden
+        data-tauri-drag-region
+        onMouseDown={onHostChromeDragMouseDown}
+        className="host-drag-region pointer-events-auto absolute inset-y-0"
+        style={{ left: nativeChrome ? 168 : 0, right: 112 }}
+      />
+      {showChromeActions ? (
+        <div
+          data-testid="host-chrome-actions"
+          className={cn(
+            "host-no-drag pointer-events-auto absolute z-50 flex h-8 items-center gap-1",
+          )}
+          style={
+            sidebarOpen
+              ? {
+                  top: actionsTop,
+                  left: sidebarWidth - 10,
+                  transform: "translateX(-100%)",
+                }
+              : { top: actionsTop, left: 80 }
+          }
         >
-          <PanelLeft className="h-3.5 w-3.5" strokeWidth={1.75} />
-        </Button>
+          {onToggleSidebar ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label={t("thread.header.toggleSidebar")}
+              data-testid="host-sidebar-toggle"
+              onClick={onToggleSidebar}
+              onFocus={!sidebarOpen ? onSidebarPreviewEnter : undefined}
+              onBlur={!sidebarOpen ? onSidebarPreviewLeave : undefined}
+              onMouseEnter={!sidebarOpen ? onSidebarPreviewEnter : undefined}
+              onMouseLeave={!sidebarOpen ? onSidebarPreviewLeave : undefined}
+              className="h-8 w-8 rounded-md bg-transparent text-muted-foreground/90 shadow-none hover:bg-transparent hover:text-foreground"
+            >
+              <PanelLeft className="h-[17px] w-[17px]" strokeWidth={2} />
+            </Button>
+          ) : null}
+          {onOpenSearch ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label={t("sidebar.searchAria")}
+              data-testid="host-sidebar-search"
+              onClick={onOpenSearch}
+              className="h-8 w-8 rounded-md bg-transparent text-muted-foreground/90 shadow-none hover:bg-transparent hover:text-foreground"
+            >
+              <Search className="h-[17px] w-[17px]" strokeWidth={2} />
+            </Button>
+          ) : null}
+        </div>
       ) : null}
       {rightAction ? (
-        <div className="host-no-drag pointer-events-auto absolute right-3 top-2">
+        <div
+          className="host-no-drag pointer-events-auto absolute right-3 flex h-8 items-center"
+          style={{ top: actionsTop }}
+        >
           {rightAction}
         </div>
       ) : null}

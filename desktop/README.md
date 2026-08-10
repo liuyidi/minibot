@@ -1,8 +1,6 @@
 # minibot Desktop（远程薄壳）
 
-Tauri 2 桌面应用直接连接远程 minibot 服务（默认 `http://116.62.35.76:8766`），注入 `window.minibotHost`，并打开服务端 WebUI。
-
-> 说明：大陆网络访问未备案域名的 `https://bot.liuyidi.me` 常在 TLS 握手阶段被重置；演示默认改走 ECS 开放的 `:8766` HTTP。若 HTTPS 探测失败会自动回退到该地址。
+Tauri 2 桌面应用直接连接远程 minibot 服务（默认 [`https://bot.liuyidi.me`](https://bot.liuyidi.me/)），注入 `window.minibotHost`，并打开服务端 WebUI。
 
 ## 架构
 
@@ -11,7 +9,7 @@ Tauri App
   ├─ 读取 api_base（MINIBOT_API_BASE → server.json → 默认）
   ├─ 探测 /webui/bootstrap（HTTPS 失败时可回退 HTTP IP）
   ├─ 注入 window.minibotHost
-  └─ navigate → http://116.62.35.76:8766/
+  └─ navigate → https://bot.liuyidi.me/
 ```
 
 不拉起本机 Python / minibot 进程。

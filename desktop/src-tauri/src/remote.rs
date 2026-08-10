@@ -8,10 +8,11 @@ use std::time::{Duration, Instant};
 use serde::{Deserialize, Serialize};
 use url::Url;
 
-/// Demo default: plain HTTP to the ECS minibot port.
-/// `https://bot.liuyidi.me` TLS is often reset from mainland networks without ICP.
-pub const DEFAULT_API_BASE: &str = "http://116.62.35.76:8766";
-pub const PREFERRED_HTTPS_API_BASE: &str = "https://bot.liuyidi.me";
+/// Local WebUI Vite (HMR). Override with `MINIBOT_API_BASE=https://bot.liuyidi.me`.
+pub const DEFAULT_API_BASE: &str = "http://127.0.0.1:5173";
+/// Legacy demo HTTP fallback when HTTPS probe fails (ECS :8766).
+pub const FALLBACK_HTTP_API_BASE: &str = "http://116.62.35.76:8766";
+pub const PRODUCTION_HTTPS_API_BASE: &str = "https://bot.liuyidi.me";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
@@ -137,10 +138,10 @@ impl RemoteServer {
                     let _ = append_log_path(
                         &self.logs_dir().unwrap_or_default(),
                         &format!(
-                            "HTTPS probe failed ({primary_err}); trying fallback {DEFAULT_API_BASE}"
+                            "HTTPS probe failed ({primary_err}); trying fallback {FALLBACK_HTTP_API_BASE}"
                         ),
                     );
-                    let _ = self.set_api_base(DEFAULT_API_BASE);
+                    let _ = self.set_api_base(FALLBACK_HTTP_API_BASE);
                     if let Err(fallback_err) = self.wait_until_ready(Duration::from_secs(6)) {
                         let _ = append_log_path(
                             &self.logs_dir().unwrap_or_default(),
@@ -308,6 +309,13 @@ fn resolve_initial_api_base(config_path: &Path) -> Result<String, String> {
             .map_err(|e| format!("read server.json: {e}"))?;
         if let Ok(cfg) = serde_json::from_str::<ServerConfig>(&raw) {
             if let Ok(normalized) = normalize_api_base(&cfg.api_base) {
+                // Prefer local Vite for desktop HMR while developing.
+                if normalized == FALLBACK_HTTP_API_BASE
+                    || normalized == PRODUCTION_HTTPS_API_BASE
+                {
+                    let _ = persist_server_config(config_path, DEFAULT_API_BASE);
+                    return Ok(DEFAULT_API_BASE.to_string());
+                }
                 return Ok(normalized);
             }
         }
@@ -317,8 +325,7 @@ fn resolve_initial_api_base(config_path: &Path) -> Result<String, String> {
 
 fn should_try_http_fallback(api_base: &str) -> bool {
     let lower = api_base.to_ascii_lowercase();
-    lower.starts_with("https://")
-        && (lower.contains("bot.liuyidi.me") || lower == PREFERRED_HTTPS_API_BASE)
+    lower.starts_with("https://") && lower.contains("bot.liuyidi.me")
 }
 
 fn append_log_path(logs_dir: &Path, line: &str) -> Result<(), String> {

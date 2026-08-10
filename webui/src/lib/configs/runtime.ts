@@ -30,6 +30,7 @@ export interface MinibotHostApi {
   pickFolder(): Promise<string | null>;
   openLogs(): Promise<void>;
   exportDiagnostics(): Promise<string>;
+  startWindowDrag?(): Promise<void>;
   openSocket?(url: string): Promise<string>;
   sendSocket?(id: string, data: string): Promise<void>;
   closeSocket?(id: string): Promise<void>;

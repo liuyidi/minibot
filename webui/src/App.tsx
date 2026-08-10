@@ -120,9 +120,12 @@ export default function App() {
     async (client: MinibotClient, fallbackSurface: RuntimeSurface) => {
       const boot = await fetchBootstrap("", bootstrapSecretRef.current);
       const url = deriveWsUrl(boot.ws_path, boot.token, boot.ws_url);
-      const runtimeSurface = boot.runtime_surface
-        ? toRuntimeSurface(boot.runtime_surface)
-        : fallbackSurface;
+      const runtimeSurface =
+        getHostApi() !== null
+          ? "native"
+          : boot.runtime_surface
+            ? toRuntimeSurface(boot.runtime_surface)
+            : fallbackSurface;
       const runtimeHost = createRuntimeHost(runtimeSurface, boot.runtime_capabilities);
       const tokenExpiresAt = bootstrapTokenExpiresAt(boot.expires_in);
       if (runtimeHost.socketFactory) {
@@ -156,7 +159,8 @@ export default function App() {
           if (cancelled) return;
           if (secret) saveSecret(secret);
           const url = deriveWsUrl(boot.ws_path, boot.token, boot.ws_url);
-          const runtimeSurface = toRuntimeSurface(boot.runtime_surface);
+          const runtimeSurface =
+            getHostApi() !== null ? "native" : toRuntimeSurface(boot.runtime_surface);
           const runtimeHost = createRuntimeHost(runtimeSurface, boot.runtime_capabilities);
           const client = new MinibotClient({
             url,

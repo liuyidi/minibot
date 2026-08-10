@@ -3,7 +3,11 @@ import { useTranslation } from "react-i18next";
 import { SessionSearchDialog } from "@/components/sidebar/SessionSearchDialog";
 import { Sidebar } from "@/components/sidebar/Sidebar";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
-import { MOBILE_SIDEBAR_WIDTH, SIDEBAR_WIDTH } from "@/layouts/constants";
+import {
+  MOBILE_SIDEBAR_WIDTH,
+  NATIVE_SIDEBAR_WIDTH,
+  SIDEBAR_WIDTH,
+} from "@/layouts/constants";
 import type { AppLayoutModel } from "@/layouts/hooks/useAppLayoutModel";
 import { cn } from "@/lib/utils";
 
@@ -70,7 +74,7 @@ export function AppSidebarChrome({ model }: { model: AppLayoutModel }) {
         <aside
           data-testid="host-sidebar-preview"
           className="absolute inset-y-0 left-0 z-30 hidden overflow-hidden lg:block animate-in fade-in-0 slide-in-from-left-2 duration-150"
-          style={{ width: SIDEBAR_WIDTH }}
+          style={{ width: showHostChrome ? NATIVE_SIDEBAR_WIDTH : SIDEBAR_WIDTH }}
           onMouseEnter={openHostSidebarPreview}
           onMouseLeave={scheduleHostSidebarPreviewClose}
         >

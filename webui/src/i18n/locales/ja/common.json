@@ -67,7 +67,9 @@
     "newChatChannelsHint": "Channel chats come from Feishu / WeChat. Switch to Chats to create one.",
     "tabChats": "Chats",
     "tabChannels": "Channels",
-    "downloadApp": "Download app"
+    "downloadApp": "Download app",
+    "accountDisplayName": "minibot",
+    "accountMenuAria": "Account menu"
   },
   "settings": {
     "backToChat": "チャットに戻る",
@@ -1301,6 +1303,15 @@
     "subtitle": "Web, mobile, and desktop share the same identity and session. Mobile connects to minibot-react-native, while desktop apps are coming soon.",
     "primary": "Open Web App",
     "secondary": "Back to chat",
+    "benefitNoInstall": "No installation",
+    "benefitSync": "Sessions stay in sync",
+    "benefitPrivate": "Connect your minibot",
+    "availableEyebrow": "Choose your entry point",
+    "platformTitle": "Start on any device",
+    "platformSubtitle": "The Web App is ready today. Mobile connects as a companion, and desktop installers are on the way.",
+    "previewPrompt": "Organize my priorities for today",
+    "previewResponse": "Done. I've synced the plan to your session.",
+    "previewRunning": "Agent is running",
     "mobileTitle": "Mobile app",
     "mobileBody": "iOS and Android support, powered by minibot-react-native as the companion app.",
     "mobileNote": "Connects to minibot-react-native",

@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
+import { onHostChromeDragMouseDown } from "@/lib/host-window-drag";
 import { cn } from "@/lib/utils";
 
 interface ThreadHeaderProps {
@@ -31,36 +32,46 @@ export function ThreadHeader({
   sessionInfoAction,
 }: ThreadHeaderProps) {
   const { t } = useTranslation();
+  // Desktop host chrome: drag from the title row (avoid growing ThreadShell props).
+  const hostChromeDrag = hideSidebarToggleForHostChrome;
 
   return (
     <div
+      data-tauri-drag-region={hostChromeDrag ? true : undefined}
+      onMouseDown={hostChromeDrag ? onHostChromeDragMouseDown : undefined}
       className={cn(
-        "relative z-10 flex items-center justify-between gap-3 px-3 py-2",
+        // pt-1 (was py-2): lift title 4px toward the window top.
+        "relative z-10 flex items-center justify-between gap-3 px-3 pt-1 pb-2",
         minimal && "h-11",
-        !minimal && hostChromeTitleInset && "lg:pl-[128px]",
+        hostChromeDrag && "host-drag-region",
+        // Collapsed native chrome: traffic lights (~70) + gap + 3×28 icons + gaps ≈ 174.
+        !minimal && hostChromeTitleInset && "lg:pl-[180px]",
       )}
     >
-      <div className="relative flex min-w-0 items-center gap-2">
+      <div className="relative flex min-w-0 flex-1 items-center gap-2">
         <Button
           variant="ghost"
           size="icon"
           aria-label={t("thread.header.toggleSidebar")}
           onClick={onToggleSidebar}
           className={cn(
-            "h-7 w-7 rounded-md text-muted-foreground hover:bg-accent/35 hover:text-foreground",
-            hideSidebarToggleForHostChrome && "lg:hidden",
+            "host-no-drag h-7 w-7 shrink-0 rounded-md text-muted-foreground hover:bg-accent/35 hover:text-foreground",
+            (hideSidebarToggleForHostChrome || hostChromeTitleInset) && "lg:hidden",
           )}
         >
           <Menu className="h-3.5 w-3.5" />
         </Button>
         {!minimal ? (
-          <div className="flex min-w-0 items-center rounded-md px-1.5 py-1 text-[12px] font-medium text-muted-foreground">
+          <div className="flex min-w-0 items-center rounded-md px-1.5 py-1 text-[15px] font-semibold tracking-tight text-foreground">
             <span className="max-w-[min(60vw,32rem)] truncate">{title}</span>
           </div>
         ) : null}
       </div>
 
-      <div className="ml-auto flex shrink-0 items-center gap-1">
+      <div
+        data-no-window-drag
+        className="host-no-drag relative z-50 ml-auto flex shrink-0 items-center gap-1"
+      >
         {sessionInfoAction}
         {promptNavigatorAction}
         {!hideThemeButton ? (
@@ -97,7 +108,7 @@ function ThemeButton({
       aria-label={label}
       onClick={onToggleTheme}
       className={cn(
-        "host-no-drag h-8 w-8 rounded-full text-muted-foreground/85 hover:bg-accent/40 hover:text-foreground",
+        "host-no-drag h-8 w-8 rounded-full text-muted-foreground/85 dark:text-foreground/90 hover:bg-accent/40 hover:text-foreground",
         className,
       )}
     >

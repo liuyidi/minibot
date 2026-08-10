@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useRef } from "react";
 
-import { SIDEBAR_RAIL_WIDTH, SIDEBAR_WIDTH } from "@/layouts/constants";
+import {
+  NATIVE_SIDEBAR_WIDTH,
+  SIDEBAR_RAIL_WIDTH,
+  SIDEBAR_WIDTH,
+} from "@/layouts/constants";
 import { useUiStore } from "@/stores";
 
 export function useHostSidebarUi(showHostChrome: boolean, showMainSidebar: boolean) {
@@ -105,8 +109,9 @@ export function useHostSidebarUi(showHostChrome: boolean, showMainSidebar: boole
   const hostSidebarCollapsed = showHostChrome && !hostSidebarOpen;
   const showHostSidebarPreview =
     showMainSidebar && hostSidebarCollapsed && hostSidebarPreviewOpen;
+  const openSidebarWidth = showHostChrome ? NATIVE_SIDEBAR_WIDTH : SIDEBAR_WIDTH;
   const hostSidebarFlowWidth = showHostChrome
-    ? (hostSidebarOpen ? SIDEBAR_WIDTH : 0)
+    ? (hostSidebarOpen ? openSidebarWidth : 0)
     : (hostSidebarOpen ? SIDEBAR_WIDTH : SIDEBAR_RAIL_WIDTH);
   const renderHostSidebarFlowContent = !showHostChrome || hostSidebarOpen;
 
@@ -125,6 +130,7 @@ export function useHostSidebarUi(showHostChrome: boolean, showMainSidebar: boole
     hostSidebarCollapsed,
     showHostSidebarPreview,
     hostSidebarFlowWidth,
+    openSidebarWidth,
     renderHostSidebarFlowContent,
   };
 }

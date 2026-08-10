@@ -15,9 +15,9 @@
       {
         "label": "main",
         "create": false,
-        "title": "minibot",
+        "title": "",
         "titleBarStyle": "Overlay",
-        "trafficLightPosition": { "x": 12, "y": 10 },
+        "trafficLightPosition": { "x": 22, "y": 22 },
         "width": 1180,
         "height": 760,
         "minWidth": 860,

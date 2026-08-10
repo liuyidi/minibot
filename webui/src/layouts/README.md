@@ -8,7 +8,7 @@ External code should import from `@/layouts` (`AppLayout`). Prefer not reaching 
 layouts/
 ├── index.ts                 # Public exports (`AppLayout`, `HostChrome`)
 ├── AppLayout.tsx            # Thin composer: theme, host bar, sidebar + main + dialogs
-├── constants.ts             # Sidebar widths and workspace-scope helpers
+├── constants.ts             # Sidebar widths (browser 272 / native 240) and workspace-scope helpers
 ├── chrome/                  # Presentational layout UI
 │   ├── HostChrome.tsx       # Native host title-bar / window chrome
 │   ├── AppSidebarChrome.tsx # Desktop sidebar, preview overlay, mobile sheet, session search
