@@ -125,7 +125,7 @@ export function Sidebar(props: SidebarProps) {
       <div
         className={cn(
           "flex items-center px-3 pb-2.5",
-          props.hostChromeInset ? "pt-[2.85rem]" : "pt-3",
+          props.hostChromeInset ? "pt-[3.75rem]" : "pt-3",
           collapsed ? "w-14 justify-start" : "justify-between",
         )}
       >
