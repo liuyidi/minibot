@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { AndroidIcon, LinuxIcon, WindowsIcon } from "./DownloadPlatformIcons";
 
-const RELEASE_MANIFEST_URL = import.meta.env.VITE_MINIBOT_RELEASES_URL || "/api/releases";
+const RELEASE_MANIFEST_URL = import.meta.env.VITE_MINIBOT_RELEASES_URL || "/releases.json";
 
 type DownloadPageProps = {
   onOpenApp: () => void;
