@@ -1,10 +1,10 @@
 import {
-  Apple,
   ArrowRight,
   Check,
   Download,
   ExternalLink,
   Globe2,
+  Laptop,
   QrCode,
   Sparkles,
 } from "lucide-react";
@@ -116,6 +116,20 @@ export function DownloadPage({ onOpenApp }: DownloadPageProps) {
             </div>
             <span className="text-xs font-medium uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">{t("download.tagline")}</span>
           </div>
+          <footer className="mt-6 flex flex-wrap justify-center gap-x-3 gap-y-1 text-xs text-slate-400 dark:text-slate-500">
+            <a className="transition-colors hover:text-slate-700 dark:hover:text-slate-200" href="https://bot.liuyidi.me">
+              bot.liuyidi.me
+            </a>
+            <span aria-hidden="true">·</span>
+            <a
+              className="transition-colors hover:text-slate-700 dark:hover:text-slate-200"
+              href="https://beian.miit.gov.cn/"
+              target="_blank"
+              rel="noreferrer"
+            >
+              {t("download.icp")}
+            </a>
+          </footer>
         </section>
       </div>
     </main>
@@ -179,10 +193,15 @@ function detectPreferredPlatform(): Platform {
 }
 
 function PlatformTabs({ activePlatform, onChange }: { activePlatform: Platform; onChange: (platform: Platform) => void }) {
-  const platforms: Array<{ id: Platform; label: string; icon: ReactNode }> = [
+  const platforms: Array<{ id: Platform; label: string; icon: ReactNode; includesLabel?: boolean }> = [
     { id: "windows", label: "Windows", icon: <WindowsIcon /> },
-    { id: "macos", label: "macOS", icon: <MacosIcon /> },
-    { id: "ios", label: "iOS", icon: <Apple className="fill-current stroke-0" /> },
+    { id: "macos", label: "macOS", icon: <Laptop /> },
+    {
+      id: "ios",
+      label: "iOS",
+      includesLabel: true,
+      icon: <img src="/download/ios-tab-mark.png" alt="" className="h-8 w-auto dark:invert md:h-10" />,
+    },
     { id: "android", label: "Android", icon: <AndroidIcon /> },
   ];
 
@@ -196,6 +215,7 @@ function PlatformTabs({ activePlatform, onChange }: { activePlatform: Platform; 
             type="button"
             role="tab"
             aria-selected={active}
+            aria-label={platform.label}
             onClick={() => onChange(platform.id)}
             className={cn(
               "flex h-20 items-center justify-center gap-3 rounded-t-[1.35rem] px-4 text-lg font-medium transition-colors md:h-24 md:text-2xl",
@@ -205,7 +225,7 @@ function PlatformTabs({ activePlatform, onChange }: { activePlatform: Platform; 
             )}
           >
             <span className="[&>svg]:h-7 [&>svg]:w-7 md:[&>svg]:h-9 md:[&>svg]:w-9">{platform.icon}</span>
-            {platform.label}
+            {!platform.includesLabel ? platform.label : null}
           </button>
         );
       })}
@@ -218,8 +238,20 @@ function PlatformPanel({ platform, release }: { platform: Platform; release: Rel
   const qrDataUrl = useQrCode(release.url);
   const isMobile = platform === "ios" || platform === "android";
   const title = `${platform === "macos" ? "macOS" : platform === "ios" ? "iOS" : platform === "android" ? "Android" : "Windows"} ${isMobile ? t("download.mobileTitle") : t("download.desktopTitle")}`;
-  const body = isMobile ? t("download.mobileBody") : t("download.desktopBody");
-  const companion = isMobile ? t("download.mobileFooter") : t("download.desktopFooter");
+  const body = isMobile
+    ? platform === "ios"
+      ? t("download.iosBody")
+      : t("download.androidBody")
+    : platform === "macos"
+      ? t("download.macosBody")
+      : t("download.windowsBody");
+  const companion = isMobile
+    ? platform === "ios"
+      ? t("download.iosFooter")
+      : t("download.androidFooter")
+    : platform === "macos"
+      ? t("download.macosFooter")
+      : t("download.windowsFooter");
   const version = release.version ? `v ${release.version}` : null;
 
   return (
@@ -246,7 +278,18 @@ function PlatformPanel({ platform, release }: { platform: Platform; release: Rel
               </span>
             )}
           </div>
-          {version ? <p className="mt-10 text-base text-slate-500 dark:text-slate-400">{t("download.currentVersion")}：{version}</p> : null}
+          {isMobile && qrDataUrl ? (
+            <div className="mt-8 flex items-center gap-5">
+              <div className="rounded-2xl border border-slate-200 bg-white p-2 shadow-sm dark:border-white/10 dark:bg-white/[0.96]">
+                <img src={qrDataUrl} alt={release.url ?? ""} className="h-28 w-28" />
+              </div>
+              <div className="space-y-2 text-base text-slate-500 dark:text-slate-400">
+                <p className="font-medium text-slate-700 dark:text-slate-200">{t("download.scanToDownload")}</p>
+                {version ? <p>{t("download.currentVersion")}：{version}</p> : null}
+              </div>
+            </div>
+          ) : null}
+          {version && !(isMobile && qrDataUrl) ? <p className="mt-10 text-base text-slate-500 dark:text-slate-400">{t("download.currentVersion")}：{version}</p> : null}
         </div>
 
         <div className="relative flex min-h-72 items-center justify-center overflow-hidden rounded-[2rem] bg-[radial-gradient(circle_at_50%_45%,rgba(141,245,216,0.4),transparent_38%),linear-gradient(135deg,#f1faf8,#e9f1fa)] dark:bg-[radial-gradient(circle_at_50%_45%,rgba(74,201,180,0.25),transparent_38%),linear-gradient(135deg,#0d1b2c,#15283d)] md:min-h-[25rem]">
@@ -259,12 +302,12 @@ function PlatformPanel({ platform, release }: { platform: Platform; release: Rel
           ) : (
             <img src="/brand/minibot_mark.svg" alt="" className="h-28 w-28 opacity-90 md:h-36 md:w-36" />
           )}
-          {qrDataUrl ? (
+          {!isMobile && qrDataUrl ? (
             <div className="absolute bottom-5 right-5 rounded-2xl bg-white p-3 shadow-xl dark:bg-white/95">
               <img src={qrDataUrl} alt={release.url ?? ""} className="h-24 w-24" />
               <p className="mt-1 text-center text-[10px] font-medium text-slate-600">{t("download.scanToDownload")}</p>
             </div>
-          ) : <QrCode className="absolute bottom-7 right-7 h-12 w-12 text-slate-300/70 dark:text-white/15" />}
+          ) : !isMobile ? <QrCode className="absolute bottom-7 right-7 h-12 w-12 text-slate-300/70 dark:text-white/15" /> : null}
         </div>
       </div>
     </div>
@@ -275,16 +318,6 @@ function WindowsIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
       <path d="M2.5 3.8 10.7 2.7v8.6H2.5V3.8Zm9.8-1.3L21.5 1v10.3h-9.2V2.5ZM2.5 12.7h8.2v8.6l-8.2-1.1v-7.5Zm9.8 0h9.2V23l-9.2-1.3v-9Z" />
-    </svg>
-  );
-}
-
-function MacosIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <circle cx="12" cy="12" r="10" fill="currentColor" />
-      <text x="12" y="10.5" textAnchor="middle" fill="white" fontSize="5.2" fontWeight="700">mac</text>
-      <text x="12" y="15.5" textAnchor="middle" fill="white" fontSize="5.2" fontWeight="700">OS</text>
     </svg>
   );
 }
