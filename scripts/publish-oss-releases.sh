@@ -7,7 +7,8 @@ Usage:
   source scripts/oss-release.env
   export OSS_ACCESS_KEY_ID=... OSS_ACCESS_KEY_SECRET=...
   scripts/publish-oss-releases.sh --version 1.0.4 \
-    [--android /path/app.apk] [--macos /path/app.dmg] \
+    [--android /path/app.apk] \
+    [--macos /path/arm64.dmg] [--macos-intel /path/x64.dmg] \
     [--windows /path/setup.exe] [--linux /path/app.deb] [--dry-run]
 
 Required environment: OSS_BUCKET, OSS_REGION, OSS_ENDPOINT, OSS_PUBLIC_BASE_URL.
@@ -18,6 +19,7 @@ EOF
 version=""
 android_file=""
 macos_file=""
+macos_intel_file=""
 windows_file=""
 linux_file=""
 dry_run=false
@@ -27,6 +29,7 @@ while [[ $# -gt 0 ]]; do
     --version) version="${2:?missing value for --version}"; shift 2 ;;
     --android) android_file="${2:?missing value for --android}"; shift 2 ;;
     --macos) macos_file="${2:?missing value for --macos}"; shift 2 ;;
+    --macos-intel) macos_intel_file="${2:?missing value for --macos-intel}"; shift 2 ;;
     --windows) windows_file="${2:?missing value for --windows}"; shift 2 ;;
     --linux) linux_file="${2:?missing value for --linux}"; shift 2 ;;
     --dry-run) dry_run=true; shift ;;
@@ -42,7 +45,7 @@ for name in OSS_BUCKET OSS_REGION OSS_ENDPOINT OSS_PUBLIC_BASE_URL; do
   fi
 done
 
-if [[ -z "$version" || (-z "$android_file" && -z "$macos_file" && -z "$windows_file" && -z "$linux_file") ]]; then
+if [[ -z "$version" || (-z "$android_file" && -z "$macos_file" && -z "$macos_intel_file" && -z "$windows_file" && -z "$linux_file") ]]; then
   usage >&2
   exit 2
 fi
@@ -69,10 +72,12 @@ upload() {
 
 android_name=""
 macos_name=""
+macos_intel_name=""
 windows_name=""
 linux_name=""
 android_size=""
 macos_size=""
+macos_intel_size=""
 windows_size=""
 linux_size=""
 
@@ -88,6 +93,16 @@ if [[ -n "$macos_file" ]]; then
   macos_name="minibot-${version}-$(basename "$macos_file")"
   macos_size="$(du -h "$macos_file" | awk '{print $1}')"
   upload "$macos_file" "${prefix}/macos/${macos_name}"
+fi
+
+if [[ -n "$macos_intel_file" ]]; then
+  [[ -f "$macos_intel_file" && "$macos_intel_file" == *.dmg ]] || {
+    echo "--macos-intel must be a .dmg file, not a .app directory" >&2
+    exit 2
+  }
+  macos_intel_name="minibot-${version}-$(basename "$macos_intel_file")"
+  macos_intel_size="$(du -h "$macos_intel_file" | awk '{print $1}')"
+  upload "$macos_intel_file" "${prefix}/macos/${macos_intel_name}"
 fi
 
 if [[ -n "$windows_file" ]]; then
@@ -113,6 +128,7 @@ fi
 manifest_command=(node scripts/update-oss-release-manifest.mjs --manifest "$manifest" --public-base-url "$OSS_PUBLIC_BASE_URL" --prefix "$prefix")
 [[ -n "$android_name" ]] && manifest_command+=(--android "$android_name" --android-version "$version" --android-size "$android_size")
 [[ -n "$macos_name" ]] && manifest_command+=(--macos "$macos_name" --macos-version "$version" --macos-size "$macos_size")
+[[ -n "$macos_intel_name" ]] && manifest_command+=(--macos-intel "$macos_intel_name" --macos-intel-version "$version" --macos-intel-size "$macos_intel_size")
 [[ -n "$windows_name" ]] && manifest_command+=(--windows "$windows_name" --windows-version "$version" --windows-size "$windows_size")
 [[ -n "$linux_name" ]] && manifest_command+=(--linux "$linux_name" --linux-version "$version" --linux-size "$linux_size")
 

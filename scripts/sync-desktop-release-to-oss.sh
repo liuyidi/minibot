@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Download a published desktop-v* GitHub Release and publish selected
-# installers to Aliyun OSS + releases.json (macOS / Windows / Linux).
+# installers to Aliyun OSS + releases.json (macOS arm+intel / Windows / Linux).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -45,13 +45,13 @@ gh release download "$tag" --dir "$tmpdir" --clobber
 
 pick_one() {
   local preferred="$1"
-  local fallback="$2"
+  local fallback="${2:-}"
   local match=""
   shopt -s nullglob
   local candidates=("$tmpdir"/$preferred)
   if [[ ${#candidates[@]} -gt 0 ]]; then
     match="${candidates[0]}"
-  else
+  elif [[ -n "$fallback" ]]; then
     candidates=("$tmpdir"/$fallback)
     if [[ ${#candidates[@]} -gt 0 ]]; then
       match="${candidates[0]}"
@@ -61,9 +61,15 @@ pick_one() {
   printf '%s' "$match"
 }
 
-macos_file="$(pick_one '*aarch64*.dmg' '*.dmg')"
+# Prefer explicit arch names from tauri-action (aarch64 / x64).
+macos_arm_file="$(pick_one '*aarch64*.dmg' '*arm64*.dmg')"
+macos_intel_file="$(pick_one '*x64*.dmg' '*x86_64*.dmg')"
+# If only one unnamed .dmg exists, treat it as Apple Silicon primary.
+if [[ -z "$macos_arm_file" && -z "$macos_intel_file" ]]; then
+  macos_arm_file="$(pick_one '*.dmg' '')"
+fi
+
 windows_file="$(pick_one '*-setup.exe' '*.exe')"
-# Prefer .deb; fall back to AppImage then rpm.
 linux_file="$(pick_one '*.deb' '*.AppImage')"
 if [[ -z "$linux_file" ]]; then
   shopt -s nullglob
@@ -74,16 +80,15 @@ if [[ -z "$linux_file" ]]; then
   fi
 fi
 
-# Drop signature sidecars accidentally matched as primary (shouldn't with above globs).
-[[ -n "$macos_file" && "$macos_file" == *.sig ]] && macos_file=""
 [[ -n "$windows_file" && "$windows_file" == *.sig ]] && windows_file=""
 
 args=(--version "$version")
-[[ -n "$macos_file" ]] && args+=(--macos "$macos_file") && echo "macOS: $macos_file"
+[[ -n "$macos_arm_file" ]] && args+=(--macos "$macos_arm_file") && echo "macOS Apple Silicon: $macos_arm_file"
+[[ -n "$macos_intel_file" ]] && args+=(--macos-intel "$macos_intel_file") && echo "macOS Intel: $macos_intel_file"
 [[ -n "$windows_file" ]] && args+=(--windows "$windows_file") && echo "Windows: $windows_file"
 [[ -n "$linux_file" ]] && args+=(--linux "$linux_file") && echo "Linux: $linux_file"
 
-if [[ -z "$macos_file" && -z "$windows_file" && -z "$linux_file" ]]; then
+if [[ -z "$macos_arm_file" && -z "$macos_intel_file" && -z "$windows_file" && -z "$linux_file" ]]; then
   echo "No macOS/Windows/Linux installers found in release $tag" >&2
   ls -la "$tmpdir" >&2 || true
   exit 1

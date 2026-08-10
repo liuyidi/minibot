@@ -15,6 +15,7 @@ import type { ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { AndroidIcon, LinuxIcon, WindowsIcon } from "./DownloadPlatformIcons";
 
 const RELEASE_MANIFEST_URL = import.meta.env.VITE_MINIBOT_RELEASES_URL || "/releases.json";
 
@@ -23,13 +24,22 @@ type DownloadPageProps = {
 };
 
 type Platform = "windows" | "macos" | "linux" | "ios" | "android";
-type Release = { version: string | null; fileName?: string; size?: string; url: string | null };
+type Release = {
+  version: string | null;
+  fileName?: string;
+  size?: string;
+  url: string | null;
+  /** Intel / x64 macOS DMG (Apple Silicon uses `url`). */
+  intelFileName?: string;
+  intelSize?: string;
+  intelUrl?: string | null;
+};
 type ReleaseManifest = Record<Platform, Release>;
 
 const EMPTY_MANIFEST: ReleaseManifest = {
   android: { version: null, url: null },
   ios: { version: null, url: null },
-  macos: { version: null, url: null },
+  macos: { version: null, url: null, intelUrl: null },
   windows: { version: null, url: null },
   linux: { version: null, url: null },
 };
@@ -276,6 +286,8 @@ function PlatformPanel({ platform, release }: { platform: Platform; release: Rel
         ? t("download.linuxFooter")
         : t("download.windowsFooter");
   const version = release.version ? `v ${release.version}` : null;
+  const intelUrl = platform === "macos" ? release.intelUrl ?? null : null;
+  const hasDownload = Boolean(release.url || intelUrl);
 
   return (
     <div className="bg-white dark:bg-[#111e30]">
@@ -286,15 +298,28 @@ function PlatformPanel({ platform, release }: { platform: Platform; release: Rel
             <li className="flex gap-3"><span className="mt-3 h-1.5 w-1.5 shrink-0 rounded-full bg-current" />{body}</li>
             <li className="flex gap-3"><span className="mt-3 h-1.5 w-1.5 shrink-0 rounded-full bg-current" />{companion}</li>
           </ul>
-          <div className="mt-10">
-            {release.url ? (
-              <a
-                href={release.url}
-                className="inline-flex h-14 min-w-56 items-center justify-center gap-3 rounded-xl bg-black px-8 text-lg font-semibold text-white transition-transform hover:-translate-y-0.5 hover:bg-slate-800 dark:bg-[#8df5d8] dark:text-[#102033] dark:hover:bg-[#b7fbe7]"
-              >
-                <Download className="h-5 w-5" />
-                {t("download.downloadNow")}
-              </a>
+          <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+            {hasDownload ? (
+              <>
+                {release.url ? (
+                  <a
+                    href={release.url}
+                    className="inline-flex h-14 min-w-56 items-center justify-center gap-3 rounded-xl bg-black px-8 text-lg font-semibold text-white transition-transform hover:-translate-y-0.5 hover:bg-slate-800 dark:bg-[#8df5d8] dark:text-[#102033] dark:hover:bg-[#b7fbe7]"
+                  >
+                    <Download className="h-5 w-5" />
+                    {platform === "macos" ? t("download.macosAppleSilicon") : t("download.downloadNow")}
+                  </a>
+                ) : null}
+                {intelUrl ? (
+                  <a
+                    href={intelUrl}
+                    className="inline-flex h-14 min-w-56 items-center justify-center gap-3 rounded-xl border border-slate-300 bg-white px-8 text-lg font-semibold text-slate-900 transition-transform hover:-translate-y-0.5 hover:bg-slate-50 dark:border-white/15 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
+                  >
+                    <Download className="h-5 w-5" />
+                    {t("download.macosIntel")}
+                  </a>
+                ) : null}
+              </>
             ) : (
               <span className="inline-flex h-14 min-w-56 items-center justify-center rounded-xl bg-slate-100 px-8 text-lg font-semibold text-slate-400 dark:bg-white/10 dark:text-slate-500">
                 {t("download.platformStatusSoon")}
@@ -334,30 +359,6 @@ function PlatformPanel({ platform, release }: { platform: Platform; release: Rel
         </div>
       </div>
     </div>
-  );
-}
-
-function WindowsIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M2.5 3.8 10.7 2.7v8.6H2.5V3.8Zm9.8-1.3L21.5 1v10.3h-9.2V2.5ZM2.5 12.7h8.2v8.6l-8.2-1.1v-7.5Zm9.8 0h9.2V23l-9.2-1.3v-9Z" />
-    </svg>
-  );
-}
-
-function LinuxIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M12 2c-1.4 0-2.6 1.4-2.6 3.2 0 1.3.5 2.4 1.2 3.1-.9.2-1.7.8-2.2 1.6C7.4 11.3 7.2 13 8 14.3c.4.7 1.1 1.2 1.9 1.5-.1.5 0 1 .3 1.5.6 1 1.8 1.5 2.9 1.2.2 0 .4-.1.6-.2.2.1.4.2.6.2 1.1.3 2.3-.2 2.9-1.2.3-.5.4-1 .3-1.5.8-.3 1.5-.8 1.9-1.5.8-1.3.6-3-.4-4.4-.5-.8-1.3-1.4-2.2-1.6.7-.7 1.2-1.8 1.2-3.1C14.6 3.4 13.4 2 12 2Zm0 1.5c.7 0 1.1.8 1.1 1.7S12.7 7 12 7s-1.1-.9-1.1-1.8.4-1.7 1.1-1.7ZM9.8 16.8c-.4-.1-.8-.4-1-.8-.3-.6-.2-1.3.2-1.8.3-.3.3-.7.1-1-.4-.5-.6-1.1-.5-1.8.2-1.2 1.1-2 2.2-2.2.3 0 .5-.2.6-.5.2-.6.6-1.1 1.1-1.4.5.3.9.8 1.1 1.4.1.3.3.5.6.5 1.1.2 2 1 2.2 2.2.1.7-.1 1.3-.5 1.8-.2.3-.2.7.1 1 .4.5.5 1.2.2 1.8-.2.4-.6.7-1 .8-.3.1-.5.3-.5.6 0 .5-.3.9-.7 1.1-.4.2-.9.1-1.2-.2-.2-.2-.5-.3-.8-.1-.3.2-.8.3-1.2.1-.4-.2-.7-.6-.7-1.1 0-.3-.2-.5-.5-.6Z" />
-    </svg>
-  );
-}
-
-function AndroidIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M7.2 8.4 5.7 5.8l.9-.5 1.6 2.8a9.9 9.9 0 0 1 7.6 0l1.6-2.8.9.5-1.5 2.6A7.4 7.4 0 0 1 20 14H4a7.4 7.4 0 0 1 3.2-5.6ZM9 11.5a.8.8 0 1 0 0-1.6.8.8 0 0 0 0 1.6Zm6 0a.8.8 0 1 0 0-1.6.8.8 0 0 0 0 1.6ZM5 15h14v4.3a1.7 1.7 0 0 1-1.7 1.7H6.7A1.7 1.7 0 0 1 5 19.3V15Z" />
-    </svg>
   );
 }
 

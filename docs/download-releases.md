@@ -82,7 +82,8 @@ scripts/sync-desktop-release-to-oss.sh --tag desktop-v1.0.0-beta.1
 
 ## Release checklist
 
-- macOS: prefer Apple Silicon `.dmg` (CI also builds Intel).
+- macOS: prefer Apple Silicon `.dmg` (CI also builds Intel); both are uploaded
+  (`url` + `intelUrl` in `releases.json`).
 - Windows: NSIS `.exe` installer; Authenticode sign before treating as production.
 - Linux: prefer `.deb` (AppImage / rpm also accepted by the sync script).
 - Android / iOS: still published separately; iOS should link App Store / TestFlight.
