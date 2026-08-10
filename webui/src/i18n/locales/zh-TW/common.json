@@ -1341,6 +1341,7 @@
     "linuxBody": "Linux x64 packages (.deb preferred).",
     "linuxFooter": "Install the downloaded package with your distro's package manager.",
     "macosAppleSilicon": "Download Apple Silicon",
-    "macosIntel": "Download Intel"
+    "macosIntel": "Download Intel",
+    "macosAlsoAvailable": "Also available: {{arch}}"
   }
 }

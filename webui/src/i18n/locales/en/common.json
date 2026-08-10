@@ -1306,6 +1306,7 @@
     "macosFooter": "Open the DMG and drag minibot into Applications to install.",
     "macosAppleSilicon": "Download Apple Silicon",
     "macosIntel": "Download Intel",
+    "macosAlsoAvailable": "Also available: {{arch}}",
     "windowsBody": "Windows x64 installer (NSIS).",
     "windowsFooter": "Run the setup executable. SmartScreen may warn until the build is code-signed.",
     "linuxBody": "Linux x64 packages (.deb preferred).",

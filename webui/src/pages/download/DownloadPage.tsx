@@ -16,6 +16,7 @@ import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { AndroidIcon, LinuxIcon, WindowsIcon } from "./DownloadPlatformIcons";
+import { usePreferredMacArch } from "./usePreferredMacArch";
 
 const RELEASE_MANIFEST_URL = import.meta.env.VITE_MINIBOT_RELEASES_URL || "/releases.json";
 
@@ -264,7 +265,7 @@ function PlatformTabs({ activePlatform, onChange }: { activePlatform: Platform; 
 
 function PlatformPanel({ platform, release }: { platform: Platform; release: Release }) {
   const { t } = useTranslation();
-  const qrDataUrl = useQrCode(release.url);
+  const macArch = usePreferredMacArch();
   const isMobile = platform === "ios" || platform === "android";
   const title = `${platformLabel(platform)} ${isMobile ? t("download.mobileTitle") : t("download.desktopTitle")}`;
   const body = isMobile
@@ -286,8 +287,31 @@ function PlatformPanel({ platform, release }: { platform: Platform; release: Rel
         ? t("download.linuxFooter")
         : t("download.windowsFooter");
   const version = release.version ? `v ${release.version}` : null;
+
+  const armUrl = platform === "macos" ? release.url : null;
   const intelUrl = platform === "macos" ? release.intelUrl ?? null : null;
-  const hasDownload = Boolean(release.url || intelUrl);
+  const primaryUrl =
+    platform === "macos"
+      ? macArch === "arm"
+        ? armUrl || intelUrl
+        : intelUrl || armUrl
+      : release.url;
+  const alternate =
+    platform === "macos" && armUrl && intelUrl
+      ? macArch === "arm"
+        ? { url: intelUrl, label: t("download.macosIntel") }
+        : { url: armUrl, label: t("download.macosAppleSilicon") }
+      : null;
+  const primaryLabel =
+    platform === "macos"
+      ? macArch === "arm" && armUrl
+        ? t("download.macosAppleSilicon")
+        : macArch === "intel" && intelUrl
+          ? t("download.macosIntel")
+          : t("download.downloadNow")
+      : t("download.downloadNow");
+  const qrDataUrl = useQrCode(primaryUrl);
+  const hasDownload = Boolean(primaryUrl);
 
   return (
     <div className="bg-white dark:bg-[#111e30]">
@@ -298,28 +322,25 @@ function PlatformPanel({ platform, release }: { platform: Platform; release: Rel
             <li className="flex gap-3"><span className="mt-3 h-1.5 w-1.5 shrink-0 rounded-full bg-current" />{body}</li>
             <li className="flex gap-3"><span className="mt-3 h-1.5 w-1.5 shrink-0 rounded-full bg-current" />{companion}</li>
           </ul>
-          <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+          <div className="mt-10">
             {hasDownload ? (
-              <>
-                {release.url ? (
+              <div className="flex flex-col items-start gap-3">
+                <a
+                  href={primaryUrl!}
+                  className="inline-flex h-14 min-w-56 items-center justify-center gap-3 rounded-xl bg-black px-8 text-lg font-semibold text-white transition-transform hover:-translate-y-0.5 hover:bg-slate-800 dark:bg-[#8df5d8] dark:text-[#102033] dark:hover:bg-[#b7fbe7]"
+                >
+                  <Download className="h-5 w-5" />
+                  {primaryLabel}
+                </a>
+                {alternate ? (
                   <a
-                    href={release.url}
-                    className="inline-flex h-14 min-w-56 items-center justify-center gap-3 rounded-xl bg-black px-8 text-lg font-semibold text-white transition-transform hover:-translate-y-0.5 hover:bg-slate-800 dark:bg-[#8df5d8] dark:text-[#102033] dark:hover:bg-[#b7fbe7]"
+                    href={alternate.url}
+                    className="text-sm text-slate-500 underline-offset-4 transition-colors hover:text-slate-800 hover:underline dark:text-slate-400 dark:hover:text-slate-200"
                   >
-                    <Download className="h-5 w-5" />
-                    {platform === "macos" ? t("download.macosAppleSilicon") : t("download.downloadNow")}
+                    {t("download.macosAlsoAvailable", { arch: alternate.label })}
                   </a>
                 ) : null}
-                {intelUrl ? (
-                  <a
-                    href={intelUrl}
-                    className="inline-flex h-14 min-w-56 items-center justify-center gap-3 rounded-xl border border-slate-300 bg-white px-8 text-lg font-semibold text-slate-900 transition-transform hover:-translate-y-0.5 hover:bg-slate-50 dark:border-white/15 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
-                  >
-                    <Download className="h-5 w-5" />
-                    {t("download.macosIntel")}
-                  </a>
-                ) : null}
-              </>
+              </div>
             ) : (
               <span className="inline-flex h-14 min-w-56 items-center justify-center rounded-xl bg-slate-100 px-8 text-lg font-semibold text-slate-400 dark:bg-white/10 dark:text-slate-500">
                 {t("download.platformStatusSoon")}

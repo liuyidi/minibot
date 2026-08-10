@@ -1306,6 +1306,7 @@
     "macosFooter": "下载后打开 DMG，将 minibot 拖入“应用程序”即可安装。",
     "macosAppleSilicon": "下载 Apple Silicon 版",
     "macosIntel": "下载 Intel 版",
+    "macosAlsoAvailable": "也可下载：{{arch}}",
     "windowsBody": "Windows x64 安装包（NSIS）。",
     "windowsFooter": "运行安装程序即可。在代码签名完成前，SmartScreen 可能会提示警告。",
     "linuxBody": "Linux x64 安装包（优先 .deb）。",

@@ -13,15 +13,22 @@
   },
   "macos": {
     "version": "1.0.0-beta.1",
-    "fileName": "minibot_1.0.0-beta.1_aarch64.dmg",
-    "url": "https://downloads.liuyidi.me/minibot_1.0.0-beta.1_aarch64.dmg"
+    "fileName": "minibot-1.0.0-beta.1-minibot_1.0.0-beta.1_aarch64.dmg",
+    "url": "https://downloads.liuyidi.me/minibot/macos/minibot-1.0.0-beta.1-minibot_1.0.0-beta.1_aarch64.dmg",
+    "size": "3.7M",
+    "intelFileName": "minibot-1.0.0-beta.1-minibot_1.0.0-beta.1_x64.dmg",
+    "intelUrl": "https://downloads.liuyidi.me/minibot/macos/minibot-1.0.0-beta.1-minibot_1.0.0-beta.1_x64.dmg"
   },
   "windows": {
-    "version": null,
-    "url": null
+    "version": "1.0.0-beta.1",
+    "url": "https://downloads.liuyidi.me/minibot/windows/minibot-1.0.0-beta.1-minibot_1.0.0-beta.1_x64-setup.exe",
+    "size": "2.1M",
+    "fileName": "minibot-1.0.0-beta.1-minibot_1.0.0-beta.1_x64-setup.exe"
   },
   "linux": {
-    "version": null,
-    "url": null
+    "version": "1.0.0-beta.1",
+    "url": "https://downloads.liuyidi.me/minibot/linux/minibot-1.0.0-beta.1-minibot_1.0.0-beta.1_amd64.deb",
+    "size": "3.0M",
+    "fileName": "minibot-1.0.0-beta.1-minibot_1.0.0-beta.1_amd64.deb"
   }
 }
