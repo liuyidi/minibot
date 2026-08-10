@@ -131,6 +131,10 @@ cd webui && npm test
 
 面向 Agent 的仓库说明见 [`AGENTS.md`](./AGENTS.md)。
 
+## 更新日志
+
+见 [`CHANGELOG.zh.md`](./CHANGELOG.zh.md)（[English](./CHANGELOG.md)）。
+
 ## 许可
 
 详见仓库内许可证文件。

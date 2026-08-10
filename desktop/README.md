@@ -8,6 +8,7 @@ Tauri 2 桌面应用连接 minibot WebUI，注入 `window.minibotHost`。
 | `npm run build` / release | [`https://bot.liuyidi.me`](https://bot.liuyidi.me/) |
 
 可用 `MINIBOT_API_BASE` 或启动页覆盖；配置写入应用 data 目录下的 `server.json`。
+Release 包会忽略其中的 localhost / `127.0.0.1`（避免沿用 `tauri:dev` 留下的地址而出现 `local-webui` 角标），并写回生产默认。
 
 ## 架构
 
@@ -55,13 +56,15 @@ MINIBOT_API_BASE=http://127.0.0.1:8766 npm run dev
 
 ```bash
 cd desktop
-npm run build          # 产出 .app + .dmg
+npm run build          # 产出 .app + .dmg，并复制到 dist-bundle/
 ```
 
-产物默认在 `src-tauri/target/release/bundle/`（或环境 `CARGO_TARGET_DIR`）：
+产物目录：`desktop/dist-bundle/`（已 gitignore）：
 
-- `macos/minibot.app`
-- `dmg/minibot_0.1.0_aarch64.dmg`
+- `minibot.app`
+- `minibot_1.0.0-beta.1_aarch64.dmg`
+
+底层 Tauri 产物仍在 `src-tauri/target/release/bundle/`（或环境 `CARGO_TARGET_DIR`）；可用 `npm run collect-bundle` 单独再拷一次。
 
 未签名分享时：
 

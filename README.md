@@ -131,6 +131,10 @@ cd webui && npm test
 
 See [`AGENTS.md`](./AGENTS.md) for agent-oriented repo guidance.
 
+## Changelog
+
+See [`CHANGELOG.md`](./CHANGELOG.md) ([中文](./CHANGELOG.zh.md)).
+
 ## License
 
 See repository license files for details.

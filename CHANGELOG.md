@@ -1,0 +1,239 @@
+# Changelog
+
+All notable user-facing changes to **minibot** are documented here.
+
+Format based on [Keep a Changelog](https://keepachangelog.com/).
+Versions follow SemVer for product narrative (`0.1.0` …). Package metadata may lag until a formal release.
+
+简体中文：[CHANGELOG.zh.md](./CHANGELOG.zh.md)
+
+---
+
+## [Unreleased]
+
+### Added
+
+- Auth bootstrap / login path updates for WebUI and API (token bootstrap flow).
+
+---
+
+## [0.9.0] - 2026-08-09
+
+### Added
+
+- Cursor-style `/` skill picker and `@` mention chips in the composer.
+
+### Fixed
+
+- Mention chips overlapping following text in message bubbles.
+- WebUI production TypeScript build errors.
+
+---
+
+## [0.8.0] - 2026-08-06
+
+### Added
+
+- Skills · Connectors hub with search, sections, and install / custom / import flows.
+- Skills WebUI closed loop with available / detail APIs and prompt filters.
+- Heartbeat (default 1h) and Dream thin consolidation (off by default / 2d) as system cron jobs.
+- WebUI sidebar pin, archive, and rename persistence for sessions.
+
+### Changed
+
+- Settings reorganized into a thin shell with clearer section pages.
+- Automations API hardened (origin / POST mutate / cascade on session delete).
+
+### Fixed
+
+- Tool results leaking into the chat transcript.
+- Sidebar persist using the correct POST mutation path.
+
+---
+
+## [0.7.0] - 2026-08-06
+
+### Added
+
+- Platform built-in multi-slot models via env (`.env.models`), with Models radio picker and Auto (first available key).
+- Identity anchoring and live-chat model resolution that honors Auto / platform selection.
+
+---
+
+## [0.6.0] - 2026-08-06
+
+### Added
+
+- Media / file preview in chat (Phase 8.1).
+
+### Changed
+
+- WebUI composer polish for attachments and file-aware flows.
+
+---
+
+## [0.5.1] - 2026-08-05
+
+### Added
+
+- IM channel cards: edit / remove menu and enable switch.
+
+### Changed
+
+- Sidebar split into **Chats** and **Channels**; faster IM QR setup.
+- Monorepo branding consolidated around minibot.
+
+---
+
+## [0.5.0] - 2026-08-05
+
+### Added
+
+- Feishu channel with QR setup and DM pairing.
+- WeChat (iLink) channel with QR login and DM pairing.
+- IM channels, scheduled tasks, skills, and knowledge promoted to the main sidebar.
+
+---
+
+## [0.4.0] - 2026-08-05
+
+### Added
+
+- Optional **E2B** microVM backend for the `exec` tool (local backend remains default).
+
+---
+
+## [0.3.1] - 2026-08-05
+
+### Added
+
+- Daily LLM usage budget kill-switch with WebUI visibility when the budget is hit.
+- Score queue wiring for observability scores.
+
+---
+
+## [0.3.0] - 2026-08-03
+
+### Added
+
+- Human-in-the-loop (HITL) approvals for high-risk tools (persist + REST / WebSocket cards). See [docs/human-in-the-loop.md](./docs/human-in-the-loop.md).
+
+---
+
+## [0.2.0] - 2026-07-31
+
+### Added
+
+- Desktop app as a remote thin shell over the same minibot REST + WebSocket API.
+
+### Fixed
+
+- Disabled WebSocket permessage-deflate for iOS `URLSessionWebSocketTask` compatibility.
+
+---
+
+## [0.1.0] - 2026-07-30
+
+First publicly demoable cut (after the `0.0.x` capability build-up).
+
+### Added
+
+- **Fallback** across user model presets on provider errors (toast / runtime visibility).
+- Shared client package (`@liuyidi/minibot-client`).
+- Public `/status` gateway health and availability page.
+- Optional mini-langfuse soft observability path (off by default).
+- Optional minikb knowledge tools + Knowledge UI.
+
+---
+
+## [0.0.10] - 2026-07-28
+
+### Added
+
+- Provider registry and **Anthropic** Messages implementation (chat + streaming).
+- Providers Dev UI page; MVP config import wizard.
+
+---
+
+## [0.0.9] - 2026-07-27
+
+### Added
+
+- WebSocket **streaming** replies (`delta` / `reasoning_*` / `stream_end`).
+- **Stop** to abort the in-flight turn.
+
+---
+
+## [0.0.8] - 2026-07-26
+
+### Added
+
+- Cron / automations to trigger agent turns on a schedule (`at` / `every` / `cron`).
+- Automations Dev UI (`/ui/automations.html`).
+
+---
+
+## [0.0.7] - 2026-07-25
+
+### Added
+
+- User **model presets** (BYOK): create / switch / activate OpenAI-compatible endpoints.
+- Settings sidebar Model section.
+
+---
+
+## [0.0.6] - 2026-07-24
+
+### Added
+
+- **MCP** server presets (stdio / SSE / HTTP) with tools injected into the agent registry.
+- MCP Insight UI (templates / Invoke / pipeline).
+
+---
+
+## [0.0.5] - 2026-07-22
+
+### Added
+
+- **Memory** file read/write and system-prompt injection.
+- **Skills** discovery (builtin + workspace) injected into agent context.
+- Memory / Skills Dev UI pages.
+
+---
+
+## [0.0.4] - 2026-07-18
+
+### Added
+
+- Context assembly (identity / workspace bootstrap files).
+- Long-thread **context compaction** (summary + keep recent messages).
+- Context usage meter and `/ui/context.html`.
+
+---
+
+## [0.0.3] - 2026-07-14
+
+### Added
+
+- Sync subagent **spawn** (block until child finishes; result returns to parent turn).
+
+---
+
+## [0.0.2] - 2026-07-08
+
+### Added
+
+- Real coding tools: filesystem read/write/edit, local **exec**, web search / fetch.
+- Chat **tool-call cards** (process narration + done card; post-hoc replay).
+- Workspace boundaries and basic tool-safety denials.
+
+---
+
+## [0.0.1] - 2026-07-01
+
+### Added
+
+- Local-first **FastAPI** agent runtime (AgentLoop + MessageBus + ReAct Runner).
+- Multi-session **JSONL** history; OpenAI-compatible provider.
+- Embedded Dev UI (`/ui/` Chat / Trace / Runtime, …) and product WebUI path skeleton.
+- Bootstrap auth (`X-Minibot-Auth` / Bearer) when a secret is configured.

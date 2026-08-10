@@ -317,11 +317,24 @@ fn resolve_initial_api_base(config_path: &Path) -> Result<String, String> {
             .map_err(|e| format!("read server.json: {e}"))?;
         if let Ok(cfg) = serde_json::from_str::<ServerConfig>(&raw) {
             if let Ok(normalized) = normalize_api_base(&cfg.api_base) {
+                // Release builds share Application Support with `tauri:dev`. A leftover
+                // localhost api_base would load the Vite WebUI and show `local-webui`.
+                if !cfg!(debug_assertions) && is_loopback_api_base(&normalized) {
+                    let _ = persist_server_config(config_path, PRODUCTION_HTTPS_API_BASE);
+                    return Ok(PRODUCTION_HTTPS_API_BASE.to_string());
+                }
                 return Ok(normalized);
             }
         }
     }
     Ok(DEFAULT_API_BASE.to_string())
+}
+
+fn is_loopback_api_base(api_base: &str) -> bool {
+    Url::parse(api_base)
+        .ok()
+        .and_then(|u| u.host_str().map(|h| h.to_ascii_lowercase()))
+        .is_some_and(|h| h == "localhost" || h == "127.0.0.1" || h == "::1")
 }
 
 fn should_try_http_fallback(api_base: &str) -> bool {

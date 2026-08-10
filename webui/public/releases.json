@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "product": "minibot",
+  "android": {
+    "version": "1.0.4",
+    "fileName": "minibot-android-v1.0.4.apk",
+    "size": "80 MB",
+    "url": null
+  },
+  "ios": {
+    "version": null,
+    "url": null
+  },
+  "macos": {
+    "version": "0.1.0",
+    "fileName": "minibot-0.1.0-aarch64.dmg",
+    "url": null
+  },
+  "windows": {
+    "version": null,
+    "url": null
+  }
+}
