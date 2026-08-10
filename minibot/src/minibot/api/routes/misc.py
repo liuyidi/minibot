@@ -2,14 +2,47 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Any
 
+import httpx
 from fastapi import APIRouter, HTTPException, Query, status
+from fastapi.responses import JSONResponse
 
 from minibot.api.deps import AuthDep, StateDep
 
 router = APIRouter(tags=["misc"])
+
+_DEFAULT_RELEASES_UPSTREAM = "https://downloads.liuyidi.me/minibot/releases.json"
+
+
+@router.get("/api/releases")
+async def release_manifest() -> JSONResponse:
+    """Same-origin proxy for the public download manifest (avoids browser CORS)."""
+    upstream = (os.environ.get("MINIBOT_RELEASES_UPSTREAM") or _DEFAULT_RELEASES_UPSTREAM).strip()
+    # Never treat a same-origin path as upstream — that would recurse.
+    if upstream.startswith("/") or "://" not in upstream:
+        upstream = _DEFAULT_RELEASES_UPSTREAM
+    try:
+        async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
+            response = await client.get(upstream)
+            response.raise_for_status()
+            payload = response.json()
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"failed to fetch release manifesto: {exc}",
+        ) from exc
+    if not isinstance(payload, dict):
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="release manifesto is not a JSON object",
+        )
+    return JSONResponse(
+        payload,
+        headers={"Cache-Control": "public, max-age=60"},
+    )
 
 
 @router.get("/api/commands")
