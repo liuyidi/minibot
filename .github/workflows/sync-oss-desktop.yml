@@ -21,6 +21,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
+  actions: read
   contents: read
 
 jobs:
@@ -104,7 +105,11 @@ jobs:
       - name: Sync release assets to OSS
         run: |
           chmod +x scripts/sync-desktop-release-to-oss.sh scripts/publish-oss-releases.sh
-          scripts/sync-desktop-release-to-oss.sh --tag "${{ steps.tag.outputs.value }}"
+          args=(--tag "${{ steps.tag.outputs.value }}")
+          if [[ "${{ github.event_name }}" == "workflow_run" ]]; then
+            args+=(--run-id "${{ github.event.workflow_run.id }}")
+          fi
+          scripts/sync-desktop-release-to-oss.sh "${args[@]}"
 
   notify-feishu:
     needs: sync-oss

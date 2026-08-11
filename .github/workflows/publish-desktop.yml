@@ -28,12 +28,16 @@ jobs:
         include:
           - platform: macos-latest
             args: --target aarch64-apple-darwin
+            bundle_name: macos-aarch64
           - platform: macos-latest
             args: --target x86_64-apple-darwin
+            bundle_name: macos-x86_64
           - platform: ubuntu-22.04
             args: ""
+            bundle_name: linux
           - platform: windows-latest
             args: ""
+            bundle_name: windows
 
     runs-on: ${{ matrix.platform }}
     timeout-minutes: 60
@@ -92,6 +96,14 @@ jobs:
           uploadUpdaterJson: false
           uploadUpdaterSignatures: false
           args: ${{ matrix.args }}
+
+      - name: Upload build bundle artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-bundle-${{ matrix.bundle_name }}
+          path: desktop/src-tauri/target/release/bundle
+          if-no-files-found: error
+          retention-days: 7
 
   notify-feishu:
     needs: publish-tauri
@@ -161,10 +173,29 @@ jobs:
           version="$(node -p "require('./desktop/package.json').version")"
           tag="desktop-v${version}"
 
-          draft="$(gh release view "$tag" --json draft --jq '.draft' 2>/dev/null || echo "false")"
+          draft="$(gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json draft --jq '.draft' 2>/dev/null || true)"
+          if [[ -z "$draft" ]]; then
+            echo "Release $tag was not found; tauri-action may have failed to create the draft release." >&2
+            exit 1
+          fi
+
           if [[ "$draft" != "true" ]]; then
             echo "Release $tag is already published; nothing to do."
             exit 0
           fi
 
           gh release edit "$tag" --draft=false --repo "$GITHUB_REPOSITORY"
+
+          for attempt in {1..12}; do
+            draft="$(gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json draft --jq '.draft' 2>/dev/null || true)"
+            if [[ "$draft" == "false" ]]; then
+              echo "Release $tag is published."
+              exit 0
+            fi
+            echo "Waiting for release $tag to become visible... ($attempt/12)"
+            sleep 5
+          done
+
+          echo "Release $tag was not visible after publishing." >&2
+          gh release view "$tag" --json name,draft,prerelease,url || true
+          exit 1
