@@ -45,8 +45,8 @@ shows it as coming soon rather than exposing a broken download link.
    draft GitHub Release.
 2. The workflow then publishes that release automatically.
 3. Workflow **Sync Desktop Release to OSS**
-   (`.github/workflows/sync-oss-desktop.yml`) runs after the release is
-   published, downloads the assets, and executes
+   (`.github/workflows/sync-oss-desktop.yml`) runs automatically after
+   **Publish Desktop** completes, downloads the assets, and executes
    `scripts/sync-desktop-release-to-oss.sh` to upload installers and update
    `minibot/releases.json` on OSS.
 4. Release notifications are sent to Feishu as card messages:

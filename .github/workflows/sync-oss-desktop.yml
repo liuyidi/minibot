@@ -4,17 +4,20 @@ name: Sync Desktop Release to OSS
 # and sync macOS / Windows / Linux packages + releases.json to Aliyun OSS.
 
 on:
+  workflow_run:
+    workflows: ["Publish Desktop"]
+    types: [completed]
   release:
     types: [published]
   workflow_dispatch:
     inputs:
       tag:
-        description: Release tag (e.g. desktop-v1.0.0-beta.1)
+        description: Release tag (e.g. desktop-v1.0.0-beta.2)
         required: true
         type: string
 
 concurrency:
-  group: sync-oss-desktop-${{ github.event.release.tag_name || inputs.tag }}
+  group: sync-oss-desktop-${{ github.event.workflow_run.head_sha || github.event.release.tag_name || inputs.tag }}
   cancel-in-progress: true
 
 permissions:
@@ -24,7 +27,11 @@ jobs:
   sync-oss:
     if: >-
       github.event_name == 'workflow_dispatch' ||
-      startsWith(github.event.release.tag_name, 'desktop-v')
+      (github.event_name == 'release' && startsWith(github.event.release.tag_name, 'desktop-v')) ||
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.name == 'Publish Desktop')
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -39,16 +46,22 @@ jobs:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
-      - uses: actions/checkout@v4
-
       - name: Resolve release tag
         id: tag
         run: |
+          set -euo pipefail
+
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             echo "value=${{ inputs.tag }}" >> "$GITHUB_OUTPUT"
-          else
+          elif [[ "${{ github.event_name }}" == "release" ]]; then
             echo "value=${{ github.event.release.tag_name }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "value=__from_package_json__" >> "$GITHUB_OUTPUT"
           fi
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.event.release.tag_name || inputs.tag || github.ref }}
 
       - name: Validate OSS configuration
         run: |
@@ -125,8 +138,11 @@ jobs:
 
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             tag="${{ inputs.tag }}"
-          else
+          elif [[ "${{ github.event_name }}" == "release" ]]; then
             tag="${{ github.event.release.tag_name }}"
+          else
+            version="$(node -p "require('./desktop/package.json').version")"
+            tag="desktop-v${version}"
           fi
           version="${tag#desktop-v}"
           release_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/tag/${tag}"
