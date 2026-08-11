@@ -47,7 +47,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.workflow_run.head_sha || inputs.tag || github.ref }}
+          ref: ${{ github.event.workflow_run.head_sha || github.ref }}
 
       - name: Setup Node
         uses: actions/setup-node@v4
