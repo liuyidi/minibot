@@ -1,6 +1,7 @@
 name: Publish Desktop
 
-# Builds minibot Tauri shell for macOS / Windows / Linux and uploads a GitHub Release.
+# Builds minibot Tauri shell for macOS / Windows / Linux, creates a GitHub draft
+# release, then publishes it automatically so the OSS sync workflow can run.
 # Trigger: push to main touching desktop/, push tag desktop-v*, or Actions → Run workflow.
 
 on:
@@ -134,3 +135,36 @@ jobs:
           RELEASE_URL="$release_url" \
           WORKFLOW_URL="$workflow_url" \
           scripts/send-feishu-release-notification.sh
+
+  publish-release:
+    needs: publish-tauri
+    if: ${{ needs.publish-tauri.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Publish draft GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          version="$(node -p "require('./desktop/package.json').version")"
+          tag="desktop-v${version}"
+
+          draft="$(gh release view "$tag" --json draft --jq '.draft' 2>/dev/null || echo "false")"
+          if [[ "$draft" != "true" ]]; then
+            echo "Release $tag is already published; nothing to do."
+            exit 0
+          fi
+
+          gh release edit "$tag" --draft=false --repo "$GITHUB_REPOSITORY"

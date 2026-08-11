@@ -41,15 +41,16 @@ shows it as coming soon rather than exposing a broken download link.
 ## Automated desktop publishing (recommended)
 
 1. Push to `main` with changes under `desktop/**` (or run **Publish Desktop** /
-   push `desktop-v*`) → draft GitHub Release with
-   macOS / Windows / Linux installers.
-2. Review the draft, then **Publish** the release on GitHub.
+   push `desktop-v*`) → GitHub Actions builds the installers and creates a
+   draft GitHub Release.
+2. The workflow then publishes that release automatically.
 3. Workflow **Sync Desktop Release to OSS**
-   (`.github/workflows/sync-oss-desktop.yml`) downloads the assets and runs
-   `scripts/sync-desktop-release-to-oss.sh`, which uploads installers and updates
+   (`.github/workflows/sync-oss-desktop.yml`) runs after the release is
+   published, downloads the assets, and executes
+   `scripts/sync-desktop-release-to-oss.sh` to upload installers and update
    `minibot/releases.json` on OSS.
 4. Release notifications are sent to Feishu as card messages:
-   - `publish-desktop` posts when the GitHub Release is created.
+   - `publish-desktop` posts when the GitHub Release draft is created.
    - `sync-oss-desktop` posts again after OSS sync completes.
 
 Configure repository **Variables**: `OSS_BUCKET`, `OSS_REGION`, `OSS_ENDPOINT`,
