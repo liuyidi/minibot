@@ -1,5 +1,7 @@
 # @liuyidi/minibot-client
 
+[![Publish @liuyidi/minibot-client](https://github.com/liuyidi/minibot/actions/workflows/publish-client.yml/badge.svg)](https://github.com/liuyidi/minibot/actions/workflows/publish-client.yml)
+
 Shared **minibot Client API** for WebUI, React Native, Desktop, and scripts.
 
 Contract: [`docs/client-api.md`](../../docs/client-api.md) (L0 bootstrap · L1 REST · L2 WS).
