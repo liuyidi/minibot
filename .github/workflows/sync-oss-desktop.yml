@@ -46,6 +46,15 @@ jobs:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.event.release.tag_name || inputs.tag || github.ref }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
       - name: Resolve release tag
         id: tag
         run: |
@@ -56,12 +65,9 @@ jobs:
           elif [[ "${{ github.event_name }}" == "release" ]]; then
             echo "value=${{ github.event.release.tag_name }}" >> "$GITHUB_OUTPUT"
           else
-            echo "value=__from_package_json__" >> "$GITHUB_OUTPUT"
+            version="$(node -p "require('./desktop/package.json').version")"
+            echo "value=desktop-v${version}" >> "$GITHUB_OUTPUT"
           fi
-
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.workflow_run.head_sha || github.event.release.tag_name || inputs.tag || github.ref }}
 
       - name: Validate OSS configuration
         run: |
@@ -73,11 +79,6 @@ jobs:
             fi
           done
           exit "$missing"
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
 
       - name: Install ossutil
         run: |
