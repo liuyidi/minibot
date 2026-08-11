@@ -26,10 +26,6 @@
 | [`notes/`](./notes/) | 工程笔记（如 Dev UI Trace、[vs OpenClaw](./notes/minibot-vs-openclaw-gap.md)、[vs nanobot](./notes/minibot-vs-nanobot-gap.md)） |
 | [`roadmap/`](./roadmap/) | 尚未并入主路线图的独立提案（如 A2A） |
 
-## 相关项目
-
-- [`notes/serverlessship.md`](./notes/serverlessship.md) | **ServerlessShip**：`Serverless Feishu deploy notifier for minibot`
-
 ## 客户端怎么接
 
 ```text
