@@ -98,7 +98,7 @@ jobs:
           uploadWorkflowArtifacts: true
           args: ${{ matrix.args }}
 
-  notify-feishu:
+  notify-serverlessship:
     needs: publish-tauri
     if: ${{ needs.publish-tauri.result == 'success' }}
     runs-on: ubuntu-latest
@@ -106,7 +106,7 @@ jobs:
     permissions:
       contents: read
     env:
-      FEISHU_RELEASE_WEBHOOK_URL: ${{ secrets.FEISHU_RELEASE_WEBHOOK_URL }}
+      SERVERLESSSHIP_RELEASE_URL: ${{ vars.SERVERLESSSHIP_RELEASE_URL }}
 
     steps:
       - uses: actions/checkout@v4
@@ -116,27 +116,31 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Send Feishu release notification
+      - name: Read release version
+        id: release-version
+        run: |
+          version="$(node -p "require('./desktop/package.json').version")"
+          echo "value=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Send release notification to ServerlessShip
         run: |
           set -euo pipefail
 
-          if [[ -z "${FEISHU_RELEASE_WEBHOOK_URL:-}" ]]; then
-            echo "FEISHU_RELEASE_WEBHOOK_URL is not set; skipping Feishu notification."
-            exit 0
-          fi
+          version="${RELEASE_VERSION}"
+          serverlessship_release_url="${SERVERLESSSHIP_RELEASE_URL:-https://serverless-ship.liuyidi.me/api/releases}"
 
-          chmod +x scripts/send-feishu-release-notification.sh
+          payload="$(node -e 'const version = process.env.RELEASE_VERSION; process.stdout.write(JSON.stringify({ project: "minibot desktop", version, tag: `desktop-v${version}`, repository: process.env.GITHUB_REPOSITORY, releaseUrl: process.env.RELEASE_URL, workflowUrl: process.env.WORKFLOW_URL, channel: "GitHub Release" }));')"
 
-          version="$(node -p "require('./desktop/package.json').version")"
-          release_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/tag/desktop-v${version}"
-          workflow_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          response="$(
+            curl -fsS \
+              -X POST \
+              -H "Content-Type: application/json" \
+              -d "$payload" \
+              "$serverlessship_release_url"
+          )"
 
-          FEISHU_RELEASE_TITLE="minibot desktop 发布完成" \
-          FEISHU_RELEASE_PHASE="GitHub Release 已发布" \
-          FEISHU_RELEASE_SUBTITLE="v${version} · GitHub Release" \
-          FEISHU_RELEASE_SUMMARY="GitHub Release 已发布，桌面安装包已可下载。" \
-          FEISHU_CARD_TEMPLATE="green" \
-          RELEASE_VERSION="$version" \
-          RELEASE_URL="$release_url" \
-          WORKFLOW_URL="$workflow_url" \
-          scripts/send-feishu-release-notification.sh
+          echo "$response"
+        env:
+          RELEASE_VERSION: ${{ steps.release-version.outputs.value }}
+          RELEASE_URL: ${{ github.server_url }}/${{ github.repository }}/releases/tag/desktop-v${{ steps.release-version.outputs.value }}
+          WORKFLOW_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
