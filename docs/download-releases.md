@@ -48,12 +48,16 @@ shows it as coming soon rather than exposing a broken download link.
    (`.github/workflows/sync-oss-desktop.yml`) downloads the assets and runs
    `scripts/sync-desktop-release-to-oss.sh`, which uploads installers and updates
    `minibot/releases.json` on OSS.
+4. Release notifications are sent to Feishu as card messages:
+   - `publish-desktop` posts when the GitHub Release is created.
+   - `sync-oss-desktop` posts again after OSS sync completes.
 
 Configure repository **Variables**: `OSS_BUCKET`, `OSS_REGION`, `OSS_ENDPOINT`,
 `OSS_PUBLIC_BASE_URL` (optional `OSS_PREFIX`, `OSS_OBJECT_ACL`).
 
 Configure repository **Secrets**: `OSS_ACCESS_KEY_ID`, `OSS_ACCESS_KEY_SECRET`
-(RAM user with `oss:PutObject` on this bucket only).
+(RAM user with `oss:PutObject` on this bucket only), `FEISHU_RELEASE_WEBHOOK_URL`
+(Feishu custom bot webhook used by both release notifications).
 
 You can also re-run sync manually: Actions → Sync Desktop Release to OSS →
 provide tag `desktop-v…`.

@@ -91,3 +91,46 @@ jobs:
           uploadUpdaterJson: false
           uploadUpdaterSignatures: false
           args: ${{ matrix.args }}
+
+  notify-feishu:
+    needs: publish-tauri
+    if: ${{ needs.publish-tauri.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    env:
+      FEISHU_RELEASE_WEBHOOK_URL: ${{ secrets.FEISHU_RELEASE_WEBHOOK_URL }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Send Feishu release notification
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${FEISHU_RELEASE_WEBHOOK_URL:-}" ]]; then
+            echo "FEISHU_RELEASE_WEBHOOK_URL is not set; skipping Feishu notification."
+            exit 0
+          fi
+
+          chmod +x scripts/send-feishu-release-notification.sh
+
+          version="$(node -p "require('./desktop/package.json').version")"
+          release_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/tag/desktop-v${version}"
+          workflow_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+
+          FEISHU_RELEASE_TITLE="minibot desktop 发布完成" \
+          FEISHU_RELEASE_PHASE="GitHub Release 已创建" \
+          FEISHU_RELEASE_SUBTITLE="v${version} · GitHub Release" \
+          FEISHU_RELEASE_SUMMARY="GitHub Release 已创建，桌面安装包已发布。" \
+          FEISHU_CARD_TEMPLATE="green" \
+          RELEASE_VERSION="$version" \
+          RELEASE_URL="$release_url" \
+          WORKFLOW_URL="$workflow_url" \
+          scripts/send-feishu-release-notification.sh

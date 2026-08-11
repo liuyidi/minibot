@@ -91,3 +91,55 @@ jobs:
         run: |
           chmod +x scripts/sync-desktop-release-to-oss.sh scripts/publish-oss-releases.sh
           scripts/sync-desktop-release-to-oss.sh --tag "${{ steps.tag.outputs.value }}"
+
+  notify-feishu:
+    needs: sync-oss
+    if: ${{ needs.sync-oss.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    env:
+      FEISHU_RELEASE_WEBHOOK_URL: ${{ secrets.FEISHU_RELEASE_WEBHOOK_URL }}
+      OSS_PUBLIC_BASE_URL: ${{ vars.OSS_PUBLIC_BASE_URL }}
+      OSS_PREFIX: ${{ vars.OSS_PREFIX || 'minibot' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Send Feishu sync notification
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${FEISHU_RELEASE_WEBHOOK_URL:-}" ]]; then
+            echo "FEISHU_RELEASE_WEBHOOK_URL is not set; skipping Feishu notification."
+            exit 0
+          fi
+
+          chmod +x scripts/send-feishu-release-notification.sh
+
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            tag="${{ inputs.tag }}"
+          else
+            tag="${{ github.event.release.tag_name }}"
+          fi
+          version="${tag#desktop-v}"
+          release_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/tag/${tag}"
+          workflow_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          manifest_url="${OSS_PUBLIC_BASE_URL%/}/${OSS_PREFIX}/releases.json"
+
+          FEISHU_RELEASE_TITLE="minibot desktop 已同步到 OSS" \
+          FEISHU_RELEASE_PHASE="OSS 同步完成" \
+          FEISHU_RELEASE_SUBTITLE="v${version} · OSS Sync" \
+          FEISHU_RELEASE_SUMMARY="GitHub Release 产物已同步到 OSS，下载清单已更新。" \
+          FEISHU_CARD_TEMPLATE="turquoise" \
+          MANIFEST_URL="$manifest_url" \
+          RELEASE_VERSION="$version" \
+          RELEASE_URL="$release_url" \
+          WORKFLOW_URL="$workflow_url" \
+          scripts/send-feishu-release-notification.sh
