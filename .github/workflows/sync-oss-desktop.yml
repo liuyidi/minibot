@@ -1,14 +1,13 @@
 name: Sync Desktop Release to OSS
 
-# After a desktop-v* GitHub Release is published (not draft), download installers
-# and sync macOS / Windows / Linux packages + releases.json to Aliyun OSS.
+# After Publish Desktop completes, download installers from workflow artifacts
+# or GitHub Release assets and sync macOS / Windows / Linux packages + releases.json
+# to Aliyun OSS.
 
 on:
   workflow_run:
     workflows: ["Publish Desktop"]
     types: [completed]
-  release:
-    types: [published]
   workflow_dispatch:
     inputs:
       tag:
@@ -28,7 +27,6 @@ jobs:
   sync-oss:
     if: >-
       github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'release' && startsWith(github.event.release.tag_name, 'desktop-v')) ||
       (github.event_name == 'workflow_run' &&
        github.event.workflow_run.conclusion == 'success' &&
        github.event.workflow_run.event == 'push' &&
@@ -49,7 +47,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.workflow_run.head_sha || github.event.release.tag_name || inputs.tag || github.ref }}
+          ref: ${{ github.event.workflow_run.head_sha || inputs.tag || github.ref }}
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -63,8 +61,6 @@ jobs:
 
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             echo "value=${{ inputs.tag }}" >> "$GITHUB_OUTPUT"
-          elif [[ "${{ github.event_name }}" == "release" ]]; then
-            echo "value=${{ github.event.release.tag_name }}" >> "$GITHUB_OUTPUT"
           else
             version="$(node -p "require('./desktop/package.json').version")"
             echo "value=desktop-v${version}" >> "$GITHUB_OUTPUT"
@@ -144,8 +140,6 @@ jobs:
 
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             tag="${{ inputs.tag }}"
-          elif [[ "${{ github.event_name }}" == "release" ]]; then
-            tag="${{ github.event.release.tag_name }}"
           else
             version="$(node -p "require('./desktop/package.json').version")"
             tag="desktop-v${version}"

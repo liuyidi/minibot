@@ -1,7 +1,7 @@
 name: Publish Desktop
 
-# Builds minibot Tauri shell for macOS / Windows / Linux, creates a GitHub draft
-# release, then publishes it automatically so the OSS sync workflow can run.
+# Builds minibot Tauri shell for macOS / Windows / Linux, publishes a GitHub
+# Release, then lets the OSS sync workflow mirror the assets.
 # Trigger: push to main touching desktop/, push tag desktop-v*, or Actions → Run workflow.
 
 on:
@@ -90,7 +90,7 @@ jobs:
 
             Unsigned CI builds: macOS may need `xattr -dr com.apple.quarantine` after install;
             Windows SmartScreen may warn until code-signed.
-          releaseDraft: true
+          releaseDraft: false
           prerelease: true
           # No updater signing keys in CI yet — don't require .sig / updater JSON.
           uploadUpdaterJson: false
@@ -132,63 +132,11 @@ jobs:
           workflow_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
 
           FEISHU_RELEASE_TITLE="minibot desktop 发布完成" \
-          FEISHU_RELEASE_PHASE="GitHub Release 已创建" \
+          FEISHU_RELEASE_PHASE="GitHub Release 已发布" \
           FEISHU_RELEASE_SUBTITLE="v${version} · GitHub Release" \
-          FEISHU_RELEASE_SUMMARY="GitHub Release 已创建，桌面安装包已发布。" \
+          FEISHU_RELEASE_SUMMARY="GitHub Release 已发布，桌面安装包已可下载。" \
           FEISHU_CARD_TEMPLATE="green" \
           RELEASE_VERSION="$version" \
           RELEASE_URL="$release_url" \
           WORKFLOW_URL="$workflow_url" \
           scripts/send-feishu-release-notification.sh
-
-  publish-release:
-    needs: publish-tauri
-    if: ${{ needs.publish-tauri.result == 'success' }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      contents: write
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-
-      - name: Publish draft GitHub Release
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -euo pipefail
-
-          version="$(node -p "require('./desktop/package.json').version")"
-          tag="desktop-v${version}"
-
-          draft="$(gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json draft --jq '.draft' 2>/dev/null || true)"
-          if [[ -z "$draft" ]]; then
-            echo "Release $tag was not found; tauri-action may have failed to create the draft release." >&2
-            exit 1
-          fi
-
-          if [[ "$draft" != "true" ]]; then
-            echo "Release $tag is already published; nothing to do."
-            exit 0
-          fi
-
-          gh release edit "$tag" --draft=false --repo "$GITHUB_REPOSITORY"
-
-          for attempt in {1..12}; do
-            draft="$(gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json draft --jq '.draft' 2>/dev/null || true)"
-            if [[ "$draft" == "false" ]]; then
-              echo "Release $tag is published."
-              exit 0
-            fi
-            echo "Waiting for release $tag to become visible... ($attempt/12)"
-            sleep 5
-          done
-
-          echo "Release $tag was not visible after publishing." >&2
-          gh release view "$tag" --json name,draft,prerelease,url || true
-          exit 1
