@@ -50,8 +50,8 @@ payload="$(
   WORKFLOW_URL="$WORKFLOW_URL" \
   MANIFEST_URL="${MANIFEST_URL:-}" \
   python3 - <<'PY'
-import json
 import os
+import json
 
 title = os.environ["FEISHU_RELEASE_TITLE"]
 phase = os.environ["FEISHU_RELEASE_PHASE"]
@@ -62,25 +62,6 @@ version = os.environ["RELEASE_VERSION"]
 release_url = os.environ["RELEASE_URL"]
 workflow_url = os.environ["WORKFLOW_URL"]
 manifest_url = os.environ.get("MANIFEST_URL", "").strip()
-
-def button(label: str, url: str) -> dict:
-    return {
-        "tag": "button",
-        "text": {"tag": "plain_text", "content": label},
-        "type": "default",
-        "width": "default",
-        "size": "medium",
-        "behaviors": [
-            {
-                "type": "open_url",
-                "default_url": url,
-                "pc_url": url,
-                "ios_url": url,
-                "android_url": url,
-            }
-        ],
-        "margin": "0px 0px 0px 0px",
-    }
 
 body_elements = [
     {
@@ -100,30 +81,7 @@ body_elements = [
         "text_size": "normal_v2",
         "margin": "0px 0px 0px 0px",
     },
-    {
-        "tag": "hr",
-        "margin": "0px 0px 0px 0px",
-    },
-    {
-        "tag": "action",
-        "actions": [
-            button("打开 Release", release_url),
-            button("打开 Workflow", workflow_url),
-        ],
-        "layout": "bisected",
-        "margin": "0px 0px 0px 0px",
-    },
 ]
-
-if manifest_url:
-    body_elements.append(
-        {
-            "tag": "action",
-            "actions": [button("打开 releases.json", manifest_url)],
-            "layout": "flow",
-            "margin": "0px 0px 0px 0px",
-        }
-    )
 
 card = {
     "schema": "2.0",
