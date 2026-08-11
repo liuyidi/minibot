@@ -62,7 +62,7 @@ manifest="webui/public/releases.json"
 upload() {
   local source="$1" object="$2"
   local command=(ossutil cp "$source" "oss://${OSS_BUCKET}/${object}" --force --region "$OSS_REGION" --endpoint "$OSS_ENDPOINT" --acl "$object_acl" --meta "Cache-Control:public,max-age=31536000,immutable")
-  printf 'Uploading %s -> oss://%s/%s\n' "$source" "$OSS_BUCKET" "$object"
+  printf 'Uploading %s -> oss://%s/%s (force overwrite)\n' "$source" "$OSS_BUCKET" "$object"
   if [[ "$dry_run" == true ]]; then
     printf 'DRY RUN:'; printf ' %q' "${command[@]}"; printf '\n'
   else
@@ -139,6 +139,7 @@ if [[ "$dry_run" == true ]]; then
 fi
 
 "${manifest_command[@]}"
+echo "Publishing releases manifest -> oss://${OSS_BUCKET}/${prefix}/releases.json (force overwrite)"
 ossutil cp "$manifest" "oss://${OSS_BUCKET}/${prefix}/releases.json" --force --region "$OSS_REGION" --endpoint "$OSS_ENDPOINT" --acl "$object_acl" --meta "Cache-Control:no-cache"
 
 echo "Published ${prefix}/releases.json. Configure VITE_MINIBOT_RELEASES_URL=${OSS_PUBLIC_BASE_URL%/}/${prefix}/releases.json for the WebUI build."
