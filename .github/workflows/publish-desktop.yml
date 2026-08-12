@@ -128,9 +128,6 @@ jobs:
 
           version="${RELEASE_VERSION}"
           serverlessship_release_url="${SERVERLESSSHIP_RELEASE_URL:-https://serverless-ship.liuyidi.me/api/releases}"
-          if [[ "$serverlessship_release_url" != */api/releases ]]; then
-            serverlessship_release_url="${serverlessship_release_url%/}/api/releases"
-          fi
 
           payload="$(node -e 'const version = process.env.RELEASE_VERSION; process.stdout.write(JSON.stringify({ project: "minibot desktop", version, tag: `desktop-v${version}`, repository: process.env.GITHUB_REPOSITORY, releaseUrl: process.env.RELEASE_URL, workflowUrl: process.env.WORKFLOW_URL, channel: "GitHub Release" }));')"
 
