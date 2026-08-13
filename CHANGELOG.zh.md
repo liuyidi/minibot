@@ -11,6 +11,18 @@ English: [CHANGELOG.md](./CHANGELOG.md)
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-08-13
+
+### 变更
+
+- 生产认证切换为 mini-auth 全链路，回调地址可在反代后保持 HTTPS。
+- 生产主机关闭旧的 gateway 密码兜底，`bot.liuyidi.me` 直接进入共享登录流程。
+
+### 修复
+
+- ECS 部署 workflow 兼容当前仓库检出方式与 `.env` 读取方式。
+- 在阿里云 / 腾讯云反代场景下，认证跳转不再退回到 `http://` 回调地址。
+
 ## [1.0.1] - 2026-08-13
 
 ### 新增
