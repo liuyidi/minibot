@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: Release tag (e.g. desktop-v1.0.0-beta.2)
+        description: Release tag (e.g. v1.0.1)
         required: true
         type: string
 
@@ -63,7 +63,7 @@ jobs:
             echo "value=${{ inputs.tag }}" >> "$GITHUB_OUTPUT"
           else
             version="$(node -p "require('./desktop/package.json').version")"
-            echo "value=desktop-v${version}" >> "$GITHUB_OUTPUT"
+            echo "value=v${version}" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Validate OSS configuration
@@ -142,9 +142,9 @@ jobs:
             tag="${{ inputs.tag }}"
           else
             version="$(node -p "require('./desktop/package.json').version")"
-            tag="desktop-v${version}"
+            tag="v${version}"
           fi
-          version="${tag#desktop-v}"
+          version="${tag#v}"
           release_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/tag/${tag}"
           workflow_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
           manifest_url="${OSS_PUBLIC_BASE_URL%/}/${OSS_PREFIX}/releases.json"

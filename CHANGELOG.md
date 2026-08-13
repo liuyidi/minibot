@@ -3,7 +3,7 @@
 All notable user-facing changes to **minibot** are documented here.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/).
-Versions follow SemVer for product narrative (`0.1.0` …). Package metadata may lag until a formal release.
+Versions follow SemVer for product narrative. Package metadata may lag until a formal release.
 
 简体中文：[CHANGELOG.zh.md](./CHANGELOG.zh.md)
 
@@ -11,9 +11,22 @@ Versions follow SemVer for product narrative (`0.1.0` …). Package metadata may
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-08-13
+
 ### Added
 
-- Auth bootstrap / login path updates for WebUI and API (token bootstrap flow).
+- Unified versioning across WebUI, desktop, and the backend.
+- Added `/compact` in the chat composer to compact conversation context.
+- Added unified Web / server GitHub Actions deployment to ECS with Feishu notifications.
+
+---
+
+## [1.0.0] - 2026-08-11
+
+### Added
+
+- Rust-wrapped desktop builds for macOS, Windows, and Linux, plus the download page and the end-to-end build and packaging flow.
+- Build and deployment automation with GitHub Actions, webhooks, and ServerlessShip notifications to Feishu.
 
 ---
 

@@ -1,0 +1,67 @@
+name: Release
+
+# Manual release entrypoint:
+# 1. Confirm version/changelog are already updated on main.
+# 2. Dispatch this workflow from the Actions tab.
+# 3. It tags the current main commit as v<version>.
+# 4. Desktop + client release workflows react to that tag.
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  create-release-tag:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "20"
+
+      - name: Resolve release version
+        id: version
+        run: |
+          set -euo pipefail
+
+          version="$(node -p "require('./webui/package.json').version")"
+          tag="v${version}"
+
+          if git rev-parse --verify "refs/tags/${tag}" >/dev/null 2>&1; then
+            echo "Tag ${tag} already exists locally." >&2
+            exit 1
+          fi
+
+          if git ls-remote --tags origin "refs/tags/${tag}" | grep -q "${tag}"; then
+            echo "Tag ${tag} already exists on origin." >&2
+            exit 1
+          fi
+
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+
+      - name: Create and push release tag
+        run: |
+          set -euo pipefail
+
+          tag="${{ steps.version.outputs.tag }}"
+          version="${{ steps.version.outputs.version }}"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "$tag" -m "Release ${tag}"
+          git push origin "$tag"
+
+          echo "Pushed release tag ${tag} for version ${version}"

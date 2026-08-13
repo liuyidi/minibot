@@ -101,6 +101,38 @@ def test_force_compact_skips_when_too_short(tmp_path: Path) -> None:
     asyncio.run(_run())
 
 
+def test_force_compact_below_configured_keep_uses_half_window(tmp_path: Path) -> None:
+    """Manual /compact should still archive when count is under compact_keep_recent."""
+    provider = FakeProvider(responses=[text_response("SUMMARY: older turns")])
+
+    async def _run() -> None:
+        loop, sessions = _make_loop(
+            tmp_path,
+            provider,
+            compact_threshold=1000,
+            compact_keep_recent=16,
+        )
+        session = sessions.create(workspace=tmp_path)
+        messages: list[dict[str, str]] = []
+        for i in range(7):
+            messages.append({"role": "user", "content": f"u{i}"})
+            messages.append({"role": "assistant", "content": f"a{i}"})
+        sessions.append_messages(session.id, messages)  # 14 messages
+        event = await loop.compact_if_needed(session.id, force=True)
+        assert event is not None
+        assert event.get("skipped") is not True
+        assert event["ok"] is True
+        assert event["before"] == 14
+        assert event["after"] == 7
+        fresh = sessions.get(session.id)
+        assert fresh is not None
+        assert len(fresh.messages) == 7
+        assert "SUMMARY" in (fresh.summary or "")
+        assert provider.calls
+
+    asyncio.run(_run())
+
+
 def test_compact_slash_command_force_and_does_not_persist_command(tmp_path: Path) -> None:
     provider = FakeProvider(responses=[text_response("SUMMARY: archived older turns")])
 

@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+# Block pushes that carry release-related source changes without version/changelog updates.
+set -euo pipefail
+
+ROOT="$(git rev-parse --show-toplevel)"
+cd "$ROOT"
+
+changed_files=()
+version_files_changed=()
+changelog_files_changed=()
+empty_tree="$(git hash-object -t tree /dev/null)"
+
+while IFS=' ' read -r local_ref local_sha remote_ref remote_sha; do
+  [[ -z "${local_ref:-}" ]] && continue
+
+  if [[ "$remote_sha" =~ ^0+$ ]]; then
+    mapfile -t files < <(git diff --name-only "$empty_tree" "$local_sha")
+  else
+    mapfile -t files < <(git diff --name-only "$remote_sha" "$local_sha")
+  fi
+
+  for file in "${files[@]}"; do
+    [[ -z "$file" ]] && continue
+    changed_files+=("$file")
+    for version_file in \
+      "webui/package.json" \
+      "webui/package-lock.json" \
+      "desktop/package.json" \
+      "desktop/package-lock.json" \
+      "desktop/src-tauri/Cargo.toml" \
+      "desktop/src-tauri/Cargo.lock" \
+      "desktop/src-tauri/tauri.conf.json" \
+      "minibot/pyproject.toml" \
+      "minibot/src/minibot/__init__.py" \
+      "packages/minibot-client/package.json"; do
+      if [[ "$file" == "$version_file" ]]; then
+        version_files_changed+=("$file")
+      fi
+    done
+    for changelog_file in "CHANGELOG.md" "CHANGELOG.zh.md"; do
+      if [[ "$file" == "$changelog_file" ]]; then
+        changelog_files_changed+=("$file")
+      fi
+    done
+  done
+done
+
+if [[ ${#changed_files[@]} -eq 0 ]]; then
+  exit 0
+fi
+
+cd minibot
+PYTHONPATH=src uv run python -m minibot.release_tools check \
+  --changed-files "${changed_files[@]}" \
+  --version-files "${version_files_changed[@]}" \
+  --changelog-files "${changelog_files_changed[@]}"

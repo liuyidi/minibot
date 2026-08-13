@@ -3,7 +3,7 @@
 记录 **minibot** 面向用户的重要变更。
 
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/)。
-版本采用产品叙事用的 SemVer（`0.1.0` …）；包元数据可能在正式发版前暂未对齐。
+版本采用产品叙事用的 SemVer；包元数据可能在正式发版前暂未对齐。
 
 English: [CHANGELOG.md](./CHANGELOG.md)
 
@@ -11,9 +11,22 @@ English: [CHANGELOG.md](./CHANGELOG.md)
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-08-13
+
 ### 新增
 
-- WebUI / API 鉴权 bootstrap / 登录路径更新（token bootstrap 流程）。
+- 各端 version 统一。
+- 对话框支持 `/compact` 命令压缩上下文。
+- 支持统一的 Web / Server GitHub Actions 部署到 ECS，并通过飞书通知。
+
+---
+
+## [1.0.0] - 2026-08-11
+
+### 新增
+
+- 用 Rust 封装桌面端，覆盖 macOS / Windows / Linux，并补齐下载页、整体构建与打包流程。
+- 新增构建与部署自动化：借助 GitHub Actions、webhooks 和 ServerlessShip，把部署通知同步到飞书。
 
 ---
 

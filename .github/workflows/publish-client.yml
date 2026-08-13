@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
   push:
     tags:
-      - "client-v*"
+      - "v*"
 
 permissions:
   contents: read

@@ -2,17 +2,13 @@ name: Publish Desktop
 
 # Builds minibot Tauri shell for macOS / Windows / Linux, publishes a GitHub
 # Release, then lets the OSS sync workflow mirror the assets.
-# Trigger: push to main touching desktop/, push tag desktop-v*, or Actions → Run workflow.
+# Trigger: manual run or push tag v*.
 
 on:
   workflow_dispatch:
   push:
-    branches: [main]
-    paths:
-      - "desktop/**"
-      - ".github/workflows/publish-desktop.yml"
     tags:
-      - "desktop-v*"
+      - "v*"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -83,15 +79,15 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           projectPath: desktop
-          tagName: desktop-v__VERSION__
-          releaseName: minibot desktop v__VERSION__
+          tagName: v__VERSION__
+          releaseName: minibot v__VERSION__
           releaseBody: |
             Desktop thin shell for minibot WebUI (macOS / Windows / Linux).
 
             Unsigned CI builds: macOS may need `xattr -dr com.apple.quarantine` after install;
             Windows SmartScreen may warn until code-signed.
           releaseDraft: false
-          prerelease: true
+          prerelease: false
           # No updater signing keys in CI yet — don't require .sig / updater JSON.
           uploadUpdaterJson: false
           uploadUpdaterSignatures: false
@@ -129,7 +125,7 @@ jobs:
           version="${RELEASE_VERSION}"
           serverlessship_release_url="${SERVERLESSSHIP_RELEASE_URL:-https://serverless-ship.liuyidi.me/api/releases}"
 
-          payload="$(node -e 'const version = process.env.RELEASE_VERSION; process.stdout.write(JSON.stringify({ project: "minibot desktop", version, tag: `desktop-v${version}`, repository: process.env.GITHUB_REPOSITORY, releaseUrl: process.env.RELEASE_URL, workflowUrl: process.env.WORKFLOW_URL, channel: "GitHub Release" }));')"
+          payload="$(node -e 'const version = process.env.RELEASE_VERSION; process.stdout.write(JSON.stringify({ project: "minibot", version, tag: `v${version}`, repository: process.env.GITHUB_REPOSITORY, releaseUrl: process.env.RELEASE_URL, workflowUrl: process.env.WORKFLOW_URL, channel: "GitHub Release" }));')"
 
           response="$(
             curl -fsS \
@@ -142,5 +138,5 @@ jobs:
           echo "$response"
         env:
           RELEASE_VERSION: ${{ steps.release-version.outputs.value }}
-          RELEASE_URL: ${{ github.server_url }}/${{ github.repository }}/releases/tag/desktop-v${{ steps.release-version.outputs.value }}
+          RELEASE_URL: ${{ github.server_url }}/${{ github.repository }}/releases/tag/v${{ steps.release-version.outputs.value }}
           WORKFLOW_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}

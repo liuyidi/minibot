@@ -1,0 +1,86 @@
+name: Release Preflight
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "webui/**"
+      - "desktop/**"
+      - "minibot/**"
+      - "packages/minibot-client/**"
+      - "CHANGELOG.md"
+      - "CHANGELOG.zh.md"
+      - ".github/workflows/release-preflight.yml"
+      - ".github/workflows/release.yml"
+      - ".githooks/pre-push"
+      - "scripts/install-git-hooks.sh"
+  push:
+    branches: [main]
+    paths:
+      - "webui/**"
+      - "desktop/**"
+      - "minibot/**"
+      - "packages/minibot-client/**"
+      - "CHANGELOG.md"
+      - "CHANGELOG.zh.md"
+      - ".github/workflows/release-preflight.yml"
+      - ".github/workflows/release.yml"
+      - ".githooks/pre-push"
+      - "scripts/install-git-hooks.sh"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  release-preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Check release preflight
+        run: |
+          set -euo pipefail
+
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            base="${{ github.event.pull_request.base.sha }}"
+            head="${{ github.event.pull_request.head.sha }}"
+          else
+            base="${{ github.event.before }}"
+            head="${{ github.sha }}"
+          fi
+
+          mapfile -t changed_files < <(git diff --name-only "$base" "$head")
+
+          version_files=()
+          changelog_files=()
+          for file in "${changed_files[@]}"; do
+            case "$file" in
+              webui/package.json|webui/package-lock.json|desktop/package.json|desktop/package-lock.json|desktop/src-tauri/Cargo.toml|desktop/src-tauri/Cargo.lock|desktop/src-tauri/tauri.conf.json|minibot/pyproject.toml|minibot/src/minibot/__init__.py|packages/minibot-client/package.json)
+                version_files+=("$file")
+                ;;
+              CHANGELOG.md|CHANGELOG.zh.md)
+                changelog_files+=("$file")
+                ;;
+            esac
+          done
+
+          cd minibot
+          PYTHONPATH=src uv run python -m minibot.release_tools check \
+            --changed-files "${changed_files[@]}" \
+            --version-files "${version_files[@]}" \
+            --changelog-files "${changelog_files[@]}"

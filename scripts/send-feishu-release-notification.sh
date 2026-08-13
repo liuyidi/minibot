@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Send a Feishu custom-bot interactive card for desktop release milestones.
+# Send a Feishu custom-bot interactive card for release milestones.
 set -euo pipefail
 
 usage() {
@@ -7,13 +7,13 @@ usage() {
 Usage:
   FEISHU_RELEASE_WEBHOOK_URL=... \
   RELEASE_VERSION=1.0.0-beta.1 \
-  RELEASE_URL=https://github.com/org/repo/releases/tag/desktop-v1.0.0-beta.1 \
+  RELEASE_URL=https://github.com/org/repo/releases/tag/v1.0.1 \
   WORKFLOW_URL=https://github.com/org/repo/actions/runs/123 \
   [MANIFEST_URL=https://downloads.example.com/minibot/releases.json] \
-  [FEISHU_RELEASE_TITLE="minibot desktop 发布完成"] \
+  [FEISHU_RELEASE_TITLE="minibot 发布完成"] \
   [FEISHU_RELEASE_PHASE="GitHub Release 已创建"] \
-  [FEISHU_RELEASE_SUBTITLE="v1.0.0-beta.1 · GitHub Release"] \
-  [FEISHU_RELEASE_SUMMARY="GitHub Release 已创建，桌面安装包已发布。"] \
+  [FEISHU_RELEASE_SUBTITLE="v1.0.1 · GitHub Release"] \
+  [FEISHU_RELEASE_SUMMARY="GitHub Release 已创建，发布产物已同步完成。"] \
   [FEISHU_CARD_TEMPLATE=green] \
   scripts/send-feishu-release-notification.sh
 

@@ -650,10 +650,9 @@ class AgentLoop:
         if event is None:
             content = "Compaction is unavailable for this session."
         elif event.get("skipped"):
-            keep = int(getattr(self.config, "compact_keep_recent", 16) or 16)
             content = (
                 f"Nothing to compact — only {event.get('before', 0)} messages "
-                f"(keep recent ≥ {max(2, keep)})."
+                f"(need more than {event.get('keep', 2)} to archive older turns)."
             )
         elif not event.get("ok"):
             content = f"Compaction failed: {event.get('error') or 'unknown error'}"
@@ -682,7 +681,7 @@ class AgentLoop:
         from minibot.agent.context import messages_to_compact_blob
 
         threshold = int(getattr(self.config, "compact_threshold", 0) or 0)
-        keep = int(getattr(self.config, "compact_keep_recent", 16) or 16)
+        configured_keep = max(2, int(getattr(self.config, "compact_keep_recent", 16) or 16))
         if not force and threshold <= 0:
             return None
         session = self.sessions.get(session_id)
@@ -691,7 +690,13 @@ class AgentLoop:
         before = len(session.messages)
         if not force and before <= threshold:
             return None
-        keep = max(2, keep)
+
+        # Auto-compact keeps the configured recent window. Manual /compact must still
+        # work below that window, so force keeps at most half the current history.
+        keep = configured_keep
+        if force:
+            keep = min(configured_keep, max(2, before // 2))
+
         if before <= keep:
             if not force:
                 return None
@@ -700,10 +705,12 @@ class AgentLoop:
                 "finished_at": _now_iso(),
                 "before": before,
                 "after": before,
+                "keep": keep,
                 "summary_preview": "",
                 "ok": True,
                 "skipped": True,
                 "error": None,
+                "forced": True,
             }
             self._compaction_log.insert(0, event)
             del self._compaction_log[40:]
@@ -717,6 +724,7 @@ class AgentLoop:
             "finished_at": _now_iso(),
             "before": before,
             "after": keep,
+            "keep": keep,
             "summary_preview": "",
             "ok": True,
             "skipped": False,
