@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import base64
 import hashlib
-from urllib.parse import urlencode
+from urllib.parse import quote, urlencode
 
 import httpx
 from fastapi import APIRouter, Cookie, Header, HTTPException, Query, Request, status
@@ -42,6 +42,14 @@ def _token_from_request(
 def _normalized_next_url(next_url: str | None) -> str:
     value = (next_url or "").strip()
     return value or "/"
+
+
+def _absolute_next_url(request: Request, next_url: str | None) -> str:
+    value = _normalized_next_url(next_url)
+    if value.startswith(("http://", "https://")):
+        return value
+    origin = str(request.base_url).rstrip("/")
+    return f"{origin}{value if value.startswith('/') else f'/{value}'}"
 
 
 def _callback_url(request: Request, state: StateDep) -> str:
@@ -200,6 +208,13 @@ async def logout(
 ) -> RedirectResponse:
     supplied = _token_from_request(request, x_minibot_auth, minibot_auth_token)
     state.revoke_token(supplied)
-    response = RedirectResponse(url=_normalized_next_url(next), status_code=status.HTTP_302_FOUND)
+    if state.settings.normalized_auth_provider() == "mini_auth":
+        next_target = _absolute_next_url(request, next)
+        mini_auth_logout = (
+            f"{state.settings.mini_auth_base_url.rstrip('/')}/logout?next={quote(next_target, safe='')}"
+        )
+        response = RedirectResponse(url=mini_auth_logout, status_code=status.HTTP_302_FOUND)
+    else:
+        response = RedirectResponse(url=_normalized_next_url(next), status_code=status.HTTP_302_FOUND)
     response.delete_cookie(AUTH_COOKIE_NAME, path="/")
     return response

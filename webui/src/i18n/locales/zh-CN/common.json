@@ -1030,14 +1030,23 @@
       "attachImage": "添加图片",
       "contextUsage": {
         "buttonAria": "显示上下文占用",
-        "title": "Context Usage",
+        "title": "上下文占用",
         "closeAria": "关闭",
-        "fullPct": "{{pct}}% Full",
-        "tokensLine": "~{{used}} / {{window}} Tokens",
+        "fullPct": "{{pct}}% 已使用",
+        "tokensLine": "约 {{used}} / {{window}} Token",
         "noSession": "打开会话后可估算上下文占用。",
         "loadFailed": "无法加载上下文占用。",
         "updating": "更新中…",
-        "estimateHint": "估算 · {{method}}"
+        "estimateHint": "估算 · {{method}}",
+        "categoryLabels": {
+          "freeSpace": "空闲空间",
+          "systemTools": "系统工具",
+          "messages": "消息",
+          "mcpTools": "MCP 工具",
+          "systemPrompt": "系统提示",
+          "skills": "技能",
+          "memoryFiles": "记忆文件"
+        }
       },
       "imageMode": {
         "label": "图片生成",

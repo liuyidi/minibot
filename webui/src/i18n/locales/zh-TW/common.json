@@ -1166,15 +1166,24 @@
         "full": "完全存取權限"
       },
       "contextUsage": {
-        "buttonAria": "Show context usage",
-        "title": "Context Usage",
-        "closeAria": "Close",
-        "fullPct": "{{pct}}% Full",
-        "tokensLine": "~{{used}} / {{window}} Tokens",
-        "noSession": "Open a chat to estimate context usage.",
-        "loadFailed": "Could not load context usage.",
-        "updating": "Updating…",
-        "estimateHint": "Estimate · {{method}}"
+        "buttonAria": "顯示上下文用量",
+        "title": "上下文用量",
+        "closeAria": "關閉",
+        "fullPct": "已使用 {{pct}}%",
+        "tokensLine": "約 {{used}} / {{window}} Token",
+        "noSession": "開啟對話後即可估算上下文用量。",
+        "loadFailed": "無法載入上下文用量。",
+        "updating": "更新中…",
+        "estimateHint": "估算 · {{method}}",
+        "categoryLabels": {
+          "freeSpace": "可用空間",
+          "systemTools": "系統工具",
+          "messages": "訊息",
+          "mcpTools": "MCP 工具",
+          "systemPrompt": "系統提示",
+          "skills": "技能",
+          "memoryFiles": "記憶檔案"
+        }
       }
     },
     "scrollToBottom": "捲動到底部",

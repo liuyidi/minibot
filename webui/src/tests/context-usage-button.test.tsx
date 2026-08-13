@@ -2,6 +2,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import i18n from "@/i18n";
 import { ContextUsageButton } from "@/components/thread/ContextUsageButton";
 import type { ContextUsagePayload } from "@/lib/types";
 
@@ -85,5 +86,23 @@ describe("ContextUsageButton", () => {
       await screen.findByText(/open a chat to estimate context usage/i),
     ).toBeInTheDocument();
     expect(fetchContextUsage).not.toHaveBeenCalled();
+  });
+
+  it("renders localized copy in Chinese", async () => {
+    await i18n.changeLanguage("zh-CN");
+
+    const user = userEvent.setup();
+    render(
+      <ContextUsageButton sessionKey="websocket:chat-1" token="tok" draftText="hello" />,
+    );
+
+    await waitFor(() => expect(fetchContextUsage).toHaveBeenCalled());
+    await user.click(await screen.findByRole("button", { name: /显示上下文占用/i }));
+
+    expect(await screen.findByText("上下文占用")).toBeInTheDocument();
+    expect(screen.getByText("15.6% 已使用")).toBeInTheDocument();
+    expect(screen.getByText("约 20k / 128k Token")).toBeInTheDocument();
+    expect(screen.getByText("系统工具")).toBeInTheDocument();
+    expect(screen.getByText("消息")).toBeInTheDocument();
   });
 });

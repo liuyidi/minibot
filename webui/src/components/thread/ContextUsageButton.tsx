@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import { X } from "lucide-react";
 
@@ -15,6 +16,16 @@ import { cn } from "@/lib/utils";
 const RING_R = 7;
 const RING_C = 2 * Math.PI * RING_R;
 const REFRESH_DEBOUNCE_MS = 280;
+
+const CONTEXT_USAGE_CATEGORY_KEYS: Record<string, string> = {
+  "Free space": "freeSpace",
+  "System tools": "systemTools",
+  Messages: "messages",
+  "MCP tools": "mcpTools",
+  "System prompt": "systemPrompt",
+  Skills: "skills",
+  "Memory files": "memoryFiles",
+};
 
 interface ContextUsageButtonProps {
   sessionKey?: string | null;
@@ -50,6 +61,12 @@ function emptyUsage(): ContextUsagePayload {
 
 function usedCategories(categories: ContextUsageCategory[]): ContextUsageCategory[] {
   return categories.filter((c) => c.id !== "free");
+}
+
+function localizeCategoryLabel(label: string, t: TFunction<"common">): string {
+  const labelKey = CONTEXT_USAGE_CATEGORY_KEYS[label];
+  if (!labelKey) return label;
+  return t(`thread.composer.contextUsage.categoryLabels.${labelKey}`, { defaultValue: label });
 }
 
 export function ContextUsageButton({
@@ -97,8 +114,18 @@ export function ContextUsageButton({
 
   const usedPct = Math.min(100, Math.max(0, Number(usage.used_pct) || 0));
   const ringOffset = RING_C * (1 - usedPct / 100);
-  const segments = usedCategories(usage.categories).filter((c) => c.tokens > 0);
-  const listRows = usedCategories(usage.categories);
+  const displayUsage = useMemo<ContextUsagePayload>(
+    () => ({
+      ...usage,
+      categories: usage.categories.map((category) => ({
+        ...category,
+        label: localizeCategoryLabel(category.label, t),
+      })),
+    }),
+    [t, usage],
+  );
+  const segments = usedCategories(displayUsage.categories).filter((c) => c.tokens > 0);
+  const listRows = usedCategories(displayUsage.categories);
   const ringTone =
     usedPct >= 90 ? "hot" : usedPct >= 70 ? "warn" : "ok";
 
@@ -202,8 +229,8 @@ export function ContextUsageButton({
                 </div>
                 <div className="text-[12.5px] tabular-nums text-muted-foreground">
                   {t("thread.composer.contextUsage.tokensLine", {
-                    used: usage.used_label ?? String(usage.used_tokens),
-                    window: usage.window_label ?? String(usage.context_window_tokens),
+                    used: displayUsage.used_label ?? String(displayUsage.used_tokens),
+                    window: displayUsage.window_label ?? String(displayUsage.context_window_tokens),
                     defaultValue: "~{{used}} / {{window}} Tokens",
                   })}
                 </div>
@@ -250,7 +277,7 @@ export function ContextUsageButton({
               ) : (
                 <div className="text-[11px] text-muted-foreground/60">
                   {t("thread.composer.contextUsage.estimateHint", {
-                    method: usage.estimate_method || "chars/4",
+                    method: displayUsage.estimate_method || "chars/4",
                     defaultValue: "Estimate · {{method}}",
                   })}
                 </div>
