@@ -67,10 +67,6 @@ jobs:
           script: |
             set -euo pipefail
             cd /opt/demo/mini-langfuse/deploy/demo
-            set -a
-            # shellcheck disable=SC1091
-            source .env
-            set +a
             export MINIBOT_REPO_DIR=/opt/demo/minibot
             export MLF_DIR=/opt/demo/mini-langfuse
             docker compose -f docker-compose.yml --env-file .env build minibot
@@ -86,10 +82,6 @@ jobs:
           script: |
             set -euo pipefail
             cd /opt/demo/mini-langfuse/deploy/demo
-            set -a
-            # shellcheck disable=SC1091
-            source .env
-            set +a
             export MINIBOT_REPO_DIR=/opt/demo/minibot
             export MLF_DIR=/opt/demo/mini-langfuse
             docker compose -f docker-compose.yml --env-file .env up -d minibot
