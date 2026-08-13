@@ -259,7 +259,10 @@ class AgentLoop:
                             kind="turn_ok",
                             text=result.content,
                             extra={
-                                "_streamed": True,
+                                # Only suppress the follow-up ``message`` frame when
+                                # deltas already delivered the answer (avoid duplicates).
+                                # Slash commands like /compact never stream.
+                                "_streamed": bool(result.streamed_answer),
                                 "tools_used": list(result.tools_used),
                                 "trace": list(result.trace),
                                 "stop_reason": result.stop_reason,
@@ -603,6 +606,7 @@ class AgentLoop:
             if result is None:
                 result = AgentRunResult(content="(empty)", messages=[*history, user_msg], stop_reason="error")
 
+            result.streamed_answer = True
             self._save_pending_approval(session_id, result)
             new_tail = result.messages[len(history) :]
             if new_tail and new_tail[0].get("role") == "system":
@@ -664,11 +668,22 @@ class AgentLoop:
             if preview:
                 content = f"{content}\n\nSummary preview:\n{preview}"
 
+        # Persist the assistant reply (not the /compact user line) so WebUI history
+        # and refresh keep the result after the WS ``message`` frame is delivered.
+        self.sessions.append_messages(
+            session_id,
+            [{"role": "assistant", "content": content}],
+        )
+        session = self.sessions.get(session_id)
+        if session is None:
+            raise KeyError(f"unknown session: {session_id}")
+
         return AgentRunResult(
             content=content,
             messages=list(session.messages),
             stop_reason="completed",
             trace=[{"type": "compact_command", "event": event}],
+            streamed_answer=False,
         )
 
     async def compact_if_needed(

@@ -159,12 +159,16 @@ def test_compact_slash_command_force_and_does_not_persist_command(tmp_path: Path
         result = await loop.handle_turn(session.id, "  /compact  ")
         fresh = sessions.get(session.id)
         assert fresh is not None
-        assert len(fresh.messages) == 2
+        # Force keep = min(2, 6//2) = 2 recent + 1 assistant compact reply
+        assert len(fresh.messages) == 3
         assert before == 6
-        assert "/compact" not in " ".join(
-            str(m.get("content") or "") for m in fresh.messages
+        assert not any(
+            m.get("role") == "user" and "/compact" in str(m.get("content") or "")
+            for m in fresh.messages
         )
+        assert fresh.messages[-1].get("role") == "assistant"
         assert "SUMMARY" in result.content or "compact" in result.content.lower()
         assert result.stop_reason == "completed"
+        assert result.streamed_answer is False
 
     asyncio.run(_run())

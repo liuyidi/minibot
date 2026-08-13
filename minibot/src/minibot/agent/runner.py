@@ -91,6 +91,8 @@ class AgentRunResult:
     used_preset: str = ""
     approval_id: str = ""
     pending_tool_calls: list[dict[str, Any]] = field(default_factory=list)
+    # True when the answer body was already delivered via WS ``delta`` frames.
+    streamed_answer: bool = False
 
 
 @dataclass(slots=True)
