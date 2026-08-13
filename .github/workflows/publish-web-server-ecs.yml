@@ -46,10 +46,10 @@ jobs:
           username: ${{ env.ECS_USER }}
           key: ${{ secrets.ECS_SSH_PRIVATE_KEY }}
           port: ${{ env.ECS_SSH_PORT }}
-          script_stop: true
           command_timeout: 5m
           script: |
             set -euo pipefail
+            git config --global --add safe.directory /opt/demo/minibot
             cd /opt/demo/minibot
             git fetch origin "${{ github.sha }}"
             git reset --hard "${{ github.sha }}"
@@ -63,15 +63,10 @@ jobs:
           username: ${{ env.ECS_USER }}
           key: ${{ secrets.ECS_SSH_PRIVATE_KEY }}
           port: ${{ env.ECS_SSH_PORT }}
-          script_stop: true
           command_timeout: 35m
           script: |
             set -euo pipefail
             cd /opt/demo/mini-langfuse/deploy/demo
-            set -a
-            # shellcheck disable=SC1091
-            source .env
-            set +a
             export MINIBOT_REPO_DIR=/opt/demo/minibot
             export MLF_DIR=/opt/demo/mini-langfuse
             docker compose -f docker-compose.yml --env-file .env build minibot
@@ -83,15 +78,10 @@ jobs:
           username: ${{ env.ECS_USER }}
           key: ${{ secrets.ECS_SSH_PRIVATE_KEY }}
           port: ${{ env.ECS_SSH_PORT }}
-          script_stop: true
           command_timeout: 5m
           script: |
             set -euo pipefail
             cd /opt/demo/mini-langfuse/deploy/demo
-            set -a
-            # shellcheck disable=SC1091
-            source .env
-            set +a
             export MINIBOT_REPO_DIR=/opt/demo/minibot
             export MLF_DIR=/opt/demo/mini-langfuse
             docker compose -f docker-compose.yml --env-file .env up -d minibot
@@ -104,7 +94,6 @@ jobs:
           username: ${{ env.ECS_USER }}
           key: ${{ secrets.ECS_SSH_PRIVATE_KEY }}
           port: ${{ env.ECS_SSH_PORT }}
-          script_stop: true
           command_timeout: 5m
           script: |
             set -euo pipefail
@@ -131,7 +120,6 @@ jobs:
           username: ${{ env.ECS_USER }}
           key: ${{ secrets.ECS_SSH_PRIVATE_KEY }}
           port: ${{ env.ECS_SSH_PORT }}
-          script_stop: true
           command_timeout: 2m
           script: |
             set -euo pipefail

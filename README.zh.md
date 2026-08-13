@@ -104,8 +104,36 @@ docker run --rm -p 8766:8766 \
 | `MINIBOT_SERVER_MINIKB_BASE_URL` | — | 可选知识库地址 |
 | `MINIBOT_SERVER_EXEC_BACKEND` | `local` | `local` 或 `e2b` |
 | `AUTH_SECRET` | 空 | 设置后 bootstrap 需要 `X-Minibot-Auth` |
+| `MINIBOT_SERVER_AUTH_PROVIDER` | `local` | 设为 `mini_auth` 时，登录交给共享认证服务 |
+| `MINIBOT_SERVER_MINI_AUTH_BASE_URL` | `http://127.0.0.1:8000` | mini-auth 基础地址 |
+| `MINIBOT_SERVER_MINI_AUTH_CLIENT_ID` | `minibot` | 在 mini-auth 中注册的 OIDC client_id |
+| `MINIBOT_SERVER_MINI_AUTH_SCOPE` | `openid profile email` | 请求的 OIDC scope |
+| `MINIBOT_SERVER_MINI_AUTH_CALLBACK_PATH` | `/auth/mini-auth/callback` | minibot 回调路径 |
+| `MINIBOT_SERVER_MINI_AUTH_TIMEOUT_S` | `20.0` | mini-auth 交换请求超时 |
+| `MINIBOT_SERVER_REQUIRE_AUTH` | `false` | 强制在 bootstrap / 受保护接口上校验登录状态 |
 
 模型预设、MCP、频道凭证在 WebUI **设置** / **IM 频道** 中管理。
+
+### 生产认证：mini-auth
+
+当 minibot 接入共享认证服务时，可以这样配置：
+
+```bash
+MINIBOT_SERVER_AUTH_PROVIDER=mini_auth
+MINIBOT_SERVER_MINI_AUTH_BASE_URL=https://auth.liuyidi.me
+MINIBOT_SERVER_MINI_AUTH_CLIENT_ID=minibot
+MINIBOT_SERVER_MINI_AUTH_SCOPE=openid profile email
+MINIBOT_SERVER_MINI_AUTH_CALLBACK_PATH=/auth/mini-auth/callback
+MINIBOT_SERVER_REQUIRE_AUTH=true
+```
+
+完整链路是：
+
+1. `GET /auth/login?next=...`
+2. 跳转到 `https://auth.liuyidi.me/oauth/authorize`
+3. 在 mini-auth 页面完成登录
+4. 回调到 `/auth/mini-auth/callback`
+5. minibot 写入自己的 session cookie，然后继续跳转到 `next`
 
 更多细节：[`minibot/README.md`](./minibot/README.md)、[`webui/README.md`](./webui/README.md)、[`docs/`](./docs/)。
 

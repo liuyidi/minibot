@@ -10,6 +10,14 @@ export interface BootstrapResponse {
   runtime_capabilities?: RuntimeCapabilities;
 }
 
+export interface AuthConfigResponse {
+  auth_provider: AuthProvider;
+  authenticated: boolean;
+  login_url?: string | null;
+  logout_url?: string | null;
+}
+
+export type AuthProvider = "local" | "mini_auth";
 export type RuntimeSurface = "browser" | "native";
 export type RestartBehavior = "none" | "nextTurn" | "engineRestart" | "appRestart";
 export type SettingsApplyStatus =

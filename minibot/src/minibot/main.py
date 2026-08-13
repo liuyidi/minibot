@@ -9,6 +9,7 @@ from typing import Any
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
 from minibot.api.routes import (
     approvals,
@@ -81,6 +82,10 @@ async def lifespan(app: FastAPI):
 
 def create_app() -> FastAPI:
     app = FastAPI(title="minibot", version="0.1.0", lifespan=lifespan)
+    app.add_middleware(
+        ProxyHeadersMiddleware,
+        trusted_hosts="*",
+    )
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],

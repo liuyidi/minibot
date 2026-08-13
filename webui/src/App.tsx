@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import {
   clearSavedSecret,
   deriveWsUrl,
+  fetchAuthConfig,
   fetchBootstrap,
   loadSavedSecret,
   saveSecret,
@@ -25,7 +26,7 @@ import {
   getHostApi,
   toRuntimeSurface,
 } from "@/lib/configs/runtime";
-import type { RuntimeSurface } from "@/lib/types";
+import type { AuthConfigResponse, RuntimeSurface } from "@/lib/types";
 import { ClientProvider } from "@/providers/ClientProvider";
 
 type BootState =
@@ -55,6 +56,33 @@ function tokenRefreshDelayMs(expiresAt: number): number {
     Math.max(1_000, remaining / 2),
   );
   return Math.max(TOKEN_REFRESH_MIN_DELAY_MS, remaining - margin);
+}
+
+function currentLocationForNext(): string {
+  if (typeof window === "undefined") return "/";
+  return `${window.location.pathname}${window.location.search}${window.location.hash}`;
+}
+
+function isLocalDevelopmentHost(): boolean {
+  if (typeof window === "undefined") return false;
+  const { hostname } = window.location;
+  return hostname === "localhost" || hostname === "127.0.0.1";
+}
+
+function buildLoginRedirect(loginUrl: string | null | undefined): string {
+  const base = loginUrl ?? "/auth/login";
+  const join = base.includes("?") ? "&" : "?";
+  return `${base}${join}next=${encodeURIComponent(currentLocationForNext())}`;
+}
+
+function buildLogoutRedirect(logoutUrl: string | null | undefined): string {
+  const base = logoutUrl ?? "/auth/logout";
+  const join = base.includes("?") ? "&" : "?";
+  return `${base}${join}next=${encodeURIComponent("/")}`;
+}
+
+function isMiniAuth(config: AuthConfigResponse | null): boolean {
+  return config?.auth_provider === "mini_auth";
 }
 
 function AuthForm({
@@ -115,38 +143,58 @@ export default function App() {
   const { t } = useTranslation();
   const [state, setState] = useState<BootState>({ status: "loading" });
   const bootstrapSecretRef = useRef("");
+  const authConfigRef = useRef<AuthConfigResponse | null>(null);
+
+  const redirectToMiniAuth = useCallback(
+    (mode: "login" | "logout") => {
+      if (typeof window === "undefined") return;
+      const config = authConfigRef.current;
+      const target =
+        mode === "login"
+          ? buildLoginRedirect(config?.login_url)
+          : buildLogoutRedirect(config?.logout_url);
+      window.location.assign(target);
+    },
+    [],
+  );
 
   const refreshReadyClient = useCallback(
     async (client: MinibotClient, fallbackSurface: RuntimeSurface) => {
-      const boot = await fetchBootstrap("", bootstrapSecretRef.current);
-      const url = deriveWsUrl(boot.ws_path, boot.token, boot.ws_url);
-      const runtimeSurface =
-        getHostApi() !== null
+      try {
+        const boot = await fetchBootstrap("", bootstrapSecretRef.current);
+        const url = deriveWsUrl(boot.ws_path, boot.token, boot.ws_url);
+        const runtimeSurface = getHostApi() !== null
           ? "native"
           : boot.runtime_surface
             ? toRuntimeSurface(boot.runtime_surface)
             : fallbackSurface;
-      const runtimeHost = createRuntimeHost(runtimeSurface, boot.runtime_capabilities);
-      const tokenExpiresAt = bootstrapTokenExpiresAt(boot.expires_in);
-      if (runtimeHost.socketFactory) {
-        client.updateUrl(url, runtimeHost.socketFactory);
-      } else {
-        client.updateUrl(url);
+        const runtimeHost = createRuntimeHost(runtimeSurface, boot.runtime_capabilities);
+        const tokenExpiresAt = bootstrapTokenExpiresAt(boot.expires_in);
+        if (runtimeHost.socketFactory) {
+          client.updateUrl(url, runtimeHost.socketFactory);
+        } else {
+          client.updateUrl(url);
+        }
+        setState((current) =>
+          current.status === "ready" && current.client === client
+            ? {
+                ...current,
+                token: boot.token,
+                tokenExpiresAt,
+                modelName: boot.model_name ?? current.modelName,
+                runtimeSurface,
+              }
+            : current,
+        );
+        return { token: boot.token, url };
+      } catch (error) {
+        if (isMiniAuth(authConfigRef.current)) {
+          redirectToMiniAuth("login");
+        }
+        throw error;
       }
-      setState((current) =>
-        current.status === "ready" && current.client === client
-          ? {
-              ...current,
-              token: boot.token,
-              tokenExpiresAt,
-              modelName: boot.model_name ?? current.modelName,
-              runtimeSurface,
-            }
-          : current,
-      );
-      return { token: boot.token, url };
     },
-    [],
+    [redirectToMiniAuth],
   );
 
   const bootstrapWithSecret = useCallback(
@@ -158,21 +206,26 @@ export default function App() {
           const boot = await fetchBootstrap("", secret);
           if (cancelled) return;
           if (secret) saveSecret(secret);
+          else if (isMiniAuth(authConfigRef.current)) clearSavedSecret();
           const url = deriveWsUrl(boot.ws_path, boot.token, boot.ws_url);
           const runtimeSurface =
             getHostApi() !== null ? "native" : toRuntimeSurface(boot.runtime_surface);
           const runtimeHost = createRuntimeHost(runtimeSurface, boot.runtime_capabilities);
+          const shouldReconnect = !isMiniAuth(authConfigRef.current);
           const client = new MinibotClient({
             url,
+            reconnect: shouldReconnect,
             socketFactory: runtimeHost.socketFactory,
-            onReauth: async () => {
-              try {
-                const refreshed = await refreshReadyClient(client, runtimeSurface);
-                return refreshed.url;
-              } catch {
-                return null;
-              }
-            },
+            onReauth: shouldReconnect
+              ? async () => {
+                  try {
+                    const refreshed = await refreshReadyClient(client, runtimeSurface);
+                    return refreshed.url;
+                  } catch {
+                    return null;
+                  }
+                }
+              : undefined,
           });
           bootstrapSecretRef.current = secret;
           client.connect();
@@ -188,6 +241,10 @@ export default function App() {
           if (cancelled) return;
           const msg = (e as Error).message;
           if (msg.includes("HTTP 401") || msg.includes("HTTP 403")) {
+            if (isMiniAuth(authConfigRef.current) || !isLocalDevelopmentHost()) {
+              redirectToMiniAuth("login");
+              return;
+            }
             setState({ status: "auth", failed: true });
           } else {
             setState({ status: "error", message: msg });
@@ -198,7 +255,7 @@ export default function App() {
         cancelled = true;
       };
     },
-    [refreshReadyClient],
+    [refreshReadyClient, redirectToMiniAuth],
   );
 
   useEffect(() => {
@@ -210,17 +267,56 @@ export default function App() {
       } catch (e) {
         const msg = (e as Error).message;
         if (msg.includes("HTTP 401") || msg.includes("HTTP 403")) {
+          if (isMiniAuth(authConfigRef.current)) {
+            redirectToMiniAuth("login");
+            return;
+          }
           setState({ status: "auth", failed: true });
+          return;
         }
+        setState({ status: "error", message: msg });
       }
     }, tokenRefreshDelayMs(state.tokenExpiresAt));
     return () => window.clearTimeout(timer);
-  }, [refreshReadyClient, state]);
+  }, [redirectToMiniAuth, refreshReadyClient, state]);
 
   useEffect(() => {
-    const saved = loadSavedSecret();
-    return bootstrapWithSecret(saved);
-  }, [bootstrapWithSecret]);
+    let cancelled = false;
+    (async () => {
+      try {
+        const config = await fetchAuthConfig("");
+        if (cancelled) return;
+        authConfigRef.current = config;
+        if (config.auth_provider === "mini_auth") {
+          if (config.authenticated) {
+            clearSavedSecret();
+            bootstrapWithSecret("");
+          } else {
+            redirectToMiniAuth("login");
+          }
+          return;
+        }
+        bootstrapWithSecret(loadSavedSecret());
+      } catch {
+        if (cancelled) return;
+        authConfigRef.current = null;
+        if (!isLocalDevelopmentHost()) {
+          redirectToMiniAuth("login");
+          return;
+        }
+        bootstrapWithSecret(loadSavedSecret());
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [bootstrapWithSecret, redirectToMiniAuth]);
+
+  useEffect(() => {
+    if (state.status !== "auth") return;
+    if (isLocalDevelopmentHost()) return;
+    redirectToMiniAuth("login");
+  }, [redirectToMiniAuth, state.status]);
 
   if (state.status === "loading") {
     return (
@@ -238,6 +334,7 @@ export default function App() {
     );
   }
   if (state.status === "auth") {
+    if (!isLocalDevelopmentHost()) return null;
     return (
       <AuthForm
         failed={!!state.failed}
@@ -268,6 +365,10 @@ export default function App() {
   const handleLogout = () => {
     if (state.status === "ready") {
       state.client.close();
+    }
+    if (isMiniAuth(authConfigRef.current)) {
+      redirectToMiniAuth("logout");
+      return;
     }
     clearSavedSecret();
     setState({ status: "auth" });
@@ -310,4 +411,3 @@ export default function App() {
     </ClientProvider>
   );
 }
-

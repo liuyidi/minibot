@@ -1,4 +1,4 @@
-import type { BootstrapResponse } from "@/lib/types";
+import type { AuthConfigResponse, BootstrapResponse } from "@/lib/types";
 import { fetchWithTimeout } from "./http";
 
 const SECRET_STORAGE_KEY = "minibot-webui.bootstrap-secret";
@@ -37,6 +37,29 @@ function authHeaders(secret: string): Record<string, string> {
   return {
     "X-Minibot-Auth": secret,
   };
+}
+
+async function fetchJson<T>(url: string, timeoutMs?: number): Promise<T> {
+  const res = await fetchWithTimeout(
+    url,
+    {
+      method: "GET",
+      credentials: "same-origin",
+    },
+    timeoutMs,
+  );
+  if (!res.ok) {
+    throw new Error(`request failed: HTTP ${res.status}`);
+  }
+  return (await res.json()) as T;
+}
+
+/** Fetch the public auth mode used by the gateway. */
+export async function fetchAuthConfig(
+  baseUrl: string = "",
+  timeoutMs?: number,
+): Promise<AuthConfigResponse> {
+  return fetchJson<AuthConfigResponse>(`${baseUrl}/auth/config`, timeoutMs);
 }
 
 /**

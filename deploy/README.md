@@ -19,11 +19,25 @@
 当前线上仍可能由 `mini-langfuse/deploy/demo/docker-compose.yml` 的 `minibot` 服务拉起（域名如 `https://bot.liuyidi.me`）。  
 mlf 迁到腾讯云 4C4G 后，建议阿里云旧机 **只保留 minibot**（+ 可选 minikb），并逐步把 Compose / Nginx / 运维说明迁入本目录。
 
-## 待补充
+## 现有资产
 
-- [ ] `docker-compose.yml`（仅 minibot + 必要依赖）
-- [ ] `.env.example`
-- [ ] Nginx 片段（`bot.liuyidi.me`）
-- [ ] 从 demo 栈拆出的操作步骤
+- `docker-compose.yml`：minibot 独立服务
+- `.env.example`：生产运行时配置草案
+- `nginx.bot.liuyidi.me.conf.example`：`bot.liuyidi.me` 反向代理片段
+
+### 生产认证接入
+
+`minibot` 已支持共享认证服务 `mini-auth`。生产环境建议设置：
+
+```bash
+MINIBOT_SERVER_AUTH_PROVIDER=mini_auth
+MINIBOT_SERVER_MINI_AUTH_BASE_URL=https://auth.liuyidi.me
+MINIBOT_SERVER_MINI_AUTH_CLIENT_ID=minibot
+MINIBOT_SERVER_MINI_AUTH_SCOPE=openid profile email
+MINIBOT_SERVER_MINI_AUTH_CALLBACK_PATH=/auth/mini-auth/callback
+MINIBOT_SERVER_REQUIRE_AUTH=true
+```
+
+部署后，`GET /auth/login?next=...` 会跳转到 `https://auth.liuyidi.me/oauth/authorize`，再由 `minibot` 的 `/auth/mini-auth/callback` 完成会话落地。
 
 本地开发仍以仓库根目录 / `minibot/README.md` 为准。
