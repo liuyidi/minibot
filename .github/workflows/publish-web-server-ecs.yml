@@ -28,6 +28,7 @@ jobs:
     env:
       ECS_HOST: ${{ vars.ECS_HOST || '116.62.35.76' }}
       ECS_USER: ${{ vars.ECS_USER || 'root' }}
+      ECS_SSH_PORT: ${{ vars.ECS_SSH_PORT || 22 }}
 
     outputs:
       short_sha: ${{ steps.meta.outputs.short_sha }}
@@ -38,25 +39,34 @@ jobs:
         run: |
           echo "short_sha=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
 
-      - name: Deploy minibot image on ECS
+      - name: Pull minibot commit on ECS
         uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ env.ECS_HOST }}
           username: ${{ env.ECS_USER }}
           key: ${{ secrets.ECS_SSH_PRIVATE_KEY }}
-          port: ${{ vars.ECS_SSH_PORT || 22 }}
+          port: ${{ env.ECS_SSH_PORT }}
           script_stop: true
-          command_timeout: 40m
+          command_timeout: 5m
           script: |
             set -euo pipefail
-
-            echo "==> Pull minibot ${{ github.sha }}"
             cd /opt/demo/minibot
             git fetch origin "${{ github.sha }}"
             git reset --hard "${{ github.sha }}"
-            git rev-parse --short HEAD
+            echo "HEAD=$(git rev-parse --short HEAD)"
+            git log -1 --oneline
 
-            echo "==> Rebuild and restart minibot (Python + WebUI)"
+      - name: Build minibot image on ECS
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ env.ECS_HOST }}
+          username: ${{ env.ECS_USER }}
+          key: ${{ secrets.ECS_SSH_PRIVATE_KEY }}
+          port: ${{ env.ECS_SSH_PORT }}
+          script_stop: true
+          command_timeout: 35m
+          script: |
+            set -euo pipefail
             cd /opt/demo/mini-langfuse/deploy/demo
             set -a
             # shellcheck disable=SC1091
@@ -64,11 +74,40 @@ jobs:
             set +a
             export MINIBOT_REPO_DIR=/opt/demo/minibot
             export MLF_DIR=/opt/demo/mini-langfuse
-
             docker compose -f docker-compose.yml --env-file .env build minibot
-            docker compose -f docker-compose.yml --env-file .env up -d minibot
 
-            echo "==> Health checks"
+      - name: Restart minibot container
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ env.ECS_HOST }}
+          username: ${{ env.ECS_USER }}
+          key: ${{ secrets.ECS_SSH_PRIVATE_KEY }}
+          port: ${{ env.ECS_SSH_PORT }}
+          script_stop: true
+          command_timeout: 5m
+          script: |
+            set -euo pipefail
+            cd /opt/demo/mini-langfuse/deploy/demo
+            set -a
+            # shellcheck disable=SC1091
+            source .env
+            set +a
+            export MINIBOT_REPO_DIR=/opt/demo/minibot
+            export MLF_DIR=/opt/demo/mini-langfuse
+            docker compose -f docker-compose.yml --env-file .env up -d minibot
+            docker ps --filter name=demo-minibot --format 'table {{.Names}}\t{{.Status}}\t{{.Image}}'
+
+      - name: Wait for minibot /health
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ env.ECS_HOST }}
+          username: ${{ env.ECS_USER }}
+          key: ${{ secrets.ECS_SSH_PRIVATE_KEY }}
+          port: ${{ env.ECS_SSH_PORT }}
+          script_stop: true
+          command_timeout: 5m
+          script: |
+            set -euo pipefail
             ok=0
             for i in $(seq 1 40); do
               if curl -fsS --max-time 3 http://127.0.0.1:8766/health >/tmp/minibot-health.json; then
@@ -84,8 +123,20 @@ jobs:
               docker logs demo-minibot --tail 120 || true
               exit 1
             fi
-            curl -fsS -o /dev/null -w "webui %{http_code}\n" http://127.0.0.1:8766/
-            curl -fsS -o /dev/null -w "public %{http_code}\n" https://bot.liuyidi.me/ || true
+
+      - name: Verify WebUI and public URL
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ env.ECS_HOST }}
+          username: ${{ env.ECS_USER }}
+          key: ${{ secrets.ECS_SSH_PRIVATE_KEY }}
+          port: ${{ env.ECS_SSH_PORT }}
+          script_stop: true
+          command_timeout: 2m
+          script: |
+            set -euo pipefail
+            curl -fsS -o /dev/null -w "local webui %{http_code}\n" http://127.0.0.1:8766/
+            curl -fsS -o /dev/null -w "public bot %{http_code}\n" https://bot.liuyidi.me/ || true
 
   notify-serverlessship:
     needs: publish-ecs
@@ -102,7 +153,6 @@ jobs:
         run: |
           set -euo pipefail
 
-          version="${RELEASE_VERSION}"
           serverlessship_release_url="${SERVERLESSSHIP_RELEASE_URL:-https://serverless-ship.liuyidi.me/api/releases}"
 
           payload="$(node -e 'process.stdout.write(JSON.stringify({
