@@ -50,6 +50,7 @@ jobs:
           command_timeout: 5m
           script: |
             set -euo pipefail
+            git config --global --add safe.directory /opt/demo/minibot
             cd /opt/demo/minibot
             git fetch origin "${{ github.sha }}"
             git reset --hard "${{ github.sha }}"
