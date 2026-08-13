@@ -69,9 +69,21 @@ jobs:
             docker compose -f docker-compose.yml --env-file .env up -d minibot
 
             echo "==> Health checks"
-            sleep 3
-            curl -fsS http://127.0.0.1:8766/health
-            echo
+            ok=0
+            for i in $(seq 1 40); do
+              if curl -fsS --max-time 3 http://127.0.0.1:8766/health >/tmp/minibot-health.json; then
+                echo "health ok after ${i} attempt(s): $(cat /tmp/minibot-health.json)"
+                ok=1
+                break
+              fi
+              echo "waiting for minibot health (${i}/40)..."
+              sleep 3
+            done
+            if [[ "$ok" -ne 1 ]]; then
+              echo "minibot health check failed; recent logs:"
+              docker logs demo-minibot --tail 120 || true
+              exit 1
+            fi
             curl -fsS -o /dev/null -w "webui %{http_code}\n" http://127.0.0.1:8766/
             curl -fsS -o /dev/null -w "public %{http_code}\n" https://bot.liuyidi.me/ || true
 
