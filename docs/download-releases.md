@@ -40,9 +40,10 @@ shows it as coming soon rather than exposing a broken download link.
 
 ## Automated desktop publishing (recommended)
 
-1. Push to `main` with changes under `desktop/**` (or run **Publish Desktop** /
-   push `desktop-v*`) → GitHub Actions builds the installers and publishes the
-   GitHub Release directly.
+1. Merge the release commit to `main`, then run **Release** manually to create
+   the shared `v<version>` tag.
+2. Workflow **Publish Desktop** (`.github/workflows/publish-desktop.yml`) runs
+   on that tag, builds the installers, and publishes the GitHub Release.
 3. Workflow **Sync Desktop Release to OSS**
    (`.github/workflows/sync-oss-desktop.yml`) runs automatically after
    **Publish Desktop** completes, downloads the workflow artifacts or published
@@ -60,7 +61,7 @@ Configure repository **Secrets**: `OSS_ACCESS_KEY_ID`, `OSS_ACCESS_KEY_SECRET`
 (Feishu custom bot webhook used by both release notifications).
 
 You can also re-run sync manually: Actions → Sync Desktop Release to OSS →
-provide tag `desktop-v…`.
+  provide tag `v…`.
 
 ## Manual publishing
 
@@ -81,7 +82,7 @@ scripts/publish-oss-releases.sh --version 1.0.0-beta.1 \
 Or sync from an already-published GitHub release:
 
 ```bash
-scripts/sync-desktop-release-to-oss.sh --tag desktop-v1.0.0-beta.1
+scripts/sync-desktop-release-to-oss.sh --tag v1.0.1
 ```
 
 ## Release checklist
