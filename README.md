@@ -104,8 +104,36 @@ Layers: environment → `~/.minibot/config.json` → in-memory state.
 | `MINIBOT_SERVER_MINIKB_BASE_URL` | — | Optional knowledge base URL |
 | `MINIBOT_SERVER_EXEC_BACKEND` | `local` | `local` or `e2b` |
 | `AUTH_SECRET` | empty | If set, bootstrap requires `X-Minibot-Auth` |
+| `MINIBOT_SERVER_AUTH_PROVIDER` | `local` | Set to `mini_auth` to delegate login to the shared auth service |
+| `MINIBOT_SERVER_MINI_AUTH_BASE_URL` | `http://127.0.0.1:8000` | mini-auth base URL |
+| `MINIBOT_SERVER_MINI_AUTH_CLIENT_ID` | `minibot` | OIDC client ID registered in mini-auth |
+| `MINIBOT_SERVER_MINI_AUTH_SCOPE` | `openid profile email` | Requested OIDC scopes |
+| `MINIBOT_SERVER_MINI_AUTH_CALLBACK_PATH` | `/auth/mini-auth/callback` | minibot callback endpoint |
+| `MINIBOT_SERVER_MINI_AUTH_TIMEOUT_S` | `20.0` | mini-auth exchange timeout |
+| `MINIBOT_SERVER_REQUIRE_AUTH` | `false` | Force auth check on bootstrap / protected endpoints |
 
 Model presets, MCP servers, and channel credentials live in WebUI **Settings** / **IM channels**.
+
+### Production auth: mini-auth
+
+When minibot is wired to the shared auth service, use:
+
+```bash
+MINIBOT_SERVER_AUTH_PROVIDER=mini_auth
+MINIBOT_SERVER_MINI_AUTH_BASE_URL=https://auth.liuyidi.me
+MINIBOT_SERVER_MINI_AUTH_CLIENT_ID=minibot
+MINIBOT_SERVER_MINI_AUTH_SCOPE=openid profile email
+MINIBOT_SERVER_MINI_AUTH_CALLBACK_PATH=/auth/mini-auth/callback
+MINIBOT_SERVER_REQUIRE_AUTH=true
+```
+
+The flow becomes:
+
+1. `GET /auth/login?next=...`
+2. redirect to `https://auth.liuyidi.me/oauth/authorize`
+3. login on mini-auth
+4. callback to `/auth/mini-auth/callback`
+5. minibot sets its session cookie and continues to `next`
 
 More detail: [`minibot/README.md`](./minibot/README.md), [`webui/README.md`](./webui/README.md), [`docs/`](./docs/).
 

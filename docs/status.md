@@ -87,6 +87,11 @@ AppState.config + rebuild_provider() / MCP reconnect
 | `MINIBOT_SERVER_HOST` / `PORT` | `127.0.0.1` / `8766` | 绑定 |
 | `MINIBOT_SERVER_AUTH_SECRET` | 空 | 设置后 bootstrap 需带 auth header |
 | `MINIBOT_SERVER_REQUIRE_AUTH` | `false` | 强制校验 token |
+| `MINIBOT_SERVER_AUTH_PROVIDER` | `local` | `mini_auth` 时接共享认证中心 |
+| `MINIBOT_SERVER_MINI_AUTH_BASE_URL` | `http://127.0.0.1:8000` | mini-auth 基础地址 |
+| `MINIBOT_SERVER_MINI_AUTH_CLIENT_ID` | `minibot` | OIDC client_id |
+| `MINIBOT_SERVER_MINI_AUTH_SCOPE` | `openid profile email` | OIDC scope |
+| `MINIBOT_SERVER_MINI_AUTH_CALLBACK_PATH` | `/auth/mini-auth/callback` | 回调路径 |
 | `MINIBOT_SERVER_DATA_DIR` | `~/.minibot` | 数据根 |
 | `MINIBOT_SERVER_CONFIG_PATH` | 空 | 覆盖默认 config 路径 |
 | `MINIBOT_SERVER_MAX_ITERATIONS` / `TEMPERATURE` | `8` / `0.2` | ReAct / 采样 |

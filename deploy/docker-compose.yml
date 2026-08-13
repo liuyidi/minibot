@@ -1,0 +1,21 @@
+# minibot production stack
+#
+# Run on the ECS host that serves bot.liuyidi.me.
+# This compose keeps the runtime minimal: just minibot itself.
+
+name: minibot
+
+services:
+  minibot:
+    build:
+      context: ..
+      dockerfile: Dockerfile.minibot
+    env_file: .env
+    ports:
+      - "8766:8766"
+    volumes:
+      - minibot-data:/data
+    restart: unless-stopped
+
+volumes:
+  minibot-data:
