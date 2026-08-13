@@ -1,0 +1,119 @@
+name: Publish Web & Server (ECS)
+
+# Rebuild minibot Python runtime + WebUI on the Aliyun ECS demo host
+# (bot.liuyidi.me), then notify Feishu via ServerlessShip.
+#
+# Trigger: push to main touching server/WebUI/Docker paths, or Actions → Run workflow.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "minibot/**"
+      - "webui/**"
+      - "Dockerfile.minibot"
+      - ".github/workflows/publish-web-server-ecs.yml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  publish-ecs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    env:
+      ECS_HOST: ${{ vars.ECS_HOST || '116.62.35.76' }}
+      ECS_USER: ${{ vars.ECS_USER || 'root' }}
+
+    outputs:
+      short_sha: ${{ steps.meta.outputs.short_sha }}
+
+    steps:
+      - name: Resolve deploy metadata
+        id: meta
+        run: |
+          echo "short_sha=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy minibot image on ECS
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ env.ECS_HOST }}
+          username: ${{ env.ECS_USER }}
+          key: ${{ secrets.ECS_SSH_PRIVATE_KEY }}
+          port: ${{ vars.ECS_SSH_PORT || 22 }}
+          script_stop: true
+          command_timeout: 40m
+          script: |
+            set -euo pipefail
+
+            echo "==> Pull minibot ${{ github.sha }}"
+            cd /opt/demo/minibot
+            git fetch origin "${{ github.sha }}"
+            git reset --hard "${{ github.sha }}"
+            git rev-parse --short HEAD
+
+            echo "==> Rebuild and restart minibot (Python + WebUI)"
+            cd /opt/demo/mini-langfuse/deploy/demo
+            set -a
+            # shellcheck disable=SC1091
+            source .env
+            set +a
+            export MINIBOT_REPO_DIR=/opt/demo/minibot
+            export MLF_DIR=/opt/demo/mini-langfuse
+
+            docker compose -f docker-compose.yml --env-file .env build minibot
+            docker compose -f docker-compose.yml --env-file .env up -d minibot
+
+            echo "==> Health checks"
+            sleep 3
+            curl -fsS http://127.0.0.1:8766/health
+            echo
+            curl -fsS -o /dev/null -w "webui %{http_code}\n" http://127.0.0.1:8766/
+            curl -fsS -o /dev/null -w "public %{http_code}\n" https://bot.liuyidi.me/ || true
+
+  notify-serverlessship:
+    needs: publish-ecs
+    if: ${{ needs.publish-ecs.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    env:
+      SERVERLESSSHIP_RELEASE_URL: ${{ vars.SERVERLESSSHIP_RELEASE_URL }}
+
+    steps:
+      - name: Send deploy notification to ServerlessShip
+        run: |
+          set -euo pipefail
+
+          version="${RELEASE_VERSION}"
+          serverlessship_release_url="${SERVERLESSSHIP_RELEASE_URL:-https://serverless-ship.liuyidi.me/api/releases}"
+
+          payload="$(node -e 'process.stdout.write(JSON.stringify({
+            project: "minibot",
+            version: process.env.RELEASE_VERSION,
+            tag: process.env.RELEASE_SHA,
+            repository: process.env.GITHUB_REPOSITORY,
+            releaseUrl: process.env.RELEASE_URL,
+            workflowUrl: process.env.WORKFLOW_URL,
+            channel: "ECS Demo",
+          }));')"
+
+          response="$(
+            curl -fsS \
+              -X POST \
+              -H "Content-Type: application/json" \
+              -d "$payload" \
+              "$serverlessship_release_url"
+          )"
+
+          echo "$response"
+        env:
+          RELEASE_VERSION: ${{ needs.publish-ecs.outputs.short_sha }}
+          RELEASE_SHA: ${{ github.sha }}
+          RELEASE_URL: https://bot.liuyidi.me/
+          WORKFLOW_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
