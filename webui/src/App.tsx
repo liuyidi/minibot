@@ -63,6 +63,12 @@ function currentLocationForNext(): string {
   return `${window.location.pathname}${window.location.search}${window.location.hash}`;
 }
 
+function isLocalDevelopmentHost(): boolean {
+  if (typeof window === "undefined") return false;
+  const { hostname } = window.location;
+  return hostname === "localhost" || hostname === "127.0.0.1";
+}
+
 function buildLoginRedirect(loginUrl: string | null | undefined): string {
   const base = loginUrl ?? "/auth/login";
   const join = base.includes("?") ? "&" : "?";
@@ -235,7 +241,7 @@ export default function App() {
           if (cancelled) return;
           const msg = (e as Error).message;
           if (msg.includes("HTTP 401") || msg.includes("HTTP 403")) {
-            if (isMiniAuth(authConfigRef.current)) {
+            if (isMiniAuth(authConfigRef.current) || !isLocalDevelopmentHost()) {
               redirectToMiniAuth("login");
               return;
             }
@@ -294,6 +300,10 @@ export default function App() {
       } catch {
         if (cancelled) return;
         authConfigRef.current = null;
+        if (!isLocalDevelopmentHost()) {
+          redirectToMiniAuth("login");
+          return;
+        }
         bootstrapWithSecret(loadSavedSecret());
       }
     })();
@@ -301,6 +311,12 @@ export default function App() {
       cancelled = true;
     };
   }, [bootstrapWithSecret, redirectToMiniAuth]);
+
+  useEffect(() => {
+    if (state.status !== "auth") return;
+    if (isLocalDevelopmentHost()) return;
+    redirectToMiniAuth("login");
+  }, [redirectToMiniAuth, state.status]);
 
   if (state.status === "loading") {
     return (
@@ -318,6 +334,7 @@ export default function App() {
     );
   }
   if (state.status === "auth") {
+    if (!isLocalDevelopmentHost()) return null;
     return (
       <AuthForm
         failed={!!state.failed}
