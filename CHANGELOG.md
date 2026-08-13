@@ -11,6 +11,18 @@ Versions follow SemVer for product narrative. Package metadata may lag until a f
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-08-13
+
+### Changed
+
+- Production auth now uses mini-auth end to end, with HTTPS-safe callback URLs behind the reverse proxy.
+- Legacy gateway secret fallback is disabled on production hosts so `bot.liuyidi.me` goes straight to the shared login flow.
+
+### Fixed
+
+- The ECS deploy workflow now works with the current repo checkout and `.env` handling.
+- The auth handoff no longer regresses to `http://` callback URLs when behind Aliyun / Tencent reverse proxies.
+
 ## [1.0.1] - 2026-08-13
 
 ### Added
