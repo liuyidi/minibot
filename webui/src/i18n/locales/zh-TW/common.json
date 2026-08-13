@@ -1096,6 +1096,10 @@
             "title": "查看對話歷史",
             "description": "列印最近 N 則已持久化的對話訊息。"
           },
+          "compact": {
+            "title": "壓縮上下文",
+            "description": "把較早的訊息總結進會話記憶，並保留最近幾輪對話。"
+          },
           "dream": {
             "title": "執行 Dream",
             "description": "手動觸發記憶整理。"

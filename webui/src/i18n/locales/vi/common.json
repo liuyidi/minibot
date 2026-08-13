@@ -1096,6 +1096,10 @@
             "title": "Hiển thị lịch sử",
             "description": "In N tin nhắn hội thoại đã lưu gần nhất."
           },
+          "compact": {
+            "title": "Nén lịch sử",
+            "description": "Tóm tắt tin nhắn cũ vào bộ nhớ phiên và giữ các lượt gần đây."
+          },
           "dream": {
             "title": "Chạy Dream",
             "description": "Kích hoạt thủ công quá trình hợp nhất bộ nhớ."

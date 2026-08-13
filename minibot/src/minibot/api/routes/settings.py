@@ -226,7 +226,9 @@ async def delete_model_configuration(
 
 @router.get("/commands")
 async def list_commands_alias(_auth: AuthDep) -> dict[str, list]:
-    return {"commands": []}
+    from minibot.api.routes.misc import BUILTIN_SLASH_COMMANDS
+
+    return {"commands": list(BUILTIN_SLASH_COMMANDS)}
 
 
 class McpPresetBody(BaseModel):

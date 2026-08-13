@@ -11,10 +11,20 @@ from minibot.api.deps import AuthDep, StateDep
 
 router = APIRouter(tags=["misc"])
 
+BUILTIN_SLASH_COMMANDS: list[dict[str, str]] = [
+    {
+        "command": "/compact",
+        "title": "Compact history",
+        "description": "Summarize older messages into session memory and keep recent turns.",
+        "icon": "minimize-2",
+        "arg_hint": "",
+    },
+]
+
 
 @router.get("/api/commands")
 async def list_commands(_auth: AuthDep) -> dict[str, list]:
-    return {"commands": []}
+    return {"commands": list(BUILTIN_SLASH_COMMANDS)}
 
 
 @router.get("/api/webui/sidebar-state")

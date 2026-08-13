@@ -1096,6 +1096,10 @@
             "title": "Tampilkan riwayat",
             "description": "Cetak N pesan percakapan tersimpan terbaru."
           },
+          "compact": {
+            "title": "Pemadatkan riwayat",
+            "description": "Ringkas pesan lama ke memori sesi dan simpan giliran terbaru."
+          },
           "dream": {
             "title": "Jalankan Dream",
             "description": "Picu konsolidasi memori secara manual."

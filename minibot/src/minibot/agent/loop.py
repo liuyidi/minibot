@@ -451,6 +451,9 @@ class AgentLoop:
         if session is None:
             raise KeyError(f"unknown session: {session_id}")
 
+        if isinstance(content, str) and content.strip().lower() == "/compact":
+            return await self._handle_compact_command(session_id)
+
         history = [message_for_runner(m) for m in session.messages if m.get("role") in _ROLES]
         stored_user = persist_user_message(content, media)
         user_msg = {
@@ -637,23 +640,74 @@ class AgentLoop:
         await self.compact_if_needed(session_id)
         return result
 
-    async def compact_if_needed(self, session_id: str) -> dict[str, Any] | None:
-        """If message count exceeds threshold, LLM-summarize older messages into session.summary."""
+    async def _handle_compact_command(self, session_id: str) -> AgentRunResult:
+        """Force-compact session history for the `/compact` slash command."""
+        event = await self.compact_if_needed(session_id, force=True)
+        session = self.sessions.get(session_id)
+        if session is None:
+            raise KeyError(f"unknown session: {session_id}")
+
+        if event is None:
+            content = "Compaction is unavailable for this session."
+        elif event.get("skipped"):
+            keep = int(getattr(self.config, "compact_keep_recent", 16) or 16)
+            content = (
+                f"Nothing to compact — only {event.get('before', 0)} messages "
+                f"(keep recent ≥ {max(2, keep)})."
+            )
+        elif not event.get("ok"):
+            content = f"Compaction failed: {event.get('error') or 'unknown error'}"
+        else:
+            preview = str(event.get("summary_preview") or "").strip()
+            content = (
+                f"Compacted history: {event.get('before')} → {event.get('after')} messages."
+            )
+            if preview:
+                content = f"{content}\n\nSummary preview:\n{preview}"
+
+        return AgentRunResult(
+            content=content,
+            messages=list(session.messages),
+            stop_reason="completed",
+            trace=[{"type": "compact_command", "event": event}],
+        )
+
+    async def compact_if_needed(
+        self,
+        session_id: str,
+        *,
+        force: bool = False,
+    ) -> dict[str, Any] | None:
+        """Summarize older messages into session.summary when over threshold (or force)."""
         from minibot.agent.context import messages_to_compact_blob
 
         threshold = int(getattr(self.config, "compact_threshold", 0) or 0)
         keep = int(getattr(self.config, "compact_keep_recent", 16) or 16)
-        if threshold <= 0:
+        if not force and threshold <= 0:
             return None
         session = self.sessions.get(session_id)
         if session is None:
             return None
         before = len(session.messages)
-        if before <= threshold:
+        if not force and before <= threshold:
             return None
         keep = max(2, keep)
         if before <= keep:
-            return None
+            if not force:
+                return None
+            event = {
+                "session_id": session_id,
+                "finished_at": _now_iso(),
+                "before": before,
+                "after": before,
+                "summary_preview": "",
+                "ok": True,
+                "skipped": True,
+                "error": None,
+            }
+            self._compaction_log.insert(0, event)
+            del self._compaction_log[40:]
+            return event
 
         old = session.messages[:-keep]
         recent = session.messages[-keep:]
@@ -665,7 +719,9 @@ class AgentLoop:
             "after": keep,
             "summary_preview": "",
             "ok": True,
+            "skipped": False,
             "error": None,
+            "forced": force,
         }
         try:
             from minibot.observability import langfuse as lf
@@ -684,7 +740,7 @@ class AgentLoop:
                 as_type="generation",
                 name="compaction",
                 model=self._chat_model(),
-                input={"message_count": len(old), "before": before, "keep": keep},
+                input={"message_count": len(old), "before": before, "keep": keep, "forced": force},
                 model_parameters={"temperature": 0.0},
             ) as gen:
                 response = await self.runner.provider.chat(

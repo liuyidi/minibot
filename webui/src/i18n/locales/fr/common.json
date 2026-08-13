@@ -1096,6 +1096,10 @@
             "title": "Afficher l’historique",
             "description": "Afficher les N derniers messages persistés de la conversation."
           },
+          "compact": {
+            "title": "Compacter l’historique",
+            "description": "Résume les anciens messages dans la mémoire de session et conserve les tours récents."
+          },
           "dream": {
             "title": "Lancer Dream",
             "description": "Déclencher manuellement la consolidation de la mémoire."

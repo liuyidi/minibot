@@ -1117,6 +1117,10 @@
             "title": "查看对话历史",
             "description": "打印最近 N 条已持久化的对话消息。"
           },
+          "compact": {
+            "title": "压缩上下文",
+            "description": "把较早的消息总结进会话记忆，并保留最近几轮对话。"
+          },
           "dream": {
             "title": "运行 Dream",
             "description": "手动触发记忆整理。"

@@ -1118,6 +1118,10 @@
             "title": "Show conversation history",
             "description": "Print the last N persisted conversation messages."
           },
+          "compact": {
+            "title": "Compact history",
+            "description": "Summarize older messages into session memory and keep recent turns."
+          },
           "dream": {
             "title": "Run Dream",
             "description": "Manually trigger memory consolidation."

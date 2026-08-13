@@ -17,6 +17,7 @@ const SLASH_COMMAND_KEYS = [
   "status",
   "model",
   "history",
+  "compact",
   "dream",
   "dream_log",
   "dream_restore",

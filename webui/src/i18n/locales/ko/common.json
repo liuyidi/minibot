@@ -1096,6 +1096,10 @@
             "title": "대화 기록 보기",
             "description": "저장된 최근 N개의 대화 메시지를 출력합니다."
           },
+          "compact": {
+            "title": "히스토리 압축",
+            "description": "이전 메시지를 요약해 세션 메모리에 넣고 최근 대화를 유지합니다."
+          },
           "dream": {
             "title": "Dream 실행",
             "description": "메모리 정리를 수동으로 트리거합니다."

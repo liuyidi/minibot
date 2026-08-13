@@ -1096,6 +1096,10 @@
             "title": "Mostrar historial",
             "description": "Imprime los últimos N mensajes persistidos de la conversación."
           },
+          "compact": {
+            "title": "Compactar historial",
+            "description": "Resume mensajes antiguos en la memoria de la sesión y conserva los turnos recientes."
+          },
           "dream": {
             "title": "Ejecutar Dream",
             "description": "Activa manualmente la consolidación de memoria."
