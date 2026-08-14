@@ -22,7 +22,6 @@ import type {
   InboundEvent,
   GoalStateWsPayload,
   PendingApproval,
-  ToolProgressEvent,
   UIMessage,
   UITurnPhase,
 } from "@/lib/types";
