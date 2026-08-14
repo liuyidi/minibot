@@ -32,13 +32,15 @@ const DEFAULT_AVATAR_SRC = "/brand/minibot_mark.svg";
 
 export function SidebarAccountFooter({
   collapsed = false,
+  displayName: displayNameProp,
   onOpenSettings,
 }: {
   collapsed?: boolean;
+  displayName?: string | null;
   onOpenSettings: (section?: SettingsSectionKey) => void;
 }) {
   const { t } = useTranslation();
-  const displayName = t("sidebar.accountDisplayName", { defaultValue: "minibot" });
+  const displayName = displayNameProp?.trim() || t("sidebar.accountDisplayName", { defaultValue: "minibot" });
   const menuAria = t("sidebar.accountMenuAria", { defaultValue: "Account menu" });
   const downloadAppLabel = t("sidebar.downloadApp");
   const settingsLabel = t("sidebar.settings");

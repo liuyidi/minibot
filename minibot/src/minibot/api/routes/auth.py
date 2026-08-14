@@ -29,6 +29,7 @@ class AuthConfigResponse(BaseModel):
     authenticated: bool = False
     login_url: str | None = None
     logout_url: str | None = None
+    account: dict[str, str | None] | None = None
 
 
 def _token_from_request(
@@ -86,7 +87,8 @@ async def auth_config(
     minibot_auth_token: str | None = Cookie(default=None, alias=AUTH_COOKIE_NAME),
 ) -> AuthConfigResponse:
     provider = state.settings.normalized_auth_provider()
-    authenticated = state.check_token(_token_from_request(request, x_minibot_auth, minibot_auth_token))
+    supplied = _token_from_request(request, x_minibot_auth, minibot_auth_token)
+    authenticated = state.check_token(supplied)
     login_url = "/auth/login" if provider == "mini_auth" else None
     logout_url = "/auth/logout" if provider == "mini_auth" else None
     return AuthConfigResponse(
@@ -94,6 +96,7 @@ async def auth_config(
         authenticated=authenticated,
         login_url=login_url,
         logout_url=logout_url,
+        account=state.token_account(supplied) if authenticated else None,
     )
 
 
@@ -173,7 +176,7 @@ async def mini_auth_callback(
                 headers={"Authorization": f"Bearer {access_token}"},
             )
             userinfo_response.raise_for_status()
-            _ = userinfo_response.json()
+            userinfo = userinfo_response.json()
     except httpx.HTTPStatusError as exc:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
@@ -185,7 +188,12 @@ async def mini_auth_callback(
             detail=f"mini-auth callback failed: {exc}",
         ) from exc
 
-    session_token = state.issue_token(ttl_s=expires_in)
+    account = {
+        "email": userinfo.get("email"),
+        "name": userinfo.get("preferred_username") or userinfo.get("name") or userinfo.get("email"),
+        "picture": userinfo.get("picture"),
+    }
+    session_token = state.issue_token(ttl_s=expires_in, account=account)
     response = RedirectResponse(url=login_record.next_url or "/", status_code=status.HTTP_302_FOUND)
     response.set_cookie(
         AUTH_COOKIE_NAME,

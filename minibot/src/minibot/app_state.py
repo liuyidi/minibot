@@ -38,6 +38,7 @@ from minibot.session.store import SessionStore
 class TokenRecord:
     token: str
     expires_at: float
+    account: dict[str, Any] | None = None
 
 
 @dataclass
@@ -84,18 +85,25 @@ class AppState:
         self.runner = AgentRunner(provider)
         self.loop.runner = self.runner
 
-    def issue_token(self, ttl_s: int | None = None) -> str:
+    def issue_token(self, ttl_s: int | None = None, account: dict[str, Any] | None = None) -> str:
         token = secrets.token_urlsafe(24)
         expires_in = self.settings.token_ttl_s if ttl_s is None else max(1, int(ttl_s))
         self.tokens[token] = TokenRecord(
             token=token,
             expires_at=time.time() + expires_in,
+            account=account,
         )
         return token
 
     def revoke_token(self, token: str | None) -> None:
         if token:
             self.tokens.pop(token, None)
+
+    def token_account(self, token: str | None) -> dict[str, Any] | None:
+        if not token or not self.check_token(token):
+            return None
+        record = self.tokens.get(token)
+        return record.account if record else None
 
     def begin_mini_auth_login(self, next_url: str) -> tuple[str, str]:
         login_state = secrets.token_urlsafe(24)

@@ -70,6 +70,7 @@ interface SidebarProps {
   archivedCount?: number;
   defaultWorkspacePath?: string | null;
   hostChromeInset?: boolean;
+  accountDisplayName?: string | null;
 }
 
 type NavigatorWithUserAgentData = Navigator & {
@@ -295,6 +296,7 @@ export function Sidebar(props: SidebarProps) {
         <Separator className="bg-sidebar-border/50" />
         <SidebarAccountFooter
           collapsed={collapsed}
+          displayName={props.accountDisplayName}
           onOpenSettings={props.onOpenSettings}
         />
       </TooltipProvider>

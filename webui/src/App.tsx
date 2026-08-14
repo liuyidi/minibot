@@ -20,6 +20,14 @@ import {
   loadSavedSecret,
   saveSecret,
 } from "@/lib/apis/bootstrap";
+import { accountDisplayName } from "@/lib/auth-account";
+import {
+  bootstrapTokenExpiresAt,
+  buildLoginRedirect,
+  buildLogoutRedirect,
+  isMiniAuth,
+  tokenRefreshDelayMs,
+} from "@/lib/auth-flow";
 import { MinibotClient } from "@/lib/apis/minibot-client";
 import {
   createRuntimeHost,
@@ -40,49 +48,13 @@ type BootState =
       tokenExpiresAt: number;
       modelName: string | null;
       runtimeSurface: RuntimeSurface;
+      accountDisplayName: string | null;
     };
-
-const TOKEN_REFRESH_MARGIN_MS = 30_000;
-const TOKEN_REFRESH_MIN_DELAY_MS = 5_000;
-
-function bootstrapTokenExpiresAt(expiresInSeconds: number): number {
-  return Date.now() + Math.max(0, expiresInSeconds) * 1000;
-}
-
-function tokenRefreshDelayMs(expiresAt: number): number {
-  const remaining = Math.max(0, expiresAt - Date.now());
-  const margin = Math.min(
-    TOKEN_REFRESH_MARGIN_MS,
-    Math.max(1_000, remaining / 2),
-  );
-  return Math.max(TOKEN_REFRESH_MIN_DELAY_MS, remaining - margin);
-}
-
-function currentLocationForNext(): string {
-  if (typeof window === "undefined") return "/";
-  return `${window.location.pathname}${window.location.search}${window.location.hash}`;
-}
 
 function isLocalDevelopmentHost(): boolean {
   if (typeof window === "undefined") return false;
   const { hostname } = window.location;
   return hostname === "localhost" || hostname === "127.0.0.1";
-}
-
-function buildLoginRedirect(loginUrl: string | null | undefined): string {
-  const base = loginUrl ?? "/auth/login";
-  const join = base.includes("?") ? "&" : "?";
-  return `${base}${join}next=${encodeURIComponent(currentLocationForNext())}`;
-}
-
-function buildLogoutRedirect(logoutUrl: string | null | undefined): string {
-  const base = logoutUrl ?? "/auth/logout";
-  const join = base.includes("?") ? "&" : "?";
-  return `${base}${join}next=${encodeURIComponent("/")}`;
-}
-
-function isMiniAuth(config: AuthConfigResponse | null): boolean {
-  return config?.auth_provider === "mini_auth";
 }
 
 function AuthForm({
@@ -236,6 +208,7 @@ export default function App() {
             tokenExpiresAt: bootstrapTokenExpiresAt(boot.expires_in),
             modelName: boot.model_name ?? null,
             runtimeSurface,
+            accountDisplayName: accountDisplayName(authConfigRef.current),
           });
         } catch (e) {
           if (cancelled) return;
@@ -399,6 +372,7 @@ export default function App() {
                 <HashChangeSync />
                 <AppLayout
                   runtimeSurface={state.runtimeSurface}
+                  accountDisplayName={state.accountDisplayName}
                   onModelNameChange={handleModelNameChange}
                   onLogout={handleLogout}
                   onNativeEngineRestart={handleNativeEngineRestart}
