@@ -55,7 +55,11 @@ if [[ ${#changed_files[@]} -eq 0 ]]; then
 fi
 
 cd minibot
+# Under `set -u`, empty arrays must expand safely (bash 3.2 / 5.x).
+changed_args=("${changed_files[@]+"${changed_files[@]}"}")
+version_args=("${version_files_changed[@]+"${version_files_changed[@]}"}")
+changelog_args=("${changelog_files_changed[@]+"${changelog_files_changed[@]}"}")
 PYTHONPATH=src uv run python -m minibot.release_tools check \
-  --changed-files "${changed_files[@]}" \
-  --version-files "${version_files_changed[@]}" \
-  --changelog-files "${changelog_files_changed[@]}"
+  --changed-files "${changed_args[@]}" \
+  --version-files ${version_args[@]+"${version_args[@]}"} \
+  --changelog-files ${changelog_args[@]+"${changelog_args[@]}"}
