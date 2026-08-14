@@ -116,3 +116,50 @@ jobs:
           uploadUpdaterSignatures: false
           uploadWorkflowArtifacts: true
           args: ${{ matrix.args }}
+
+  notify-serverlessship:
+    needs: publish-tauri
+    if: ${{ needs.publish-tauri.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    env:
+      SERVERLESSSHIP_RELEASE_URL: ${{ vars.SERVERLESSSHIP_RELEASE_URL }}
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "20"
+
+      - name: Read release version
+        id: release-version
+        run: |
+          version="$(node -p "require('./desktopV2/package.json').version")"
+          echo "value=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Send release notification to ServerlessShip
+        run: |
+          set -euo pipefail
+
+          serverlessship_release_url="${SERVERLESSSHIP_RELEASE_URL:-https://serverless-ship.liuyidi.me/api/releases}"
+
+          payload="$(node -e 'const version = process.env.RELEASE_VERSION; const tag = process.env.RELEASE_TAG; process.stdout.write(JSON.stringify({ project: "minibot", version, tag, repository: process.env.GITHUB_REPOSITORY, releaseUrl: process.env.RELEASE_URL, workflowUrl: process.env.WORKFLOW_URL, channel: "GitHub Release (Desktop V2)" }));')"
+
+          response="$(
+            curl -fsS \
+              -X POST \
+              -H "Content-Type: application/json" \
+              -d "$payload" \
+              "$serverlessship_release_url"
+          )"
+
+          echo "$response"
+        env:
+          RELEASE_VERSION: ${{ steps.release-version.outputs.value }}
+          RELEASE_TAG: desktop-v2-v${{ steps.release-version.outputs.value }}
+          RELEASE_URL: ${{ github.server_url }}/${{ github.repository }}/releases/tag/desktop-v2-v${{ steps.release-version.outputs.value }}
+          WORKFLOW_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
