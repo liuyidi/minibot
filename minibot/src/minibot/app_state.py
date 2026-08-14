@@ -25,6 +25,7 @@ from minibot.observability.score_queue import ScoreQueue
 from minibot.observability.usage_budget import BudgetExceeded
 from minibot.sandbox.base import SandboxBackend
 from minibot.sandbox.factory import build_sandbox_backend
+from minibot.migration import migrate_legacy_user_data
 from minibot.user_runtime import UserRuntime, build_user_runtime
 from minibot.security.principal_context import current_principal
 
@@ -250,6 +251,7 @@ def build_app_state() -> AppState:
         fallback = Path.cwd() / ".minibot-data"
         fallback.mkdir(parents=True, exist_ok=True)
         settings.__dict__["data_dir"] = fallback
+    migrate_legacy_user_data(settings)
     sandbox_backend = build_sandbox_backend(settings)
     fallback_stats = FallbackStats()
     fault_controller = FaultController()

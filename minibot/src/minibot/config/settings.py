@@ -38,6 +38,7 @@ class Settings(BaseSettings):
 
     data_dir: Path = Path.home() / ".minibot"
     config_path: Path | None = None
+    legacy_owner_user_id: str = ""
 
     # mini-langfuse (optional; soft-import — see observability/langfuse.py)
     langfuse_enabled: bool = False
@@ -107,6 +108,9 @@ class Settings(BaseSettings):
     def normalized_auth_provider(self) -> str:
         value = (self.auth_provider or "local").strip().lower().replace("-", "_")
         return value if value in {"local", "mini_auth"} else "local"
+
+    def normalized_legacy_owner_user_id(self) -> str:
+        return self.legacy_owner_user_id.strip()
 
 
 @lru_cache
