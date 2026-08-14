@@ -27,6 +27,16 @@ npm run dev
 
 数据目录：Tauri app data 下的 `engine/`（`MINIBOT_SERVER_DATA_DIR`）。
 
+## 登录（mini-auth + `minibot://`）
+
+1. WebUI 检测到 `minibotHost.openLogin` → 系统浏览器打开  
+   `http://127.0.0.1:8766/auth/login?desktop=1&next=…`
+2. mini-auth 完成后跳转 `minibot://auth/callback?code=&state=`
+3. 壳收 deep link → `POST /auth/desktop/complete` → 导航  
+   `/auth/desktop/session?token=…` 写入 cookie
+
+需：mini-auth 客户端白名单含 `minibot://auth/callback`；macOS 需安装过一次 `.app` 后协议才稳定（`tauri dev` 有限）。
+
 ## 与 V1 差异（目标）
 
 | | desktop (V1) | desktopV2 |
