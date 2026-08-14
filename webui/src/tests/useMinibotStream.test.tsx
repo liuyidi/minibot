@@ -1734,6 +1734,49 @@ describe("useMinibotStream", () => {
     expect(result.current.runStartedAt).toBeNull();
   });
 
+  it("clears isStreaming on goal_status idle without turn_end", () => {
+    const fake = fakeClient();
+    const { result } = renderHook(() => useMinibotStream("chat-g", EMPTY_MESSAGES), {
+      wrapper: wrap(fake.client),
+    });
+
+    act(() => {
+      result.current.send("hello");
+    });
+    expect(result.current.isStreaming).toBe(true);
+
+    act(() => {
+      fake.emit("chat-g", {
+        event: "goal_status",
+        chat_id: "chat-g",
+        status: "idle",
+      });
+    });
+    expect(result.current.isStreaming).toBe(false);
+  });
+
+  it("clears isStreaming on error events", () => {
+    const fake = fakeClient();
+    const { result } = renderHook(() => useMinibotStream("chat-g", EMPTY_MESSAGES), {
+      wrapper: wrap(fake.client),
+    });
+
+    act(() => {
+      result.current.send("hello");
+    });
+    expect(result.current.isStreaming).toBe(true);
+
+    act(() => {
+      fake.emit("chat-g", {
+        event: "error",
+        chat_id: "chat-g",
+        detail: "unknown_chat",
+      });
+    });
+    expect(result.current.isStreaming).toBe(false);
+    expect(result.current.runStartedAt).toBeNull();
+  });
+
   it("clears runStartedAt on turn_end even without idle", () => {
     const fake = fakeClient();
     const { result } = renderHook(() => useMinibotStream("chat-g", EMPTY_MESSAGES), {

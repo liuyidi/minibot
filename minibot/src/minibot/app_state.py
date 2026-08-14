@@ -101,6 +101,19 @@ class AppState:
             out.append(self.runtime_for(user_id))
         return out
 
+    def find_session_owner(self, session_id: str) -> str | None:
+        """Return user_id whose session store contains ``session_id``, if any."""
+        sid = (session_id or "").strip()
+        if not sid:
+            return None
+        for runtime in self.preload_user_runtimes():
+            if runtime.sessions.get(sid) is not None:
+                return runtime.user_id
+        system = self.runtime_for("system")
+        if system.sessions.get(sid) is not None:
+            return "system"
+        return None
+
     @property
     def sessions(self) -> Any:
         return self.runtime_for().sessions
@@ -305,7 +318,8 @@ def build_app_state() -> AppState:
                 return
             return
 
-        if state.sessions.get(job.session_id) is None:
+        owner_user_id = state.find_session_owner(job.session_id)
+        if owner_user_id is None:
             raise RuntimeError(f"unknown session_id={job.session_id}")
         # Bus → BusWorker → handle_turn(entry=cron); waiter completes when turn ends.
         assert state.cron is not None
@@ -321,6 +335,7 @@ def build_app_state() -> AppState:
                     "job_id": job.id,
                     "job_name": job.name,
                 },
+                user_id=owner_user_id,
             )
         )
         await asyncio.wait_for(waiter, timeout=600.0)

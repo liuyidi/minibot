@@ -281,6 +281,7 @@ class AgentLoop:
                                 chat_id=session_id,
                                 content="",
                                 metadata={"kind": "turn_end"},
+                                user_id=(principal.user_id if principal else None),
                             )
                         )
                     return result
@@ -401,8 +402,15 @@ class AgentLoop:
                     text=result.content,
                     extra={"tools_used": result.tools_used, "trace": result.trace, "stop_reason": result.stop_reason},
                 )
+                principal = current_principal()
                 await bus.publish_outbound(
-                    OutboundMessage(channel=channel, chat_id=approval.session_id, content="", metadata={"kind": "turn_end"})
+                    OutboundMessage(
+                        channel=channel,
+                        chat_id=approval.session_id,
+                        content="",
+                        metadata={"kind": "turn_end"},
+                        user_id=(principal.user_id if principal else None),
+                    )
                 )
         return result
 
@@ -422,12 +430,14 @@ class AgentLoop:
             meta["stream_id"] = stream_id
         if extra:
             meta.update(extra)
+        principal = current_principal()
         await bus.publish_outbound(
             OutboundMessage(
                 channel=channel,
                 chat_id=chat_id,
                 content=text,
                 metadata=meta,
+                user_id=(principal.user_id if principal else None),
             )
         )
 

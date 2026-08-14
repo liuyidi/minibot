@@ -8,6 +8,7 @@ from typing import Any
 
 from minibot.bus.events import InboundMessage, OutboundMessage
 from minibot.security.channel_context import bind_channel, reset_channel
+from minibot.security.principal_context import current_principal
 
 logger = logging.getLogger(__name__)
 
@@ -72,6 +73,9 @@ class BusWorker:
         self.state.sessions.create(session_id=session_id, title=title or session_id)
 
     async def _handle_inbound(self, msg: InboundMessage) -> None:
+        # Lazy import avoids deps → app_state → bus.worker cycle.
+        from minibot.api.deps import bind_user_runtime_context
+
         channel = (msg.channel or "websocket").strip() or "websocket"
         platform_chat_id = msg.chat_id
         session_id = msg.session_key
@@ -93,6 +97,7 @@ class BusWorker:
 
         token = bind_channel(channel)
         try:
+            bind_user_runtime_context(self.state, msg.user_id)
             if is_ws or is_cron:
                 if self.state.sessions.get(session_id) is None:
                     await bus_publish_error(
@@ -100,6 +105,7 @@ class BusWorker:
                         channel=channel,
                         chat_id=platform_chat_id,
                         detail="unknown_chat",
+                        user_id=msg.user_id,
                     )
                     self._complete_cron_wait(job_id, error=RuntimeError("unknown_chat"))
                     return
@@ -127,6 +133,7 @@ class BusWorker:
                     "reasoning": result.reasoning or "",
                 }
                 reply_to = meta.get("message_id") or meta.get("reply_to")
+                principal = current_principal()
                 await self.state.bus.publish_outbound(
                     OutboundMessage(
                         channel=channel,
@@ -134,6 +141,7 @@ class BusWorker:
                         content=result.content or "",
                         reply_to=str(reply_to) if reply_to else None,
                         metadata=out_meta,
+                        user_id=(principal.user_id if principal else msg.user_id),
                     )
                 )
             self._complete_cron_wait(job_id)
@@ -152,6 +160,7 @@ class BusWorker:
                     channel=channel,
                     chat_id=platform_chat_id,
                     detail=f"budget_exceeded:{exc.reason}",
+                    user_id=msg.user_id,
                 )
             else:
                 logger.exception(
@@ -164,6 +173,7 @@ class BusWorker:
                     channel=channel,
                     chat_id=platform_chat_id,
                     detail=str(exc),
+                    user_id=msg.user_id,
                 )
             self._complete_cron_wait(job_id, error=exc)
         finally:
@@ -178,6 +188,7 @@ class BusWorker:
         cron.complete_wait(job_id, error=error)
 
     async def _outbound_loop(self) -> None:
+        from minibot.api.deps import bind_user_runtime_context
         from minibot.api.ws import deliver_outbound
 
         bus = self.state.bus
@@ -197,6 +208,7 @@ class BusWorker:
                 if channel in _WS_LIKE:
                     await deliver_outbound(msg)
                     continue
+                bind_user_runtime_context(self.state, msg.user_id)
                 manager = getattr(self.state, "channels", None)
                 if manager is not None and await manager.deliver(msg):
                     continue
@@ -216,6 +228,7 @@ async def bus_publish_error(
     channel: str,
     chat_id: str,
     detail: str,
+    user_id: str | None = None,
 ) -> None:
     await state.bus.publish_outbound(
         OutboundMessage(
@@ -223,5 +236,6 @@ async def bus_publish_error(
             chat_id=chat_id,
             content="",
             metadata={"kind": "turn_error", "detail": detail},
+            user_id=user_id,
         )
     )

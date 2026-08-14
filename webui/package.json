@@ -1,7 +1,7 @@
 {
   "name": "minibot-webui",
   "private": true,
-  "version": "1.0.6",
+  "version": "1.0.7",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -60,7 +60,7 @@
     "katex": "^0.16.21",
     "postcss": "^8.5.0",
     "tailwindcss": "^3.4.17",
-    "tailwindcss-animate": "^1.0.7",
+    "tailwindcss-animate": "^1.0.6",
     "typescript": "^5.7.2",
     "typescript-eslint": "^8.59.4",
     "vite": "^5.4.11",

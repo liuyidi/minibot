@@ -39,6 +39,14 @@ def _extract_supplied_token(
     )
 
 
+def bind_user_runtime_context(state: AppState, user_id: str | None) -> None:
+    """Bind principal + data_dir for a known user id (bus worker / cron / channels)."""
+    uid = (user_id or "").strip() or "system"
+    kind = "system" if uid == "system" else "user"
+    bind_principal(Principal(kind=kind, user_id=uid))
+    bind_data_dir(resolve_user_root(state.settings, uid))
+
+
 def bind_token_context(state: AppState, token: str | None) -> None:
     """Bind principal and per-user data root from a validated token account."""
     account = state.token_account(token)
@@ -55,8 +63,7 @@ def bind_token_context(state: AppState, token: str | None) -> None:
         )
         bind_data_dir(resolve_user_root(state.settings, user_id))
         return
-    bind_principal(Principal(kind="system", user_id="system"))
-    bind_data_dir(resolve_user_root(state.settings, "system"))
+    bind_user_runtime_context(state, "system")
 
 
 async def require_token(

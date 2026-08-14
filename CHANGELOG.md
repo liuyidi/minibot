@@ -11,6 +11,13 @@ Versions follow SemVer for product narrative. Package metadata may lag until a f
 
 ## [Unreleased]
 
+## [1.0.7] - 2026-08-14
+
+### Fixed
+
+- WebSocket / Feishu / WeChat / cron messages on the bus now carry `user_id` so BusWorker binds the correct per-user session store (fixes `unknown_chat` and a stuck “model is replying” spinner).
+- WebUI clears streaming state on `goal_status: idle` and `error`, not only on `turn_end`.
+
 ## [1.0.6] - 2026-08-14
 
 ### Fixed

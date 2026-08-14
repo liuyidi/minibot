@@ -87,7 +87,7 @@ def build_user_runtime(
         approvals=approvals,
         usage_budget=usage_budget,
     )
-    channels = build_channel_manager(settings, bus, config=config)
+    channels = build_channel_manager(settings, bus, config=config, user_id=user_id)
     return UserRuntime(
         user_id=user_id,
         root=root,

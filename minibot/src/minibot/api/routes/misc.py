@@ -462,6 +462,7 @@ async def bus_inject(
             sender_id="devui",
             chat_id=session_id,
             content=content,
+            user_id=state.current_user_id(),
         )
     )
     worker = state.bus_worker.status() if state.bus_worker is not None else {}

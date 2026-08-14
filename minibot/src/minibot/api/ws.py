@@ -16,6 +16,7 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from minibot.api.deps import bind_token_context
 from minibot.app_state import AppState
 from minibot.bus.events import InboundMessage, OutboundMessage
+from minibot.security.principal_context import current_principal
 from minibot.workspace import WorkspaceError
 
 router = APIRouter()
@@ -468,6 +469,7 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
                 known.add(chat_id)
                 hub.attach(chat_id, websocket)
                 await hub.send(chat_id, {"event": "goal_status", "chat_id": chat_id, "status": "running"})
+                principal = current_principal()
                 await state.bus.publish_inbound(
                     InboundMessage(
                         channel="websocket",
@@ -475,6 +477,7 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
                         chat_id=chat_id,
                         content=content,
                         media=media_paths,
+                        user_id=(principal.user_id if principal else "system"),
                     )
                 )
                 continue

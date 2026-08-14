@@ -11,6 +11,13 @@ English: [CHANGELOG.md](./CHANGELOG.md)
 
 ## [Unreleased]
 
+## [1.0.7] - 2026-08-14
+
+### 修复
+
+- WebSocket / 飞书 / 微信 / 定时任务经 MessageBus 时携带 `user_id`，BusWorker 按用户绑定会话目录，避免 `unknown_chat` 与「模型正在回复」卡住。
+- WebUI 在 `goal_status: idle` 与 `error` 时也会结束流式状态（不再只等 `turn_end`）。
+
 ## [1.0.6] - 2026-08-14
 
 ### 修复

@@ -49,9 +49,10 @@ class BaseChannel(ABC):
     send_tool_hints: bool = False
     show_reasoning: bool = False
 
-    def __init__(self, config: Any, bus: MessageBus) -> None:
+    def __init__(self, config: Any, bus: MessageBus, *, owner_user_id: str | None = None) -> None:
         self.config = config
         self.bus = bus
+        self.owner_user_id = (owner_user_id or "").strip() or "system"
         self._running = False
         self.logger = _BraceLogger(f"minibot.channels.{self.name}")
 
@@ -125,6 +126,7 @@ class BaseChannel(ABC):
                 media=media or [],
                 metadata=meta,
                 session_key_override=session_key,
+                user_id=self.owner_user_id,
             )
         )
 

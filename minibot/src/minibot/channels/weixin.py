@@ -56,10 +56,10 @@ class WeixinChannel(BaseChannel):
     def default_config(cls) -> dict[str, Any]:
         return WeixinConfig().model_dump(by_alias=True)
 
-    def __init__(self, config: Any, bus: MessageBus) -> None:
+    def __init__(self, config: Any, bus: MessageBus, **kwargs: Any) -> None:
         if isinstance(config, dict):
             config = WeixinConfig.model_validate(config)
-        super().__init__(config, bus)
+        super().__init__(config, bus, **kwargs)
         self.config: WeixinConfig = config
         self._client: httpx.AsyncClient | None = None
         self._token = ""

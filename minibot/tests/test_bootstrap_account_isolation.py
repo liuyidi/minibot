@@ -66,6 +66,40 @@ def test_session_default_workspace_is_under_user_root(client: TestClient, data_d
     assert "users/user-delta/workspace" in str(workspace_path)
 
 
+def test_ws_chat_with_account_token_completes_turn(client: TestClient, data_dir: Path) -> None:
+    """Bus worker must inherit user_id so WS turns resolve the per-user session store."""
+    from minibot.api.deps import AUTH_COOKIE_NAME
+
+    state = client.app.state.app_state
+    cookie = state.issue_token(
+        account={"id": "user-ws", "email": "ws@example.com", "name": "ws", "picture": None}
+    )
+    boot = client.get("/webui/bootstrap", cookies={AUTH_COOKIE_NAME: cookie}).json()["token"]
+    headers = {"Authorization": f"Bearer {boot}"}
+    created = client.post("/api/sessions", headers=headers, json={"title": "ws-user"})
+    assert created.status_code == 200
+    session_id = created.json()["id"]
+
+    saw_idle = False
+    with client.websocket_connect(f"/ws?token={boot}") as ws:
+        assert ws.receive_json().get("event") == "ready"
+        ws.send_json({"type": "message", "chat_id": session_id, "content": "ping via ws"})
+        for _ in range(40):
+            evt = ws.receive_json()
+            if evt.get("event") == "goal_status" and evt.get("status") == "idle":
+                saw_idle = True
+                break
+            if evt.get("event") == "error" and evt.get("detail") == "unknown_chat":
+                raise AssertionError("bus worker lost user context: unknown_chat")
+
+    assert saw_idle
+    session_path = data_dir / "users" / "user-ws" / "sessions" / f"{session_id}.jsonl"
+    assert session_path.is_file()
+    text = session_path.read_text(encoding="utf-8")
+    assert "ping via ws" in text
+    assert "ok from fake provider" in text
+
+
 def test_websocket_new_chat_uses_token_account(client: TestClient, data_dir: Path) -> None:
     state = client.app.state.app_state
     cookie = state.issue_token(account=_account("user-gamma", "gamma@example.com"))

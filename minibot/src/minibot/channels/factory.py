@@ -76,9 +76,11 @@ def build_channel_manager(
     bus: MessageBus,
     *,
     config: AppConfig | None = None,
+    user_id: str | None = None,
 ) -> ChannelManager:
     configure_channel_paths(settings.data_dir)
     manager = ChannelManager(bus)
+    owner_user_id = (user_id or "").strip() or "system"
 
     feishu = resolve_feishu_config(settings, config)
     if feishu is not None:
@@ -100,7 +102,7 @@ def build_channel_manager(
             streaming=False,
         )
         # Stash policy on channel for inbound pairing gate.
-        channel = FeishuChannel(cfg, bus)
+        channel = FeishuChannel(cfg, bus, owner_user_id=owner_user_id)
         channel.dm_policy = feishu.dm_policy  # type: ignore[attr-defined]
         manager.register(channel)
         log.info("Feishu channel registered app_id=%s dm_policy=%s", feishu.app_id, feishu.dm_policy)
@@ -118,7 +120,7 @@ def build_channel_manager(
             allow_from=allow,
             streaming=False,
         )
-        channel = WeixinChannel(cfg, bus)
+        channel = WeixinChannel(cfg, bus, owner_user_id=owner_user_id)
         channel.dm_policy = weixin.dm_policy  # type: ignore[attr-defined]
         manager.register(channel)
         log.info("Weixin channel registered dm_policy=%s", weixin.dm_policy)
@@ -155,9 +157,12 @@ async def reload_feishu_channel(state: Any) -> None:
     """Stop existing feishu channel (if any) and rebuild from current config."""
     import asyncio
 
+    owner_user_id = state.current_user_id()
     manager = getattr(state, "channels", None)
     if manager is None:
-        state.channels = build_channel_manager(state.settings, state.bus, config=state.config)
+        state.channels = build_channel_manager(
+            state.settings, state.bus, config=state.config, user_id=owner_user_id
+        )
         manager = state.channels
     else:
         existing = manager.channels.pop("feishu", None)
@@ -170,7 +175,9 @@ async def reload_feishu_channel(state: Any) -> None:
     feishu = resolve_feishu_config(state.settings, state.config)
     if feishu is None:
         return
-    rebuilt = build_channel_manager(state.settings, state.bus, config=state.config)
+    rebuilt = build_channel_manager(
+        state.settings, state.bus, config=state.config, user_id=owner_user_id
+    )
     channel = rebuilt.channels.get("feishu")
     if channel is None:
         if rebuilt.last_error:
@@ -184,9 +191,12 @@ async def reload_weixin_channel(state: Any) -> None:
     """Stop existing weixin channel (if any) and rebuild from current config."""
     import asyncio
 
+    owner_user_id = state.current_user_id()
     manager = getattr(state, "channels", None)
     if manager is None:
-        state.channels = build_channel_manager(state.settings, state.bus, config=state.config)
+        state.channels = build_channel_manager(
+            state.settings, state.bus, config=state.config, user_id=owner_user_id
+        )
         manager = state.channels
     else:
         existing = manager.channels.pop("weixin", None)
@@ -199,7 +209,9 @@ async def reload_weixin_channel(state: Any) -> None:
     weixin = resolve_weixin_config(state.settings, state.config)
     if weixin is None:
         return
-    rebuilt = build_channel_manager(state.settings, state.bus, config=state.config)
+    rebuilt = build_channel_manager(
+        state.settings, state.bus, config=state.config, user_id=owner_user_id
+    )
     channel = rebuilt.channels.get("weixin")
     if channel is None:
         if rebuilt.last_error:
