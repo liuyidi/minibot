@@ -430,13 +430,49 @@ fn resolve_sidecar_command() -> Result<(String, String), String> {
             return Ok((trimmed.to_string(), "MINIBOT_SIDECAR".into()));
         }
     }
+    if let Some(path) = bundled_sidecar_path() {
+        return Ok((path.to_string_lossy().into_owned(), "bundled".into()));
+    }
     if which_command("minibot") {
         return Ok(("minibot".into(), "PATH:minibot".into()));
     }
     Err(
-        "未找到本地引擎。请将 minibot 加入 PATH，或设置 MINIBOT_SIDECAR 指向可执行文件。"
+        "未找到本地引擎。请打包 sidecar、将 minibot 加入 PATH，或设置 MINIBOT_SIDECAR。"
             .into(),
     )
+}
+
+/// Locate PyInstaller onedir launcher bundled via Tauri `resources`.
+fn bundled_sidecar_path() -> Option<PathBuf> {
+    let names = ["minibot-sidecar", "minibot-sidecar.exe"];
+    let mut dirs: Vec<PathBuf> = Vec::new();
+
+    if let Ok(exe) = std::env::current_exe() {
+        if let Some(exe_dir) = exe.parent() {
+            dirs.push(exe_dir.join("minibot-sidecar"));
+            dirs.push(exe_dir.to_path_buf());
+            // macOS .app: Contents/MacOS → Contents/Resources/minibot-sidecar
+            if let Some(contents) = exe_dir.parent() {
+                dirs.push(contents.join("Resources").join("minibot-sidecar"));
+                dirs.push(contents.join("Resources"));
+            }
+        }
+    }
+
+    if let Ok(cwd) = std::env::current_dir() {
+        dirs.push(cwd.join("src-tauri/resources/minibot-sidecar"));
+        dirs.push(cwd.join("resources/minibot-sidecar"));
+    }
+
+    for dir in dirs {
+        for name in names {
+            let candidate = dir.join(name);
+            if candidate.is_file() {
+                return Some(candidate);
+            }
+        }
+    }
+    None
 }
 
 fn which_command(name: &str) -> bool {

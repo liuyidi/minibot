@@ -20,9 +20,21 @@ npm install
 npm run dev
 ```
 
-Spawn order: `MINIBOT_SIDECAR` → `minibot` on `PATH`.
+Spawn order: `MINIBOT_SIDECAR` → bundled PyInstaller onedir → `minibot` on `PATH`.
 
 Engine data: `{app_data}/engine` via `MINIBOT_SERVER_DATA_DIR`.
+
+## Bundle local sidecar
+
+```bash
+# From repo root
+./scripts/freeze-minibot-sidecar.sh
+cd desktopV2 && ./scripts/prepare-sidecar.sh
+npm run build:app   # or: npm run tauri build
+```
+
+`prepare-sidecar.sh` copies `dist/sidecar/<triple>/minibot-sidecar/` into
+`src-tauri/resources/minibot-sidecar/` (gitignored; Tauri `bundle.resources`).
 
 ## vs V1
 

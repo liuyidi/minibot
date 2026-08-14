@@ -23,9 +23,22 @@ npm run dev
 自动拉起顺序：
 
 1. `MINIBOT_SIDECAR`（冻结二进制或可执行路径）
-2. PATH 上的 `minibot`
+2. 打包进 `.app` 的 PyInstaller onedir（`resources/minibot-sidecar`）
+3. PATH 上的 `minibot`
 
 数据目录：Tauri app data 下的 `engine/`（`MINIBOT_SERVER_DATA_DIR`）。
+
+## 打包本地 sidecar
+
+```bash
+# 仓库根目录
+./scripts/freeze-minibot-sidecar.sh
+cd desktopV2 && ./scripts/prepare-sidecar.sh
+npm run build:app
+```
+
+`prepare-sidecar.sh` 将 `dist/sidecar/<triple>/minibot-sidecar/` 拷到
+`src-tauri/resources/minibot-sidecar/`（已 gitignore；由 Tauri `bundle.resources` 嵌入）。
 
 ## 登录（mini-auth + `minibot://`）
 
@@ -48,4 +61,4 @@ npm run dev
 
 ## 打包
 
-仍用 Tauri；sidecar 冻结与 CI 见设计文档 Task 4。当前以 PATH/`MINIBOT_SIDECAR` 开发为主。
+开发可用 PATH / `MINIBOT_SIDECAR`；正式包用上面的 freeze + `prepare-sidecar.sh`。CI 见 `publish-desktop-v2` workflow。
