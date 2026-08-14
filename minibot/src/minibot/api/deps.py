@@ -7,6 +7,7 @@ from typing import Annotated
 from fastapi import Depends, Header, HTTPException, Request, status
 
 from minibot.app_state import AppState
+from minibot.security.principal_context import Principal, bind_data_dir, bind_principal
 
 AUTH_COOKIE_NAME = "minibot_auth_token"
 
@@ -46,6 +47,21 @@ async def require_token(
     token = _extract_supplied_token(request, authorization, x_minibot_auth)
     if not state.check_token(token):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+    account = state.token_account(token)
+    if account and account.get("id"):
+        bind_principal(
+            Principal(
+                kind="user",
+                user_id=str(account.get("id")),
+                email=(account.get("email") or None),
+                name=(account.get("name") or None),
+                picture=(account.get("picture") or None),
+            )
+        )
+        bind_data_dir(state.settings.data_dir)
+    else:
+        bind_principal(Principal(kind="system", user_id="system"))
+        bind_data_dir(state.settings.data_dir)
     return token or ""
 
 

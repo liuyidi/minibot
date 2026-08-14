@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from minibot.security.principal_context import current_data_dir
+
 
 class WorkspaceError(ValueError):
     """Invalid workspace path."""
@@ -44,7 +46,8 @@ def default_workspace() -> Path:
     """
     from minibot.config.settings import get_settings
 
-    path = get_settings().data_dir.expanduser() / "workspace"
+    data_dir = current_data_dir() or get_settings().data_dir
+    path = Path(data_dir).expanduser() / "workspace"
     path.mkdir(parents=True, exist_ok=True)
     seed_workspace_bootstrap(path)
     return path.resolve()
