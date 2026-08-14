@@ -41,9 +41,9 @@
 - Modify: gateway auth routes + mini-auth redirect allowlist
 - Modify: WebUI login when `minibotHost` present
 
-- [ ] Register scheme
-- [ ] Handle callback → session
-- [ ] System browser open for login
+- [x] Register scheme
+- [x] Handle callback → session
+- [x] System browser open for login
 
 ### Task 4: Freeze sidecar + CI
 
@@ -55,4 +55,4 @@
 
 ## Progress
 
-- Task 1–2 started on `feature/desktopv2`.
+- Task 1–3 on `feature/desktopv2` (local spawn + `minibot://` OAuth path).
