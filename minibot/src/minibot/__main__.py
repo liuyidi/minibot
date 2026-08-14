@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import sys
+
 import uvicorn
 
 from minibot.config.settings import get_settings
@@ -9,8 +11,16 @@ from minibot.config.settings import get_settings
 
 def main() -> None:
     settings = get_settings()
+    # Frozen sidecars: pass the app object. A string target re-imports via
+    # importlib and fails if package datas shadow PYZ modules.
+    if getattr(sys, "frozen", False):
+        from minibot.main import app
+
+        app_target: object = app
+    else:
+        app_target = "minibot.main:app"
     uvicorn.run(
-        "minibot.main:app",
+        app_target,
         host=settings.host,
         port=settings.port,
         reload=False,

@@ -48,6 +48,7 @@ dist/
 build/
 *.manifest
 *.spec
+!minibot/packaging/pyinstaller/*.spec
 pip-wheel-metadata/
 share/python-wheels/
 

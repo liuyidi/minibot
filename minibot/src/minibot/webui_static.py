@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import sys
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
@@ -30,6 +31,11 @@ def resolve_webui_dist() -> Path | None:
     candidates: list[Path] = []
     if env:
         candidates.append(Path(env).expanduser())
+    # PyInstaller onedir / onefile extract dir.
+    if getattr(sys, "frozen", False):
+        meipass = Path(getattr(sys, "_MEIPASS", Path(sys.executable).resolve().parent))
+        candidates.append(meipass / "webui-dist")
+        candidates.append(Path(sys.executable).resolve().parent / "webui-dist")
     # Packaged alongside DevUI (Docker copies dist here).
     here = Path(__file__).resolve().parent
     candidates.append(here / "static" / "webui")
