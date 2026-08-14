@@ -462,7 +462,9 @@
       "copyUserId": "Copy user ID",
       "copiedUserId": "Copied",
       "createdAt": "Registration date",
-      "unknownValue": "—"
+      "unknownValue": "—",
+      "github": "GitHub",
+      "githubBound": "Bound"
     },
     "usage": {
       "title": "Token activity",

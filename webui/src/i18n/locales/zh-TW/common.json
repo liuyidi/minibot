@@ -329,7 +329,9 @@
       "copyUserId": "複製使用者 ID",
       "copiedUserId": "已複製",
       "createdAt": "註冊時間",
-      "unknownValue": "—"
+      "unknownValue": "—",
+      "github": "GitHub",
+      "githubBound": "已綁定"
     },
     "usage": {
       "title": "Token 活動",

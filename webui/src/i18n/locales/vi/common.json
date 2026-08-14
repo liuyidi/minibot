@@ -329,7 +329,9 @@
       "copyUserId": "Sao chép ID người dùng",
       "copiedUserId": "Đã sao chép",
       "createdAt": "Ngày đăng ký",
-      "unknownValue": "—"
+      "unknownValue": "—",
+      "github": "GitHub",
+      "githubBound": "Bound"
     },
     "usage": {
       "title": "Hoạt động token",

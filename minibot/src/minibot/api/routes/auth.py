@@ -57,6 +57,32 @@ def _callback_url(request: Request, state: StateDep) -> str:
     return f"{str(request.base_url).rstrip('/')}{state.settings.mini_auth_callback_path}"
 
 
+def account_from_mini_auth_userinfo(userinfo: dict) -> dict[str, str | None]:
+    identities = userinfo.get("identities") or []
+    github = next(
+        (
+            item
+            for item in identities
+            if isinstance(item, dict) and item.get("provider") == "github"
+        ),
+        None,
+    )
+    display_name = None
+    if isinstance(github, dict):
+        raw = github.get("display_name")
+        if isinstance(raw, str) and raw.strip():
+            display_name = raw.strip()
+    return {
+        "id": userinfo.get("sub"),
+        "email": userinfo.get("email"),
+        "name": userinfo.get("preferred_username") or userinfo.get("name") or userinfo.get("email"),
+        "picture": userinfo.get("picture"),
+        "created_at": userinfo.get("created_at"),
+        "github_bound": "true" if github is not None else "false",
+        "github_display_name": display_name,
+    }
+
+
 def _code_challenge_s256(code_verifier: str) -> str:
     digest = hashlib.sha256(code_verifier.encode("utf-8")).digest()
     return base64.urlsafe_b64encode(digest).rstrip(b"=").decode("ascii")
@@ -111,7 +137,10 @@ async def bootstrap(
     supplied = _token_from_request(request, x_minibot_auth, minibot_auth_token)
     if not state.check_token(supplied):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
-    token = state.issue_token()
+    # Short-lived API/WS token must inherit the login cookie's account, otherwise
+    # every WebUI client collapses onto the shared ``system`` user runtime.
+    account = state.token_account(supplied)
+    token = state.issue_token(account=dict(account) if account else None)
     return BootstrapResponse(
         token=token,
         expires_in=state.settings.token_ttl_s,
@@ -188,13 +217,7 @@ async def mini_auth_callback(
             detail=f"mini-auth callback failed: {exc}",
         ) from exc
 
-    account = {
-        "id": userinfo.get("sub"),
-        "email": userinfo.get("email"),
-        "name": userinfo.get("preferred_username") or userinfo.get("name") or userinfo.get("email"),
-        "picture": userinfo.get("picture"),
-        "created_at": userinfo.get("created_at"),
-    }
+    account = account_from_mini_auth_userinfo(userinfo)
     session_token = state.issue_token(ttl_s=expires_in, account=account)
     response = RedirectResponse(url=login_record.next_url or "/", status_code=status.HTTP_302_FOUND)
     response.set_cookie(

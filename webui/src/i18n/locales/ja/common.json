@@ -329,7 +329,9 @@
       "copyUserId": "ユーザー ID をコピー",
       "copiedUserId": "コピーしました",
       "createdAt": "登録日",
-      "unknownValue": "—"
+      "unknownValue": "—",
+      "github": "GitHub",
+      "githubBound": "Bound"
     },
     "usage": {
       "title": "Token アクティビティ",

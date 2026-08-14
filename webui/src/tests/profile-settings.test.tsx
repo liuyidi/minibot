@@ -155,8 +155,39 @@ describe("profile settings", () => {
     expect(await screen.findByRole("heading", { name: "liuyidi" })).toBeInTheDocument();
     expect(await screen.findByText("user-demo")).toBeInTheDocument();
     expect(screen.getByText("2026-08-11")).toBeInTheDocument();
+    expect(screen.queryByText("GitHub")).not.toBeInTheDocument();
     expect(screen.queryByTestId("profile-usage-panel")).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Token activity")).not.toBeInTheDocument();
+  });
+
+  it("shows GitHub display name when the account is bound", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url === "/api/settings") return jsonResponse(settingsPayload());
+        if (url === "/auth/config") {
+          return jsonResponse({
+            auth_provider: "mini_auth",
+            authenticated: true,
+            account: {
+              id: "user-demo",
+              name: "demo",
+              email: "demo@mini-auth.dev",
+              created_at: "2026-08-11T00:00:00Z",
+              github_bound: "true",
+              github_display_name: "octocat",
+            },
+          });
+        }
+        return { ok: false, status: 404, json: async () => ({}) } as Response;
+      }),
+    );
+
+    renderProfileSettings();
+
+    expect(await screen.findByText("GitHub")).toBeInTheDocument();
+    expect(screen.getByText("octocat")).toBeInTheDocument();
   });
 
   it("saves a nickname edit locally", async () => {

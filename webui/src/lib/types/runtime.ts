@@ -21,6 +21,8 @@ export interface AuthConfigResponse {
     name?: string | null;
     picture?: string | null;
     created_at?: string | null;
+    github_bound?: string | null;
+    github_display_name?: string | null;
   } | null;
 }
 

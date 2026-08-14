@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Calendar, Copy, Hash, Sparkles, UserRound } from "lucide-react";
+import { Calendar, Copy, Github, Hash, Sparkles, UserRound } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { ProfileAvatar } from "@/components/settings/ProfileAvatar";
@@ -13,6 +13,8 @@ export type ProfileSettingsProps = {
   avatarSeed: string;
   userId: string;
   createdAtLabel: string;
+  githubBound?: boolean;
+  githubDisplayName?: string;
   onSaveDisplayName: (value: string) => void;
   onRandomizeAvatar: () => void;
 };
@@ -22,6 +24,8 @@ export function ProfileSettings({
   avatarSeed,
   userId,
   createdAtLabel,
+  githubBound = false,
+  githubDisplayName = "",
   onSaveDisplayName,
   onRandomizeAvatar,
 }: ProfileSettingsProps) {
@@ -121,6 +125,17 @@ export function ProfileSettings({
             {t("settings.profile.randomizeAvatar", { defaultValue: "Randomize" })}
           </Button>
         </ProfileField>
+        {githubBound ? (
+          <ProfileField
+            icon={<Github className="h-4 w-4" aria-hidden />}
+            label={t("settings.profile.github", { defaultValue: "GitHub" })}
+          >
+            <span className="text-[13px] text-muted-foreground">
+              {githubDisplayName.trim()
+                || t("settings.profile.githubBound", { defaultValue: "Bound" })}
+            </span>
+          </ProfileField>
+        ) : null}
       </ProfileCard>
 
       <ProfileCard

@@ -329,7 +329,9 @@
       "copyUserId": "Copiar ID de usuario",
       "copiedUserId": "Copiado",
       "createdAt": "Fecha de registro",
-      "unknownValue": "—"
+      "unknownValue": "—",
+      "github": "GitHub",
+      "githubBound": "Bound"
     },
     "usage": {
       "title": "Actividad de tokens",

@@ -59,6 +59,8 @@ export function useProfileSettings() {
     displayName: resolved.displayName,
     userId: resolved.userId,
     createdAtLabel: formatProfileDate(resolved.createdAt),
+    githubBound: resolved.githubBound,
+    githubDisplayName: resolved.githubDisplayName,
     accountReady,
     saveDisplayName,
     randomizeAvatar,

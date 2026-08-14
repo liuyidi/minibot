@@ -329,7 +329,9 @@
       "copyUserId": "사용자 ID 복사",
       "copiedUserId": "복사됨",
       "createdAt": "가입일",
-      "unknownValue": "—"
+      "unknownValue": "—",
+      "github": "GitHub",
+      "githubBound": "Bound"
     },
     "usage": {
       "title": "Token 활동",

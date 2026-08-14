@@ -8,6 +8,8 @@ export type ProfileAccount = {
   createdAt: string;
   email: string | null;
   picture: string | null;
+  githubBound: boolean;
+  githubDisplayName: string;
 };
 
 export type ResolveProfileAccountOptions = {
@@ -37,6 +39,8 @@ export function resolveProfileAccount(
     createdAt: auth?.created_at?.trim() || local.createdAt,
     email: auth?.email?.trim() || null,
     picture: auth?.picture?.trim() || null,
+    githubBound: auth?.github_bound === "true",
+    githubDisplayName: auth?.github_display_name?.trim() || "",
   };
 }
 

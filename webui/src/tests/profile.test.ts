@@ -53,6 +53,8 @@ describe("profile helpers", () => {
       createdAt: "2026-08-11T00:00:00Z",
       email: "demo@mini-auth.dev",
       picture: null,
+      githubBound: false,
+      githubDisplayName: "",
     });
 
     const unnamed = writeLocalProfile({ ...local, displayName: null });
@@ -64,6 +66,33 @@ describe("profile helpers", () => {
         allowFallback: false,
       }).displayName,
     ).toBe("");
+  });
+
+  it("resolves github bind fields from auth account", () => {
+    const local = writeLocalProfile({
+      displayName: "Studio",
+      avatarSeed: "seed-1",
+      localUserId: "local-1",
+      createdAt: "2026-01-01T00:00:00Z",
+    });
+    expect(
+      resolveProfileAccount(
+        local,
+        {
+          id: "user-demo",
+          github_bound: "true",
+          github_display_name: "octocat",
+        },
+        "minibot",
+      ),
+    ).toMatchObject({
+      githubBound: true,
+      githubDisplayName: "octocat",
+    });
+    expect(resolveProfileAccount(local, { github_bound: "false" }, "minibot").githubBound).toBe(
+      false,
+    );
+    expect(resolveProfileAccount(local, null, "minibot").githubBound).toBe(false);
   });
 
   it("persists a generated local profile on first read", () => {

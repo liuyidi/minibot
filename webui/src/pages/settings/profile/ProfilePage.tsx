@@ -16,6 +16,8 @@ export function ProfilePage() {
         avatarSeed={model.avatarSeed}
         userId={model.userId}
         createdAtLabel={model.createdAtLabel}
+        githubBound={model.githubBound}
+        githubDisplayName={model.githubDisplayName}
         onSaveDisplayName={model.saveDisplayName}
         onRandomizeAvatar={model.randomizeAvatar}
       />

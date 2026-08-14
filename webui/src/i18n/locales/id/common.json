@@ -329,7 +329,9 @@
       "copyUserId": "Salin ID pengguna",
       "copiedUserId": "Disalin",
       "createdAt": "Tanggal pendaftaran",
-      "unknownValue": "—"
+      "unknownValue": "—",
+      "github": "GitHub",
+      "githubBound": "Bound"
     },
     "usage": {
       "title": "Aktivitas token",
