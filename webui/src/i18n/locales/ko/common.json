@@ -69,7 +69,8 @@
     "tabChannels": "Channels",
     "downloadApp": "Download app",
     "accountDisplayName": "minibot",
-    "accountMenuAria": "Account menu"
+    "accountMenuAria": "Account menu",
+    "profile": "프로필"
   },
   "settings": {
     "backToChat": "채팅으로 돌아가기",
@@ -81,6 +82,7 @@
       "general": "일반",
       "byok": "BYOK",
       "overview": "개요",
+      "profile": "프로필",
       "appearance": "외관",
       "models": "모델",
       "providers": "제공자",
@@ -314,6 +316,21 @@
       "voiceInput": "음성 입력",
       "workspace": "작업공간"
     },
+    "profile": {
+      "personalTitle": "개인 정보",
+      "personalSubtitle": "기본 정보를 확인하고 수정합니다",
+      "accountTitle": "계정 세부정보",
+      "accountSubtitle": "계정 정보를 확인합니다",
+      "nickname": "닉네임",
+      "nicknamePlaceholder": "닉네임을 입력하세요",
+      "avatar": "아바타",
+      "randomizeAvatar": "무작위 변경",
+      "userId": "사용자 ID",
+      "copyUserId": "사용자 ID 복사",
+      "copiedUserId": "복사됨",
+      "createdAt": "가입일",
+      "unknownValue": "—"
+    },
     "usage": {
       "title": "Token 활동",
       "shortTitle": "Token Usage",
@@ -337,7 +354,14 @@
         "cron": "자동화",
         "dream": "메모리 정리",
         "system": "시스템"
-      }
+      },
+      "longestChat": "최장 채팅 시간",
+      "granularityDaily": "일간",
+      "granularityWeekly": "주간",
+      "granularityCumulative": "누적",
+      "insightsTitle": "활동 인사이트",
+      "pluginsTitle": "가장 많이 사용한 플러그인",
+      "pluginRuns": "{{count}}회 실행"
     },
     "providers": {
       "searchPlaceholder": "제공자 검색",

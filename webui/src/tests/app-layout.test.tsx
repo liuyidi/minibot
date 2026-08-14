@@ -191,6 +191,10 @@ vi.mock("@/hooks/ui", async (importOriginal) => {
 });
 
 vi.mock("@/lib/apis/bootstrap", () => ({
+  fetchAuthConfig: vi.fn().mockResolvedValue({
+    auth_provider: "local",
+    authenticated: false,
+  }),
   fetchBootstrap: vi.fn().mockResolvedValue({
     token: "tok",
     ws_path: "/",
@@ -231,7 +235,7 @@ vi.mock("@/lib/apis/minibot-client", () => {
   return { MinibotClient: MockClient };
 });
 
-import { deriveWsUrl, fetchBootstrap } from "@/lib/apis/bootstrap";
+import { deriveWsUrl, fetchAuthConfig, fetchBootstrap } from "@/lib/apis/bootstrap";
 import App from "@/App";
 import { useSessionUiStore, useUiStore } from "@/stores";
 
@@ -260,6 +264,10 @@ describe("App layout", () => {
       token: "tok",
       ws_path: "/",
       expires_in: 300,
+    });
+    vi.mocked(fetchAuthConfig).mockReset().mockResolvedValue({
+      auth_provider: "local",
+      authenticated: false,
     });
     vi.mocked(deriveWsUrl).mockReset().mockReturnValue("ws://test");
     vi.stubGlobal(
@@ -302,6 +310,26 @@ describe("App layout", () => {
     expect(within(sidebar).getByRole("button", { name: "Account menu" })).toBeInTheDocument();
     expect(within(sidebar).queryByRole("button", { name: "Apps" })).not.toBeInTheDocument();
     expect(within(sidebar).queryByRole("button", { name: "Show archived" })).not.toBeInTheDocument();
+  });
+
+  it("shows the mini-auth account name in the expanded sidebar footer", async () => {
+    vi.mocked(fetchAuthConfig).mockResolvedValue({
+      auth_provider: "mini_auth",
+      authenticated: true,
+      login_url: "/auth/login",
+      logout_url: "/auth/logout",
+      account: {
+        email: "demo@mini-auth.dev",
+        name: "demo",
+        picture: null,
+      },
+    });
+
+    render(<App />);
+
+    await waitFor(() => expect(connectSpy).toHaveBeenCalled());
+    const sidebar = screen.getByRole("navigation", { name: "Sidebar navigation" });
+    expect(within(sidebar).getByText("demo")).toBeInTheDocument();
   });
 
   it("opens Skills from the main sidebar", async () => {

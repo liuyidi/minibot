@@ -10,17 +10,11 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from minibot.agent.approval import ApprovalStore
-from minibot.agent.loop import AgentLoop
 from minibot.agent.runner import AgentRunner
-from minibot.agent.tools.builtin import SYSTEM_PROMPT, register_default_tools
-from minibot.agent.tools.mcp import McpManager
-from minibot.agent.tools.registry import ToolRegistry
 from minibot.bus.queue import MessageBus
 from minibot.bus.worker import BusWorker
-from minibot.channels.factory import auto_approve_channels_from_settings, build_channel_manager
 from minibot.channels.manager import ChannelManager
-from minibot.config.app_config import AppConfig, load_app_config, save_app_config
+from minibot.config.app_config import AppConfig
 from minibot.config.settings import Settings, get_settings
 from minibot.cron.service import CronService
 from minibot.cron.types import CronJob
@@ -28,16 +22,18 @@ from minibot.providers.factory import build_provider_chain
 from minibot.providers.fallback import FallbackStats
 from minibot.providers.fault_inject import FaultController
 from minibot.observability.score_queue import ScoreQueue
-from minibot.observability.usage_budget import BudgetExceeded, UsageBudget
+from minibot.observability.usage_budget import BudgetExceeded
 from minibot.sandbox.base import SandboxBackend
 from minibot.sandbox.factory import build_sandbox_backend
-from minibot.session.store import SessionStore
+from minibot.user_runtime import UserRuntime, build_user_runtime
+from minibot.security.principal_context import current_principal
 
 
 @dataclass
 class TokenRecord:
     token: str
     expires_at: float
+    account: dict[str, Any] | None = None
 
 
 @dataclass
@@ -51,16 +47,15 @@ class MiniAuthLoginRecord:
 class AppState:
     settings: Settings
     bus: MessageBus
-    sessions: SessionStore
-    tools: ToolRegistry
+    sessions: Any
+    tools: Any
     runner: AgentRunner
-    loop: AgentLoop
+    loop: Any
     config: AppConfig
-    mcp: McpManager
-    approvals: ApprovalStore
+    mcp: Any
+    approvals: Any
     cron: CronService | None = None
     bus_worker: BusWorker | None = None
-    usage_budget: UsageBudget | None = None
     sandbox_backend: SandboxBackend | None = None
     channels: ChannelManager | None = None
     tokens: dict[str, TokenRecord] = field(default_factory=dict)
@@ -70,32 +65,127 @@ class AppState:
     score_queue: ScoreQueue = field(default_factory=ScoreQueue)
     media_gateway: Any | None = None
     started_at: float = field(default_factory=time.time)
+    user_runtimes: dict[str, UserRuntime] = field(default_factory=dict)
+
+    def current_user_id(self) -> str:
+        principal = current_principal()
+        return principal.user_id if principal and principal.user_id else "system"
+
+    def runtime_for(self, user_id: str | None = None) -> UserRuntime:
+        uid = (user_id or self.current_user_id() or "system").strip() or "system"
+        runtime = self.user_runtimes.get(uid)
+        if runtime is None:
+            assert self.sandbox_backend is not None
+            runtime = build_user_runtime(
+                settings=self.settings,
+                bus=self.bus,
+                sandbox_backend=self.sandbox_backend,
+                user_id=uid,
+            )
+            self.user_runtimes[uid] = runtime
+        return runtime
+
+    @property
+    def sessions(self) -> Any:
+        return self.runtime_for().sessions
+
+    @sessions.setter
+    def sessions(self, value: Any) -> None:
+        self.__dict__["_bootstrap_sessions"] = value
+
+    @property
+    def tools(self) -> Any:
+        return self.runtime_for().tools
+
+    @tools.setter
+    def tools(self, value: Any) -> None:
+        self.__dict__["_bootstrap_tools"] = value
+
+    @property
+    def runner(self) -> AgentRunner:
+        return self.runtime_for().runner
+
+    @runner.setter
+    def runner(self, value: AgentRunner) -> None:
+        self.__dict__["_bootstrap_runner"] = value
+
+    @property
+    def loop(self) -> Any:
+        return self.runtime_for().loop
+
+    @loop.setter
+    def loop(self, value: Any) -> None:
+        self.__dict__["_bootstrap_loop"] = value
+
+    @property
+    def config(self) -> AppConfig:
+        return self.runtime_for().config
+
+    @config.setter
+    def config(self, value: AppConfig) -> None:
+        self.__dict__["_bootstrap_config"] = value
+
+    @property
+    def mcp(self) -> Any:
+        return self.runtime_for().mcp
+
+    @mcp.setter
+    def mcp(self, value: Any) -> None:
+        self.__dict__["_bootstrap_mcp"] = value
+
+    @property
+    def approvals(self) -> Any:
+        return self.runtime_for().approvals
+
+    @approvals.setter
+    def approvals(self, value: Any) -> None:
+        self.__dict__["_bootstrap_approvals"] = value
+
+    @property
+    def usage_budget(self) -> Any:
+        return self.runtime_for().usage_budget
+
+    @usage_budget.setter
+    def usage_budget(self, value: Any) -> None:
+        self.__dict__["_bootstrap_usage_budget"] = value
+
+    @property
+    def channels(self) -> ChannelManager | None:
+        return self.runtime_for().channels
+
+    @channels.setter
+    def channels(self, value: ChannelManager | None) -> None:
+        self.__dict__["_bootstrap_channels"] = value
 
     def is_mini_auth_enabled(self) -> bool:
         return self.settings.normalized_auth_provider() == "mini_auth"
 
     def rebuild_provider(self) -> None:
         # Platform keys stay in env; do not copy them into config.json.
-        provider = build_provider_chain(
-            self.config,
-            stats=self.fallback_stats,
-            fault=self.fault_controller,
-        )
-        self.runner = AgentRunner(provider)
-        self.loop.runner = self.runner
+        runtime = self.runtime_for()
+        provider = build_provider_chain(runtime.config, stats=self.fallback_stats, fault=self.fault_controller)
+        runtime.runner = AgentRunner(provider)
+        runtime.loop.runner = runtime.runner
 
-    def issue_token(self, ttl_s: int | None = None) -> str:
+    def issue_token(self, ttl_s: int | None = None, account: dict[str, Any] | None = None) -> str:
         token = secrets.token_urlsafe(24)
         expires_in = self.settings.token_ttl_s if ttl_s is None else max(1, int(ttl_s))
         self.tokens[token] = TokenRecord(
             token=token,
             expires_at=time.time() + expires_in,
+            account=account,
         )
         return token
 
     def revoke_token(self, token: str | None) -> None:
         if token:
             self.tokens.pop(token, None)
+
+    def token_account(self, token: str | None) -> dict[str, Any] | None:
+        if not token or not self.check_token(token):
+            return None
+        record = self.tokens.get(token)
+        return record.account if record else None
 
     def begin_mini_auth_login(self, next_url: str) -> tuple[str, str]:
         login_state = secrets.token_urlsafe(24)
@@ -131,7 +221,7 @@ class AppState:
         return True
 
     def save_config(self, *, rebuild_provider: bool = True) -> None:
-        save_app_config(self.config)
+        self.runtime_for().save_config()
         if rebuild_provider:
             self.rebuild_provider()
 
@@ -145,42 +235,9 @@ def build_app_state() -> AppState:
         fallback = Path.cwd() / ".minibot-data"
         fallback.mkdir(parents=True, exist_ok=True)
         settings.__dict__["data_dir"] = fallback
-    config = load_app_config()
     sandbox_backend = build_sandbox_backend(settings)
-    tools = register_default_tools(backend=sandbox_backend)
-    from minibot.agent.approval import ApprovalPolicy
-
-    tools.approval_policy = ApprovalPolicy(
-        auto_approve_channels=auto_approve_channels_from_settings(settings, config)
-    )
-    mcp = McpManager(tools)
     fallback_stats = FallbackStats()
     fault_controller = FaultController()
-    provider = build_provider_chain(
-        config,
-        stats=fallback_stats,
-        fault=fault_controller,
-    )
-    runner = AgentRunner(provider)
-    sessions = SessionStore(data_dir=settings.data_dir)
-    approvals = ApprovalStore(data_dir=settings.data_dir)
-    usage_budget = UsageBudget(
-        settings.data_dir,
-        daily_token_limit=settings.daily_token_limit,
-        daily_turn_limit=settings.daily_turn_limit,
-    )
-    loop = AgentLoop(
-        sessions=sessions,
-        tools=tools,
-        runner=runner,
-        config=config,
-        approvals=approvals,
-        system_prompt=SYSTEM_PROMPT,
-        usage_budget=usage_budget,
-    )
-    from minibot.agent.tools.spawn import attach_spawn_tool
-
-    attach_spawn_tool(tools, loop=loop)
     from minibot.webui.media_gateway import WebUIMediaGateway
 
     media_gateway = WebUIMediaGateway(
@@ -190,29 +247,19 @@ def build_app_state() -> AppState:
     state = AppState(
         settings=settings,
         bus=MessageBus(),
-        sessions=sessions,
-        tools=tools,
-        runner=runner,
-        loop=loop,
-        config=config,
-        mcp=mcp,
-        approvals=approvals,
+        sessions=None,
+        tools=None,
+        runner=None,  # type: ignore[arg-type]
+        loop=None,
+        config=None,  # type: ignore[arg-type]
+        mcp=None,
+        approvals=None,
         fallback_stats=fallback_stats,
         fault_controller=fault_controller,
-        usage_budget=usage_budget,
         sandbox_backend=sandbox_backend,
         media_gateway=media_gateway,
     )
-    state.channels = build_channel_manager(settings, state.bus, config=config)
     state.bus_worker = BusWorker(state)
-    from minibot.channels.feishu_setup import FeishuSetupManager
-    from minibot.channels.weixin_setup import WeixinSetupManager
-    from minibot.channels.pairing import PairingStore
-
-    state.feishu_setup = FeishuSetupManager()
-    state.feishu_pairing = PairingStore(settings.data_dir)
-    state.weixin_setup = WeixinSetupManager()
-    state.weixin_pairing = PairingStore(settings.data_dir, channel="weixin")
     cron_path = settings.data_dir.expanduser() / "cron" / "jobs.json"
 
     async def _on_cron_job(job: CronJob) -> None:

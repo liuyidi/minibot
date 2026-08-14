@@ -3,6 +3,7 @@ import { Menu } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { getHostApi } from "@/lib/configs/runtime";
 import { cn } from "@/lib/utils";
 
@@ -68,27 +69,49 @@ export function SidebarBrandHeader({
         collapsed ? "w-14 justify-start" : "justify-between",
       )}
     >
-      <button
-        type="button"
-        aria-label={collapsed ? toggleLabel : t("app.brand")}
-        aria-hidden={collapsed ? undefined : true}
-        title={collapsed ? toggleLabel : t("app.brand")}
-        onClick={collapsed ? onExpand : undefined}
-        tabIndex={collapsed ? 0 : -1}
-        className={cn(
-          "flex h-9 shrink-0 items-center justify-center overflow-hidden rounded-xl transition-colors",
-          collapsed
-            ? "-ml-0.5 w-9 hover:bg-sidebar-accent/75"
-            : "pointer-events-none -ml-0.5 gap-2 px-1",
-        )}
-      >
-        <span
-          className="flex h-8 w-8 items-center justify-center rounded-lg bg-sidebar-foreground/90 text-[13px] font-semibold tracking-tight text-sidebar"
+      {collapsed ? (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              aria-label={toggleLabel}
+              onClick={onExpand}
+              tabIndex={0}
+              className={cn(
+                "flex h-9 shrink-0 items-center justify-center overflow-hidden rounded-xl transition-colors",
+                "-ml-0.5 w-9 hover:bg-sidebar-accent/75",
+              )}
+            >
+              <span
+                className="flex h-8 w-8 items-center justify-center rounded-lg bg-sidebar-foreground/90 text-[13px] font-semibold tracking-tight text-sidebar"
+                aria-hidden
+              >
+                M
+              </span>
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="right" align="center" sideOffset={10}>
+            {toggleLabel}
+          </TooltipContent>
+        </Tooltip>
+      ) : (
+        <button
+          type="button"
+          aria-label={t("app.brand")}
           aria-hidden
+          onClick={undefined}
+          tabIndex={-1}
+          className={cn(
+            "flex h-9 shrink-0 items-center justify-center overflow-hidden rounded-xl transition-colors",
+            "pointer-events-none -ml-0.5 gap-2 px-1",
+          )}
         >
-          M
-        </span>
-        {!collapsed ? (
+          <span
+            className="flex h-8 w-8 items-center justify-center rounded-lg bg-sidebar-foreground/90 text-[13px] font-semibold tracking-tight text-sidebar"
+            aria-hidden
+          >
+            M
+          </span>
           <span className="flex min-w-0 items-baseline gap-1.5">
             <span className="max-w-[7rem] truncate text-[13px] font-semibold tracking-tight text-sidebar-foreground">
               {t("app.brand")}
@@ -102,8 +125,8 @@ export function SidebarBrandHeader({
               </span>
             ) : null}
           </span>
-        ) : null}
-      </button>
+        </button>
+      )}
       {!collapsed && !hostChromeInset ? (
         <Button
           variant="ghost"

@@ -24,17 +24,19 @@ function invokeTauri(cmd: string, args?: Record<string, unknown>): Promise<unkno
 
 export function AppLayout({
   runtimeSurface,
+  accountDisplayName,
   onModelNameChange,
   onLogout,
   onNativeEngineRestart,
 }: {
   runtimeSurface: RuntimeSurface;
+  accountDisplayName?: string | null;
   onModelNameChange: (modelName: string | null) => void;
   onLogout: () => void;
   onNativeEngineRestart: () => Promise<string>;
 }) {
   const { t } = useTranslation();
-  const model = useAppLayoutModel({ runtimeSurface, onModelNameChange });
+  const model = useAppLayoutModel({ runtimeSurface, accountDisplayName, onModelNameChange });
   const host = { onLogout, onModelNameChange, onNativeEngineRestart };
 
   useEffect(() => {

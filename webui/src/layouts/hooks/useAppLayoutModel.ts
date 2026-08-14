@@ -17,9 +17,11 @@ import { useUiStore } from "@/stores";
 
 export function useAppLayoutModel({
   runtimeSurface,
+  accountDisplayName,
   onModelNameChange,
 }: {
   runtimeSurface: RuntimeSurface;
+  accountDisplayName?: string | null;
   onModelNameChange: (modelName: string | null) => void;
 }) {
   const { t } = useTranslation();
@@ -141,6 +143,7 @@ export function useAppLayoutModel({
     showArchived: sidebarState.view.show_archived,
     archivedCount: sidebarState.archived_keys.length,
     defaultWorkspacePath: workspace.workspaces?.default_scope.project_path ?? null,
+    accountDisplayName,
   };
 
   useEffect(() => {

@@ -26,6 +26,7 @@ const SLASH_COMMAND_KEYS = [
   "pairing",
 ];
 const SETTINGS_NAV_KEYS = [
+  "profile",
   "overview",
   "appearance",
   "models",
@@ -40,6 +41,7 @@ const LOCALIZED_SETTINGS_COPY_KEYS = [
   "settings.sidebar.title",
   "settings.sidebar.ariaLabel",
   "settings.nav.overview",
+  "settings.nav.profile",
   "settings.nav.appearance",
   "settings.nav.models",
   "settings.nav.providers",

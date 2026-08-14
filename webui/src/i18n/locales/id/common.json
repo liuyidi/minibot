@@ -69,7 +69,8 @@
     "tabChannels": "Channels",
     "downloadApp": "Download app",
     "accountDisplayName": "minibot",
-    "accountMenuAria": "Account menu"
+    "accountMenuAria": "Account menu",
+    "profile": "Profil"
   },
   "settings": {
     "backToChat": "Kembali ke chat",
@@ -81,6 +82,7 @@
       "general": "Umum",
       "byok": "BYOK",
       "overview": "Ikhtisar",
+      "profile": "Profil",
       "appearance": "Tampilan",
       "models": "Model",
       "providers": "Penyedia",
@@ -314,6 +316,21 @@
       "voiceInput": "Input suara",
       "workspace": "Ruang kerja"
     },
+    "profile": {
+      "personalTitle": "Informasi pribadi",
+      "personalSubtitle": "Lihat dan ubah informasi dasar Anda",
+      "accountTitle": "Detail akun",
+      "accountSubtitle": "Lihat informasi akun Anda",
+      "nickname": "Nama panggilan",
+      "nicknamePlaceholder": "Masukkan nama panggilan",
+      "avatar": "Avatar",
+      "randomizeAvatar": "Acak",
+      "userId": "ID pengguna",
+      "copyUserId": "Salin ID pengguna",
+      "copiedUserId": "Disalin",
+      "createdAt": "Tanggal pendaftaran",
+      "unknownValue": "—"
+    },
     "usage": {
       "title": "Aktivitas token",
       "shortTitle": "Token Usage",
@@ -337,7 +354,14 @@
         "cron": "Otomasi",
         "dream": "Memori",
         "system": "Sistem"
-      }
+      },
+      "longestChat": "Obrolan terlama",
+      "granularityDaily": "Harian",
+      "granularityWeekly": "Mingguan",
+      "granularityCumulative": "Kumulatif",
+      "insightsTitle": "Wawasan aktivitas",
+      "pluginsTitle": "Plugin paling sering digunakan",
+      "pluginRuns": "{{count}} kali dijalankan"
     },
     "providers": {
       "searchPlaceholder": "Cari penyedia",

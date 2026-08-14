@@ -6,6 +6,7 @@ from functools import lru_cache
 from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from minibot.security.principal_context import current_data_dir
 
 
 class Settings(BaseSettings):
@@ -78,6 +79,9 @@ class Settings(BaseSettings):
     weixin_auto_approve_tools: bool = True
 
     def resolved_config_path(self) -> Path:
+        data_dir = current_data_dir()
+        if data_dir is not None:
+            return Path(data_dir).expanduser() / "config.json"
         if self.config_path is not None:
             return self.config_path.expanduser()
         return self.data_dir.expanduser() / "config.json"

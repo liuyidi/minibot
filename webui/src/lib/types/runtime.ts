@@ -15,6 +15,13 @@ export interface AuthConfigResponse {
   authenticated: boolean;
   login_url?: string | null;
   logout_url?: string | null;
+  account?: {
+    id?: string | null;
+    email?: string | null;
+    name?: string | null;
+    picture?: string | null;
+    created_at?: string | null;
+  } | null;
 }
 
 export type AuthProvider = "local" | "mini_auth";

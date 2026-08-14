@@ -27,6 +27,7 @@ export type ShellLocation = {
 };
 
 const SETTINGS_SECTION_KEYS: SettingsSectionKey[] = [
+  "profile",
   "overview",
   "appearance",
   "models",

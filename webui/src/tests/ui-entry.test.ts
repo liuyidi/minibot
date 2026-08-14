@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   SETTINGS_SECTIONS,
+  SETTINGS_SHOW_PROFILE_USAGE,
   SETTINGS_SHOW_PROVIDERS_PANEL,
   SETTINGS_SHOW_USER_MODEL_CONFIGS,
   UI_ENTRY,
@@ -21,6 +22,7 @@ describe("ui-entry gates", () => {
 
   it("exposes the enabled settings section set", () => {
     expect([...SETTINGS_SECTIONS]).toEqual([
+      "profile",
       "overview",
       "appearance",
       "models",
@@ -30,9 +32,11 @@ describe("ui-entry gates", () => {
     ]);
     expect(SETTINGS_SHOW_PROVIDERS_PANEL).toBe(false);
     expect(SETTINGS_SHOW_USER_MODEL_CONFIGS).toBe(false);
+    expect(SETTINGS_SHOW_PROFILE_USAGE).toBe(false);
   });
 
   it("recognizes enabled settings sections", () => {
+    expect(isEnabledSettingsSection("profile")).toBe(true);
     expect(isEnabledSettingsSection("overview")).toBe(true);
     expect(isEnabledSettingsSection("models")).toBe(true);
     expect(isEnabledSettingsSection("browser")).toBe(true);
