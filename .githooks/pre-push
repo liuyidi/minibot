@@ -59,7 +59,7 @@ cd minibot
 changed_args=("${changed_files[@]+"${changed_files[@]}"}")
 version_args=("${version_files_changed[@]+"${version_files_changed[@]}"}")
 changelog_args=("${changelog_files_changed[@]+"${changelog_files_changed[@]}"}")
-PYTHONPATH=src uv run python -m minibot.release_tools check \
+PYTHONPATH=src uv run --no-sync python -m minibot.release_tools check \
   --changed-files "${changed_args[@]}" \
   --version-files ${version_args[@]+"${version_args[@]}"} \
   --changelog-files ${changelog_args[@]+"${changelog_args[@]}"}
