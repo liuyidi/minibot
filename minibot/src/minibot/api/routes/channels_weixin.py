@@ -15,20 +15,22 @@ router = APIRouter(prefix="/api/channels/weixin", tags=["channels-weixin"])
 
 
 def _setup_mgr(state: Any) -> WeixinSetupManager:
-    mgr = getattr(state, "weixin_setup", None)
+    runtime = state.runtime_for()
+    mgr = getattr(runtime, "weixin_setup", None)
     if mgr is None:
         mgr = WeixinSetupManager()
-        state.weixin_setup = mgr
+        runtime.weixin_setup = mgr
     return mgr
 
 
 def _pairing(state: Any) -> Any:
-    store = getattr(state, "weixin_pairing", None)
+    runtime = state.runtime_for()
+    store = getattr(runtime, "weixin_pairing", None)
     if store is None:
         from minibot.channels.pairing import PairingStore
 
-        store = PairingStore(state.settings.data_dir, channel="weixin")
-        state.weixin_pairing = store
+        store = PairingStore(runtime.root, channel="weixin")
+        runtime.weixin_pairing = store
     return store
 
 

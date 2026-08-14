@@ -15,20 +15,22 @@ router = APIRouter(prefix="/api/channels/feishu", tags=["channels-feishu"])
 
 
 def _setup_mgr(state: Any) -> FeishuSetupManager:
-    mgr = getattr(state, "feishu_setup", None)
+    runtime = state.runtime_for()
+    mgr = getattr(runtime, "feishu_setup", None)
     if mgr is None:
         mgr = FeishuSetupManager()
-        state.feishu_setup = mgr
+        runtime.feishu_setup = mgr
     return mgr
 
 
 def _pairing(state: Any) -> Any:
-    store = getattr(state, "feishu_pairing", None)
+    runtime = state.runtime_for()
+    store = getattr(runtime, "feishu_pairing", None)
     if store is None:
         from minibot.channels.pairing import PairingStore
 
-        store = PairingStore(state.settings.data_dir)
-        state.feishu_pairing = store
+        store = PairingStore(runtime.root)
+        runtime.feishu_pairing = store
     return store
 
 
