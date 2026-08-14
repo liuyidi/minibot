@@ -11,7 +11,17 @@ Versions follow SemVer for product narrative. Package metadata may lag until a f
 
 ## [Unreleased]
 
-## [1.0.3] - 2026-08-14
+## [1.0.4] - 2026-08-14
+
+## [1.0.4] - 2026-08-14
+
+### Fixed
+
+- Profile page no longer briefly shows the `minibot` fallback name while auth account details are still loading.
+
+### Added
+
+- Per-user runtime scoping for IM setup state, workspace payloads, and observability tags, with legacy data migration on startup.
 
 ## [1.0.3] - 2026-08-14
 
