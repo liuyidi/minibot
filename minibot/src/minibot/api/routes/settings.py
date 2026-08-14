@@ -249,6 +249,7 @@ class McpPresetBody(BaseModel):
 @router.get("/mcp-presets")
 async def list_mcp_presets(_auth: AuthDep, state: StateDep) -> dict[str, Any]:
     return {
+        "user_id": state.current_user_id(),
         "presets": mcp_presets_public_list(state.config),
         "runtime": state.mcp.snapshot(),
         "templates": list_mcp_templates(),
@@ -301,6 +302,7 @@ async def mcp_preset_from_template(
         connect = await state.mcp.connect(preset)
     return {
         "ok": True,
+        "user_id": state.current_user_id(),
         "template_id": body.template_id,
         "preset": next(p for p in mcp_presets_public_list(state.config) if p["id"] == preset.id),
         "sample_invoke": tpl.get("sample_invoke"),
@@ -359,6 +361,7 @@ async def upsert_mcp_preset_route(
         await state.mcp.disconnect(preset.id)
     return {
         "ok": True,
+        "user_id": state.current_user_id(),
         "preset": next(p for p in mcp_presets_public_list(state.config) if p["id"] == preset.id),
         "runtime": state.mcp.snapshot(),
     }
@@ -376,7 +379,12 @@ async def delete_mcp_preset_route(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     await state.mcp.disconnect(preset_id)
     state.save_config(rebuild_provider=False)
-    return {"ok": True, "presets": mcp_presets_public_list(state.config), "runtime": state.mcp.snapshot()}
+    return {
+        "ok": True,
+        "user_id": state.current_user_id(),
+        "presets": mcp_presets_public_list(state.config),
+        "runtime": state.mcp.snapshot(),
+    }
 
 
 @router.post("/mcp-presets/{preset_id}/enable")
@@ -393,6 +401,7 @@ async def enable_mcp_preset(
     result = await state.mcp.connect(preset)
     return {
         "ok": bool(result.get("ok")),
+        "user_id": state.current_user_id(),
         "connect": result,
         "preset": next(p for p in mcp_presets_public_list(state.config) if p["id"] == preset.id),
         "runtime": state.mcp.snapshot(),
@@ -413,6 +422,7 @@ async def disable_mcp_preset(
     await state.mcp.disconnect(preset_id)
     return {
         "ok": True,
+        "user_id": state.current_user_id(),
         "preset": next(p for p in mcp_presets_public_list(state.config) if p["id"] == preset.id),
         "runtime": state.mcp.snapshot(),
     }

@@ -20,7 +20,7 @@ from minibot.config.settings import Settings, get_settings
 from minibot.channels.feishu_setup import FeishuPersistedConfig
 from minibot.channels.weixin_setup import WeixinPersistedConfig
 from minibot.providers.registry import list_providers
-from minibot.security.principal_context import current_data_dir
+from minibot.security.principal_context import current_data_dir, current_user_id
 
 
 def _providers_public(config: AppConfig) -> list[dict[str, Any]]:
@@ -323,8 +323,9 @@ def settings_public_payload(config: AppConfig) -> dict[str, Any]:
             "has_api_key": has_key,
         },
         "runtime": {
+            "user_id": current_user_id(),
             "config_path": str(settings.resolved_config_path()),
-            "workspace_path": str(default_workspace() if current_data_dir() is None else (Path(current_data_dir()) / "workspace").resolve()),
+            "workspace_path": str(default_workspace()),
             "gateway_host": settings.host,
             "gateway_port": settings.port,
             "heartbeat": {
