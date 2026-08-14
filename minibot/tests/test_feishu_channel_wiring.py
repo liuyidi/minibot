@@ -72,7 +72,7 @@ def test_approval_policy_auto_approve_feishu() -> None:
 
     token = bind_channel("websocket")
     try:
-        need, *_ = policy.check(_Tool(), {})
+        need, *_ = policy.check(_Tool(), {"command": "sudo id"})
         assert need is True
     finally:
         reset_channel(token)

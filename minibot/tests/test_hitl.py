@@ -13,7 +13,7 @@ from minibot.config.app_config import AppConfig
 from minibot.session.store import SessionStore
 
 
-def test_write_tool_waits_for_approval_then_resumes(tmp_path: Path) -> None:
+def test_write_tool_runs_without_approval(tmp_path: Path) -> None:
     provider = FakeProvider(
         responses=[
             tool_response("write_file", {"path": "approved.txt", "content": "safe"}),
@@ -30,16 +30,40 @@ def test_write_tool_waits_for_approval_then_resumes(tmp_path: Path) -> None:
     )
 
     async def run() -> None:
-        paused = await loop.handle_turn(session.id, "write the file")
+        result = await loop.handle_turn(session.id, "write the file")
+        assert result.stop_reason != "paused_for_approval"
+        assert result.content == "The file was written."
+        assert (tmp_path / "approved.txt").read_text() == "safe"
+
+    asyncio.run(run())
+
+
+def test_escape_exec_waits_for_approval_then_resumes(tmp_path: Path) -> None:
+    provider = FakeProvider(
+        responses=[
+            tool_response("exec", {"command": "cat /etc/passwd"}),
+            text_response("Command finished."),
+        ]
+    )
+    sessions = SessionStore(tmp_path)
+    session = sessions.create(workspace=tmp_path)
+    loop = AgentLoop(
+        sessions=sessions,
+        tools=register_default_tools(),
+        runner=AgentRunner(provider),
+        config=AppConfig(),
+    )
+
+    async def run() -> None:
+        paused = await loop.handle_turn(session.id, "read passwd")
         assert paused.stop_reason == "paused_for_approval"
         assert paused.approval_id
-        assert not (tmp_path / "approved.txt").exists()
         pending = loop.approvals.get(paused.approval_id)
         assert pending is not None and pending.status == "pending"
+        assert pending.tool_calls[0]["name"] == "exec"
 
         resumed = await loop.resolve_approval(paused.approval_id, "approve")
-        assert resumed.content == "The file was written."
-        assert (tmp_path / "approved.txt").read_text() == "safe"
+        assert resumed.content == "Command finished."
 
     asyncio.run(run())
 
@@ -49,7 +73,7 @@ def test_rest_turn_returns_approval_and_rest_resolve(
 ) -> None:
     """REST clients receive the pending approval inline and can resume it by REST."""
     fake_provider.responses = [
-        tool_response("write_file", {"path": "rest-approved.txt", "content": "ok"}),
+        tool_response("exec", {"command": "sudo id"}),
         text_response("REST flow completed."),
     ]
     created = client.post(
@@ -63,13 +87,13 @@ def test_rest_turn_returns_approval_and_rest_resolve(
     turn = client.post(
         f"/api/sessions/{session_id}/turns",
         headers=auth_headers,
-        json={"content": "write a file"},
+        json={"content": "run privileged command"},
     )
     assert turn.status_code == 200
     payload = turn.json()
     assert payload["stop_reason"] == "paused_for_approval"
-    assert payload["approval"]["tool_calls"][0]["name"] == "write_file"
-    assert not (data_dir / "rest-approved.txt").exists()
+    assert payload["approval"]["tool_calls"][0]["name"] == "exec"
+    assert payload["approval"]["tool_calls"][0]["arguments"]["command"] == "sudo id"
 
     resolved = client.post(
         f"/api/approvals/{payload['approval_id']}/resolve",
@@ -80,4 +104,3 @@ def test_rest_turn_returns_approval_and_rest_resolve(
     resolved_payload = resolved.json()
     assert resolved_payload["user_id"]
     assert resolved_payload["content"] == "REST flow completed."
-    assert (data_dir / "rest-approved.txt").read_text() == "ok"
