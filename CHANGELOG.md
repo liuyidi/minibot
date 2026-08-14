@@ -11,6 +11,8 @@ Versions follow SemVer for product narrative. Package metadata may lag until a f
 
 ## [Unreleased]
 
+## [1.0.8] - 2026-08-15
+
 ### Changed
 
 - Tool approval is now boundary-based: in-workspace read/write, `write_memory`, ordinary sandboxed `exec`, and MCP (temporarily trusted by default) run without prompts. Only sandbox-escaping `exec` (e.g. `sudo`, `/etc`, `~`, pipe-to-shell) requires HITL. MCP trust UI deferred.

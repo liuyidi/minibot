@@ -11,6 +11,8 @@ English: [CHANGELOG.md](./CHANGELOG.md)
 
 ## [Unreleased]
 
+## [1.0.8] - 2026-08-15
+
 ### 变更
 
 - 工具审批改为边界策略：工作区内读写 / `write_memory` / 普通沙箱 `exec` / MCP（暂默认信任）直接执行；仅「越界/出沙箱」的 `exec`（如 `sudo`、访问 `/etc`、`~`、管道进 shell 等）弹出审批。MCP trust 开关延后。
