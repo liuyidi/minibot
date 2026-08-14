@@ -39,11 +39,14 @@ async def lifespan(app: FastAPI):
     app.state.app_state = state
     lf.init_from_settings(state.settings)
     state.score_queue.start()
+    runtimes = state.preload_user_runtimes()
     if state.bus_worker is not None:
         state.bus_worker.start()
-    if state.channels is not None and state.channels.channels:
+    for runtime in runtimes:
+        if runtime.channels is None or not runtime.channels.channels:
+            continue
         try:
-            await state.channels.start()
+            await runtime.channels.start()
         except Exception:  # noqa: BLE001 — never block boot on IM
             pass
     try:
@@ -66,9 +69,10 @@ async def lifespan(app: FastAPI):
                 await state.cron.stop()
         with suppress(Exception):
             await state.mcp.stop()
-        if state.channels is not None:
-            with suppress(Exception):
-                await state.channels.stop()
+        for runtime in list(state.user_runtimes.values()):
+            if runtime.channels is not None:
+                with suppress(Exception):
+                    await runtime.channels.stop()
         if state.bus_worker is not None:
             await state.bus_worker.stop()
         if state.sandbox_backend is not None:

@@ -85,6 +85,21 @@ class AppState:
             self.user_runtimes[uid] = runtime
         return runtime
 
+    def preload_user_runtimes(self) -> list[UserRuntime]:
+        root = self.settings.data_dir.expanduser() / "users"
+        if not root.exists():
+            return []
+        out: list[UserRuntime] = []
+        for entry in sorted(root.iterdir()):
+            if not entry.is_dir():
+                continue
+            user_id = entry.name
+            if user_id in self.user_runtimes:
+                out.append(self.user_runtimes[user_id])
+                continue
+            out.append(self.runtime_for(user_id))
+        return out
+
     @property
     def sessions(self) -> Any:
         return self.runtime_for().sessions
