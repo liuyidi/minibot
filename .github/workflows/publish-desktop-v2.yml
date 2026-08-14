@@ -1,0 +1,118 @@
+name: Publish Desktop V2
+
+# Builds desktopV2 with a frozen minibot sidecar (PyInstaller onedir).
+# Does not replace publish-desktop.yml (thin shell under desktop/).
+# Trigger: manual only until download cutover.
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  publish-tauri:
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # macos-latest is arm64; use macos-13 for native x86_64 freeze.
+          - platform: macos-latest
+            args: --target aarch64-apple-darwin
+            triple: aarch64-apple-darwin
+          - platform: macos-13
+            args: --target x86_64-apple-darwin
+            triple: x86_64-apple-darwin
+          - platform: ubuntu-22.04
+            args: ""
+            triple: x86_64-unknown-linux-gnu
+          - platform: windows-latest
+            args: ""
+            triple: x86_64-pc-windows-msvc
+
+    runs-on: ${{ matrix.platform }}
+    timeout-minutes: 90
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install Linux dependencies
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            xdg-utils
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: |
+            webui/package-lock.json
+            desktopV2/package-lock.json
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin' || matrix.platform == 'macos-13' && 'x86_64-apple-darwin' || '' }}
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: desktopV2/src-tauri -> target
+
+      - name: Setup uv / Python
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+
+      - name: Sync minibot dependencies
+        working-directory: minibot
+        run: uv sync --extra feishu --extra weixin
+
+      - name: Build WebUI dist
+        working-directory: webui
+        run: |
+          npm ci
+          npm run build
+          test -f dist/index.html
+
+      - name: Freeze minibot sidecar
+        run: ./scripts/freeze-minibot-sidecar.sh ${{ matrix.triple }}
+
+      - name: Prepare sidecar for Tauri
+        run: ./desktopV2/scripts/prepare-sidecar.sh ${{ matrix.triple }}
+
+      - name: Install desktopV2 frontend dependencies
+        working-directory: desktopV2
+        run: npm ci
+
+      - name: Build and upload release
+        uses: tauri-apps/tauri-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: desktopV2
+          tagName: desktop-v2-v__VERSION__
+          releaseName: minibot Desktop V2 v__VERSION__
+          releaseBody: |
+            Desktop V2 (local gateway + frozen minibot sidecar).
+
+            Unsigned CI builds: macOS may need `xattr -dr com.apple.quarantine` after install;
+            Windows SmartScreen may warn until code-signed.
+
+            Thin-shell releases remain under `v*` via Publish Desktop.
+          releaseDraft: false
+          prerelease: true
+          uploadUpdaterJson: false
+          uploadUpdaterSignatures: false
+          uploadWorkflowArtifacts: true
+          args: ${{ matrix.args }}

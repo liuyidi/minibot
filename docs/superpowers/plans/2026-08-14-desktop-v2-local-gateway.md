@@ -47,8 +47,8 @@
 
 ### Task 4: Freeze sidecar + CI
 
-- [ ] PyInstaller/Nuitka per OS
-- [ ] `externalBin` + publish workflow for desktopV2
+- [x] PyInstaller/Nuitka per OS
+- [x] `externalBin` + publish workflow for desktopV2
 - [ ] Cutover download page when green
 
 ---
