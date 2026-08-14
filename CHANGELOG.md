@@ -11,6 +11,20 @@ Versions follow SemVer for product narrative. Package metadata may lag until a f
 
 ## [Unreleased]
 
+## [1.0.3] - 2026-08-14
+
+## [1.0.3] - 2026-08-14
+
+### Added
+
+- Settings now includes a personal profile page for nickname, randomized default avatar, user ID, and registration date.
+- Token usage dashboard UI is prepared on the profile page and stays hidden until a backend endpoint is available.
+- Mini-auth account payloads now pass through user id and created_at for account details.
+
+### Changed
+
+- Sidebar account menu can open the profile page directly and shows the local profile avatar.
+
 ## [1.0.2] - 2026-08-13
 
 ### Changed
