@@ -1,0 +1,53 @@
+[package]
+name = "minibot-desktop-v2"
+version = "1.0.7"
+description = "Tauri desktop V2 — local minibot gateway shell"
+authors = ["minibot"]
+edition = "2021"
+rust-version = "1.77.2"
+
+[lib]
+name = "minibot_desktop_v2_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-opener = "2"
+tauri-plugin-dialog = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+url = "2"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2 = "0.6"
+objc2-foundation = { version = "0.3.2", features = [
+  "NSArray",
+  "NSString",
+  "NSGeometry",
+  "NSObject",
+  "NSNotification",
+] }
+objc2-app-kit = { version = "0.3.2", features = [
+  "NSButton",
+  "NSButtonCell",
+  "NSCell",
+  "NSColor",
+  "NSControl",
+  "NSCursor",
+  "NSImage",
+  "NSLayoutConstraint",
+  "NSResponder",
+  "NSTitlebarAccessoryViewController",
+  "NSView",
+  "NSViewController",
+  "NSWindow",
+] }
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+strip = true
