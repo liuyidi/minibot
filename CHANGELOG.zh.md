@@ -11,6 +11,13 @@ English: [CHANGELOG.md](./CHANGELOG.md)
 
 ## [Unreleased]
 
+## [1.0.9] - 2026-08-15
+
+### 新增
+
+- Desktop V2：PyInstaller onedir 冻结本地 gateway、打进 Tauri 安装包，并通过独立的 `Publish Desktop V2` 工作流发布（经 ServerlessShip 飞书通知）。
+- 桌面端：完成本地 OAuth 交接（系统浏览器 → HTTP 回调 → 应用内会话）与欢迎登录页。
+
 ## [1.0.8] - 2026-08-15
 
 ### 变更

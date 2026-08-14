@@ -11,6 +11,13 @@ Versions follow SemVer for product narrative. Package metadata may lag until a f
 
 ## [Unreleased]
 
+## [1.0.9] - 2026-08-15
+
+### Added
+
+- Desktop V2: freeze minibot as a PyInstaller onedir sidecar, bundle it into the Tauri app, and publish via a dedicated `Publish Desktop V2` workflow (Feishu notify through ServerlessShip).
+- Desktop: finish local OAuth handoff (system browser → HTTP callback → in-app session) and welcome Sign-in UI.
+
 ## [1.0.8] - 2026-08-15
 
 ### Changed
