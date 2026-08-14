@@ -202,6 +202,52 @@ describe("profile settings", () => {
     await user.click(screen.getByRole("button", { name: "Copy user ID" }));
     expect(writeText).toHaveBeenCalledWith("user-demo");
   });
+
+  it("does not flash the minibot fallback before auth account loads", async () => {
+    let resolveAuth: ((value: Response) => void) | null = null;
+    localStorage.setItem(
+      PROFILE_STORAGE_KEY,
+      JSON.stringify({
+        displayName: null,
+        avatarSeed: "seed-red",
+        localUserId: "local-abc",
+        createdAt: "2026-08-11T00:00:00Z",
+      }),
+    );
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url === "/api/settings") return jsonResponse(settingsPayload());
+        if (url === "/auth/config") {
+          return new Promise<Response>((resolve) => {
+            resolveAuth = resolve;
+          });
+        }
+        return { ok: false, status: 404, json: async () => ({}) } as Response;
+      }),
+    );
+
+    renderProfileSettings();
+
+    await screen.findByText("Personal information");
+    expect(screen.queryByRole("heading", { name: "minibot" })).not.toBeInTheDocument();
+
+    resolveAuth?.(
+      jsonResponse({
+        auth_provider: "mini_auth",
+        authenticated: true,
+        account: {
+          id: "user-demo",
+          name: "demo",
+          email: "demo@mini-auth.dev",
+          created_at: "2026-08-11T00:00:00Z",
+        },
+      }),
+    );
+
+    expect(await screen.findByRole("heading", { name: "demo" })).toBeInTheDocument();
+  });
 });
 
 describe("profile usage panel", () => {

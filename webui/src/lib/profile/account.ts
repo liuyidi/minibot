@@ -10,15 +10,29 @@ export type ProfileAccount = {
   picture: string | null;
 };
 
+export type ResolveProfileAccountOptions = {
+  fallbackName: string;
+  /** When false, skip the product fallback so auth can load without a name flash. */
+  allowFallback?: boolean;
+};
+
 export function resolveProfileAccount(
   local: LocalProfile,
   auth: AuthConfigResponse["account"] | null | undefined,
-  fallbackName: string,
+  fallbackNameOrOptions: string | ResolveProfileAccountOptions,
 ): ProfileAccount {
+  const options =
+    typeof fallbackNameOrOptions === "string"
+      ? { fallbackName: fallbackNameOrOptions, allowFallback: true }
+      : {
+          fallbackName: fallbackNameOrOptions.fallbackName,
+          allowFallback: fallbackNameOrOptions.allowFallback !== false,
+        };
   const authName = auth?.name?.trim() || auth?.email?.trim() || "";
   const localName = local.displayName?.trim() || "";
+  const fallback = options.allowFallback ? options.fallbackName : "";
   return {
-    displayName: localName || authName || fallbackName,
+    displayName: localName || authName || fallback,
     userId: auth?.id?.trim() || local.localUserId,
     createdAt: auth?.created_at?.trim() || local.createdAt,
     email: auth?.email?.trim() || null,

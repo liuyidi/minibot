@@ -3,7 +3,7 @@ export {
   hashSeed,
   profileInitials,
 } from "./avatar";
-export { formatProfileDate, resolveProfileAccount, type ProfileAccount } from "./account";
+export { formatProfileDate, resolveProfileAccount, type ProfileAccount, type ResolveProfileAccountOptions } from "./account";
 export {
   PROFILE_CHANGED_EVENT,
   PROFILE_STORAGE_KEY,

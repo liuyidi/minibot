@@ -57,8 +57,8 @@ export function ProfileSettings({
     <div className="space-y-7">
       <header className="flex flex-col items-center pt-2 pb-1 text-center">
         <ProfileAvatar name={displayName} seed={avatarSeed} size="lg" />
-        <h2 className="mt-4 text-[22px] font-semibold tracking-tight text-foreground sm:text-[26px]">
-          {displayName}
+        <h2 className="mt-4 min-h-[1.2em] text-[22px] font-semibold tracking-tight text-foreground sm:text-[26px]">
+          {displayName || "\u00a0"}
         </h2>
       </header>
 

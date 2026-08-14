@@ -58,6 +58,12 @@ describe("profile helpers", () => {
     const unnamed = writeLocalProfile({ ...local, displayName: null });
     expect(resolveProfileAccount(unnamed, { name: "demo" }, "minibot").displayName).toBe("demo");
     expect(resolveProfileAccount(unnamed, null, "minibot").userId).toBe("local-1");
+    expect(
+      resolveProfileAccount(unnamed, null, {
+        fallbackName: "minibot",
+        allowFallback: false,
+      }).displayName,
+    ).toBe("");
   });
 
   it("persists a generated local profile on first read", () => {

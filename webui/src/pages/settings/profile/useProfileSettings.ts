@@ -14,15 +14,20 @@ export function useProfileSettings() {
   const { t } = useTranslation();
   const { profile, setDisplayName, randomizeAvatar } = useLocalProfile();
   const [account, setAccount] = useState<AuthConfigResponse["account"]>(null);
+  const [accountReady, setAccountReady] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     void fetchAuthConfig("")
       .then((config) => {
-        if (!cancelled) setAccount(config.account ?? null);
+        if (cancelled) return;
+        setAccount(config.account ?? null);
+        setAccountReady(true);
       })
       .catch(() => {
-        if (!cancelled) setAccount(null);
+        if (cancelled) return;
+        setAccount(null);
+        setAccountReady(true);
       });
     return () => {
       cancelled = true;
@@ -31,8 +36,13 @@ export function useProfileSettings() {
 
   const fallbackName = t("sidebar.accountDisplayName", { defaultValue: "minibot" });
   const resolved: ProfileAccount = useMemo(
-    () => resolveProfileAccount(profile, account, fallbackName),
-    [account, fallbackName, profile],
+    () =>
+      resolveProfileAccount(profile, account, {
+        fallbackName,
+        // Avoid flashing the product fallback before /auth/config settles.
+        allowFallback: accountReady || Boolean(profile.displayName?.trim()),
+      }),
+    [account, accountReady, fallbackName, profile],
   );
 
   const saveDisplayName = useCallback(
@@ -49,6 +59,7 @@ export function useProfileSettings() {
     displayName: resolved.displayName,
     userId: resolved.userId,
     createdAtLabel: formatProfileDate(resolved.createdAt),
+    accountReady,
     saveDisplayName,
     randomizeAvatar,
   };
