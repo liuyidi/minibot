@@ -13,6 +13,7 @@ from typing import Any
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
+from minibot.api.deps import bind_token_context
 from minibot.app_state import AppState
 from minibot.bus.events import InboundMessage, OutboundMessage
 from minibot.workspace import WorkspaceError
@@ -278,6 +279,7 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
     if not state.check_token(token):
         await websocket.close(code=4401)
         return
+    bind_token_context(state, token)
 
     await websocket.accept()
     known: set[str] = set()

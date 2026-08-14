@@ -38,15 +38,8 @@ def _extract_supplied_token(
     )
 
 
-async def require_token(
-    request: Request,
-    authorization: Annotated[str | None, Header()] = None,
-    x_minibot_auth: Annotated[str | None, Header(alias="X-Minibot-Auth")] = None,
-) -> str:
-    state: AppState = request.app.state.app_state
-    token = _extract_supplied_token(request, authorization, x_minibot_auth)
-    if not state.check_token(token):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+def bind_token_context(state: AppState, token: str | None) -> None:
+    """Bind principal (and data_dir) from a validated token's account payload."""
     account = state.token_account(token)
     if account and account.get("id"):
         bind_principal(
@@ -59,9 +52,21 @@ async def require_token(
             )
         )
         bind_data_dir(state.settings.data_dir)
-    else:
-        bind_principal(Principal(kind="system", user_id="system"))
-        bind_data_dir(state.settings.data_dir)
+        return
+    bind_principal(Principal(kind="system", user_id="system"))
+    bind_data_dir(state.settings.data_dir)
+
+
+async def require_token(
+    request: Request,
+    authorization: Annotated[str | None, Header()] = None,
+    x_minibot_auth: Annotated[str | None, Header(alias="X-Minibot-Auth")] = None,
+) -> str:
+    state: AppState = request.app.state.app_state
+    token = _extract_supplied_token(request, authorization, x_minibot_auth)
+    if not state.check_token(token):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+    bind_token_context(state, token)
     return token or ""
 
 
