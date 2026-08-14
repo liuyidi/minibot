@@ -8,6 +8,7 @@ from fastapi import Depends, Header, HTTPException, Request, status
 
 from minibot.app_state import AppState
 from minibot.security.principal_context import Principal, bind_data_dir, bind_principal
+from minibot.user_runtime import resolve_user_root
 
 AUTH_COOKIE_NAME = "minibot_auth_token"
 
@@ -39,22 +40,23 @@ def _extract_supplied_token(
 
 
 def bind_token_context(state: AppState, token: str | None) -> None:
-    """Bind principal (and data_dir) from a validated token's account payload."""
+    """Bind principal and per-user data root from a validated token account."""
     account = state.token_account(token)
     if account and account.get("id"):
+        user_id = str(account.get("id"))
         bind_principal(
             Principal(
                 kind="user",
-                user_id=str(account.get("id")),
+                user_id=user_id,
                 email=(account.get("email") or None),
                 name=(account.get("name") or None),
                 picture=(account.get("picture") or None),
             )
         )
-        bind_data_dir(state.settings.data_dir)
+        bind_data_dir(resolve_user_root(state.settings, user_id))
         return
     bind_principal(Principal(kind="system", user_id="system"))
-    bind_data_dir(state.settings.data_dir)
+    bind_data_dir(resolve_user_root(state.settings, "system"))
 
 
 async def require_token(

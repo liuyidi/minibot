@@ -51,6 +51,21 @@ def test_bootstrap_tokens_isolate_session_lists(client: TestClient, data_dir: Pa
     assert not (data_dir / "users" / "user-beta" / "sessions" / f"{session_id}.jsonl").exists()
 
 
+def test_session_default_workspace_is_under_user_root(client: TestClient, data_dir: Path) -> None:
+    state = client.app.state.app_state
+    cookie = state.issue_token(account=_account("user-delta", "delta@example.com"))
+    boot = client.get("/webui/bootstrap", cookies={AUTH_COOKIE_NAME: cookie}).json()["token"]
+    headers = {"Authorization": f"Bearer {boot}"}
+
+    created = client.post("/api/sessions", headers=headers, json={"title": "delta-ws"})
+    assert created.status_code == 200
+    workspace_path = Path(created.json()["workspace_path"]).resolve()
+    expected = (data_dir / "users" / "user-delta" / "workspace").resolve()
+    assert workspace_path == expected
+    assert (expected / "SOUL.md").is_file()
+    assert "users/user-delta/workspace" in str(workspace_path)
+
+
 def test_websocket_new_chat_uses_token_account(client: TestClient, data_dir: Path) -> None:
     state = client.app.state.app_state
     cookie = state.issue_token(account=_account("user-gamma", "gamma@example.com"))

@@ -11,6 +11,12 @@ Versions follow SemVer for product narrative. Package metadata may lag until a f
 
 ## [Unreleased]
 
+## [1.0.6] - 2026-08-14
+
+### Fixed
+
+- Authenticated requests now bind the default workspace under `users/<user_id>/workspace` instead of the shared server `/workspace`.
+
 ## [1.0.5] - 2026-08-14
 
 ### Fixed

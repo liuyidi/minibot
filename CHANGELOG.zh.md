@@ -11,6 +11,12 @@ English: [CHANGELOG.md](./CHANGELOG.md)
 
 ## [Unreleased]
 
+## [1.0.6] - 2026-08-14
+
+### 修复
+
+- 已登录请求的默认工作区改为 `users/<user_id>/workspace`，不再使用共享的服务器 `/workspace`。
+
 ## [1.0.5] - 2026-08-14
 
 ### 修复
