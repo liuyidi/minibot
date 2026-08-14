@@ -14,9 +14,10 @@ def test_resolve_webui_dist_env(tmp_path: Path, monkeypatch) -> None:
     assert resolve_webui_dist() == tmp_path.resolve()
 
 
-def test_resolve_webui_dist_missing(monkeypatch, tmp_path: Path) -> None:
-    monkeypatch.setenv("MINIBOT_WEBUI_DIST", str(tmp_path / "nope"))
-    # May still find monorepo dist if present; only assert env miss doesn't crash
+def test_resolve_webui_dist_finds_monorepo_checkout() -> None:
+    """``minibot/src/minibot`` checkout must resolve repo ``webui/dist``."""
     path = resolve_webui_dist()
-    if path is not None:
-        assert (path / "index.html").is_file()
+    assert path is not None
+    assert path.name == "dist"
+    assert path.parent.name == "webui"
+    assert (path / "index.html").is_file()

@@ -14,7 +14,15 @@
       "hint": "请输入 gateway 配置中的 tokenIssueSecret。",
       "placeholder": "密码",
       "submit": "连接",
-      "invalid": "密码无效，请重试。"
+      "invalid": "密码无效，请重试。",
+      "welcomeTitle": "欢迎使用 Minibot",
+      "login": "登录",
+      "browserTitle": "请在浏览器中完成登录",
+      "browserHint": "已打开系统浏览器进行登录。完成后请回到此窗口。",
+      "browserWaiting": "正在等待浏览器登录…",
+      "browserRetry": "再次打开浏览器",
+      "privacy": "隐私政策",
+      "terms": "服务条款"
     },
     "account": {
       "section": "账户",

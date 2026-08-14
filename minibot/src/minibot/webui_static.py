@@ -33,13 +33,21 @@ def resolve_webui_dist() -> Path | None:
     # Packaged alongside DevUI (Docker copies dist here).
     here = Path(__file__).resolve().parent
     candidates.append(here / "static" / "webui")
-    # Monorepo checkout: webui/dist at repo root
-    # minibot/src/minibot -> parents[3] == repo root
-    repo_root = here.parents[3] if len(here.parents) > 3 else here.parents[-1]
-    candidates.append(repo_root / "webui" / "dist")
+    # Monorepo checkout: walk up until ``webui/dist/index.html`` exists.
+    # ``minibot/src/minibot/webui_static.py`` → repo root is ``parents[2]``.
+    for parent in here.parents:
+        candidates.append(parent / "webui" / "dist")
+    seen: set[Path] = set()
     for path in candidates:
-        if (path / "index.html").is_file():
-            return path.resolve()
+        try:
+            resolved = path.expanduser().resolve()
+        except OSError:
+            continue
+        if resolved in seen:
+            continue
+        seen.add(resolved)
+        if (resolved / "index.html").is_file():
+            return resolved
     return None
 
 

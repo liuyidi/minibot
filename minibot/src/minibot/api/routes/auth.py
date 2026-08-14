@@ -4,17 +4,84 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import platform
+import subprocess
+import time
+from pathlib import Path
 from urllib.parse import quote, urlencode
 
 import httpx
 from fastapi import APIRouter, Cookie, Header, HTTPException, Query, Request, status
-from fastapi.responses import RedirectResponse
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from pydantic import BaseModel, Field
 
 from minibot.api.deps import AUTH_COOKIE_NAME, StateDep
 from minibot.app_state import MiniAuthLoginRecord
+from minibot.webui_static import resolve_webui_dist
 
 router = APIRouter(tags=["auth"])
+
+_DESKTOP_DONE_PATH = "auth/desktop-done.html"
+_FALLBACK_DESKTOP_DONE_HTML = """<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="utf-8" /><title>登录成功</title></head>
+<body style="font-family:system-ui;display:grid;place-items:center;min-height:100vh;margin:0">
+  <main style="text-align:center">
+    <h1>登录成功</h1>
+    <p><a href="minibot://auth/done">打开 Minibot 继续使用</a></p>
+  </main>
+</body>
+</html>
+"""
+
+
+def _desktop_done_file() -> Path | None:
+    dist = resolve_webui_dist()
+    if dist is None:
+        return None
+    path = dist / _DESKTOP_DONE_PATH
+    return path if path.is_file() else None
+
+
+def _focus_desktop_app() -> dict[str, object]:
+    """Best-effort bring desktop shell to front (macOS). Deep links need a registered .app."""
+    system = platform.system()
+    if system != "Darwin":
+        return {"ok": False, "reason": f"unsupported platform: {system}"}
+
+    # Prefer direct process name (works with `tauri:dev` binary).
+    scripts = [
+        'tell application "System Events" to set frontmost of process '
+        '"minibot-desktop-v2" to true',
+        'tell application "System Events" to set frontmost of process '
+        '"minibot V2" to true',
+        'tell application id "me.liuyidi.minibot.desktopv2" to activate',
+    ]
+    errors: list[str] = []
+    for script in scripts:
+        try:
+            completed = subprocess.run(
+                ["osascript", "-e", script],
+                capture_output=True,
+                text=True,
+                timeout=5,
+                check=False,
+            )
+        except (OSError, subprocess.SubprocessError) as exc:
+            errors.append(str(exc))
+            continue
+        if completed.returncode == 0:
+            return {"ok": True, "focused": True}
+        detail = (completed.stderr or completed.stdout or "").strip()
+        if detail:
+            errors.append(detail)
+    return {"ok": False, "reason": "; ".join(errors) or "focus failed"}
+
+
+class DesktopHandoffResponse(BaseModel):
+    token: str
+    expires_in: int
+    next_url: str = "/"
 
 
 class BootstrapResponse(BaseModel):
@@ -110,11 +177,20 @@ def _build_authorize_url(
     next_url: str | None,
     *,
     desktop: bool = False,
+    desktop_login_id: str | None = None,
 ) -> str:
-    redirect_uri = _desktop_callback_url(state) if desktop else _http_callback_url(request, state)
+    # With desktop_login_id, use HTTP loopback so the system browser can finish
+    # PKCE; the desktop WebView polls /auth/desktop/handoff (deep links are flaky
+    # under `tauri:dev`). Without an id, keep minibot:// for packaged deep-link flow.
+    handoff_id = (desktop_login_id or "").strip()
+    if desktop and not handoff_id:
+        redirect_uri = _desktop_callback_url(state)
+    else:
+        redirect_uri = _http_callback_url(request, state)
     login_state, code_verifier = state.begin_mini_auth_login(
         _normalized_next_url(next_url),
         redirect_uri=redirect_uri,
+        desktop_login_id=handoff_id or None,
     )
     challenge = _code_challenge_s256(code_verifier)
     params = urlencode(
@@ -142,7 +218,12 @@ async def _exchange_mini_auth_code(
     token_url = f"{base_url}/oauth/token"
     userinfo_url = f"{base_url}/oauth/userinfo"
     try:
-        async with httpx.AsyncClient(timeout=state.settings.mini_auth_timeout_s) as client:
+        # trust_env=False: ignore HTTP(S)_PROXY from IDE/agent sandboxes; those
+        # proxies often 403 CONNECT to auth.liuyidi.me and break local login.
+        async with httpx.AsyncClient(
+            timeout=state.settings.mini_auth_timeout_s,
+            trust_env=False,
+        ) as client:
             token_response = await client.post(
                 token_url,
                 json={
@@ -173,6 +254,11 @@ async def _exchange_mini_auth_code(
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail=f"mini-auth rejected the callback: {exc.response.status_code}",
+        ) from exc
+    except httpx.ProxyError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"mini-auth unreachable via proxy: {exc}",
         ) from exc
     except httpx.HTTPError as exc:
         raise HTTPException(
@@ -232,20 +318,27 @@ async def login(
     state: StateDep,
     next: str | None = Query(default="/"),
     desktop: bool = Query(default=False),
+    desktop_login_id: str | None = Query(default=None),
 ) -> RedirectResponse:
     if state.settings.normalized_auth_provider() != "mini_auth":
         return RedirectResponse(url=_normalized_next_url(next), status_code=status.HTTP_302_FOUND)
-    authorize_url = _build_authorize_url(request, state, next, desktop=desktop)
+    authorize_url = _build_authorize_url(
+        request,
+        state,
+        next,
+        desktop=desktop,
+        desktop_login_id=desktop_login_id,
+    )
     return RedirectResponse(url=authorize_url, status_code=status.HTTP_302_FOUND)
 
 
-@router.get("/auth/mini-auth/callback")
+@router.get("/auth/mini-auth/callback", response_model=None)
 async def mini_auth_callback(
     request: Request,
     state: StateDep,
     code: str = Query(...),
     oauth_state: str = Query(..., alias="state"),
-) -> RedirectResponse:
+):
     if state.settings.normalized_auth_provider() != "mini_auth":
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="mini-auth is disabled")
 
@@ -261,6 +354,14 @@ async def mini_auth_callback(
         redirect_uri=redirect_uri,
     )
     session_token = state.issue_token(ttl_s=expires_in, account=account)
+    if login_record.desktop_login_id:
+        state.put_desktop_handoff(
+            login_record.desktop_login_id,
+            token=session_token,
+            ttl_s=expires_in,
+            next_url=login_record.next_url or "/",
+        )
+        return RedirectResponse(url="/auth/desktop/done", status_code=status.HTTP_302_FOUND)
     response = RedirectResponse(url=login_record.next_url or "/", status_code=status.HTTP_302_FOUND)
     response.set_cookie(
         AUTH_COOKIE_NAME,
@@ -271,6 +372,39 @@ async def mini_auth_callback(
         samesite="lax",
     )
     return response
+
+
+@router.get("/auth/desktop/done", response_model=None)
+async def desktop_done():
+    """Browser landing page after desktop OAuth; static HTML lives in webui dist."""
+    path = _desktop_done_file()
+    if path is not None:
+        return FileResponse(path, media_type="text/html; charset=utf-8")
+    return HTMLResponse(content=_FALLBACK_DESKTOP_DONE_HTML, status_code=status.HTTP_200_OK)
+
+
+@router.post("/auth/desktop/focus")
+@router.get("/auth/desktop/focus")
+async def desktop_focus() -> dict[str, object]:
+    """Focus a running desktop shell. Used when ``minibot://`` is not registered yet."""
+    return _focus_desktop_app()
+
+
+@router.get("/auth/desktop/handoff", response_model=DesktopHandoffResponse)
+async def desktop_handoff(
+    state: StateDep,
+    id: str = Query(..., min_length=1),
+) -> DesktopHandoffResponse:
+    """Poll after system-browser login; returns once the OAuth callback stored a token."""
+    record = state.take_desktop_handoff(id)
+    if record is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Handoff not ready")
+    remaining = max(1, int(record.expires_at - time.time()))
+    return DesktopHandoffResponse(
+        token=record.token,
+        expires_in=remaining,
+        next_url=record.next_url or "/",
+    )
 
 
 @router.post("/auth/desktop/complete", response_model=DesktopCompleteResponse)

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>登录成功 · Minibot</title>
+    <style>
+      :root {
+        --ink: #080808;
+        --muted: #666666;
+        --canvas: #ffffff;
+        --ok: #16a34a;
+        --ok-soft: #dcfce7;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background: var(--canvas);
+        color: var(--ink);
+        font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      }
+      main {
+        width: 100%;
+        max-width: 360px;
+        text-align: center;
+      }
+      .check {
+        width: 64px;
+        height: 64px;
+        margin: 0 auto 20px;
+        border-radius: 999px;
+        background: var(--ok-soft);
+        color: var(--ok);
+        display: grid;
+        place-items: center;
+      }
+      .check svg {
+        width: 32px;
+        height: 32px;
+      }
+      h1 {
+        margin: 0 0 24px;
+        font-size: 24px;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+      }
+      button.cta,
+      a.cta {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 48px;
+        width: 100%;
+        border: 0;
+        border-radius: 999px;
+        background: var(--ink);
+        color: #fff;
+        text-decoration: none;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        font-family: inherit;
+      }
+      button.cta:hover,
+      a.cta:hover {
+        opacity: 0.9;
+      }
+      p.hint {
+        margin: 16px 0 0;
+        font-size: 13px;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="check" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M20 6 9 17l-5-5" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </div>
+      <h1>登录成功</h1>
+      <button type="button" class="cta" id="open-app">打开 Minibot 继续使用</button>
+      <p class="hint">
+        登录已完成，可直接切回 Minibot 窗口。若系统未弹出「打开应用」，请先打开一次
+        <code>desktopV2</code> 打包的 .app 以注册协议，或点上方按钮尝试前置窗口。
+      </p>
+    </main>
+    <script>
+      (function () {
+        var DEEP_LINK = "minibot://auth/done";
+        function focusDesktop() {
+          return fetch("/auth/desktop/focus", {
+            method: "POST",
+            credentials: "same-origin",
+            keepalive: true,
+          }).catch(function () {});
+        }
+        function openApp() {
+          // 1) Focus running tauri:dev / installed app via gateway (no scheme needed).
+          focusDesktop();
+          // 2) Custom scheme → system “Open Minibot?” when .app is registered.
+          window.setTimeout(function () {
+            window.location.href = DEEP_LINK;
+          }, 120);
+        }
+        var btn = document.getElementById("open-app");
+        if (btn) btn.addEventListener("click", openApp);
+        window.setTimeout(openApp, 450);
+      })();
+    </script>
+  </body>
+</html>

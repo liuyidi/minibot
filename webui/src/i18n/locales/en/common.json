@@ -14,7 +14,15 @@
       "hint": "Enter the secret configured as tokenIssueSecret in your gateway config.",
       "placeholder": "Password",
       "submit": "Connect",
-      "invalid": "Invalid password. Try again."
+      "invalid": "Invalid password. Try again.",
+      "welcomeTitle": "Welcome to Minibot",
+      "login": "Sign in",
+      "browserTitle": "Finish signing in",
+      "browserHint": "A browser window was opened for login. Complete it there, then return here.",
+      "browserWaiting": "Waiting for browser login…",
+      "browserRetry": "Open browser again",
+      "privacy": "Privacy Policy",
+      "terms": "Terms of Service"
     },
     "account": {
       "section": "Account",

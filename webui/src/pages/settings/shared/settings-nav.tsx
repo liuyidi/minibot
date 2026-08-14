@@ -107,7 +107,7 @@ export function SettingsSidebar({
       </nav>
 
       <div className="hidden md:mt-auto md:block md:pt-4">
-        {onLogout && !hostChromeInset ? (
+        {onLogout ? (
           <Button
             type="button"
             variant="ghost"

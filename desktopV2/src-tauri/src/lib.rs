@@ -40,6 +40,20 @@ struct AppState {
 static RECREATING_WINDOW: AtomicBool = AtomicBool::new(false);
 
 const WINDOW_LABEL: &str = "main";
+
+fn is_desktop_auth_done_link(deep_link: &str) -> bool {
+    let Ok(url) = Url::parse(deep_link) else {
+        return false;
+    };
+    if url.scheme() != "minibot" {
+        return false;
+    }
+    let host = url.host_str().unwrap_or("");
+    let path = url.path().trim_matches('/');
+    (host == "auth" && path == "done")
+        || (host.is_empty() && path == "auth/done")
+        || path.ends_with("auth/done")
+}
 /// Overlay traffic-light inset (logical px). Single source for
 /// `WindowBuilder::traffic_light_position` and post-chrome AppKit layout.
 ///
@@ -67,28 +81,35 @@ fn install_native_chrome_on_main(app: &tauri::AppHandle, window: &tauri::Webview
 fn host_bridge_script() -> String {
     r#"
 (() => {
-  if (window.minibotHost) return;
-  const invoke = window.__TAURI__?.core?.invoke
-    || window.__TAURI_INTERNALS__?.invoke;
-  if (typeof invoke !== "function") return;
-  const reconnect = () => invoke("host_reconnect");
-  window.minibotHost = {
-    getRuntimeInfo: () => invoke("host_get_runtime_info"),
-    restartEngine: reconnect,
-    reconnect,
-    pickFolder: () => invoke("host_pick_folder"),
-    openLogs: () => invoke("host_open_logs"),
-    exportDiagnostics: () => invoke("host_export_diagnostics"),
-    openLogin: (url) => invoke("host_open_login", { url }),
-    openInBrowser: () => invoke("open_in_browser"),
-    startWindowDrag: () => {
-      const getCurrentWindow = window.__TAURI__?.window?.getCurrentWindow;
-      if (typeof getCurrentWindow === "function") {
-        return getCurrentWindow().startDragging();
-      }
-      return invoke("plugin:window|start_dragging");
-    },
+  const install = () => {
+    if (window.minibotHost && typeof window.minibotHost.openLogin === "function") return;
+    const invoke = window.__TAURI__?.core?.invoke
+      || window.__TAURI_INTERNALS__?.invoke;
+    if (typeof invoke !== "function") {
+      setTimeout(install, 40);
+      return;
+    }
+    const reconnect = () => invoke("host_reconnect");
+    window.minibotHost = {
+      getRuntimeInfo: () => invoke("host_get_runtime_info"),
+      restartEngine: reconnect,
+      reconnect,
+      pickFolder: () => invoke("host_pick_folder"),
+      openLogs: () => invoke("host_open_logs"),
+      exportDiagnostics: () => invoke("host_export_diagnostics"),
+      openLogin: (url) => invoke("host_open_login", { url }),
+      openInBrowser: () => invoke("open_in_browser"),
+      startWindowDrag: () => {
+        const getCurrentWindow = window.__TAURI__?.window?.getCurrentWindow;
+        if (typeof getCurrentWindow === "function") {
+          return getCurrentWindow().startDragging();
+        }
+        return invoke("plugin:window|start_dragging");
+      },
+    };
+    window.dispatchEvent(new Event("minibot-host-ready"));
   };
+  install();
 })();
 "#
     .to_string()
@@ -491,6 +512,18 @@ pub fn run() {
                         let raw = url.as_str().to_string();
                         eprintln!("minibot-desktop-v2: deep link {raw}");
                         if !raw.starts_with("minibot://") {
+                            continue;
+                        }
+                        // Browser success page: just focus the app (session arrives via HTTP handoff).
+                        if is_desktop_auth_done_link(&raw) {
+                            let handle2 = handle.clone();
+                            let _ = handle.run_on_main_thread(move || {
+                                if let Some(win) = handle2.get_webview_window(WINDOW_LABEL) {
+                                    let _ = win.show();
+                                    let _ = win.unminimize();
+                                    let _ = win.set_focus();
+                                }
+                            });
                             continue;
                         }
                         let server2 = Arc::clone(&server_for_link);

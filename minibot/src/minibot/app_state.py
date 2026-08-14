@@ -43,6 +43,14 @@ class MiniAuthLoginRecord:
     next_url: str
     expires_at: float
     redirect_uri: str = ""
+    desktop_login_id: str = ""
+
+
+@dataclass
+class DesktopHandoffRecord:
+    token: str
+    expires_at: float
+    next_url: str = "/"
 
 
 @dataclass
@@ -62,6 +70,7 @@ class AppState:
     channels: ChannelManager | None = None
     tokens: dict[str, TokenRecord] = field(default_factory=dict)
     mini_auth_logins: dict[str, MiniAuthLoginRecord] = field(default_factory=dict)
+    desktop_handoffs: dict[str, DesktopHandoffRecord] = field(default_factory=dict)
     fallback_stats: FallbackStats = field(default_factory=FallbackStats)
     fault_controller: FaultController = field(default_factory=FaultController)
     score_queue: ScoreQueue = field(default_factory=ScoreQueue)
@@ -222,6 +231,7 @@ class AppState:
         next_url: str,
         *,
         redirect_uri: str | None = None,
+        desktop_login_id: str | None = None,
     ) -> tuple[str, str]:
         login_state = secrets.token_urlsafe(24)
         code_verifier = secrets.token_urlsafe(64)
@@ -230,11 +240,40 @@ class AppState:
             next_url=next_url or "/",
             expires_at=time.time() + 600,
             redirect_uri=(redirect_uri or "").strip(),
+            desktop_login_id=(desktop_login_id or "").strip(),
         )
         return login_state, code_verifier
 
     def consume_mini_auth_login(self, login_state: str) -> MiniAuthLoginRecord | None:
         record = self.mini_auth_logins.pop(login_state, None)
+        if record is None:
+            return None
+        if record.expires_at < time.time():
+            return None
+        return record
+
+    def put_desktop_handoff(
+        self,
+        desktop_login_id: str,
+        *,
+        token: str,
+        ttl_s: int,
+        next_url: str = "/",
+    ) -> None:
+        key = (desktop_login_id or "").strip()
+        if not key:
+            return
+        self.desktop_handoffs[key] = DesktopHandoffRecord(
+            token=token,
+            expires_at=time.time() + max(1, int(ttl_s)),
+            next_url=next_url or "/",
+        )
+
+    def take_desktop_handoff(self, desktop_login_id: str) -> DesktopHandoffRecord | None:
+        key = (desktop_login_id or "").strip()
+        if not key:
+            return None
+        record = self.desktop_handoffs.pop(key, None)
         if record is None:
             return None
         if record.expires_at < time.time():

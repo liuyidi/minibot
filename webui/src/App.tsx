@@ -3,15 +3,17 @@ import {
   useEffect,
   useRef,
   useState,
-  type FormEvent,
 } from "react";
 import { useTranslation } from "react-i18next";
 import { HashRouter, Route, Routes } from "react-router-dom";
 
+import {
+  AuthForm,
+  BootLoadingScreen,
+  BrowserLoginWaiting,
+} from "@/components/auth/BootScreens";
 import { AppLayout } from "@/layouts";
 import { HashChangeSync } from "@/routes";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   clearSavedSecret,
   deriveWsUrl,
@@ -26,8 +28,12 @@ import {
   bootstrapTokenExpiresAt,
   buildLoginRedirect,
   buildLogoutRedirect,
+  desktopSessionUrl,
   isMiniAuth,
+  newDesktopLoginId,
   tokenRefreshDelayMs,
+  waitForDesktopHandoff,
+  waitForDesktopOpenLogin,
 } from "@/lib/auth-flow";
 import { MinibotClient } from "@/lib/apis/minibot-client";
 import {
@@ -42,6 +48,8 @@ type BootState =
   | { status: "loading" }
   | { status: "error"; message: string }
   | { status: "auth"; failed?: boolean }
+  | { status: "desktop_welcome" }
+  | { status: "browser_login"; desktopLoginId: string }
   | {
       status: "ready";
       client: MinibotClient;
@@ -58,87 +66,48 @@ function isLocalDevelopmentHost(): boolean {
   return hostname === "localhost" || hostname === "127.0.0.1";
 }
 
-function AuthForm({
-  failed,
-  onSecret,
-}: {
-  failed: boolean;
-  onSecret: (secret: string) => void;
-}) {
-  const { t } = useTranslation();
-  const [value, setValue] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-
-  const handleSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    const secret = value.trim();
-    if (!secret) return;
-    setSubmitting(true);
-    onSecret(secret);
-  };
-
-  return (
-    <div className="flex h-full w-full items-center justify-center px-6">
-      <form
-        onSubmit={handleSubmit}
-        className="flex w-full max-w-sm flex-col gap-4"
-      >
-        <div className="flex flex-col items-center gap-1 text-center">
-          <p className="text-lg font-semibold">{t("app.auth.title")}</p>
-          <p className="text-sm text-muted-foreground">{t("app.auth.hint")}</p>
-        </div>
-        {failed && (
-          <p className="text-center text-sm text-destructive">
-            {t("app.auth.invalid")}
-          </p>
-        )}
-        <Input
-          type="password"
-          placeholder={t("app.auth.placeholder")}
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          disabled={submitting}
-          autoFocus
-        />
-        <Button
-          type="submit"
-          className="w-full"
-          disabled={!value.trim() || submitting}
-        >
-          {t("app.auth.submit")}
-        </Button>
-      </form>
-    </div>
-  );
-}
-
 export default function App() {
   const { t } = useTranslation();
   const [state, setState] = useState<BootState>({ status: "loading" });
   const bootstrapSecretRef = useRef("");
   const authConfigRef = useRef<AuthConfigResponse | null>(null);
 
-  const redirectToMiniAuth = useCallback(
-    (mode: "login" | "logout") => {
-      if (typeof window === "undefined") return;
-      const config = authConfigRef.current;
-      if (mode === "login") {
-        const host = getHostApi();
+  const beginDesktopLogin = useCallback(() => {
+    if (typeof window === "undefined") return;
+    const config = authConfigRef.current;
+    void (async () => {
+      const host = await waitForDesktopOpenLogin();
+      if (host?.openLogin) {
+        const desktopLoginId = newDesktopLoginId();
+        setState({ status: "browser_login", desktopLoginId });
         const relative = buildLoginRedirect(config?.login_url, {
-          desktop: host?.openLogin != null,
+          desktop: true,
+          desktopLoginId,
+          next: "/",
         });
-        if (host?.openLogin) {
-          void host.openLogin(absoluteAuthUrl(relative));
-          return;
-        }
-        window.location.assign(relative);
+        await host.openLogin(absoluteAuthUrl(relative));
         return;
       }
-      const target = buildLogoutRedirect(config?.logout_url);
-      window.location.assign(target);
-    },
-    [],
-  );
+      window.location.assign(buildLoginRedirect(config?.login_url));
+    })();
+  }, []);
+
+  const showDesktopWelcomeOrBrowserLogin = useCallback(() => {
+    if (typeof window === "undefined") return;
+    void (async () => {
+      const host = await waitForDesktopOpenLogin();
+      if (host?.openLogin) {
+        setState({ status: "desktop_welcome" });
+        return;
+      }
+      window.location.assign(buildLoginRedirect(authConfigRef.current?.login_url));
+    })();
+  }, []);
+
+  const redirectToMiniAuthLogout = useCallback(() => {
+    if (typeof window === "undefined") return;
+    window.location.assign(buildLogoutRedirect(authConfigRef.current?.logout_url));
+  }, []);
 
   const refreshReadyClient = useCallback(
     async (client: MinibotClient, fallbackSurface: RuntimeSurface) => {
@@ -171,12 +140,12 @@ export default function App() {
         return { token: boot.token, url };
       } catch (error) {
         if (isMiniAuth(authConfigRef.current)) {
-          redirectToMiniAuth("login");
+          showDesktopWelcomeOrBrowserLogin();
         }
         throw error;
       }
     },
-    [redirectToMiniAuth],
+    [showDesktopWelcomeOrBrowserLogin],
   );
 
   const bootstrapWithSecret = useCallback(
@@ -225,7 +194,7 @@ export default function App() {
           const msg = (e as Error).message;
           if (msg.includes("HTTP 401") || msg.includes("HTTP 403")) {
             if (isMiniAuth(authConfigRef.current) || !isLocalDevelopmentHost()) {
-              redirectToMiniAuth("login");
+              showDesktopWelcomeOrBrowserLogin();
               return;
             }
             setState({ status: "auth", failed: true });
@@ -238,7 +207,7 @@ export default function App() {
         cancelled = true;
       };
     },
-    [refreshReadyClient, redirectToMiniAuth],
+    [refreshReadyClient, showDesktopWelcomeOrBrowserLogin],
   );
 
   useEffect(() => {
@@ -251,7 +220,7 @@ export default function App() {
         const msg = (e as Error).message;
         if (msg.includes("HTTP 401") || msg.includes("HTTP 403")) {
           if (isMiniAuth(authConfigRef.current)) {
-            redirectToMiniAuth("login");
+            showDesktopWelcomeOrBrowserLogin();
             return;
           }
           setState({ status: "auth", failed: true });
@@ -261,7 +230,30 @@ export default function App() {
       }
     }, tokenRefreshDelayMs(state.tokenExpiresAt));
     return () => window.clearTimeout(timer);
-  }, [redirectToMiniAuth, refreshReadyClient, state]);
+  }, [showDesktopWelcomeOrBrowserLogin, refreshReadyClient, state]);
+
+  useEffect(() => {
+    if (state.status !== "browser_login") return;
+    const controller = new AbortController();
+    void (async () => {
+      try {
+        const handoff = await waitForDesktopHandoff(state.desktopLoginId, {
+          signal: controller.signal,
+        });
+        window.location.assign(
+          desktopSessionUrl(handoff.token, handoff.next_url || "/"),
+        );
+      } catch (error) {
+        if (controller.signal.aborted) return;
+        if (error instanceof DOMException && error.name === "AbortError") return;
+        setState({
+          status: "error",
+          message: (error as Error).message || "Desktop login handoff failed",
+        });
+      }
+    })();
+    return () => controller.abort();
+  }, [state]);
 
   useEffect(() => {
     let cancelled = false;
@@ -275,7 +267,7 @@ export default function App() {
             clearSavedSecret();
             bootstrapWithSecret("");
           } else {
-            redirectToMiniAuth("login");
+            showDesktopWelcomeOrBrowserLogin();
           }
           return;
         }
@@ -284,7 +276,7 @@ export default function App() {
         if (cancelled) return;
         authConfigRef.current = null;
         if (!isLocalDevelopmentHost()) {
-          redirectToMiniAuth("login");
+          showDesktopWelcomeOrBrowserLogin();
           return;
         }
         bootstrapWithSecret(loadSavedSecret());
@@ -293,28 +285,22 @@ export default function App() {
     return () => {
       cancelled = true;
     };
-  }, [bootstrapWithSecret, redirectToMiniAuth]);
+  }, [bootstrapWithSecret, showDesktopWelcomeOrBrowserLogin]);
 
   useEffect(() => {
     if (state.status !== "auth") return;
     if (isLocalDevelopmentHost()) return;
-    redirectToMiniAuth("login");
-  }, [redirectToMiniAuth, state.status]);
+    showDesktopWelcomeOrBrowserLogin();
+  }, [showDesktopWelcomeOrBrowserLogin, state.status]);
 
   if (state.status === "loading") {
-    return (
-      <div className="flex h-full w-full items-center justify-center">
-        <div className="flex flex-col items-center gap-3 animate-in fade-in-0 duration-300">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-foreground/40" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-foreground/60" />
-            </span>
-            {t("app.loading.connecting")}
-          </div>
-        </div>
-      </div>
-    );
+    return <BootLoadingScreen label={t("app.loading.connecting")} />;
+  }
+  if (state.status === "desktop_welcome") {
+    return <BrowserLoginWaiting waiting={false} onLogin={beginDesktopLogin} />;
+  }
+  if (state.status === "browser_login") {
+    return <BrowserLoginWaiting waiting onLogin={beginDesktopLogin} />;
   }
   if (state.status === "auth") {
     if (!isLocalDevelopmentHost()) return null;
@@ -350,7 +336,7 @@ export default function App() {
       state.client.close();
     }
     if (isMiniAuth(authConfigRef.current)) {
-      redirectToMiniAuth("logout");
+      redirectToMiniAuthLogout();
       return;
     }
     clearSavedSecret();

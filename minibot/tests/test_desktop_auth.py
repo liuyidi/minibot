@@ -27,6 +27,84 @@ def test_desktop_login_uses_custom_scheme_redirect(client: TestClient) -> None:
     assert params["code_challenge"][0]
 
 
+def test_desktop_login_with_handoff_id_uses_http_callback(client: TestClient) -> None:
+    state = client.app.state.app_state
+    state.settings.__dict__["auth_provider"] = "mini_auth"
+    state.settings.__dict__["mini_auth_base_url"] = "https://auth.example"
+    state.settings.__dict__["mini_auth_callback_path"] = "/auth/mini-auth/callback"
+
+    res = client.get(
+        "/auth/login?desktop=1&desktop_login_id=desk-1&next=%2F",
+        follow_redirects=False,
+    )
+
+    assert res.status_code == 302
+    params = parse_qs(urlparse(res.headers["location"]).query)
+    assert params["redirect_uri"][0].endswith("/auth/mini-auth/callback")
+    login_state = params["state"][0]
+    record = state.mini_auth_logins[login_state]
+    assert record.desktop_login_id == "desk-1"
+
+
+def test_desktop_http_callback_stores_handoff(client: TestClient) -> None:
+    state = client.app.state.app_state
+    state.settings.__dict__["auth_provider"] = "mini_auth"
+    state.settings.__dict__["mini_auth_base_url"] = "https://auth.example"
+
+    login_state, _verifier = state.begin_mini_auth_login(
+        "/",
+        redirect_uri="http://testserver/auth/mini-auth/callback",
+        desktop_login_id="desk-poll",
+    )
+
+    token_json = {"access_token": "at-1", "expires_in": 3600}
+    userinfo = {
+        "sub": "user-desk",
+        "email": "desk@example.com",
+        "preferred_username": "desk",
+        "created_at": "2026-08-14T00:00:00Z",
+        "identities": [],
+    }
+
+    mock_client = MagicMock()
+    mock_token = MagicMock()
+    mock_token.raise_for_status = MagicMock()
+    mock_token.json.return_value = token_json
+    mock_user = MagicMock()
+    mock_user.raise_for_status = MagicMock()
+    mock_user.json.return_value = userinfo
+    mock_client.post = AsyncMock(return_value=mock_token)
+    mock_client.get = AsyncMock(return_value=mock_user)
+    mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+    mock_client.__aexit__ = AsyncMock(return_value=None)
+
+    with patch("minibot.api.routes.auth.httpx.AsyncClient", return_value=mock_client):
+        done = client.get(
+            f"/auth/mini-auth/callback?code=auth-code&state={login_state}",
+            follow_redirects=False,
+        )
+
+    assert done.status_code == 302
+    assert done.headers["location"] == "/auth/desktop/done"
+
+    missing = client.get("/auth/desktop/handoff?id=wrong")
+    assert missing.status_code == 404
+
+    handoff = client.get("/auth/desktop/handoff?id=desk-poll")
+    assert handoff.status_code == 200
+    body = handoff.json()
+    assert body["token"]
+    assert body["next_url"] == "/"
+    assert client.get("/auth/desktop/handoff?id=desk-poll").status_code == 404
+
+
+def test_desktop_done_page_serves_html(client: TestClient) -> None:
+    res = client.get("/auth/desktop/done")
+    assert res.status_code == 200
+    assert "登录成功" in res.text
+    assert "minibot://auth/done" in res.text
+
+
 def test_desktop_complete_exchanges_code_and_session_sets_cookie(client: TestClient) -> None:
     state = client.app.state.app_state
     state.settings.__dict__["auth_provider"] = "mini_auth"
