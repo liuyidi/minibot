@@ -16,7 +16,7 @@ description: >-
 |------|------|-------------------|
 | https://mlf.liuyidi.me | mini-langfuse | 8080 → web, 8000 → API |
 | https://bot.liuyidi.me | minibot + WebUI | 8766 |
-| https://kb.liuyidi.me | minikb（可选） | 8081 |
+| https://kb.liuyidi.me | minikb（Volcengine，经本机 nginx） | 反代 → 101.96.224.232:80 |
 
 ECS：`root@116.62.35.76`，密钥 `~/Downloads/agent.pem`，代码根 `/opt/demo/`。
 
@@ -24,21 +24,19 @@ ECS：`root@116.62.35.76`，密钥 `~/Downloads/agent.pem`，代码根 `/opt/dem
 /opt/demo/
   mini-langfuse/     # compose 在 deploy/demo/
   minibot/           # monorepo（Dockerfile.minibot + webui/ + minibot/）
-  minikb/
+# minikb lives on Volcengine (/opt/minikb), not under /opt/demo
 ```
 
 Compose 入口：`/opt/demo/mini-langfuse/deploy/demo/`（`.env`、`docker-compose.yml`、`up.sh`）。
-
-平台模型密钥：在本机 `minibot/minibot/` 维护 `.env.models`，`./scripts/merge-env.sh` 后把 slot 变量追加进 ECS 的 `deploy/demo/.env`（compose 已转发 `MINIBOT_SERVER_{SLOT}_*`）。**不要**把 `.env.models` 打进镜像。
 
 更完整的踩坑实录：`mini-langfuse/docs/aliyun-ecs-demo-deploy.md`、`deploy/demo/GUIDE-liuyidi.me.md`。
 
 ## 何时用哪条路径
 
 1. **只改了 minibot / WebUI 代码** → 拉 `minibot` monorepo + 重建 `minibot` 镜像
-2. **只改了 minikb** → 拉 `minikb` + 重建 `minikb`（需 `--profile kb`）
+2. **只改了 minikb** → 走 minikb 仓 `publish-volcengine-minikb.yml`（不要在本机 compose 起 kb）
 3. **改了 compose / Langfuse** → 拉 `mini-langfuse` + `./up.sh core` 或针对性 recreate
-4. **首次 / 全量含知识库** → `./up.sh kb`（2C2G 务必有 swap）
+4. **kb 域名 / 反代** → 更新 `nginx-subdomains.conf` 中 `upstream demo_kb` 后 reload nginx
 
 ## 发布前（本机）
 
@@ -99,53 +97,14 @@ WebUI 静态有变更且怀疑缓存层：
 docker compose ... build --no-cache minibot
 ```
 
-## B. 更新 / 首次启动 minikb（kb.liuyidi.me）
+## B. minikb（kb.liuyidi.me）
 
-### 前置
+minikb **不在** Aliyun demo compose。发布：`minikb` 仓库 workflow `Publish Volcengine Minikb`。
 
-1. DNS：`kb.liuyidi.me` → ECS IP（证书 SAN 需含该域名）
-2. Postgres 有 `minikb` 库（旧 volume 可能缺；init 脚本只在**首次**建库执行）：
+阿里云 Nginx：`upstream demo_kb { server 101.96.224.232:80; }`（见 `deploy/demo/nginx-subdomains.conf`），
+模板副本：`minikb/deploy/nginx.kb.liuyidi.me.conf.example`。
 
-```bash
-docker exec demo-postgres psql -U demo -d postgres -tc \
-  "SELECT 1 FROM pg_database WHERE datname='\''minikb'\''" | grep -q 1 \
-  || docker exec demo-postgres psql -U demo -d postgres -c "CREATE DATABASE minikb;"
-docker exec demo-postgres psql -U demo -d minikb -c "CREATE EXTENSION IF NOT EXISTS vector;"
-```
-
-3. 使用 CN 友好 Dockerfile：`minikb/docker/Dockerfile.ecs`（DaoCloud python + 阿里云 PyPI）。  
-   Compose：`dockerfile: docker/Dockerfile.ecs`，且 `depends_on: minio` healthy。  
-   仓库内模板副本：`mini-langfuse/deploy/demo/Dockerfile.minikb`（内容同源，可 scp 到 `minikb/docker/Dockerfile.ecs`）。
-
-### 只起 kb（推荐，少动 core）
-
-```bash
-cd /opt/demo/minikb && git fetch origin main && git reset --hard origin/main
-
-cd /opt/demo/mini-langfuse/deploy/demo
-set -a; source .env; set +a
-export MINIKB_DIR=/opt/demo/minikb MLF_DIR=/opt/demo/mini-langfuse
-export MINIBOT_REPO_DIR=/opt/demo/minibot MINIBOT_DIR=/opt/demo/minibot
-export COMPOSE_BAKE=false
-
-COMPOSE=(docker compose -f docker-compose.yml --env-file .env --profile kb)
-"${COMPOSE[@]}" build minikb
-"${COMPOSE[@]}" up -d minio
-# 等 healthy 后
-"${COMPOSE[@]}" up -d minio-bootstrap minikb
-
-curl -fsS http://127.0.0.1:8081/health
-curl -fsS -o /dev/null -w "ui %{http_code}\n" http://127.0.0.1:8081/ui/
-curl -fsS https://kb.liuyidi.me/health
-```
-
-也可用 `./up.sh kb`（会 `--build` 整栈；DaoCloud 拉 server 基镜像偶发失败时改用上面「只 build minikb」）。
-
-### Nginx
-
-- 证书：`/etc/letsencrypt/live/mlf.liuyidi.me/`（SAN 含 bot/kb/mlf/apex）
-- kb 反代 `127.0.0.1:8081`；建议 `location = / { return 302 /ui/; }`（minikb 根路径本身 404）
-- 改完：`nginx -t && systemctl reload nginx`
+验收：`curl -fsS https://kb.liuyidi.me/health`
 
 ## C. 全量 core（Langfuse + minibot）
 
