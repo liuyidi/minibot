@@ -35,6 +35,11 @@ jobs:
 
     runs-on: ${{ matrix.platform }}
     timeout-minutes: 90
+    # Windows defaults to pwsh; .sh freeze/prepare must run under Git Bash or they
+    # can "succeed" without executing (then Tauri fails: resources/minibot-sidecar missing).
+    defaults:
+      run:
+        shell: bash
 
     steps:
       - uses: actions/checkout@v6
@@ -89,7 +94,17 @@ jobs:
         run: ./scripts/freeze-minibot-sidecar.sh ${{ matrix.triple }}
 
       - name: Prepare sidecar for Tauri
-        run: ./desktopV2/scripts/prepare-sidecar.sh ${{ matrix.triple }}
+        run: |
+          set -euo pipefail
+          ./desktopV2/scripts/prepare-sidecar.sh ${{ matrix.triple }}
+          dest="desktopV2/src-tauri/resources/minibot-sidecar"
+          ls -la "$dest"
+          if [[ -f "$dest/minibot-sidecar.exe" || -f "$dest/minibot-sidecar" ]]; then
+            echo "prepare-sidecar: launcher present"
+          else
+            echo "prepare-sidecar: missing launcher under $dest" >&2
+            exit 1
+          fi
 
       - name: Install desktopV2 frontend dependencies
         working-directory: desktopV2

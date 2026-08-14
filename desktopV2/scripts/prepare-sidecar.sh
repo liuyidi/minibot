@@ -32,8 +32,16 @@ if [[ ! -f "$LAUNCHER" ]]; then
 fi
 
 rm -rf "$DEST"
-mkdir -p "$(dirname "$DEST")"
-cp -R "$SRC" "$DEST"
+mkdir -p "$DEST"
+# Copy contents (not the directory node) so DEST is always …/resources/minibot-sidecar/
+# with launcher + _internal/ directly underneath (avoids nested cp quirks on Git Bash).
+cp -R "$SRC"/. "$DEST"/
 chmod +x "$DEST/minibot-sidecar" "$DEST/minibot-sidecar.exe" 2>/dev/null || true
+
+if [[ ! -f "$DEST/minibot-sidecar" && ! -f "$DEST/minibot-sidecar.exe" ]]; then
+  echo "prepare-sidecar: copy failed; no launcher under $DEST" >&2
+  ls -la "$DEST" || true
+  exit 1
+fi
 
 echo "prepare-sidecar: ok → $DEST (triple=$TRIPLE)"
