@@ -1,6 +1,7 @@
 import type { SettingsPayload } from "@/lib/types";
 
 export type SettingsSectionKey =
+  | "profile"
   | "overview"
   | "appearance"
   | "models"

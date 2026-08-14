@@ -69,7 +69,8 @@
     "portalDevui": "Dev notes",
     "downloadApp": "Download app",
     "accountDisplayName": "minibot",
-    "accountMenuAria": "Account menu"
+    "accountMenuAria": "Account menu",
+    "profile": "Profile"
   },
   "settings": {
     "backToChat": "Back to chat",
@@ -81,6 +82,7 @@
       "general": "General",
       "byok": "BYOK",
       "overview": "Overview",
+      "profile": "Profile",
       "appearance": "Appearance",
       "models": "Models",
       "providers": "Providers",
@@ -447,6 +449,21 @@
       "voiceInput": "Voice input",
       "workspace": "Workspace"
     },
+    "profile": {
+      "personalTitle": "Personal information",
+      "personalSubtitle": "View and edit your basic information",
+      "accountTitle": "Account details",
+      "accountSubtitle": "View your account information",
+      "nickname": "Nickname",
+      "nicknamePlaceholder": "Enter a nickname",
+      "avatar": "Avatar",
+      "randomizeAvatar": "Randomize",
+      "userId": "User ID",
+      "copyUserId": "Copy user ID",
+      "copiedUserId": "Copied",
+      "createdAt": "Registration date",
+      "unknownValue": "—"
+    },
     "usage": {
       "title": "Token activity",
       "shortTitle": "Token Usage",
@@ -470,7 +487,14 @@
         "cron": "Automations",
         "dream": "Memory",
         "system": "System"
-      }
+      },
+      "longestChat": "Longest chat",
+      "granularityDaily": "Daily",
+      "granularityWeekly": "Weekly",
+      "granularityCumulative": "Cumulative",
+      "insightsTitle": "Activity insights",
+      "pluginsTitle": "Most used plugins",
+      "pluginRuns": "{{count}} runs"
     },
     "providers": {
       "searchPlaceholder": "Search providers",

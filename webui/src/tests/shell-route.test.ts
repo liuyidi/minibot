@@ -26,11 +26,11 @@ describe("shell-route settings paths", () => {
 
   it("reads /settings/:section and legacy ?section=", () => {
     expect(
-      shellRouteFromLocation({ pathname: "/settings/models", search: "" }),
+      shellRouteFromLocation({ pathname: "/settings/profile", search: "" }),
     ).toEqual({
       view: "settings",
       activeKey: null,
-      settingsSection: "models",
+      settingsSection: "profile",
     });
 
     expect(

@@ -69,7 +69,8 @@
     "tabChannels": "Channels",
     "downloadApp": "Download app",
     "accountDisplayName": "minibot",
-    "accountMenuAria": "Account menu"
+    "accountMenuAria": "Account menu",
+    "profile": "Hồ sơ"
   },
   "settings": {
     "backToChat": "Quay lại chat",
@@ -81,6 +82,7 @@
       "general": "Chung",
       "byok": "BYOK",
       "overview": "Tổng quan",
+      "profile": "Hồ sơ",
       "appearance": "Giao diện",
       "models": "Mô hình",
       "providers": "Nhà cung cấp",
@@ -314,6 +316,21 @@
       "voiceInput": "Nhập bằng giọng nói",
       "workspace": "Không gian làm việc"
     },
+    "profile": {
+      "personalTitle": "Thông tin cá nhân",
+      "personalSubtitle": "Xem và chỉnh sửa thông tin cơ bản",
+      "accountTitle": "Chi tiết tài khoản",
+      "accountSubtitle": "Xem thông tin tài khoản của bạn",
+      "nickname": "Biệt danh",
+      "nicknamePlaceholder": "Nhập biệt danh",
+      "avatar": "Ảnh đại diện",
+      "randomizeAvatar": "Đổi ngẫu nhiên",
+      "userId": "ID người dùng",
+      "copyUserId": "Sao chép ID người dùng",
+      "copiedUserId": "Đã sao chép",
+      "createdAt": "Ngày đăng ký",
+      "unknownValue": "—"
+    },
     "usage": {
       "title": "Hoạt động token",
       "shortTitle": "Token Usage",
@@ -337,7 +354,14 @@
         "cron": "Tự động hóa",
         "dream": "Bộ nhớ",
         "system": "Hệ thống"
-      }
+      },
+      "longestChat": "Cuộc trò chuyện dài nhất",
+      "granularityDaily": "Hàng ngày",
+      "granularityWeekly": "Hàng tuần",
+      "granularityCumulative": "Tích lũy",
+      "insightsTitle": "Thông tin hoạt động",
+      "pluginsTitle": "Plugin dùng nhiều nhất",
+      "pluginRuns": "{{count}} lần chạy"
     },
     "providers": {
       "searchPlaceholder": "Tìm nhà cung cấp",

@@ -6,10 +6,12 @@ import {
   FlaskConical,
   Home,
   Settings,
+  UserRound,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { ConnectionStatusDot } from "./ConnectionBadge";
+import { ProfileAvatar } from "@/components/settings/ProfileAvatar";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -26,9 +28,8 @@ import {
 import { PORTAL } from "@/lib/configs/portal";
 import { UI_ENTRY } from "@/lib/configs/ui-entry";
 import { cn } from "@/lib/utils";
+import { useLocalProfile } from "@/hooks/settings";
 import type { SettingsSectionKey } from "@/pages/settings";
-
-const DEFAULT_AVATAR_SRC = "/brand/minibot_mark.svg";
 
 export function SidebarAccountFooter({
   collapsed = false,
@@ -40,10 +41,15 @@ export function SidebarAccountFooter({
   onOpenSettings: (section?: SettingsSectionKey) => void;
 }) {
   const { t } = useTranslation();
-  const displayName = displayNameProp?.trim() || t("sidebar.accountDisplayName", { defaultValue: "minibot" });
+  const { profile } = useLocalProfile();
+  const displayName =
+    profile.displayName?.trim()
+    || displayNameProp?.trim()
+    || t("sidebar.accountDisplayName", { defaultValue: "minibot" });
   const menuAria = t("sidebar.accountMenuAria", { defaultValue: "Account menu" });
   const downloadAppLabel = t("sidebar.downloadApp");
   const settingsLabel = t("sidebar.settings");
+  const profileLabel = t("sidebar.profile", { defaultValue: "Profile" });
 
   return (
     <div
@@ -68,10 +74,11 @@ export function SidebarAccountFooter({
                     )}
                   >
                     <span className="relative shrink-0">
-                      <img
-                        src={DEFAULT_AVATAR_SRC}
-                        alt=""
-                        className="h-7 w-7 rounded-full bg-sidebar-accent object-cover ring-1 ring-sidebar-border/60"
+                      <ProfileAvatar
+                        name={displayName}
+                        seed={profile.avatarSeed}
+                        size="sm"
+                        className="ring-1 ring-sidebar-border/60"
                       />
                       <ConnectionStatusDot
                         className="absolute -bottom-0.5 -right-0.5"
@@ -111,6 +118,13 @@ export function SidebarAccountFooter({
                 {UI_ENTRY.settings ? (
                   <>
                     <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      className="gap-2"
+                      onSelect={() => onOpenSettings("profile")}
+                    >
+                      <UserRound className="h-4 w-4 shrink-0 opacity-80" aria-hidden />
+                      <span className="min-w-0 flex-1 truncate">{profileLabel}</span>
+                    </DropdownMenuItem>
                     <DropdownMenuItem
                       className="gap-2"
                       onSelect={() => onOpenSettings()}
@@ -155,10 +169,11 @@ export function SidebarAccountFooter({
               )}
             >
               <span className="relative shrink-0">
-                <img
-                  src={DEFAULT_AVATAR_SRC}
-                  alt=""
-                  className="h-8 w-8 rounded-full bg-sidebar-accent object-cover ring-1 ring-sidebar-border/60"
+                <ProfileAvatar
+                  name={displayName}
+                  seed={profile.avatarSeed}
+                  size="md"
+                  className="ring-1 ring-sidebar-border/60"
                 />
                 <ConnectionStatusDot
                   className="absolute -bottom-0.5 -right-0.5"
@@ -200,6 +215,13 @@ export function SidebarAccountFooter({
             {UI_ENTRY.settings ? (
               <>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="gap-2"
+                  onSelect={() => onOpenSettings("profile")}
+                >
+                  <UserRound className="h-4 w-4 shrink-0 opacity-80" aria-hidden />
+                  <span className="min-w-0 flex-1 truncate">{profileLabel}</span>
+                </DropdownMenuItem>
                 <DropdownMenuItem
                   className="gap-2"
                   onSelect={() => onOpenSettings()}

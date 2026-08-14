@@ -16,6 +16,7 @@ import { BrowserPage } from "./browser/BrowserPage";
 import { ImagePage } from "./image/ImagePage";
 import { ModelsSettingsPage } from "./models/ModelsSettingsPage";
 import { OverviewPage } from "./overview/OverviewPage";
+import { ProfilePage } from "./profile/ProfilePage";
 import { RuntimePage } from "./runtime/RuntimePage";
 import { VoicePage } from "./voice/VoicePage";
 import { SettingsShellProvider } from "./SettingsShellContext";
@@ -26,6 +27,7 @@ export type { SettingsPageProps } from "@/pages/settings/shared/types";
 
 /** Route registry: `/#/settings/:section` → page component. */
 const SETTINGS_SECTION_PAGES: Record<SettingsSectionKey, ComponentType> = {
+  profile: ProfilePage,
   overview: OverviewPage,
   appearance: AppearancePage,
   models: ModelsSettingsPage,
@@ -113,7 +115,7 @@ export function SettingsLayout({
               hostChromeInset && "pt-[4.25rem] sm:pt-[4.25rem] lg:pt-[4.75rem]",
             )}
           >
-            <div className="mb-7">
+            <div className={cn(activeSection === "profile" ? "mb-2" : "mb-7")}>
               {!showSidebar ? (
                 <button
                   type="button"
@@ -124,12 +126,17 @@ export function SettingsLayout({
                   {t("settings.backToChat")}
                 </button>
               ) : null}
-              {showSidebar ? (
+              {showSidebar && activeSection !== "profile" ? (
                 <p className="mb-2 text-[12px] font-normal text-muted-foreground">
                   {t("settings.sidebar.title")}
                 </p>
               ) : null}
-              <h1 className="text-[24px] font-normal leading-tight tracking-normal text-foreground sm:text-[28px]">
+              <h1
+                className={cn(
+                  "text-[24px] font-normal leading-tight tracking-normal text-foreground sm:text-[28px]",
+                  activeSection === "profile" && "sr-only",
+                )}
+              >
                 {text(`settings.nav.${activeSection}`, titleForSection(activeSection))}
               </h1>
             </div>

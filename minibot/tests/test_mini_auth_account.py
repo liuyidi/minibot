@@ -12,9 +12,11 @@ def test_auth_config_returns_mini_auth_account(client: TestClient) -> None:
     state.settings.__dict__["auth_provider"] = "mini_auth"
     token = state.issue_token(
         account={
+            "id": "user-demo",
             "email": "demo@mini-auth.dev",
             "name": "demo",
             "picture": None,
+            "created_at": "2026-08-11T00:00:00Z",
         }
     )
 
@@ -22,7 +24,9 @@ def test_auth_config_returns_mini_auth_account(client: TestClient) -> None:
 
     assert res.status_code == 200
     assert res.json()["account"] == {
+        "id": "user-demo",
         "email": "demo@mini-auth.dev",
         "name": "demo",
         "picture": None,
+        "created_at": "2026-08-11T00:00:00Z",
     }

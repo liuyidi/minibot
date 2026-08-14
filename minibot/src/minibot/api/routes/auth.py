@@ -189,9 +189,11 @@ async def mini_auth_callback(
         ) from exc
 
     account = {
+        "id": userinfo.get("sub"),
         "email": userinfo.get("email"),
         "name": userinfo.get("preferred_username") or userinfo.get("name") or userinfo.get("email"),
         "picture": userinfo.get("picture"),
+        "created_at": userinfo.get("created_at"),
     }
     session_token = state.issue_token(ttl_s=expires_in, account=account)
     response = RedirectResponse(url=login_record.next_url or "/", status_code=status.HTTP_302_FOUND)

@@ -69,7 +69,8 @@
     "newChatChannelsHint": "Channel chats come from Feishu / WeChat. Switch to Chats to create one.",
     "downloadApp": "Download app",
     "accountDisplayName": "minibot",
-    "accountMenuAria": "Account menu"
+    "accountMenuAria": "Account menu",
+    "profile": "個人資料"
   },
   "settings": {
     "backToChat": "返回聊天",
@@ -81,6 +82,7 @@
       "general": "一般",
       "byok": "BYOK",
       "overview": "概覽",
+      "profile": "個人資料",
       "appearance": "外觀",
       "models": "模型",
       "providers": "提供商",
@@ -314,6 +316,21 @@
       "voiceInput": "語音辨識",
       "workspace": "工作區"
     },
+    "profile": {
+      "personalTitle": "個人資料",
+      "personalSubtitle": "檢視並修改您的基本資訊",
+      "accountTitle": "帳號詳情",
+      "accountSubtitle": "檢視您的帳號資訊",
+      "nickname": "暱稱",
+      "nicknamePlaceholder": "輸入暱稱",
+      "avatar": "頭像",
+      "randomizeAvatar": "隨機更換",
+      "userId": "使用者 ID",
+      "copyUserId": "複製使用者 ID",
+      "copiedUserId": "已複製",
+      "createdAt": "註冊時間",
+      "unknownValue": "—"
+    },
     "usage": {
       "title": "Token 活動",
       "shortTitle": "Token Usage",
@@ -337,7 +354,14 @@
         "cron": "自動任務",
         "dream": "記憶整理",
         "system": "系統"
-      }
+      },
+      "longestChat": "最長聊天時長",
+      "granularityDaily": "每日",
+      "granularityWeekly": "每週",
+      "granularityCumulative": "累計",
+      "insightsTitle": "活動洞察",
+      "pluginsTitle": "最常用的外掛",
+      "pluginRuns": "{{count}} 次執行"
     },
     "providers": {
       "searchPlaceholder": "搜尋供應商",

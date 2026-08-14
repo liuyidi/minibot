@@ -69,7 +69,8 @@
     "tabChannels": "Channels",
     "downloadApp": "Download app",
     "accountDisplayName": "minibot",
-    "accountMenuAria": "Account menu"
+    "accountMenuAria": "Account menu",
+    "profile": "Perfil"
   },
   "settings": {
     "backToChat": "Volver al chat",
@@ -81,6 +82,7 @@
       "general": "General",
       "byok": "BYOK",
       "overview": "Resumen",
+      "profile": "Perfil",
       "appearance": "Apariencia",
       "models": "Modelos",
       "providers": "Proveedores",
@@ -314,6 +316,21 @@
       "voiceInput": "Entrada de voz",
       "workspace": "Espacio de trabajo"
     },
+    "profile": {
+      "personalTitle": "Información personal",
+      "personalSubtitle": "Consulta y edita tu información básica",
+      "accountTitle": "Detalles de la cuenta",
+      "accountSubtitle": "Consulta la información de tu cuenta",
+      "nickname": "Apodo",
+      "nicknamePlaceholder": "Introduce un apodo",
+      "avatar": "Avatar",
+      "randomizeAvatar": "Aleatorio",
+      "userId": "ID de usuario",
+      "copyUserId": "Copiar ID de usuario",
+      "copiedUserId": "Copiado",
+      "createdAt": "Fecha de registro",
+      "unknownValue": "—"
+    },
     "usage": {
       "title": "Actividad de tokens",
       "shortTitle": "Token Usage",
@@ -337,7 +354,14 @@
         "cron": "Automatizaciones",
         "dream": "Memoria",
         "system": "Sistema"
-      }
+      },
+      "longestChat": "Chat más largo",
+      "granularityDaily": "Diario",
+      "granularityWeekly": "Semanal",
+      "granularityCumulative": "Acumulado",
+      "insightsTitle": "Perspectivas de actividad",
+      "pluginsTitle": "Complementos más usados",
+      "pluginRuns": "{{count}} ejecuciones"
     },
     "providers": {
       "searchPlaceholder": "Buscar proveedores",

@@ -151,7 +151,7 @@ function autoDynamicProviderPayload(
 
 function renderSettingsView(
   options: {
-    initialSection?: "overview" | "advanced" | "models";
+    initialSection?: "overview" | "advanced" | "models" | "profile";
     initialSettings?: SettingsPayload;
     showSidebar?: boolean;
     onSettingsChange?: (payload: SettingsPayload) => void;
@@ -268,6 +268,7 @@ describe("SettingsView", () => {
     renderSettingsView({ initialSection: "overview" });
 
     const settingsNav = await screen.findByRole("navigation", { name: "Settings sections" });
+    expect(within(settingsNav).getByRole("button", { name: "Profile" })).toBeInTheDocument();
     expect(within(settingsNav).getByRole("button", { name: "Overview" })).toBeInTheDocument();
     expect(within(settingsNav).getByRole("button", { name: "Appearance" })).toBeInTheDocument();
     expect(within(settingsNav).getByRole("button", { name: "Models" })).toBeInTheDocument();

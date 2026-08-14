@@ -69,7 +69,8 @@
     "tabChannels": "Channels",
     "downloadApp": "Download app",
     "accountDisplayName": "minibot",
-    "accountMenuAria": "Account menu"
+    "accountMenuAria": "Account menu",
+    "profile": "プロフィール"
   },
   "settings": {
     "backToChat": "チャットに戻る",
@@ -81,6 +82,7 @@
       "general": "一般",
       "byok": "BYOK",
       "overview": "概要",
+      "profile": "プロフィール",
       "appearance": "外観",
       "models": "モデル",
       "providers": "プロバイダー",
@@ -314,6 +316,21 @@
       "voiceInput": "音声入力",
       "workspace": "ワークスペース"
     },
+    "profile": {
+      "personalTitle": "個人情報",
+      "personalSubtitle": "基本情報を表示・編集します",
+      "accountTitle": "アカウント詳細",
+      "accountSubtitle": "アカウント情報を表示します",
+      "nickname": "ニックネーム",
+      "nicknamePlaceholder": "ニックネームを入力",
+      "avatar": "アバター",
+      "randomizeAvatar": "ランダムに変更",
+      "userId": "ユーザー ID",
+      "copyUserId": "ユーザー ID をコピー",
+      "copiedUserId": "コピーしました",
+      "createdAt": "登録日",
+      "unknownValue": "—"
+    },
     "usage": {
       "title": "Token アクティビティ",
       "shortTitle": "Token Usage",
@@ -337,7 +354,14 @@
         "cron": "自動タスク",
         "dream": "メモリ整理",
         "system": "システム"
-      }
+      },
+      "longestChat": "最長チャット時間",
+      "granularityDaily": "日次",
+      "granularityWeekly": "週次",
+      "granularityCumulative": "累計",
+      "insightsTitle": "アクティビティ分析",
+      "pluginsTitle": "よく使うプラグイン",
+      "pluginRuns": "{{count}} 回実行"
     },
     "providers": {
       "searchPlaceholder": "プロバイダーを検索",

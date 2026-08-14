@@ -15,6 +15,7 @@ export const UI_ENTRY = {
 
 /** Settings sidebar sections (full surface). */
 export const SETTINGS_SECTIONS = [
+  "profile",
   "overview",
   "appearance",
   "models",
@@ -26,6 +27,9 @@ export const SETTINGS_SECTIONS = [
 ] as const;
 
 export type EnabledSettingsSection = (typeof SETTINGS_SECTIONS)[number];
+
+/** Token usage dashboard on the profile page (no backend yet). */
+export const SETTINGS_SHOW_PROFILE_USAGE = false;
 
 /** Multi-provider / OAuth panel under Models. */
 export const SETTINGS_SHOW_PROVIDERS_PANEL = false;
