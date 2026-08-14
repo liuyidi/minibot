@@ -79,6 +79,7 @@ fn host_bridge_script() -> String {
     pickFolder: () => invoke("host_pick_folder"),
     openLogs: () => invoke("host_open_logs"),
     exportDiagnostics: () => invoke("host_export_diagnostics"),
+    openLogin: (url) => invoke("host_open_login", { url }),
     openInBrowser: () => invoke("open_in_browser"),
     startWindowDrag: () => {
       const getCurrentWindow = window.__TAURI__?.window?.getCurrentWindow;
@@ -190,8 +191,18 @@ fn emit_status(app: &tauri::AppHandle, status: EngineStatus) {
     let _ = app.emit("engine-status", status);
 }
 
-fn remote_url(api_base: &str) -> Result<Url, String> {
-    Url::parse(&format!("{}/", api_base.trim_end_matches('/'))).map_err(|e| e.to_string())
+fn remote_url(target: &str) -> Result<Url, String> {
+    let t = target.trim();
+    if let Ok(parsed) = Url::parse(t) {
+        let has_non_root_path = {
+            let path = parsed.path();
+            !path.is_empty() && path != "/"
+        };
+        if has_non_root_path || parsed.query().is_some() || parsed.fragment().is_some() {
+            return Ok(parsed);
+        }
+    }
+    Url::parse(&format!("{}/", t.trim_end_matches('/'))).map_err(|e| e.to_string())
 }
 
 /// Overlay titlebar / traffic lights exist only on macOS.
@@ -346,6 +357,17 @@ fn host_export_diagnostics(state: State<'_, AppState>) -> Result<String, String>
 }
 
 #[tauri::command]
+fn host_open_login(app: tauri::AppHandle, url: String) -> Result<(), String> {
+    let trimmed = url.trim();
+    if trimmed.is_empty() {
+        return Err("login url is empty".into());
+    }
+    app.opener()
+        .open_url(trimmed, None::<&str>)
+        .map_err(|e| format!("open login browser failed: {e}"))
+}
+
+#[tauri::command]
 fn open_in_browser(app: tauri::AppHandle, state: State<'_, AppState>) -> Result<(), String> {
     let api_base = state.server.api_base()?;
     let url = format!("{}/", api_base.trim_end_matches('/'));
@@ -414,6 +436,7 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_deep_link::init())
         .on_page_load(|webview, payload| {
             if matches!(payload.event(), tauri::webview::PageLoadEvent::Finished) {
                 let url = payload.url().to_string();
@@ -452,6 +475,49 @@ pub fn run() {
             app.manage(AppState {
                 server: Arc::clone(&server),
             });
+
+            {
+                use tauri_plugin_deep_link::DeepLinkExt;
+                #[cfg(any(target_os = "linux", all(debug_assertions, windows)))]
+                {
+                    if let Err(err) = app.deep_link().register_all() {
+                        eprintln!("minibot-desktop-v2: deep-link register_all: {err}");
+                    }
+                }
+                let handle = app.handle().clone();
+                let server_for_link = Arc::clone(&server);
+                app.deep_link().on_open_url(move |event| {
+                    for url in event.urls() {
+                        let raw = url.as_str().to_string();
+                        eprintln!("minibot-desktop-v2: deep link {raw}");
+                        if !raw.starts_with("minibot://") {
+                            continue;
+                        }
+                        let server2 = Arc::clone(&server_for_link);
+                        let handle2 = handle.clone();
+                        std::thread::spawn(move || {
+                            match server2.complete_desktop_oauth(&raw) {
+                                Ok(session_url) => {
+                                    let handle3 = handle2.clone();
+                                    let _ = handle2.run_on_main_thread(move || {
+                                        if let Err(err) =
+                                            open_remote_webui(&handle3, &session_url)
+                                        {
+                                            eprintln!(
+                                                "minibot-desktop-v2: oauth navigate failed: {err}"
+                                            );
+                                        }
+                                    });
+                                }
+                                Err(err) => {
+                                    eprintln!("minibot-desktop-v2: oauth complete failed: {err}");
+                                }
+                            }
+                        });
+                    }
+                });
+            }
+
             open_splash(&app.handle())?;
             eprintln!("minibot-desktop-v2: splash opened");
             let _ = std::io::Write::flush(&mut std::io::stderr());
@@ -494,6 +560,7 @@ pub fn run() {
             host_pick_folder,
             host_open_logs,
             host_export_diagnostics,
+            host_open_login,
             host_set_native_chrome_sidebar_open,
             host_set_native_chrome_dark,
         ])

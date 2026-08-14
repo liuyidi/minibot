@@ -28,6 +28,8 @@ class Settings(BaseSettings):
     mini_auth_client_id: str = "minibot"
     mini_auth_scope: str = "openid profile email"
     mini_auth_callback_path: str = "/auth/mini-auth/callback"
+    # Desktop V2 custom-scheme redirect (system browser → minibot:// → app).
+    mini_auth_desktop_redirect_uri: str = "minibot://auth/callback"
     mini_auth_timeout_s: float = 20.0
 
     openai_api_key: str = ""

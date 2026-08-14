@@ -9,9 +9,10 @@ from urllib.parse import quote, urlencode
 import httpx
 from fastapi import APIRouter, Cookie, Header, HTTPException, Query, Request, status
 from fastapi.responses import RedirectResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from minibot.api.deps import AUTH_COOKIE_NAME, StateDep
+from minibot.app_state import MiniAuthLoginRecord
 
 router = APIRouter(tags=["auth"])
 
@@ -30,6 +31,17 @@ class AuthConfigResponse(BaseModel):
     login_url: str | None = None
     logout_url: str | None = None
     account: dict[str, str | None] | None = None
+
+
+class DesktopCompleteRequest(BaseModel):
+    code: str = Field(min_length=1)
+    state: str = Field(min_length=1)
+
+
+class DesktopCompleteResponse(BaseModel):
+    token: str
+    expires_in: int
+    next_url: str = "/"
 
 
 def _token_from_request(
@@ -53,8 +65,12 @@ def _absolute_next_url(request: Request, next_url: str | None) -> str:
     return f"{origin}{value if value.startswith('/') else f'/{value}'}"
 
 
-def _callback_url(request: Request, state: StateDep) -> str:
+def _http_callback_url(request: Request, state: StateDep) -> str:
     return f"{str(request.base_url).rstrip('/')}{state.settings.mini_auth_callback_path}"
+
+
+def _desktop_callback_url(state: StateDep) -> str:
+    return (state.settings.mini_auth_desktop_redirect_uri or "minibot://auth/callback").strip()
 
 
 def account_from_mini_auth_userinfo(userinfo: dict) -> dict[str, str | None]:
@@ -88,14 +104,24 @@ def _code_challenge_s256(code_verifier: str) -> str:
     return base64.urlsafe_b64encode(digest).rstrip(b"=").decode("ascii")
 
 
-def _build_authorize_url(request: Request, state: StateDep, next_url: str | None) -> str:
-    login_state, code_verifier = state.begin_mini_auth_login(_normalized_next_url(next_url))
+def _build_authorize_url(
+    request: Request,
+    state: StateDep,
+    next_url: str | None,
+    *,
+    desktop: bool = False,
+) -> str:
+    redirect_uri = _desktop_callback_url(state) if desktop else _http_callback_url(request, state)
+    login_state, code_verifier = state.begin_mini_auth_login(
+        _normalized_next_url(next_url),
+        redirect_uri=redirect_uri,
+    )
     challenge = _code_challenge_s256(code_verifier)
     params = urlencode(
         {
             "response_type": "code",
             "client_id": state.settings.mini_auth_client_id,
-            "redirect_uri": _callback_url(request, state),
+            "redirect_uri": redirect_uri,
             "scope": state.settings.mini_auth_scope,
             "state": login_state,
             "code_challenge": challenge,
@@ -103,6 +129,58 @@ def _build_authorize_url(request: Request, state: StateDep, next_url: str | None
         }
     )
     return f"{state.settings.mini_auth_base_url.rstrip('/')}/oauth/authorize?{params}"
+
+
+async def _exchange_mini_auth_code(
+    state: StateDep,
+    *,
+    code: str,
+    login_record: MiniAuthLoginRecord,
+    redirect_uri: str,
+) -> tuple[dict[str, str | None], int]:
+    base_url = state.settings.mini_auth_base_url.rstrip("/")
+    token_url = f"{base_url}/oauth/token"
+    userinfo_url = f"{base_url}/oauth/userinfo"
+    try:
+        async with httpx.AsyncClient(timeout=state.settings.mini_auth_timeout_s) as client:
+            token_response = await client.post(
+                token_url,
+                json={
+                    "grant_type": "authorization_code",
+                    "code": code,
+                    "redirect_uri": redirect_uri,
+                    "client_id": state.settings.mini_auth_client_id,
+                    "code_verifier": login_record.code_verifier,
+                },
+            )
+            token_response.raise_for_status()
+            token_data = token_response.json()
+            access_token = token_data.get("access_token")
+            expires_in = int(token_data.get("expires_in") or state.settings.token_ttl_s)
+            if not access_token:
+                raise HTTPException(
+                    status_code=status.HTTP_502_BAD_GATEWAY,
+                    detail="mini-auth token response missing access_token",
+                )
+
+            userinfo_response = await client.get(
+                userinfo_url,
+                headers={"Authorization": f"Bearer {access_token}"},
+            )
+            userinfo_response.raise_for_status()
+            userinfo = userinfo_response.json()
+    except httpx.HTTPStatusError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"mini-auth rejected the callback: {exc.response.status_code}",
+        ) from exc
+    except httpx.HTTPError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"mini-auth callback failed: {exc}",
+        ) from exc
+
+    return account_from_mini_auth_userinfo(userinfo), expires_in
 
 
 @router.get("/auth/config", response_model=AuthConfigResponse)
@@ -153,10 +231,11 @@ async def login(
     request: Request,
     state: StateDep,
     next: str | None = Query(default="/"),
+    desktop: bool = Query(default=False),
 ) -> RedirectResponse:
     if state.settings.normalized_auth_provider() != "mini_auth":
         return RedirectResponse(url=_normalized_next_url(next), status_code=status.HTTP_302_FOUND)
-    authorize_url = _build_authorize_url(request, state, next)
+    authorize_url = _build_authorize_url(request, state, next, desktop=desktop)
     return RedirectResponse(url=authorize_url, status_code=status.HTTP_302_FOUND)
 
 
@@ -174,52 +253,69 @@ async def mini_auth_callback(
     if login_record is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired login state")
 
-    callback_url = _callback_url(request, state)
-    base_url = state.settings.mini_auth_base_url.rstrip("/")
-    token_url = f"{base_url}/oauth/token"
-    userinfo_url = f"{base_url}/oauth/userinfo"
-    try:
-        async with httpx.AsyncClient(timeout=state.settings.mini_auth_timeout_s) as client:
-            token_response = await client.post(
-                token_url,
-                json={
-                    "grant_type": "authorization_code",
-                    "code": code,
-                    "redirect_uri": callback_url,
-                    "client_id": state.settings.mini_auth_client_id,
-                    "code_verifier": login_record.code_verifier,
-                },
-            )
-            token_response.raise_for_status()
-            token_data = token_response.json()
-            access_token = token_data.get("access_token")
-            expires_in = int(token_data.get("expires_in") or state.settings.token_ttl_s)
-            if not access_token:
-                raise HTTPException(
-                    status_code=status.HTTP_502_BAD_GATEWAY,
-                    detail="mini-auth token response missing access_token",
-                )
-
-            userinfo_response = await client.get(
-                userinfo_url,
-                headers={"Authorization": f"Bearer {access_token}"},
-            )
-            userinfo_response.raise_for_status()
-            userinfo = userinfo_response.json()
-    except httpx.HTTPStatusError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"mini-auth rejected the callback: {exc.response.status_code}",
-        ) from exc
-    except httpx.HTTPError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"mini-auth callback failed: {exc}",
-        ) from exc
-
-    account = account_from_mini_auth_userinfo(userinfo)
+    redirect_uri = login_record.redirect_uri or _http_callback_url(request, state)
+    account, expires_in = await _exchange_mini_auth_code(
+        state,
+        code=code,
+        login_record=login_record,
+        redirect_uri=redirect_uri,
+    )
     session_token = state.issue_token(ttl_s=expires_in, account=account)
     response = RedirectResponse(url=login_record.next_url or "/", status_code=status.HTTP_302_FOUND)
+    response.set_cookie(
+        AUTH_COOKIE_NAME,
+        session_token,
+        max_age=expires_in,
+        path="/",
+        httponly=True,
+        samesite="lax",
+    )
+    return response
+
+
+@router.post("/auth/desktop/complete", response_model=DesktopCompleteResponse)
+async def desktop_complete(
+    state: StateDep,
+    body: DesktopCompleteRequest,
+) -> DesktopCompleteResponse:
+    """Finish PKCE after ``minibot://auth/callback`` lands in the desktop shell."""
+    if state.settings.normalized_auth_provider() != "mini_auth":
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="mini-auth is disabled")
+
+    login_record = state.consume_mini_auth_login(body.state)
+    if login_record is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired login state")
+
+    redirect_uri = login_record.redirect_uri or _desktop_callback_url(state)
+    account, expires_in = await _exchange_mini_auth_code(
+        state,
+        code=body.code,
+        login_record=login_record,
+        redirect_uri=redirect_uri,
+    )
+    session_token = state.issue_token(ttl_s=expires_in, account=account)
+    return DesktopCompleteResponse(
+        token=session_token,
+        expires_in=expires_in,
+        next_url=login_record.next_url or "/",
+    )
+
+
+@router.get("/auth/desktop/session")
+async def desktop_session(
+    state: StateDep,
+    token: str = Query(...),
+    next: str | None = Query(default="/"),
+) -> RedirectResponse:
+    """Install the auth cookie into the desktop WebView (same-origin as gateway)."""
+    if not state.check_token(token):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+    account = state.token_account(token)
+    # Re-issue so the cookie carries a fresh TTL window while keeping account.
+    expires_in = state.settings.token_ttl_s
+    session_token = state.issue_token(ttl_s=expires_in, account=dict(account) if account else None)
+    state.revoke_token(token)
+    response = RedirectResponse(url=_normalized_next_url(next), status_code=status.HTTP_302_FOUND)
     response.set_cookie(
         AUTH_COOKIE_NAME,
         session_token,

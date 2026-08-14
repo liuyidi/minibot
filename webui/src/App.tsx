@@ -22,6 +22,7 @@ import {
 } from "@/lib/apis/bootstrap";
 import { accountDisplayName } from "@/lib/auth-account";
 import {
+  absoluteAuthUrl,
   bootstrapTokenExpiresAt,
   buildLoginRedirect,
   buildLogoutRedirect,
@@ -121,10 +122,19 @@ export default function App() {
     (mode: "login" | "logout") => {
       if (typeof window === "undefined") return;
       const config = authConfigRef.current;
-      const target =
-        mode === "login"
-          ? buildLoginRedirect(config?.login_url)
-          : buildLogoutRedirect(config?.logout_url);
+      if (mode === "login") {
+        const host = getHostApi();
+        const relative = buildLoginRedirect(config?.login_url, {
+          desktop: host?.openLogin != null,
+        });
+        if (host?.openLogin) {
+          void host.openLogin(absoluteAuthUrl(relative));
+          return;
+        }
+        window.location.assign(relative);
+        return;
+      }
+      const target = buildLogoutRedirect(config?.logout_url);
       window.location.assign(target);
     },
     [],

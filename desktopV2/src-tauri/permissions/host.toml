@@ -11,6 +11,7 @@ commands.allow = [
   "host_pick_folder",
   "host_open_logs",
   "host_export_diagnostics",
+  "host_open_login",
   "host_set_native_chrome_sidebar_open",
   "host_set_native_chrome_dark",
 ]

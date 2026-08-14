@@ -191,6 +191,41 @@ impl RemoteServer {
         Ok(())
     }
 
+    pub fn complete_desktop_oauth(&self, deep_link: &str) -> Result<String, String> {
+        let (code, oauth_state) = parse_desktop_auth_callback(deep_link)?;
+        let api_base = self.api_base()?;
+        let complete_url = format!(
+            "{}/auth/desktop/complete",
+            api_base.trim_end_matches('/')
+        );
+        let payload = serde_json::json!({
+            "code": code,
+            "state": oauth_state,
+        });
+        let body = serde_json::to_string(&payload).map_err(|e| e.to_string())?;
+        let response = curl_json_post(&complete_url, &body)?;
+        let token = response
+            .get("token")
+            .and_then(|v| v.as_str())
+            .ok_or_else(|| "desktop complete missing token".to_string())?
+            .to_string();
+        let next_url = response
+            .get("next_url")
+            .and_then(|v| v.as_str())
+            .unwrap_or("/");
+        let session_url = format!(
+            "{}/auth/desktop/session?token={}&next={}",
+            api_base.trim_end_matches('/'),
+            urlencoding_encode(&token),
+            urlencoding_encode(next_url),
+        );
+        let _ = append_log_path(
+            &self.logs_dir().unwrap_or_default(),
+            "desktop oauth complete → session handoff",
+        );
+        Ok(session_url)
+    }
+
     pub fn export_diagnostics(&self) -> Result<String, String> {
         let info = self.runtime_info()?;
         let g = self.inner.lock().map_err(|_| "remote state lock poisoned".to_string())?;
@@ -308,6 +343,84 @@ impl Drop for RemoteServer {
     fn drop(&mut self) {
         let _ = self.stop_local_engine();
     }
+}
+
+fn parse_desktop_auth_callback(deep_link: &str) -> Result<(String, String), String> {
+    let url = Url::parse(deep_link).map_err(|e| format!("invalid deep link: {e}"))?;
+    if url.scheme() != "minibot" {
+        return Err(format!("unexpected deep link scheme: {}", url.scheme()));
+    }
+    let host = url.host_str().unwrap_or("");
+    let path = url.path().trim_matches('/');
+    // Accept minibot://auth/callback and minibot:///auth/callback
+    let is_callback = (host == "auth" && path == "callback")
+        || (host.is_empty() && path == "auth/callback")
+        || path.ends_with("auth/callback");
+    if !is_callback {
+        return Err(format!("unsupported deep link path: {deep_link}"));
+    }
+    let mut code = None;
+    let mut state = None;
+    for (key, value) in url.query_pairs() {
+        if key == "code" {
+            code = Some(value.into_owned());
+        } else if key == "state" {
+            state = Some(value.into_owned());
+        }
+    }
+    match (code, state) {
+        (Some(c), Some(s)) if !c.is_empty() && !s.is_empty() => Ok((c, s)),
+        _ => Err("deep link missing code/state".into()),
+    }
+}
+
+fn curl_json_post(url: &str, body: &str) -> Result<serde_json::Value, String> {
+    let output = Command::new("/usr/bin/curl")
+        .args([
+            "-sS",
+            "-X",
+            "POST",
+            "-H",
+            "Content-Type: application/json",
+            "-H",
+            "Accept: application/json",
+            "--noproxy",
+            "*",
+            "--connect-timeout",
+            "5",
+            "--max-time",
+            "30",
+            "-d",
+            body,
+            url,
+        ])
+        .env_remove("ALL_PROXY")
+        .env_remove("all_proxy")
+        .env_remove("HTTP_PROXY")
+        .env_remove("HTTPS_PROXY")
+        .env_remove("http_proxy")
+        .env_remove("https_proxy")
+        .output()
+        .map_err(|e| format!("curl POST failed to start: {e}"))?;
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(format!("curl POST failed: {stderr}"));
+    }
+    let text = String::from_utf8_lossy(&output.stdout);
+    serde_json::from_str(text.trim()).map_err(|e| format!("invalid complete JSON: {e}; body={text}"))
+}
+
+fn urlencoding_encode(raw: &str) -> String {
+    let mut out = String::with_capacity(raw.len());
+    for b in raw.bytes() {
+        match b {
+            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'~' => {
+                out.push(b as char);
+            }
+            _ => out.push_str(&format!("%{b:02X}")),
+        }
+    }
+    out
 }
 
 fn resolve_sidecar_command() -> Result<(String, String), String> {

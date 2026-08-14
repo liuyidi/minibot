@@ -30,6 +30,8 @@ export interface MinibotHostApi {
   pickFolder(): Promise<string | null>;
   openLogs(): Promise<void>;
   exportDiagnostics(): Promise<string>;
+  /** Open system browser for mini-auth (desktop V2). */
+  openLogin?(url: string): Promise<void>;
   startWindowDrag?(): Promise<void>;
   openSocket?(url: string): Promise<string>;
   sendSocket?(id: string, data: string): Promise<void>;

@@ -42,6 +42,7 @@ class MiniAuthLoginRecord:
     code_verifier: str
     next_url: str
     expires_at: float
+    redirect_uri: str = ""
 
 
 @dataclass
@@ -216,13 +217,19 @@ class AppState:
         record = self.tokens.get(token)
         return record.account if record else None
 
-    def begin_mini_auth_login(self, next_url: str) -> tuple[str, str]:
+    def begin_mini_auth_login(
+        self,
+        next_url: str,
+        *,
+        redirect_uri: str | None = None,
+    ) -> tuple[str, str]:
         login_state = secrets.token_urlsafe(24)
         code_verifier = secrets.token_urlsafe(64)
         self.mini_auth_logins[login_state] = MiniAuthLoginRecord(
             code_verifier=code_verifier,
             next_url=next_url or "/",
             expires_at=time.time() + 600,
+            redirect_uri=(redirect_uri or "").strip(),
         )
         return login_state, code_verifier
 

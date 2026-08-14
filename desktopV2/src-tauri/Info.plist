@@ -2,7 +2,7 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-  <!-- Cleartext HTTP to ECS IP (demo without ICP HTTPS). -->
+  <!-- Cleartext HTTP for local gateway / demo hosts. -->
   <key>NSAppTransportSecurity</key>
   <dict>
     <key>NSAllowsArbitraryLoads</key>
@@ -10,5 +10,18 @@
     <key>NSAllowsLocalNetworking</key>
     <true/>
   </dict>
+  <key>CFBundleURLTypes</key>
+  <array>
+    <dict>
+      <key>CFBundleTypeRole</key>
+      <string>Editor</string>
+      <key>CFBundleURLName</key>
+      <string>me.liuyidi.minibot.desktopv2</string>
+      <key>CFBundleURLSchemes</key>
+      <array>
+        <string>minibot</string>
+      </array>
+    </dict>
+  </array>
 </dict>
 </plist>

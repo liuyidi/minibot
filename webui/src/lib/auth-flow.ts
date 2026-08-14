@@ -21,10 +21,21 @@ function currentLocationForNext(): string {
   return `${window.location.pathname}${window.location.search}${window.location.hash}`;
 }
 
-export function buildLoginRedirect(loginUrl: string | null | undefined): string {
+export function buildLoginRedirect(
+  loginUrl: string | null | undefined,
+  options?: { desktop?: boolean },
+): string {
   const base = loginUrl ?? "/auth/login";
   const join = base.includes("?") ? "&" : "?";
-  return `${base}${join}next=${encodeURIComponent(currentLocationForNext())}`;
+  const desktop = options?.desktop ? "&desktop=1" : "";
+  return `${base}${join}next=${encodeURIComponent(currentLocationForNext())}${desktop}`;
+}
+
+export function absoluteAuthUrl(pathOrUrl: string): string {
+  if (/^https?:\/\//i.test(pathOrUrl)) return pathOrUrl;
+  if (typeof window === "undefined") return pathOrUrl;
+  const path = pathOrUrl.startsWith("/") ? pathOrUrl : `/${pathOrUrl}`;
+  return `${window.location.origin}${path}`;
 }
 
 export function buildLogoutRedirect(logoutUrl: string | null | undefined): string {

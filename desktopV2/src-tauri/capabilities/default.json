@@ -19,8 +19,9 @@
     "core:window:allow-start-dragging",
     "core:window:allow-toggle-maximize",
     "core:webview:default",
-    "opener:default",
-    "dialog:default",
-    "allow-host"
+            "deep-link:default",
+            "opener:default",
+            "dialog:default",
+            "allow-host"
   ]
 }
