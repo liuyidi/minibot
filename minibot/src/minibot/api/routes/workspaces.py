@@ -58,6 +58,8 @@ async def list_workspaces(_auth: AuthDep, state: StateDep) -> dict[str, Any]:
             "access_mode": "restricted",
         },
         "controls": {
+            # Browser WebUI ignores this and hides the picker without a native host.
+            # Desktop (minibotHost) still uses it to allow local folder selection.
             "can_change_project": True,
             "can_use_full_access": True,
         },

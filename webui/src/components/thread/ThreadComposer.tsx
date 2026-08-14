@@ -60,6 +60,7 @@ import {
   WorkspaceAccessMenu,
   WorkspaceProjectPicker,
 } from "@/components/thread/WorkspaceControls";
+import { getHostApi } from "@/lib/configs/runtime";
 import {
   useAttachedImages,
   type AttachedImage,
@@ -795,12 +796,11 @@ export function ThreadComposer({
     () => queuedPromptsStorageKey(pendingQueueKey),
     [pendingQueueKey],
   );
-  const showProjectPicker =
-    isHero
+  const showProjectPicker = isHero
     && !!workspaceDefaultScope
     && !!onWorkspaceScopeChange
-    && workspaceControls?.can_change_project !== false;
-
+    && workspaceControls?.can_change_project !== false
+    && !!getHostApi();
   useEffect(() => {
     skipQueuedPromptPersistRef.current = true;
     setQueuedPrompts(queuedPromptStorageKey ? readQueuedPrompts(queuedPromptStorageKey) : []);

@@ -607,65 +607,47 @@ describe("ThreadComposer", () => {
     );
   });
 
-  it("keeps project selection as a compact composer dropdown", async () => {
+  it("shows project picker on desktop host", async () => {
     const onWorkspaceScopeChange = vi.fn();
+    const pickFolder = vi.fn().mockResolvedValue(null);
     const defaultScope = {
       project_path: "/Users/test/.nanobot/workspace",
       project_name: "workspace",
       access_mode: "restricted" as const,
       restrict_to_workspace: true,
     };
-    render(
-      <ThreadComposer
-        onSend={vi.fn()}
-        placeholder="Ask anything..."
-        variant="hero"
-        workspaceScope={{
-          ...defaultScope,
-          access_mode: "full",
-          restrict_to_workspace: false,
-        }}
-        workspaceDefaultScope={defaultScope}
-        workspaceControls={{ can_change_project: true, can_use_full_access: true }}
-        onWorkspaceScopeChange={onWorkspaceScopeChange}
-      />,
-    );
+    Object.defineProperty(window, "minibotHost", {
+      configurable: true,
+      value: {
+        getRuntimeInfo: vi.fn(),
+        restartEngine: vi.fn(),
+        pickFolder,
+        openLogs: vi.fn(),
+        exportDiagnostics: vi.fn(),
+      },
+    });
+    try {
+      render(
+        <ThreadComposer
+          onSend={vi.fn()}
+          placeholder="Ask anything..."
+          variant="hero"
+          workspaceScope={{
+            ...defaultScope,
+            access_mode: "full",
+            restrict_to_workspace: false,
+          }}
+          workspaceDefaultScope={defaultScope}
+          workspaceControls={{ can_change_project: true, can_use_full_access: true }}
+          onWorkspaceScopeChange={onWorkspaceScopeChange}
+        />,
+      );
 
-    fireEvent.pointerDown(screen.getByRole("button", { name: "Choose project" }));
-
-    expect(await screen.findByRole("menuitem", { name: /Default workspace/ })).toBeInTheDocument();
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-
-    const input = screen.getByLabelText("Paste path");
-    fireEvent.change(input, { target: { value: "relative/project" } });
-    fireEvent.click(screen.getByRole("button", { name: "Use Path" }));
-
-    expect(screen.getByRole("alert")).toHaveTextContent(
-      "Enter an absolute folder path on this machine.",
-    );
-    expect(onWorkspaceScopeChange).not.toHaveBeenCalled();
-
-    fireEvent.change(input, { target: { value: "/Users/test/project-alpha" } });
-    fireEvent.click(screen.getByRole("button", { name: "Use Path" }));
-
-    expect(onWorkspaceScopeChange).toHaveBeenCalledWith(expect.objectContaining({
-      project_path: "/Users/test/project-alpha",
-      project_name: "project-alpha",
-      access_mode: "full",
-      restrict_to_workspace: false,
-    }));
-
-    fireEvent.pointerDown(screen.getByRole("button", { name: "Choose project" }));
-    const reopenedInput = await screen.findByLabelText("Paste path");
-    fireEvent.change(reopenedInput, { target: { value: "~/Pictures/Photos" } });
-    fireEvent.click(screen.getByRole("button", { name: "Use Path" }));
-
-    expect(onWorkspaceScopeChange).toHaveBeenLastCalledWith(expect.objectContaining({
-      project_path: "~/Pictures/Photos",
-      project_name: "Photos",
-      access_mode: "full",
-      restrict_to_workspace: false,
-    }));
+      expect(screen.getByRole("button", { name: "Choose project" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Choose project" })).toHaveTextContent("Select project");
+    } finally {
+      Reflect.deleteProperty(window, "minibotHost");
+    }
   });
 
   it("uses the native folder picker for project selection on native host", async () => {
@@ -688,31 +670,36 @@ describe("ThreadComposer", () => {
       },
     });
 
-    render(
-      <ThreadComposer
-        onSend={vi.fn()}
-        placeholder="Ask anything..."
-        variant="hero"
-        workspaceScope={defaultScope}
-        workspaceDefaultScope={defaultScope}
-        workspaceControls={{ can_change_project: true, can_use_full_access: true }}
-        onWorkspaceScopeChange={onWorkspaceScopeChange}
-      />,
-    );
+    try {
+      render(
+        <ThreadComposer
+          onSend={vi.fn()}
+          placeholder="Ask anything..."
+          variant="hero"
+          workspaceScope={defaultScope}
+          workspaceDefaultScope={defaultScope}
+          workspaceControls={{ can_change_project: true, can_use_full_access: true }}
+          onWorkspaceScopeChange={onWorkspaceScopeChange}
+        />,
+      );
 
-    fireEvent.click(screen.getByRole("button", { name: "Choose project" }));
+      fireEvent.click(screen.getByRole("button", { name: "Choose project" }));
 
-    await waitFor(() => expect(pickFolder).toHaveBeenCalled());
-    expect(screen.queryByRole("menuitem", { name: /Default workspace/ })).not.toBeInTheDocument();
-    expect(onWorkspaceScopeChange).toHaveBeenCalledWith(expect.objectContaining({
-      project_path: "/Users/test/native-project",
-      project_name: "native-project",
-      access_mode: "full",
-      restrict_to_workspace: false,
-    }));
+      await waitFor(() => expect(pickFolder).toHaveBeenCalled());
+      expect(screen.queryByRole("menuitem", { name: /Default workspace/ })).not.toBeInTheDocument();
+      expect(onWorkspaceScopeChange).toHaveBeenCalledWith(expect.objectContaining({
+        project_path: "/Users/test/native-project",
+        project_name: "native-project",
+        access_mode: "full",
+        restrict_to_workspace: false,
+      }));
+    } finally {
+      Reflect.deleteProperty(window, "minibotHost");
+    }
   });
 
-  it("uses the web path menu when no native host picker is available", async () => {
+  it("hides project picker in browser WebUI (fixed workspace path)", () => {
+    Reflect.deleteProperty(window, "minibotHost");
     const defaultScope = {
       project_path: "/Users/test/.nanobot/workspace",
       project_name: "workspace",
@@ -732,10 +719,7 @@ describe("ThreadComposer", () => {
       />,
     );
 
-    fireEvent.pointerDown(screen.getByRole("button", { name: "Choose project" }));
-
-    expect(await screen.findByRole("menuitem", { name: /Default workspace/ })).toBeInTheDocument();
-    expect(screen.getByLabelText("Paste path")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Choose project" })).not.toBeInTheDocument();
   });
 
   it("shows turn run timer when runStartedAt is set", () => {

@@ -14,6 +14,7 @@ Versions follow SemVer for product narrative. Package metadata may lag until a f
 ### Changed
 
 - Tool approval is now boundary-based: in-workspace read/write, `write_memory`, ordinary sandboxed `exec`, and MCP (temporarily trusted by default) run without prompts. Only sandbox-escaping `exec` (e.g. `sudo`, `/etc`, `~`, pipe-to-shell) requires HITL. MCP trust UI deferred.
+- Browser WebUI no longer offers project selection under the composer; it stays on the default workspace. Desktop (native host) still can pick a local folder.
 
 ## [1.0.7] - 2026-08-14
 

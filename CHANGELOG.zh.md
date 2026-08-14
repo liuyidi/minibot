@@ -14,6 +14,7 @@ English: [CHANGELOG.md](./CHANGELOG.md)
 ### 变更
 
 - 工具审批改为边界策略：工作区内读写 / `write_memory` / 普通沙箱 `exec` / MCP（暂默认信任）直接执行；仅「越界/出沙箱」的 `exec`（如 `sudo`、访问 `/etc`、`~`、管道进 shell 等）弹出审批。MCP trust 开关延后。
+- Web 端对话框不再提供「选择项目」；固定使用默认工作区。桌面端（native host）仍可选择本地文件夹。
 
 ## [1.0.7] - 2026-08-14
 

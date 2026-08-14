@@ -51,12 +51,15 @@ export function WorkspaceProjectPicker({
   const projectLabel = currentProjectScope
     ? currentProjectScope.project_name || projectNameFromPath(currentProjectScope.project_path)
     : t("thread.composer.workspace.projectPlaceholder");
+  const hostApi = getHostApi();
+  const nativeProjectPicker = !!hostApi;
+  // Browser WebUI uses a fixed per-user workspace; only native desktop can pick folders.
   const visible = isHero
     && !!defaultScope
     && !!onChange
-    && controls?.can_change_project !== false;
-  const hostApi = getHostApi();
-  const nativeProjectPicker = !!hostApi;
+    && controls?.can_change_project !== false
+    && nativeProjectPicker;
+
 
   useEffect(() => {
     if (!open) return;
