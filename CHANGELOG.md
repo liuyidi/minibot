@@ -11,7 +11,16 @@ Versions follow SemVer for product narrative. Package metadata may lag until a f
 
 ## [Unreleased]
 
-## [1.0.4] - 2026-08-14
+## [1.0.5] - 2026-08-14
+
+### Fixed
+
+- WebUI bootstrap now copies the mini-auth account into the short-lived API/WS token so chat sessions stay isolated per user.
+- WebSocket connections bind the same user principal as REST, so new chats land in the correct per-user store.
+
+### Added
+
+- Profile page can show GitHub account bind status from mini-auth.
 
 ## [1.0.4] - 2026-08-14
 

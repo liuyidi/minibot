@@ -11,7 +11,16 @@ English: [CHANGELOG.md](./CHANGELOG.md)
 
 ## [Unreleased]
 
-## [1.0.4] - 2026-08-14
+## [1.0.5] - 2026-08-14
+
+### 修复
+
+- WebUI bootstrap 会把 mini-auth 登录账号写入短时 API/WS token，会话按用户隔离。
+- WebSocket 与 REST 一样绑定用户身份，新建会话写入对应用户目录。
+
+### 新增
+
+- 个人资料页可展示来自 mini-auth 的 GitHub 绑定状态。
 
 ## [1.0.4] - 2026-08-14
 

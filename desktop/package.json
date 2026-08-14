@@ -1,7 +1,7 @@
 {
   "name": "minibot-desktop",
   "private": true,
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Tauri thin shell for minibot WebUI",
   "type": "module",
   "scripts": {
