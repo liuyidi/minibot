@@ -23,6 +23,7 @@ from minibot.agent.tools.registry import ToolRegistry
 from minibot.bus.events import OutboundMessage
 from minibot.bus.queue import MessageBus
 from minibot.config.app_config import AppConfig
+from minibot.security.principal_context import current_principal
 from minibot.security.workspace_access import bind_workspace, reset_workspace
 from minibot.session.store import SessionStore
 from minibot.workspace import normalize_workspace
@@ -181,9 +182,11 @@ class AgentLoop:
             from minibot.observability import langfuse as lf
 
             parent_token = bind_parent_session(session_id)
+            principal = current_principal()
             with lf.turn_trace(
                 name="agent-turn",
                 session_id=session_id,
+                user_id=(principal.user_id if principal else None),
                 input={"content": content},
                 metadata={
                     "entry": entry_key,

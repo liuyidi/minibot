@@ -93,5 +93,6 @@ def test_api_blocks_turn_when_budget_tripped(client, auth_headers: dict[str, str
     usage = client.get("/api/settings/usage", headers=auth_headers)
     assert usage.status_code == 200
     payload = usage.json()
+    assert payload["user_id"]
     assert payload["totals"]["turns"] >= 1
     assert payload["tripped"] is True

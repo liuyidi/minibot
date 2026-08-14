@@ -60,13 +60,16 @@ class ModelConfigurationBody(BaseModel):
 async def settings_usage(_auth: AuthDep, state: StateDep) -> dict[str, Any]:
     if state.usage_budget is None:
         return {
+            "user_id": state.current_user_id(),
             "days": [],
             "totals": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0, "turns": 0},
             "tripped": False,
             "by_entry": {},
             "limits": {"daily_token_limit": 0, "daily_turn_limit": 0, "enabled": False},
         }
-    return state.usage_budget.snapshot()
+    payload = state.usage_budget.snapshot()
+    payload["user_id"] = state.current_user_id()
+    return payload
 
 
 @router.get("/provider-models")

@@ -24,6 +24,7 @@ async def list_approvals(
     pending_only: bool = False,
 ) -> dict:
     return {
+        "user_id": state.current_user_id(),
         "approvals": [
             item.public()
             for item in state.approvals.list(session_id=session_id, pending_only=pending_only)
@@ -47,6 +48,7 @@ async def resolve_approval(
     except ValueError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     return {
+        "user_id": state.current_user_id(),
         "approval_id": approval_id,
         "content": result.content,
         "stop_reason": result.stop_reason,

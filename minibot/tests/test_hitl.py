@@ -77,5 +77,7 @@ def test_rest_turn_returns_approval_and_rest_resolve(
         json={"decision": "approve"},
     )
     assert resolved.status_code == 200
-    assert resolved.json()["content"] == "REST flow completed."
+    resolved_payload = resolved.json()
+    assert resolved_payload["user_id"]
+    assert resolved_payload["content"] == "REST flow completed."
     assert (data_dir / "rest-approved.txt").read_text() == "ok"
