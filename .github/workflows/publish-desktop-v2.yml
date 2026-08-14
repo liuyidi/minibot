@@ -19,11 +19,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # macos-latest is arm64; use macos-13 for native x86_64 freeze.
+          # macos-latest is arm64; macos-13 is retired — use macos-15-intel for x86_64.
           - platform: macos-latest
             args: --target aarch64-apple-darwin
             triple: aarch64-apple-darwin
-          - platform: macos-13
+          - platform: macos-15-intel
             args: --target x86_64-apple-darwin
             triple: x86_64-apple-darwin
           - platform: ubuntu-22.04
@@ -67,7 +67,7 @@ jobs:
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin' || matrix.platform == 'macos-13' && 'x86_64-apple-darwin' || '' }}
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin' || matrix.platform == 'macos-15-intel' && 'x86_64-apple-darwin' || '' }}
 
       - name: Rust cache
         uses: swatinem/rust-cache@v2

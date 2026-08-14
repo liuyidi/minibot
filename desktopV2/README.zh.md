@@ -125,7 +125,7 @@ npm run build:app                               # 仅 .app
 | | |
 |---|---|
 | 触发 | 仅手动 `workflow_dispatch`（下载页切换前） |
-| 矩阵 | macOS arm64 / macOS x86_64（`macos-13`）/ Linux / Windows |
+| 矩阵 | macOS arm64 / macOS x86_64（`macos-15-intel`）/ Linux / Windows |
 | 步骤 | `uv sync` → 构建 WebUI → freeze → prepare → `tauri-action` |
 | Release tag | `desktop-v2-v__VERSION__`（**不**与薄壳 `v*` 冲突） |
 | 通知 | 成功后 → ServerlessShip → 飞书（`channel: GitHub Release (Desktop V2)`） |

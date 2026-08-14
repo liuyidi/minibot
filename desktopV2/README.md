@@ -125,7 +125,7 @@ Workflow: [`.github/workflows/publish-desktop-v2.yml`](../.github/workflows/publ
 | | |
 |---|---|
 | Trigger | **Manual** `workflow_dispatch` only (until download cutover) |
-| Matrix | macOS arm64 / macOS x86_64 (`macos-13`) / Linux / Windows |
+| Matrix | macOS arm64 / macOS x86_64 (`macos-15-intel`) / Linux / Windows |
 | Steps | `uv sync` → WebUI build → freeze → prepare → `tauri-action` |
 | Release tag | `desktop-v2-v__VERSION__` (does **not** collide with thin-shell `v*`) |
 | Notify | On success → ServerlessShip → Feishu (`channel: GitHub Release (Desktop V2)`) |
