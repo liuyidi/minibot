@@ -451,11 +451,18 @@ fn bundled_sidecar_path() -> Option<PathBuf> {
         if let Some(exe_dir) = exe.parent() {
             dirs.push(exe_dir.join("minibot-sidecar"));
             dirs.push(exe_dir.to_path_buf());
-            // macOS .app: Contents/MacOS → Contents/Resources/minibot-sidecar
+            // macOS .app: Contents/MacOS → Contents/Resources/…
             if let Some(contents) = exe_dir.parent() {
-                dirs.push(contents.join("Resources").join("minibot-sidecar"));
-                dirs.push(contents.join("Resources"));
+                let resources = contents.join("Resources");
+                // Prefer flattened target from tauri.conf resource map.
+                dirs.push(resources.join("minibot-sidecar"));
+                // Default Tauri layout keeps the source folder name:
+                // resources/minibot-sidecar → Resources/resources/minibot-sidecar
+                dirs.push(resources.join("resources").join("minibot-sidecar"));
+                dirs.push(resources.clone());
             }
+            // Linux/Windows: resources next to the executable
+            dirs.push(exe_dir.join("resources").join("minibot-sidecar"));
         }
     }
 
