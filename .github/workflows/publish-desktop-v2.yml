@@ -121,8 +121,10 @@ jobs:
           releaseBody: |
             Desktop V2 (local gateway + frozen minibot sidecar).
 
-            Unsigned CI builds: macOS may need `xattr -dr com.apple.quarantine` after install;
-            Windows SmartScreen may warn until code-signed.
+            Unsigned CI builds use macOS ad-hoc signing. If Gatekeeper says the app is
+            “damaged”: `xattr -cr "/Applications/minibot V2.app"` then
+            `codesign --force --deep --sign - "/Applications/minibot V2.app"`.
+            Windows SmartScreen may warn until Developer ID signed.
 
             Thin-shell releases remain under `v*` via Publish Desktop.
           releaseDraft: false

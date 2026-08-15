@@ -118,6 +118,18 @@ npm run build:app                               # .app only
 `prepare-sidecar.sh` copies the onedir into `src-tauri/resources/minibot-sidecar/`  
 (gitignored; listed in `tauri.conf.json` → `bundle.resources`). Packaged apps resolve that path as label `bundled`.
 
+### Open an unsigned macOS build
+
+CI uses ad-hoc signing (`signingIdentity: "-"`). After downloading from GitHub you may still need:
+
+```bash
+# After dragging minibot V2.app into /Applications
+xattr -cr "/Applications/minibot V2.app"
+# If Gatekeeper still says “damaged”:
+codesign --force --deep --sign - "/Applications/minibot V2.app"
+open "/Applications/minibot V2.app"
+```
+
 ## 5. CI publish + Feishu notify
 
 Workflow: [`.github/workflows/publish-desktop-v2.yml`](../.github/workflows/publish-desktop-v2.yml)

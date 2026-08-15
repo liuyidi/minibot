@@ -118,6 +118,18 @@ npm run build:app                               # 仅 .app
 `prepare-sidecar.sh` 把 onedir 拷到 `src-tauri/resources/minibot-sidecar/`  
 （已 gitignore；写入 `tauri.conf.json` 的 `bundle.resources`）。安装包内解析该路径时 label 为 `bundled`。
 
+### 打开未公证的 macOS 安装包
+
+CI 使用 ad-hoc 签名（`signingIdentity: "-"`）。从 GitHub 下载后若仍提示「已损坏」：
+
+```bash
+# 把 minibot V2.app 拖进 /Applications 之后
+xattr -cr "/Applications/minibot V2.app"
+# 若仍提示已损坏：
+codesign --force --deep --sign - "/Applications/minibot V2.app"
+open "/Applications/minibot V2.app"
+```
+
 ## 5. CI 发布 + 飞书通知
 
 工作流：[`.github/workflows/publish-desktop-v2.yml`](../.github/workflows/publish-desktop-v2.yml)
