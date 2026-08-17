@@ -18,10 +18,8 @@ SPEC="$ROOT/minibot/packaging/pyinstaller/minibot-sidecar.spec"
 echo "freeze-minibot-sidecar: triple=$TRIPLE"
 echo "freeze-minibot-sidecar: out=$OUT"
 
-if [[ ! -f "$ROOT/webui/dist/index.html" ]]; then
-  echo "freeze-minibot-sidecar: building webui dist…"
-  (cd "$ROOT/webui" && npm run build)
-fi
+echo "freeze-minibot-sidecar: building webui dist…"
+(cd "$ROOT/webui" && npm run build)
 
 mkdir -p "$OUT"
 cd "$ROOT/minibot"
