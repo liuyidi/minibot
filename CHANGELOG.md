@@ -11,6 +11,12 @@ Versions follow SemVer for product narrative. Package metadata may lag until a f
 
 ## [Unreleased]
 
+## [1.0.11] - 2026-08-17
+
+### Fixed
+
+- Desktop no longer shows the red ``local-webui`` debug badge (loopback gateway is normal for Desktop V2).
+
 ## [1.0.10] - 2026-08-17
 
 ### Added

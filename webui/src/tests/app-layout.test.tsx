@@ -255,6 +255,7 @@ describe("App layout", () => {
     sessionUpdateHandlers.clear();
     window.history.replaceState(null, "", "/");
     setNavigatorPlatform("Linux x86_64");
+    delete window.minibotHost;
     localStorage.removeItem("minibot-webui.sidebar");
     localStorage.removeItem("minibot-webui.sidebar.completed-runs.v1");
     localStorage.removeItem("minibot-webui.sidebar.session-updates.v1");
@@ -2115,5 +2116,73 @@ describe("App layout", () => {
     expect(fetchBootstrap).toHaveBeenCalledTimes(2);
     expect(updateUrlSpy).toHaveBeenCalledWith("ws://test?token=tok-2");
     unmount();
+  });
+
+  it("routes mini-auth sign-out to the logout URL instead of the secret gate", async () => {
+    const assignSpy = vi
+      .spyOn(window.location, "assign")
+      .mockImplementation(() => undefined);
+    vi.mocked(fetchAuthConfig).mockResolvedValue({
+      auth_provider: "mini_auth",
+      authenticated: true,
+      login_url: "/auth/login",
+      logout_url: "/auth/logout",
+      account: {
+        email: "demo@mini-auth.dev",
+        name: "demo",
+        picture: null,
+      },
+    });
+    mockFetchRoutes({ "/api/settings": baseSettingsPayload() });
+
+    render(<App />);
+    await waitFor(() => expect(connectSpy).toHaveBeenCalled());
+    await openSettingsFromSidebarAccount();
+
+    fireEvent.click(screen.getByRole("button", { name: "Sign out" }));
+
+    await waitFor(() => {
+      expect(assignSpy).toHaveBeenCalledWith("/auth/logout?next=%2F");
+    });
+    expect(
+      screen.queryByText(/tokenIssueSecret|Enter the secret configured/i),
+    ).not.toBeInTheDocument();
+    assignSpy.mockRestore();
+  });
+
+  it("shows the welcome login screen after local sign-out on desktop", async () => {
+    window.minibotHost = {
+      getRuntimeInfo: async () => ({
+        surface: "native",
+        app_version: "1.0.0",
+        engine_status: "ready",
+        data_dir: "/tmp",
+        logs_dir: "/tmp",
+        config_path: "/tmp/config.json",
+        workspace_path: "/tmp/workspace",
+        python: "python",
+      }),
+      restartEngine: async () => undefined,
+      pickFolder: async () => null,
+      openLogs: async () => undefined,
+      exportDiagnostics: async () => "",
+      openLogin: async () => undefined,
+    };
+    mockFetchRoutes({ "/api/settings": baseSettingsPayload() });
+
+    render(<App />);
+    await waitFor(() => expect(connectSpy).toHaveBeenCalled());
+    await openSettingsFromSidebarAccount();
+
+    fireEvent.click(screen.getByRole("button", { name: "Sign out" }));
+
+    expect(
+      await screen.findByRole("button", { name: "Sign in" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/tokenIssueSecret|Enter the secret configured/i),
+    ).not.toBeInTheDocument();
+
+    delete window.minibotHost;
   });
 });

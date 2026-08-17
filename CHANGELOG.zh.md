@@ -11,6 +11,12 @@ English: [CHANGELOG.md](./CHANGELOG.md)
 
 ## [Unreleased]
 
+## [1.0.11] - 2026-08-17
+
+### 修复
+
+- 桌面端不再显示红色 ``local-webui`` 调试角标（本机 gateway 对 Desktop V2 是正常形态）。
+
 ## [1.0.10] - 2026-08-17
 
 ### 新增

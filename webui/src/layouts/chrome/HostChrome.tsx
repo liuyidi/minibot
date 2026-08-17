@@ -43,12 +43,38 @@ function useNativeChromeControls(): boolean {
 /** Absolute top for web fallback chrome actions (tests / non-native). */
 const CHROME_ACTIONS_TOP = 16;
 
-/** Vite / localhost only — never on production hosts like bot.liuyidi.me. */
-function showLocalWebuiDebugMark(): boolean {
-  if (typeof window === "undefined") return false;
-  if (import.meta.env.DEV) return true;
-  const host = window.location.hostname;
-  return host === "localhost" || host === "127.0.0.1" || host === "[::1]";
+/** Vite / plain browser on loopback — not packaged desktop (always 127.0.0.1). */
+function useShowLocalWebuiDebugMark(): boolean {
+  const [show, setShow] = useState(() => {
+    if (typeof window === "undefined") return false;
+    if (window.minibotHost || window.minibotNativeChrome) return false;
+    if (import.meta.env.DEV) return true;
+    const host = window.location.hostname;
+    return host === "localhost" || host === "127.0.0.1" || host === "[::1]";
+  });
+  useEffect(() => {
+    const hide = () => setShow(false);
+    if (window.minibotHost || window.minibotNativeChrome) {
+      hide();
+      return;
+    }
+    window.addEventListener("minibot-host-ready", hide);
+    window.addEventListener("minibot:native-chrome-ready", hide);
+    const id = window.setInterval(() => {
+      if (window.minibotHost || window.minibotNativeChrome) {
+        hide();
+        window.clearInterval(id);
+      }
+    }, 50);
+    const stop = window.setTimeout(() => window.clearInterval(id), 5_000);
+    return () => {
+      window.removeEventListener("minibot-host-ready", hide);
+      window.removeEventListener("minibot:native-chrome-ready", hide);
+      window.clearInterval(id);
+      window.clearTimeout(stop);
+    };
+  }, []);
+  return show;
 }
 
 export function HostChrome({
@@ -73,7 +99,7 @@ export function HostChrome({
   // Desktop installs AppKit buttons; keep web controls only as fallback (e.g. Vitest).
   const showChromeActions = !nativeChrome && Boolean(onToggleSidebar || onOpenSearch);
   const actionsTop = CHROME_ACTIONS_TOP;
-  const showDebugMark = showLocalWebuiDebugMark();
+  const showDebugMark = useShowLocalWebuiDebugMark();
 
   return (
     <header className="pointer-events-none absolute inset-x-0 top-0 z-40 h-12 bg-transparent text-foreground/90">
