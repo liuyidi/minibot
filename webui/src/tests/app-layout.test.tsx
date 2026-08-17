@@ -2151,6 +2151,7 @@ describe("App layout", () => {
   });
 
   it("shows the welcome login screen after local sign-out on desktop", async () => {
+    const openLogin = vi.fn(async () => undefined);
     window.minibotHost = {
       getRuntimeInfo: async () => ({
         surface: "native",
@@ -2166,8 +2167,19 @@ describe("App layout", () => {
       pickFolder: async () => null,
       openLogs: async () => undefined,
       exportDiagnostics: async () => "",
-      openLogin: async () => undefined,
+      openLogin,
     };
+    vi.mocked(fetchAuthConfig).mockResolvedValue({
+      auth_provider: "mini_auth",
+      authenticated: true,
+      login_url: "/auth/login",
+      logout_url: "/auth/logout",
+      account: {
+        email: "demo@mini-auth.dev",
+        name: "demo",
+        picture: null,
+      },
+    });
     mockFetchRoutes({ "/api/settings": baseSettingsPayload() });
 
     render(<App />);
@@ -2182,6 +2194,13 @@ describe("App layout", () => {
     expect(
       screen.queryByText(/tokenIssueSecret|Enter the secret configured/i),
     ).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(openLogin).toHaveBeenCalled();
+      const opened = String(openLogin.mock.calls.at(-1)?.[0] ?? "");
+      expect(opened).toContain("/auth/logout");
+      expect(opened).toContain("desktop%2Flogged-out");
+      expect(opened).not.toContain("local=1");
+    });
 
     delete window.minibotHost;
   });

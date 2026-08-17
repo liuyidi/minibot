@@ -90,8 +90,7 @@
       <h1>登录成功</h1>
       <button type="button" class="cta" id="open-app">打开 Minibot 继续使用</button>
       <p class="hint">
-        登录已完成，可直接切回 Minibot 窗口。若系统未弹出「打开应用」，请先打开一次
-        <code>desktopV2</code> 打包的 .app 以注册协议，或点上方按钮尝试前置窗口。
+        登录已完成，请回到 Minibot 窗口。这个浏览器标签可以关闭，不影响客户端使用。
       </p>
     </main>
     <script>
@@ -105,9 +104,7 @@
           }).catch(function () {});
         }
         function openApp() {
-          // 1) Focus running tauri:dev / installed app via gateway (no scheme needed).
           focusDesktop();
-          // 2) Custom scheme → system “Open Minibot?” when .app is registered.
           window.setTimeout(function () {
             window.location.href = DEEP_LINK;
           }, 120);
@@ -115,6 +112,12 @@
         var btn = document.getElementById("open-app");
         if (btn) btn.addEventListener("click", openApp);
         window.setTimeout(openApp, 450);
+        // Best-effort: some browsers allow closing tabs they opened via redirects.
+        window.setTimeout(function () {
+          try {
+            window.close();
+          } catch (_) {}
+        }, 1600);
       })();
     </script>
   </body>

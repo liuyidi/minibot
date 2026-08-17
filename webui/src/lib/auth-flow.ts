@@ -141,10 +141,15 @@ export async function waitForDesktopOpenLogin(
   });
 }
 
-export function buildLogoutRedirect(logoutUrl: string | null | undefined): string {
+export function buildLogoutRedirect(
+  logoutUrl: string | null | undefined,
+  options?: { next?: string; local?: boolean },
+): string {
   const base = logoutUrl ?? "/auth/logout";
   const join = base.includes("?") ? "&" : "?";
-  return `${base}${join}next=${encodeURIComponent("/")}`;
+  const next = options?.next ?? "/";
+  const local = options?.local ? "&local=1" : "";
+  return `${base}${join}next=${encodeURIComponent(next)}${local}`;
 }
 
 export function isMiniAuth(config: AuthConfigResponse | null): boolean {

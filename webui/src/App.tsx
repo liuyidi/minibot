@@ -24,17 +24,18 @@ import {
 } from "@/lib/apis/bootstrap";
 import { accountDisplayName } from "@/lib/auth-account";
 import {
-  absoluteAuthUrl,
   bootstrapTokenExpiresAt,
-  buildLoginRedirect,
-  buildLogoutRedirect,
   desktopSessionUrl,
   isMiniAuth,
-  newDesktopLoginId,
   tokenRefreshDelayMs,
   waitForDesktopHandoff,
   waitForDesktopOpenLogin,
 } from "@/lib/auth-flow";
+import {
+  beginDesktopLogin,
+  redirectToMiniAuthLogout,
+  showDesktopWelcomeOrBrowserLogin,
+} from "@/lib/desktop-auth-actions";
 import { MinibotClient } from "@/lib/apis/minibot-client";
 import {
   createRuntimeHost,
@@ -72,41 +73,26 @@ export default function App() {
   const bootstrapSecretRef = useRef("");
   const authConfigRef = useRef<AuthConfigResponse | null>(null);
 
-  const beginDesktopLogin = useCallback(() => {
-    if (typeof window === "undefined") return;
-    const config = authConfigRef.current;
-    void (async () => {
-      const host = await waitForDesktopOpenLogin();
-      if (host?.openLogin) {
-        const desktopLoginId = newDesktopLoginId();
-        setState({ status: "browser_login", desktopLoginId });
-        const relative = buildLoginRedirect(config?.login_url, {
-          desktop: true,
-          desktopLoginId,
-          next: "/",
-        });
-        await host.openLogin(absoluteAuthUrl(relative));
-        return;
-      }
-      window.location.assign(buildLoginRedirect(config?.login_url));
-    })();
+  const startDesktopLogin = useCallback(() => {
+    void beginDesktopLogin({
+      loginUrl: authConfigRef.current?.login_url,
+      onBrowserLogin: (desktopLoginId) =>
+        setState({ status: "browser_login", desktopLoginId }),
+    });
   }, []);
 
-  const showDesktopWelcomeOrBrowserLogin = useCallback(() => {
-    if (typeof window === "undefined") return;
-    void (async () => {
-      const host = await waitForDesktopOpenLogin();
-      if (host?.openLogin) {
-        setState({ status: "desktop_welcome" });
-        return;
-      }
-      window.location.assign(buildLoginRedirect(authConfigRef.current?.login_url));
-    })();
+  const goDesktopWelcomeOrLogin = useCallback(() => {
+    void showDesktopWelcomeOrBrowserLogin({
+      loginUrl: authConfigRef.current?.login_url,
+      onWelcome: () => setState({ status: "desktop_welcome" }),
+    });
   }, []);
 
-  const redirectToMiniAuthLogout = useCallback(() => {
-    if (typeof window === "undefined") return;
-    window.location.assign(buildLogoutRedirect(authConfigRef.current?.logout_url));
+  const logoutMiniAuth = useCallback(() => {
+    void redirectToMiniAuthLogout({
+      logoutUrl: authConfigRef.current?.logout_url,
+      onDesktopWelcome: () => setState({ status: "desktop_welcome" }),
+    });
   }, []);
 
   const refreshReadyClient = useCallback(
@@ -140,12 +126,12 @@ export default function App() {
         return { token: boot.token, url };
       } catch (error) {
         if (isMiniAuth(authConfigRef.current)) {
-          showDesktopWelcomeOrBrowserLogin();
+          goDesktopWelcomeOrLogin();
         }
         throw error;
       }
     },
-    [showDesktopWelcomeOrBrowserLogin],
+    [goDesktopWelcomeOrLogin],
   );
 
   const bootstrapWithSecret = useCallback(
@@ -194,7 +180,7 @@ export default function App() {
           const msg = (e as Error).message;
           if (msg.includes("HTTP 401") || msg.includes("HTTP 403")) {
             if (isMiniAuth(authConfigRef.current) || !isLocalDevelopmentHost()) {
-              showDesktopWelcomeOrBrowserLogin();
+              goDesktopWelcomeOrLogin();
               return;
             }
             setState({ status: "auth", failed: true });
@@ -207,7 +193,7 @@ export default function App() {
         cancelled = true;
       };
     },
-    [refreshReadyClient, showDesktopWelcomeOrBrowserLogin],
+    [refreshReadyClient, goDesktopWelcomeOrLogin],
   );
 
   useEffect(() => {
@@ -220,7 +206,7 @@ export default function App() {
         const msg = (e as Error).message;
         if (msg.includes("HTTP 401") || msg.includes("HTTP 403")) {
           if (isMiniAuth(authConfigRef.current)) {
-            showDesktopWelcomeOrBrowserLogin();
+            goDesktopWelcomeOrLogin();
             return;
           }
           setState({ status: "auth", failed: true });
@@ -230,7 +216,7 @@ export default function App() {
       }
     }, tokenRefreshDelayMs(state.tokenExpiresAt));
     return () => window.clearTimeout(timer);
-  }, [showDesktopWelcomeOrBrowserLogin, refreshReadyClient, state]);
+  }, [goDesktopWelcomeOrLogin, refreshReadyClient, state]);
 
   useEffect(() => {
     if (state.status !== "browser_login") return;
@@ -267,7 +253,7 @@ export default function App() {
             clearSavedSecret();
             bootstrapWithSecret("");
           } else {
-            showDesktopWelcomeOrBrowserLogin();
+            goDesktopWelcomeOrLogin();
           }
           return;
         }
@@ -276,7 +262,7 @@ export default function App() {
         if (cancelled) return;
         authConfigRef.current = null;
         if (!isLocalDevelopmentHost()) {
-          showDesktopWelcomeOrBrowserLogin();
+          goDesktopWelcomeOrLogin();
           return;
         }
         bootstrapWithSecret(loadSavedSecret());
@@ -285,22 +271,31 @@ export default function App() {
     return () => {
       cancelled = true;
     };
-  }, [bootstrapWithSecret, showDesktopWelcomeOrBrowserLogin]);
+  }, [bootstrapWithSecret, goDesktopWelcomeOrLogin]);
 
   useEffect(() => {
     if (state.status !== "auth") return;
-    if (isLocalDevelopmentHost()) return;
-    showDesktopWelcomeOrBrowserLogin();
-  }, [showDesktopWelcomeOrBrowserLogin, state.status]);
+    if (!isLocalDevelopmentHost()) {
+      goDesktopWelcomeOrLogin();
+      return;
+    }
+    // Desktop WebView is always loopback; never keep the legacy secret gate there.
+    void (async () => {
+      const host = await waitForDesktopOpenLogin();
+      if (host?.openLogin) {
+        setState({ status: "desktop_welcome" });
+      }
+    })();
+  }, [goDesktopWelcomeOrLogin, state.status]);
 
   if (state.status === "loading") {
     return <BootLoadingScreen label={t("app.loading.connecting")} />;
   }
   if (state.status === "desktop_welcome") {
-    return <BrowserLoginWaiting waiting={false} onLogin={beginDesktopLogin} />;
+    return <BrowserLoginWaiting waiting={false} onLogin={startDesktopLogin} />;
   }
   if (state.status === "browser_login") {
-    return <BrowserLoginWaiting waiting onLogin={beginDesktopLogin} />;
+    return <BrowserLoginWaiting waiting onLogin={startDesktopLogin} />;
   }
   if (state.status === "auth") {
     if (!isLocalDevelopmentHost()) return null;
@@ -336,11 +331,20 @@ export default function App() {
       state.client.close();
     }
     if (isMiniAuth(authConfigRef.current)) {
-      redirectToMiniAuthLogout();
+      logoutMiniAuth();
       return;
     }
     clearSavedSecret();
-    setState({ status: "auth" });
+    // Desktop always runs on loopback; prefer the welcome login screen over the
+    // legacy tokenIssueSecret gate used by browser-only local gateway auth.
+    void (async () => {
+      const host = await waitForDesktopOpenLogin();
+      if (host?.openLogin) {
+        setState({ status: "desktop_welcome" });
+        return;
+      }
+      setState({ status: "auth" });
+    })();
   };
 
   const handleNativeEngineRestart = async (): Promise<string> => {

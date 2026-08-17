@@ -105,6 +105,26 @@ def test_desktop_done_page_serves_html(client: TestClient) -> None:
     assert "minibot://auth/done" in res.text
 
 
+def test_logout_local_clears_cookie_without_idp_redirect(client: TestClient) -> None:
+    state = client.app.state.app_state
+    state.settings.__dict__["auth_provider"] = "mini_auth"
+    state.settings.__dict__["mini_auth_base_url"] = "https://auth.example"
+    token = state.issue_token(account={"id": "u1", "email": "a@b.c"})
+    client.cookies.set(AUTH_COOKIE_NAME, token)
+
+    res = client.get("/auth/logout?local=1", follow_redirects=False)
+    assert res.status_code == 204
+    assert not state.check_token(token)
+    # Set-Cookie delete is present (empty value / expired).
+    assert any(AUTH_COOKIE_NAME in v for v in res.headers.get_list("set-cookie"))
+
+
+def test_desktop_logged_out_page_serves_html(client: TestClient) -> None:
+    res = client.get("/auth/desktop/logged-out")
+    assert res.status_code == 200
+    assert "已退出" in res.text
+
+
 def test_desktop_complete_exchanges_code_and_session_sets_cookie(client: TestClient) -> None:
     state = client.app.state.app_state
     state.settings.__dict__["auth_provider"] = "mini_auth"
