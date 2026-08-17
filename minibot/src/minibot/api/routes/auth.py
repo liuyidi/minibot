@@ -24,7 +24,6 @@ router = APIRouter(tags=["auth"])
 log = logging.getLogger("minibot.auth")
 
 _DESKTOP_DONE_PATH = "auth/desktop-done.html"
-_DESKTOP_LOGGED_OUT_PATH = "auth/desktop-logged-out.html"
 _FALLBACK_DESKTOP_DONE_HTML = """<!DOCTYPE html>
 <html lang="zh-CN">
 <head><meta charset="utf-8" /><title>登录成功</title></head>
@@ -32,17 +31,6 @@ _FALLBACK_DESKTOP_DONE_HTML = """<!DOCTYPE html>
   <main style="text-align:center">
     <h1>登录成功</h1>
     <p><a href="minibot://auth/done">打开 Minibot 继续使用</a></p>
-  </main>
-</body>
-</html>
-"""
-_FALLBACK_DESKTOP_LOGGED_OUT_HTML = """<!DOCTYPE html>
-<html lang="zh-CN">
-<head><meta charset="utf-8" /><title>已退出</title></head>
-<body style="font-family:system-ui;display:grid;place-items:center;min-height:100vh;margin:0">
-  <main style="text-align:center">
-    <h1>已退出登录</h1>
-    <p>可以关闭此浏览器标签。</p>
   </main>
 </body>
 </html>
@@ -59,10 +47,6 @@ def _webui_auth_page(relative: str) -> Path | None:
 
 def _desktop_done_file() -> Path | None:
     return _webui_auth_page(_DESKTOP_DONE_PATH)
-
-
-def _desktop_logged_out_file() -> Path | None:
-    return _webui_auth_page(_DESKTOP_LOGGED_OUT_PATH)
 
 
 def _focus_desktop_app() -> dict[str, object]:
@@ -478,18 +462,6 @@ async def desktop_done():
     return HTMLResponse(content=_FALLBACK_DESKTOP_DONE_HTML, status_code=status.HTTP_200_OK)
 
 
-@router.get("/auth/desktop/logged-out", response_model=None)
-async def desktop_logged_out():
-    """Browser landing page after desktop IdP logout."""
-    path = _desktop_logged_out_file()
-    if path is not None:
-        return FileResponse(path, media_type="text/html; charset=utf-8")
-    return HTMLResponse(
-        content=_FALLBACK_DESKTOP_LOGGED_OUT_HTML,
-        status_code=status.HTTP_200_OK,
-    )
-
-
 @router.post("/auth/desktop/focus")
 @router.get("/auth/desktop/focus")
 async def desktop_focus() -> dict[str, object]:
@@ -581,7 +553,7 @@ async def logout(
     supplied = _token_from_request(request, x_minibot_auth, minibot_auth_token)
     _clear_platform_proxy_credentials(state, supplied)
     state.revoke_token(supplied)
-    # Desktop WebView clears its own cookie here; IdP logout happens in the system browser.
+    # local=1: clear minibot session only (desktop / SPA). Otherwise redirect to IdP logout.
     if local:
         response: Response = Response(status_code=status.HTTP_204_NO_CONTENT)
         response.delete_cookie(AUTH_COOKIE_NAME, path="/")

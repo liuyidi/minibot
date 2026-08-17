@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2 } from "lucide-react";
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useEffect, useRef, useState } from "react";
 
 const PRIVACY_URL = "https://bot.liuyidi.me/privacy";
 const TERMS_URL = "https://bot.liuyidi.me/terms";
@@ -35,6 +35,15 @@ export function BrowserLoginWaiting({
 }) {
   const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
+  const copiedResetRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (copiedResetRef.current != null) {
+        window.clearTimeout(copiedResetRef.current);
+      }
+    };
+  }, []);
 
   const copyLoginLink = async () => {
     const url = (loginUrl || "").trim();
@@ -44,7 +53,13 @@ export function BrowserLoginWaiting({
     try {
       await navigator.clipboard.writeText(url);
       setCopied(true);
-      window.setTimeout(() => setCopied(false), 1600);
+      if (copiedResetRef.current != null) {
+        window.clearTimeout(copiedResetRef.current);
+      }
+      copiedResetRef.current = window.setTimeout(() => {
+        setCopied(false);
+        copiedResetRef.current = null;
+      }, 3000);
     } catch {
       // Best-effort; user can still retry login.
     }
@@ -78,7 +93,7 @@ export function BrowserLoginWaiting({
                     className="h-11 flex-1 rounded-full bg-[#f0f0f0] text-sm font-medium text-[#080808] hover:bg-[#e8e8e8] disabled:opacity-50"
                     onClick={() => void copyLoginLink()}
                   >
-                    {copied ? t("app.auth.copyLoginLink") : t("app.auth.copyLoginLink")}
+                    {copied ? t("app.auth.loginLinkCopied") : t("app.auth.copyLoginLink")}
                   </Button>
                   <Button
                     type="button"

@@ -25,6 +25,7 @@
       "browserNotOpened": "没有自动打开浏览器?",
       "browserCopyHint": "复制登录链接，用浏览器手动打开完成登录",
       "copyLoginLink": "复制登录链接",
+      "loginLinkCopied": "已复制",
       "retryLogin": "重新发起登录",
       "privacy": "隐私政策",
       "terms": "服务条款"

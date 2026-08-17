@@ -135,12 +135,6 @@ def test_logout_local_clears_cookie_without_idp_redirect(client: TestClient) -> 
     assert any(AUTH_COOKIE_NAME in v for v in res.headers.get_list("set-cookie"))
 
 
-def test_desktop_logged_out_page_serves_html(client: TestClient) -> None:
-    res = client.get("/auth/desktop/logged-out")
-    assert res.status_code == 200
-    assert "已退出" in res.text
-
-
 def test_desktop_complete_exchanges_code_and_session_sets_cookie(client: TestClient) -> None:
     state = client.app.state.app_state
     state.settings.__dict__["auth_provider"] = "mini_auth"

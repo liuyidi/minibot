@@ -25,6 +25,7 @@
       "browserNotOpened": "Browser didn’t open?",
       "browserCopyHint": "Copy the login link and open it in a browser to finish signing in",
       "copyLoginLink": "Copy login link",
+      "loginLinkCopied": "Copied",
       "retryLogin": "Try again",
       "privacy": "Privacy Policy",
       "terms": "Terms of Service"
