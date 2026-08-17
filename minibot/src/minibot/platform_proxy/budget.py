@@ -47,12 +47,15 @@ class DesktopBudget:
         prompt_tokens: int = 0,
         completion_tokens: int = 0,
     ) -> None:
-        total = max(0, int(prompt_tokens)) + max(0, int(completion_tokens))
+        prompt = max(0, int(prompt_tokens))
+        completion = max(0, int(completion_tokens))
         self._budget_for(user_id).record_turn(
             entry="platform_proxy",
-            prompt_tokens=max(0, int(prompt_tokens)),
-            completion_tokens=max(0, int(completion_tokens)),
-            total_tokens=total,
+            usage={
+                "prompt_tokens": prompt,
+                "completion_tokens": completion,
+                "total_tokens": prompt + completion,
+            },
         )
 
     def snapshot(self, user_id: str) -> dict[str, Any]:
