@@ -1,7 +1,7 @@
 {
   "name": "minibot-desktop-v2",
   "private": true,
-  "version": "1.0.12",
+  "version": "1.0.13",
   "description": "Tauri desktop V2 \u2014 local minibot gateway shell",
   "type": "module",
   "scripts": {

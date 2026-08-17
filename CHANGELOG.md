@@ -11,6 +11,13 @@ Versions follow SemVer for product narrative. Package metadata may lag until a f
 
 ## [Unreleased]
 
+## [1.0.13] - 2026-08-17
+
+### Changed
+
+- Copy login link button shows「Copied」for 3 seconds after a successful copy.
+- Removed unused desktop IdP logged-out landing page (logout is local-only).
+
 ## [1.0.12] - 2026-08-17
 
 ### Added
