@@ -11,6 +11,16 @@ Versions follow SemVer for product narrative. Package metadata may lag until a f
 
 ## [Unreleased]
 
+## [1.0.12] - 2026-08-17
+
+### Added
+
+- Desktop login: open `auth.liuyidi.me` directly in the system browser with `minibot://` callback; waiting UI supports copy login link / retry.
+
+### Changed
+
+- Sign-out requires confirmation and clears only the local session (no browser IdP logout), so re-login can reuse an existing account.
+
 ## [1.0.11] - 2026-08-17
 
 ### Fixed
