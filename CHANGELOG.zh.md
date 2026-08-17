@@ -11,6 +11,12 @@ English: [CHANGELOG.md](./CHANGELOG.md)
 
 ## [Unreleased]
 
+## [1.0.10] - 2026-08-17
+
+### 新增
+
+- 桌面本机 gateway 可通过云端 `/platform/v1` 使用平台模型：登录用户无需在 `.app` 内携带厂商 API key；短时桌面推理 token 与独立桌面日额度由 `bot.liuyidi.me` 签发与计量。
+
 ## [1.0.9] - 2026-08-15
 
 ### 新增

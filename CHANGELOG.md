@@ -11,6 +11,12 @@ Versions follow SemVer for product narrative. Package metadata may lag until a f
 
 ## [Unreleased]
 
+## [1.0.10] - 2026-08-17
+
+### Added
+
+- Desktop local gateway can use cloud `/platform/v1` so platform models work for every signed-in user without shipping vendor API keys in the `.app`. Short-lived desktop inference tokens and a separate desktop daily budget live on `bot.liuyidi.me`.
+
 ## [1.0.9] - 2026-08-15
 
 ### Added

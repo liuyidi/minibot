@@ -1,6 +1,6 @@
 [package]
 name = "minibot-desktop"
-version = "1.0.9"
+version = "1.0.10"
 description = "Tauri thin shell for minibot WebUI"
 authors = ["minibot"]
 edition = "2021"
