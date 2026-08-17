@@ -147,65 +147,55 @@ fn host_chrome_polish_script() -> String {
     .to_string()
 }
 
-fn boot_overlay_script(api_base: &str) -> String {
-    let url = format!("{}/", api_base.trim_end_matches('/'));
-    let url_js = serde_json::to_string(&url).unwrap_or_else(|_| "\"\"".into());
+fn boot_overlay_script(_api_base: &str) -> String {
+    // Production-facing gate: match WebUI BootLoadingScreen (white + quiet spinner).
+    // Debug URL / Retry stay hidden until the page fails to paint.
     // Use r## so JS selectors like "#root" do not terminate the raw string.
-    format!(
-        r##"
-(() => {{
+    r##"
+(() => {
   if (window.__minibotBoot) return;
   window.__minibotBoot = true;
-  const TARGET = {url_js};
   const host = document.createElement("div");
   host.id = "minibot-boot";
   host.style.cssText = "all:initial;position:fixed;inset:0;z-index:2147483647;";
-  const shadow = host.attachShadow({{ mode: "open" }});
+  const shadow = host.attachShadow({ mode: "open" });
   const box = document.createElement("div");
-  box.style.cssText = "position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#0b0d10;color:#f4f6f8;font:14px/1.5 -apple-system,sans-serif;padding:24px;";
-  const card = document.createElement("div");
-  card.style.cssText = "width:min(520px,100%);background:#14181e;border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:22px 20px;box-sizing:border-box;";
-  card.innerHTML = "<h1 style='margin:0 0 8px;font-size:20px;color:#f4f6f8'>minibot</h1><p id='mb-msg' style='margin:0 0 10px;color:#9aa3ad'>Loading WebUI...</p><pre id='mb-err' style='margin:0 0 12px;color:#ff8b80;white-space:pre-wrap;font:12px monospace'></pre><p id='mb-url' style='margin:0 0 14px;color:#9aa3ad;font-size:12px;word-break:break-all'></p><button id='mb-retry' type='button' style='margin-right:8px;border:0;border-radius:10px;padding:10px 14px;background:#e8eef4;color:#111;font-weight:600'>Retry</button><button id='mb-browser' type='button' style='border:1px solid rgba(255,255,255,.18);border-radius:10px;padding:10px 14px;background:transparent;color:#e8eef4;font-weight:600'>Open in browser</button>";
-  box.appendChild(card);
+  box.style.cssText = "position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#ffffff;color:#080808;font:14px/1.5 -apple-system,BlinkMacSystemFont,sans-serif;";
+  const wrap = document.createElement("div");
+  wrap.style.cssText = "display:flex;flex-direction:column;align-items:center;gap:12px;";
+  wrap.innerHTML = "<div id='mb-row' style='display:flex;align-items:center;gap:8px;color:#666666;font-size:14px'><span style='position:relative;display:inline-flex;height:8px;width:8px'><span style='position:absolute;inset:0;border-radius:9999px;background:rgba(8,8,8,.4);animation:mb-ping 1.2s cubic-bezier(0,0,.2,1) infinite'></span><span style='position:relative;display:inline-flex;height:8px;width:8px;border-radius:9999px;background:rgba(8,8,8,.6)'></span></span><span id='mb-msg'>Connecting…</span></div><div id='mb-actions' style='display:none;flex-direction:column;align-items:center;gap:10px;margin-top:8px'><p id='mb-err' style='margin:0;max-width:320px;text-align:center;color:#8a8a8a;font-size:12px;line-height:1.4'></p><button id='mb-retry' type='button' style='border:0;border-radius:9999px;padding:10px 18px;background:#080808;color:#fff;font:600 13px/1 -apple-system,sans-serif;cursor:pointer'>Retry</button></div>";
+  const style = document.createElement("style");
+  style.textContent = "@keyframes mb-ping{75%,100%{transform:scale(2);opacity:0}}";
+  shadow.appendChild(style);
+  box.appendChild(wrap);
   shadow.appendChild(box);
-  card.querySelector("#mb-url").textContent = "URL: " + TARGET;
   const getInvoke = () => window.__TAURI__?.core?.invoke || window.__TAURI_INTERNALS__?.invoke;
-  card.querySelector("#mb-retry").onclick = () => {{
+  wrap.querySelector("#mb-retry").onclick = () => {
     const i = getInvoke();
     if (typeof i === "function") i("host_reconnect");
     else location.reload();
-  }};
-  card.querySelector("#mb-browser").onclick = () => {{
-    const i = getInvoke();
-    if (typeof i === "function") i("open_in_browser");
-    else window.open(TARGET, "_blank");
-  }};
-  const mount = () => {{
-    if (!document.getElementById("minibot-boot")) {{
+  };
+  const mount = () => {
+    if (!document.getElementById("minibot-boot")) {
       (document.documentElement || document.body).appendChild(host);
-    }}
-  }};
+    }
+  };
   mount();
-  const hide = () => {{
+  const hide = () => {
     const root = document.getElementById("root");
     if (root && root.childElementCount > 0) host.remove();
-  }};
-  const iv = setInterval(hide, 300);
-  setTimeout(() => {{
+  };
+  const iv = setInterval(hide, 200);
+  setTimeout(() => {
     clearInterval(iv);
-    if (document.getElementById("minibot-boot")) {{
-      card.querySelector("#mb-msg").textContent = "WebUI still blank (script/assets may be blocked)";
-      card.querySelector("#mb-err").textContent =
-        "url=" + location.href + "\\nreadyState=" + document.readyState;
-    }}
-  }}, 12000);
-  window.addEventListener("error", (ev) => {{
-    card.querySelector("#mb-msg").textContent = "Script error";
-    card.querySelector("#mb-err").textContent += String(ev.message || ev) + "\\n";
-  }});
-}})();
+    if (!document.getElementById("minibot-boot")) return;
+    wrap.querySelector("#mb-msg").textContent = "Taking longer than expected";
+    wrap.querySelector("#mb-err").textContent = "Check that the local engine started, then retry.";
+    wrap.querySelector("#mb-actions").style.display = "flex";
+  }, 15000);
+})();
 "##
-    )
+    .to_string()
 }
 
 fn emit_status(app: &tauri::AppHandle, status: EngineStatus) {
@@ -270,7 +260,6 @@ fn open_splash(app: &tauri::AppHandle) -> Result<(), String> {
 /// and can quit the whole app when the splash is the only window.
 fn open_remote_webui(app: &tauri::AppHandle, api_base: &str) -> Result<(), String> {
     let parsed = remote_url(api_base)?;
-    let boot = boot_overlay_script(api_base);
 
     if let Some(win) = app.get_webview_window(WINDOW_LABEL) {
         let _ = win.set_title("");
@@ -279,19 +268,12 @@ fn open_remote_webui(app: &tauri::AppHandle, api_base: &str) -> Result<(), Strin
             .map_err(|e| format!("navigate to remote WebUI failed: {e}"))?;
         let _ = win.show();
         let _ = win.set_focus();
-        // Bridge / polish / native chrome install happen in on_page_load (Finished).
-        // Boot overlay is also injected there; keep a delayed fallback in case
-        // Finished races ahead of first paint.
-        let win2 = win.clone();
-        let boot2 = boot;
-        std::thread::spawn(move || {
-            std::thread::sleep(std::time::Duration::from_millis(600));
-            let _ = win2.eval(&boot2);
-            let _ = win2.set_title("");
-        });
+        // Boot overlay is injected once in on_page_load(Finished) — avoid a second
+        // delayed eval that flashes another loading surface.
         return Ok(());
     }
 
+    let boot = boot_overlay_script(api_base);
     RECREATING_WINDOW.store(true, Ordering::SeqCst);
     let built = with_platform_chrome(
         WebviewWindowBuilder::new(app, WINDOW_LABEL, WebviewUrl::External(parsed))
@@ -555,8 +537,7 @@ pub fn run() {
             eprintln!("minibot-desktop-v2: splash opened");
             let _ = std::io::Write::flush(&mut std::io::stderr());
 
-            // Don't rely on splash React invoke — Cursor/agent launches sometimes
-            // leave the asset:// splash blank. Connect + navigate from Rust.
+            // Rust owns auto-connect; splash is a quiet loading surface until navigate.
             let handle = app.handle().clone();
             std::thread::spawn(move || {
                 std::thread::sleep(std::time::Duration::from_millis(250));
@@ -572,12 +553,14 @@ pub fn run() {
                         let _ = handle.run_on_main_thread(move || {
                             if let Err(err) = open_remote_webui(&handle2, &api_base) {
                                 eprintln!("minibot-desktop-v2: open_remote_webui failed: {err}");
+                                let _ = handle2.emit("boot-error", err);
                             }
                         });
                     }
                     Err(err) => {
                         eprintln!("minibot-desktop-v2: auto-connect failed: {err}");
                         let _ = std::io::Write::flush(&mut std::io::stderr());
+                        let _ = handle.emit("boot-error", err);
                     }
                 }
             });

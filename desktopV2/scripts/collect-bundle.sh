@@ -6,7 +6,8 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="$ROOT/dist-bundle"
 TARGET="${CARGO_TARGET_DIR:-$ROOT/src-tauri/target}"
 BUNDLE="$TARGET/release/bundle"
-APP_NAME="${MINIBOT_BUNDLE_APP_NAME:-minibot}"
+# Must match tauri.conf.json productName (space included).
+APP_NAME="${MINIBOT_BUNDLE_APP_NAME:-minibot V2}"
 
 if [[ ! -d "$BUNDLE" ]]; then
   echo "collect-bundle: missing $BUNDLE (run tauri build first)" >&2
