@@ -19,6 +19,7 @@ from minibot.api.routes import (
     channels_weixin,
     media,
     misc,
+    platform_proxy,
     sessions,
     settings,
     status,
@@ -103,6 +104,7 @@ def create_app() -> FastAPI:
         return {"status": "ok", "runtime": "minibot"}
 
     app.include_router(auth.router)
+    app.include_router(platform_proxy.router)
     app.include_router(media.router)
     app.include_router(approvals.router)
     app.include_router(channels_feishu.router)

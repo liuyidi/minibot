@@ -77,6 +77,26 @@ class AppState:
     media_gateway: Any | None = None
     started_at: float = field(default_factory=time.time)
     user_runtimes: dict[str, UserRuntime] = field(default_factory=dict)
+    _platform_token_store: Any | None = field(default=None, repr=False)
+    _desktop_budget: Any | None = field(default=None, repr=False)
+
+    def platform_token_store(self) -> Any:
+        if self._platform_token_store is None:
+            from minibot.platform_proxy.tokens import PlatformTokenStore
+
+            self._platform_token_store = PlatformTokenStore(self.settings.data_dir)
+        return self._platform_token_store
+
+    def desktop_budget(self) -> Any:
+        if self._desktop_budget is None:
+            from minibot.platform_proxy.budget import DesktopBudget
+
+            self._desktop_budget = DesktopBudget(
+                self.settings.data_dir,
+                daily_token_limit=self.settings.desktop_daily_token_limit,
+                daily_turn_limit=self.settings.desktop_daily_turn_limit,
+            )
+        return self._desktop_budget
 
     def current_user_id(self) -> str:
         principal = current_principal()

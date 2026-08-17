@@ -58,6 +58,14 @@ class Settings(BaseSettings):
     daily_token_limit: int = 0
     daily_turn_limit: int = 0
 
+    # Desktop clients: remote platform LLM proxy (keys stay on the cloud host).
+    # When set on a local sidecar, platform/auto models call this base + /platform/v1.
+    platform_proxy_base_url: str = ""
+    platform_proxy_token_ttl_s: int = 3600
+    # Desktop-only budget enforced on /platform/v1 (separate from daily_* above).
+    desktop_daily_token_limit: int = 0
+    desktop_daily_turn_limit: int = 0
+
     # Exec sandbox: local (cwd/bwrap) or e2b (Firecracker microVM)
     exec_backend: str = "local"
     e2b_api_key: str = ""
