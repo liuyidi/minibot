@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Loader2 } from "lucide-react";
 import { type FormEvent, useState } from "react";
 
 const PRIVACY_URL = "https://bot.liuyidi.me/privacy";
@@ -25,12 +26,30 @@ export function BootLoadingScreen({ label }: { label: string }) {
 
 export function BrowserLoginWaiting({
   waiting,
+  loginUrl,
   onLogin,
 }: {
   waiting: boolean;
+  loginUrl?: string | null;
   onLogin: () => void;
 }) {
   const { t } = useTranslation();
+  const [copied, setCopied] = useState(false);
+
+  const copyLoginLink = async () => {
+    const url = (loginUrl || "").trim();
+    if (!url || typeof navigator === "undefined" || !navigator.clipboard?.writeText) {
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1600);
+    } catch {
+      // Best-effort; user can still retry login.
+    }
+  };
+
   return (
     <div className="relative flex h-full w-full flex-col bg-white text-[#080808]">
       <div className="flex flex-1 flex-col items-center justify-center px-6">
@@ -39,16 +58,38 @@ export function BrowserLoginWaiting({
             {t("app.auth.welcomeTitle")}
           </h1>
           {waiting ? (
-            <div className="flex w-full flex-col items-center gap-4">
-              <p className="text-sm text-[#666666]">{t("app.auth.browserWaiting")}</p>
-              <Button
-                type="button"
-                variant="outline"
-                className="h-12 w-full rounded-full border-[#dedede] bg-white text-base font-semibold text-[#080808] hover:bg-[#f5f5f5]"
-                onClick={onLogin}
-              >
-                {t("app.auth.browserRetry")}
-              </Button>
+            <div className="flex w-full flex-col items-center gap-8">
+              <div className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-[#f0f0f0] px-8 text-base font-medium text-[#666666]">
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                {t("app.auth.signingIn")}
+              </div>
+              <div className="flex w-full flex-col items-center gap-3">
+                <p className="text-sm font-medium text-[#080808]">
+                  {t("app.auth.browserNotOpened")}
+                </p>
+                <p className="text-sm leading-6 text-[#8a8a8a]">
+                  {t("app.auth.browserCopyHint")}
+                </p>
+                <div className="mt-1 flex w-full gap-3">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    disabled={!loginUrl}
+                    className="h-11 flex-1 rounded-full bg-[#f0f0f0] text-sm font-medium text-[#080808] hover:bg-[#e8e8e8] disabled:opacity-50"
+                    onClick={() => void copyLoginLink()}
+                  >
+                    {copied ? t("app.auth.copyLoginLink") : t("app.auth.copyLoginLink")}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="h-11 flex-1 rounded-full bg-[#f0f0f0] text-sm font-medium text-[#080808] hover:bg-[#e8e8e8]"
+                    onClick={onLogin}
+                  >
+                    {t("app.auth.retryLogin")}
+                  </Button>
+                </div>
+              </div>
             </div>
           ) : (
             <Button

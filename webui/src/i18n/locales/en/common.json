@@ -21,13 +21,22 @@
       "browserHint": "A browser window was opened for login. Complete it there, then return here.",
       "browserWaiting": "Waiting for browser login…",
       "browserRetry": "Open browser again",
+      "signingIn": "Signing in…",
+      "browserNotOpened": "Browser didn’t open?",
+      "browserCopyHint": "Copy the login link and open it in a browser to finish signing in",
+      "copyLoginLink": "Copy login link",
+      "retryLogin": "Try again",
       "privacy": "Privacy Policy",
       "terms": "Terms of Service"
     },
     "account": {
       "section": "Account",
       "logoutHint": "Disconnect this browser from the gateway.",
-      "logout": "Sign out"
+      "logout": "Sign out",
+      "logoutConfirmTitle": "Confirm sign out",
+      "logoutConfirmBody": "Signing out stops all running tasks (including background sessions). Sign out?",
+      "logoutConfirmCancel": "Cancel",
+      "logoutConfirmAction": "Confirm sign out"
     },
     "system": {
       "section": "System",

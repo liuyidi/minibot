@@ -21,13 +21,22 @@
       "browserHint": "已打开系统浏览器进行登录。完成后请回到此窗口。",
       "browserWaiting": "正在等待浏览器登录…",
       "browserRetry": "再次打开浏览器",
+      "signingIn": "登录中…",
+      "browserNotOpened": "没有自动打开浏览器?",
+      "browserCopyHint": "复制登录链接，用浏览器手动打开完成登录",
+      "copyLoginLink": "复制登录链接",
+      "retryLogin": "重新发起登录",
       "privacy": "隐私政策",
       "terms": "服务条款"
     },
     "account": {
       "section": "账户",
       "logoutHint": "断开此浏览器与 gateway 的连接。",
-      "logout": "退出登录"
+      "logout": "退出登录",
+      "logoutConfirmTitle": "确认登出",
+      "logoutConfirmBody": "登出后会停止所有正在执行中的任务（包括后台会话），确认要登出吗？",
+      "logoutConfirmCancel": "取消",
+      "logoutConfirmAction": "确认登出"
     },
     "system": {
       "section": "系统",

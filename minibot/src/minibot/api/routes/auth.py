@@ -133,6 +133,10 @@ class DesktopCompleteResponse(BaseModel):
     next_url: str = "/"
 
 
+class DesktopAuthorizeResponse(BaseModel):
+    authorize_url: str
+
+
 def _token_from_request(
     request: Request,
     x_minibot_auth: str | None,
@@ -200,12 +204,13 @@ def _build_authorize_url(
     *,
     desktop: bool = False,
     desktop_login_id: str | None = None,
+    force_desktop_scheme: bool = False,
 ) -> str:
-    # With desktop_login_id, use HTTP loopback so the system browser can finish
-    # PKCE; the desktop WebView polls /auth/desktop/handoff (deep links are flaky
-    # under `tauri:dev`). Without an id, keep minibot:// for packaged deep-link flow.
+    # Packaged desktop / authorize API: minibot:// callback (no loopback flash).
+    # With desktop_login_id: HTTP loopback so the system browser can finish PKCE;
+    # the WebView polls /auth/desktop/handoff (deep links are flaky under tauri:dev).
     handoff_id = (desktop_login_id or "").strip()
-    if desktop and not handoff_id:
+    if force_desktop_scheme or (desktop and not handoff_id):
         redirect_uri = _desktop_callback_url(state)
     else:
         redirect_uri = _http_callback_url(request, state)
@@ -400,6 +405,25 @@ async def login(
         desktop_login_id=desktop_login_id,
     )
     return RedirectResponse(url=authorize_url, status_code=status.HTTP_302_FOUND)
+
+
+@router.get("/auth/desktop/authorize", response_model=DesktopAuthorizeResponse)
+async def desktop_authorize(
+    request: Request,
+    state: StateDep,
+    next: str | None = Query(default="/"),
+) -> DesktopAuthorizeResponse:
+    """Return a mini-auth authorize URL using ``minibot://`` redirect_uri."""
+    if state.settings.normalized_auth_provider() != "mini_auth":
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="mini-auth is disabled")
+    authorize_url = _build_authorize_url(
+        request,
+        state,
+        next,
+        desktop=True,
+        force_desktop_scheme=True,
+    )
+    return DesktopAuthorizeResponse(authorize_url=authorize_url)
 
 
 @router.get("/auth/mini-auth/callback", response_model=None)

@@ -12,8 +12,10 @@ import {
   UserRound,
   type LucideIcon,
 } from "lucide-react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { LogoutConfirm } from "@/components/auth/LogoutConfirm";
 import { Button } from "@/components/ui/button";
 import { SETTINGS_SECTIONS } from "@/lib/configs/ui-entry";
 import { cn } from "@/lib/utils";
@@ -59,6 +61,7 @@ export function SettingsSidebar({
   hostChromeInset?: boolean;
 }) {
   const { t } = useTranslation();
+  const [logoutOpen, setLogoutOpen] = useState(false);
   return (
     <aside
       className={cn(
@@ -111,7 +114,7 @@ export function SettingsSidebar({
           <Button
             type="button"
             variant="ghost"
-            onClick={onLogout}
+            onClick={() => setLogoutOpen(true)}
             className="h-9 w-full justify-start gap-2 rounded-[10px] px-2.5 text-[13px] font-medium text-muted-foreground hover:bg-destructive/8 hover:text-destructive"
           >
             <LogOut className="h-4 w-4" aria-hidden />
@@ -119,6 +122,17 @@ export function SettingsSidebar({
           </Button>
         ) : null}
       </div>
+
+      {onLogout ? (
+        <LogoutConfirm
+          open={logoutOpen}
+          onCancel={() => setLogoutOpen(false)}
+          onConfirm={() => {
+            setLogoutOpen(false);
+            onLogout();
+          }}
+        />
+      ) : null}
     </aside>
   );
 }

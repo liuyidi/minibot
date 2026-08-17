@@ -2118,7 +2118,7 @@ describe("App layout", () => {
     unmount();
   });
 
-  it("routes mini-auth sign-out to the logout URL instead of the secret gate", async () => {
+  it("confirms before mini-auth sign-out and clears locally only", async () => {
     const assignSpy = vi
       .spyOn(window.location, "assign")
       .mockImplementation(() => undefined);
@@ -2133,17 +2133,46 @@ describe("App layout", () => {
         picture: null,
       },
     });
-    mockFetchRoutes({ "/api/settings": baseSettingsPayload() });
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/api/settings")) {
+        return jsonResponse(baseSettingsPayload());
+      }
+      if (url.includes("/auth/logout")) {
+        return { ok: true, status: 204, json: async () => ({}) } as Response;
+      }
+      return { ok: false, status: 404, json: async () => ({}) } as Response;
+    });
+    vi.stubGlobal("fetch", fetchMock);
 
     render(<App />);
     await waitFor(() => expect(connectSpy).toHaveBeenCalled());
     await openSettingsFromSidebarAccount();
 
     fireEvent.click(screen.getByRole("button", { name: "Sign out" }));
+    const dialog = await screen.findByRole("alertdialog");
+    expect(within(dialog).getByRole("heading", { name: "Confirm sign out" })).toBeInTheDocument();
+
+    fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
+    await waitFor(() => {
+      expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+    });
+    expect(assignSpy).not.toHaveBeenCalled();
+    expect(fetchMock.mock.calls.some(([u]) => String(u).includes("/auth/logout"))).toBe(false);
+
+    fireEvent.click(screen.getByRole("button", { name: "Sign out" }));
+    const confirmDialog = await screen.findByRole("alertdialog");
+    fireEvent.click(within(confirmDialog).getByRole("button", { name: "Confirm sign out" }));
 
     await waitFor(() => {
-      expect(assignSpy).toHaveBeenCalledWith("/auth/logout?next=%2F");
+      expect(
+        fetchMock.mock.calls.some(([u]) => String(u).includes("/auth/logout") && String(u).includes("local=1")),
+      ).toBe(true);
     });
+    await waitFor(() => {
+      expect(assignSpy).toHaveBeenCalledWith("/auth/login?next=%2F");
+    });
+    expect(assignSpy.mock.calls.every(([u]) => !String(u).includes("/auth/logout"))).toBe(true);
     expect(
       screen.queryByText(/tokenIssueSecret|Enter the secret configured/i),
     ).not.toBeInTheDocument();
@@ -2180,13 +2209,30 @@ describe("App layout", () => {
         picture: null,
       },
     });
-    mockFetchRoutes({ "/api/settings": baseSettingsPayload() });
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/api/settings")) {
+        return jsonResponse(baseSettingsPayload());
+      }
+      if (url.includes("/auth/logout")) {
+        return { ok: true, status: 204, json: async () => ({}) } as Response;
+      }
+      if (url.includes("/auth/desktop/authorize")) {
+        return jsonResponse({
+          authorize_url: "https://auth.example/oauth/authorize?x=1",
+        });
+      }
+      return { ok: false, status: 404, json: async () => ({}) } as Response;
+    });
+    vi.stubGlobal("fetch", fetchMock);
 
     render(<App />);
     await waitFor(() => expect(connectSpy).toHaveBeenCalled());
     await openSettingsFromSidebarAccount();
 
     fireEvent.click(screen.getByRole("button", { name: "Sign out" }));
+    const dialog = await screen.findByRole("alertdialog");
+    fireEvent.click(within(dialog).getByRole("button", { name: "Confirm sign out" }));
 
     expect(
       await screen.findByRole("button", { name: "Sign in" }),
@@ -2194,13 +2240,7 @@ describe("App layout", () => {
     expect(
       screen.queryByText(/tokenIssueSecret|Enter the secret configured/i),
     ).not.toBeInTheDocument();
-    await waitFor(() => {
-      expect(openLogin).toHaveBeenCalled();
-      const opened = String(openLogin.mock.calls.at(-1)?.[0] ?? "");
-      expect(opened).toContain("/auth/logout");
-      expect(opened).toContain("desktop%2Flogged-out");
-      expect(opened).not.toContain("local=1");
-    });
+    expect(openLogin).not.toHaveBeenCalled();
 
     delete window.minibotHost;
   });

@@ -25,6 +25,7 @@ import {
 import { accountDisplayName } from "@/lib/auth-account";
 import {
   bootstrapTokenExpiresAt,
+  buildLoginRedirect,
   desktopSessionUrl,
   isMiniAuth,
   tokenRefreshDelayMs,
@@ -50,7 +51,11 @@ type BootState =
   | { status: "error"; message: string }
   | { status: "auth"; failed?: boolean }
   | { status: "desktop_welcome" }
-  | { status: "browser_login"; desktopLoginId: string }
+  | {
+      status: "browser_login";
+      desktopLoginId: string | null;
+      loginUrl: string | null;
+    }
   | {
       status: "ready";
       client: MinibotClient;
@@ -76,8 +81,8 @@ export default function App() {
   const startDesktopLogin = useCallback(() => {
     void beginDesktopLogin({
       loginUrl: authConfigRef.current?.login_url,
-      onBrowserLogin: (desktopLoginId) =>
-        setState({ status: "browser_login", desktopLoginId }),
+      onBrowserLogin: ({ desktopLoginId, loginUrl }) =>
+        setState({ status: "browser_login", desktopLoginId, loginUrl }),
     });
   }, []);
 
@@ -92,6 +97,11 @@ export default function App() {
     void redirectToMiniAuthLogout({
       logoutUrl: authConfigRef.current?.logout_url,
       onDesktopWelcome: () => setState({ status: "desktop_welcome" }),
+      onWebSignedOut: () => {
+        window.location.assign(
+          buildLoginRedirect(authConfigRef.current?.login_url, { next: "/" }),
+        );
+      },
     });
   }, []);
 
@@ -219,11 +229,12 @@ export default function App() {
   }, [goDesktopWelcomeOrLogin, refreshReadyClient, state]);
 
   useEffect(() => {
-    if (state.status !== "browser_login") return;
+    if (state.status !== "browser_login" || !state.desktopLoginId) return;
     const controller = new AbortController();
+    const desktopLoginId = state.desktopLoginId;
     void (async () => {
       try {
-        const handoff = await waitForDesktopHandoff(state.desktopLoginId, {
+        const handoff = await waitForDesktopHandoff(desktopLoginId, {
           signal: controller.signal,
         });
         window.location.assign(
@@ -279,7 +290,6 @@ export default function App() {
       goDesktopWelcomeOrLogin();
       return;
     }
-    // Desktop WebView is always loopback; never keep the legacy secret gate there.
     void (async () => {
       const host = await waitForDesktopOpenLogin();
       if (host?.openLogin) {
@@ -295,16 +305,17 @@ export default function App() {
     return <BrowserLoginWaiting waiting={false} onLogin={startDesktopLogin} />;
   }
   if (state.status === "browser_login") {
-    return <BrowserLoginWaiting waiting onLogin={startDesktopLogin} />;
+    return (
+      <BrowserLoginWaiting
+        waiting
+        loginUrl={state.loginUrl}
+        onLogin={startDesktopLogin}
+      />
+    );
   }
   if (state.status === "auth") {
     if (!isLocalDevelopmentHost()) return null;
-    return (
-      <AuthForm
-        failed={!!state.failed}
-        onSecret={(s) => bootstrapWithSecret(s)}
-      />
-    );
+    return <AuthForm failed={!!state.failed} onSecret={(s) => bootstrapWithSecret(s)} />;
   }
   if (state.status === "error") {
     return (
@@ -335,8 +346,6 @@ export default function App() {
       return;
     }
     clearSavedSecret();
-    // Desktop always runs on loopback; prefer the welcome login screen over the
-    // legacy tokenIssueSecret gate used by browser-only local gateway auth.
     void (async () => {
       const host = await waitForDesktopOpenLogin();
       if (host?.openLogin) {

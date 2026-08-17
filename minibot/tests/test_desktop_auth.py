@@ -27,6 +27,22 @@ def test_desktop_login_uses_custom_scheme_redirect(client: TestClient) -> None:
     assert params["code_challenge"][0]
 
 
+def test_desktop_authorize_returns_custom_scheme_url(client: TestClient) -> None:
+    state = client.app.state.app_state
+    state.settings.__dict__["auth_provider"] = "mini_auth"
+    state.settings.__dict__["mini_auth_base_url"] = "https://auth.example"
+    state.settings.__dict__["mini_auth_desktop_redirect_uri"] = "minibot://auth/callback"
+
+    res = client.get("/auth/desktop/authorize?next=%2F")
+    assert res.status_code == 200
+    body = res.json()
+    assert "authorize_url" in body
+    location = body["authorize_url"]
+    assert location.startswith("https://auth.example/oauth/authorize?")
+    params = parse_qs(urlparse(location).query)
+    assert params["redirect_uri"] == ["minibot://auth/callback"]
+
+
 def test_desktop_login_with_handoff_id_uses_http_callback(client: TestClient) -> None:
     state = client.app.state.app_state
     state.settings.__dict__["auth_provider"] = "mini_auth"

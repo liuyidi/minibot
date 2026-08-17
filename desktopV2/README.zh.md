@@ -62,25 +62,19 @@ npm run dev
 
 未登录桌面显示欢迎 / Sign in。**即便是正式安装包，本机 gateway 仍监听 `127.0.0.1:8766`**（不是 `bot.liuyidi.me`）；只有身份提供方是公网 `auth.liuyidi.me`。
 
-完整链路：
+完整链路（正式包，推荐）：
 
-1. WebUI 检测到 `minibotHost.openLogin` → 生成 `desktop_login_id` → 系统浏览器打开本机  
-   `http://127.0.0.1:8766/auth/login?desktop=1&desktop_login_id=…&next=…`  
-   （`absoluteAuthUrl` = WebView 的 `window.location.origin`，即本地 gateway）
-2. Gateway 302 到 mini-auth（`https://auth.liuyidi.me/oauth/authorize`）；登录完成后 **redirect_uri** 仍回到本机  
-   `http://127.0.0.1:8766/auth/mini-auth/callback`（会话交接走 HTTP loopback，不依赖 `minibot://`）。  
-   该 callback 必须在 mini-auth 客户端白名单中。
-3. 回调写入短期 handoff，浏览器跳到 `/auth/desktop/done`。
-4. 应用内 WebUI 轮询 `GET /auth/desktop/handoff?id=…`，再打开  
-   `/auth/desktop/session?token=…` 写 cookie。
-5. 可选：`minibot://auth/done` 仅用于**聚焦窗口**（不做第二次 PKCE）。macOS 上  
-   `tauri:dev` **不会**注册自定义协议 — 需打一次 `.app` 并注册：
+1. WebUI 检测到 `minibotHost.openLogin` → `GET /auth/desktop/authorize` 拿到带 **`minibot://auth/callback`** 的 authorize URL → 系统浏览器直接打开 `https://auth.liuyidi.me/oauth/authorize?…`（地址栏不出现本机 IP）。
+2. 桌面停留在「登录中…」等待页，可 **复制登录链接** / **重新发起登录**。
+3. 登录完成后浏览器回调 `minibot://auth/callback?code&state` → 壳 `POST /auth/desktop/complete` → WebView 打开 `/auth/desktop/session?token=…` 写 cookie。
+4. 可选：`minibot://auth/done` 仅用于聚焦窗口。
 
-```bash
-cd desktopV2 && ./scripts/register-url-scheme.sh
-```
+开发态兜底（`tauri:dev` 未注册协议时）：仍可用 loopback  
+`http://127.0.0.1:8766/auth/login?desktop=1&desktop_login_id=…` → HTTP callback → `/auth/desktop/handoff` 轮询。
 
-注意：Cursor 注入的 `HTTP_PROXY` 可能干扰本机 gateway 连 `auth.liuyidi.me`（gateway 对 mini-auth 的 httpx 使用 `trust_env=False`）。
+### 退出登录
+
+确认对话框后只清本机 minibot 会话（`/auth/logout?local=1`），**不**打开浏览器清 IdP。再次登录时可沿用浏览器里已登录的账号。
 
 ## 3. 冻结 sidecar（PyInstaller onedir）
 

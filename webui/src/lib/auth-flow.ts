@@ -152,6 +152,26 @@ export function buildLogoutRedirect(
   return `${base}${join}next=${encodeURIComponent(next)}${local}`;
 }
 
+export type DesktopAuthorizeResponse = {
+  authorize_url: string;
+};
+
+/** Fetch a mini-auth authorize URL with minibot:// redirect_uri (packaged desktop). */
+export async function fetchDesktopAuthorizeUrl(
+  next = "/",
+): Promise<DesktopAuthorizeResponse> {
+  const url = `/auth/desktop/authorize?next=${encodeURIComponent(next)}`;
+  const res = await fetch(url, { credentials: "same-origin" });
+  if (!res.ok) {
+    throw new Error(`Desktop authorize failed (HTTP ${res.status})`);
+  }
+  const body = (await res.json()) as DesktopAuthorizeResponse;
+  if (!body?.authorize_url || typeof body.authorize_url !== "string") {
+    throw new Error("Desktop authorize missing authorize_url");
+  }
+  return body;
+}
+
 export function isMiniAuth(config: AuthConfigResponse | null): boolean {
   return config?.auth_provider === "mini_auth";
 }

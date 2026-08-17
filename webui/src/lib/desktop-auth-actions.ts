@@ -3,26 +3,50 @@ import {
   absoluteAuthUrl,
   buildLoginRedirect,
   buildLogoutRedirect,
+  fetchDesktopAuthorizeUrl,
   newDesktopLoginId,
   waitForDesktopOpenLogin,
 } from "@/lib/auth-flow";
 
+export type DesktopBrowserLoginStart = {
+  /** Set for HTTP loopback handoff; null when using minibot:// callback. */
+  desktopLoginId: string | null;
+  /** Absolute URL opened in the system browser (for copy / retry). */
+  loginUrl: string;
+};
+
 /** Open system-browser OAuth, or fall back to in-window login redirect. */
 export async function beginDesktopLogin(options: {
   loginUrl: string | null | undefined;
-  onBrowserLogin: (desktopLoginId: string) => void;
+  onBrowserLogin: (start: DesktopBrowserLoginStart) => void;
+  /** Prefer HTTP loopback + handoff (e.g. tauri:dev without scheme). */
+  preferLoopback?: boolean;
 }): Promise<void> {
   if (typeof window === "undefined") return;
   const host = await waitForDesktopOpenLogin();
   if (host?.openLogin) {
+    if (!options.preferLoopback) {
+      try {
+        const { authorize_url } = await fetchDesktopAuthorizeUrl();
+        options.onBrowserLogin({
+          desktopLoginId: null,
+          loginUrl: authorize_url,
+        });
+        await host.openLogin(authorize_url);
+        return;
+      } catch {
+        // Fall through to loopback handoff.
+      }
+    }
     const desktopLoginId = newDesktopLoginId();
-    options.onBrowserLogin(desktopLoginId);
     const relative = buildLoginRedirect(options.loginUrl, {
       desktop: true,
       desktopLoginId,
       next: "/",
     });
-    await host.openLogin(absoluteAuthUrl(relative));
+    const absolute = absoluteAuthUrl(relative);
+    options.onBrowserLogin({ desktopLoginId, loginUrl: absolute });
+    await host.openLogin(absolute);
     return;
   }
   window.location.assign(buildLoginRedirect(options.loginUrl));
@@ -43,31 +67,28 @@ export async function showDesktopWelcomeOrBrowserLogin(options: {
 }
 
 /**
- * Clear WebView session locally, then IdP-logout in the system browser.
- * Browser-only clients keep using an in-window logout redirect.
+ * WorkBuddy-style: clear only the local minibot session.
+ * Do not open a browser or hit mini-auth /logout.
  */
 export async function redirectToMiniAuthLogout(options: {
   logoutUrl: string | null | undefined;
   onDesktopWelcome: () => void;
+  onWebSignedOut: () => void;
 }): Promise<void> {
   if (typeof window === "undefined") return;
+  try {
+    await fetch(buildLogoutRedirect(options.logoutUrl, { local: true }), {
+      method: "GET",
+      credentials: "same-origin",
+    });
+  } catch {
+    // Best-effort local clear.
+  }
+  clearSavedSecret();
   const host = await waitForDesktopOpenLogin();
   if (host?.openLogin) {
-    try {
-      await fetch(buildLogoutRedirect(options.logoutUrl, { local: true }), {
-        method: "GET",
-        credentials: "same-origin",
-      });
-    } catch {
-      // Best-effort; still leave the app on the welcome screen.
-    }
-    clearSavedSecret();
     options.onDesktopWelcome();
-    const browserLogout = buildLogoutRedirect(options.logoutUrl, {
-      next: "/auth/desktop/logged-out",
-    });
-    await host.openLogin(absoluteAuthUrl(browserLogout));
     return;
   }
-  window.location.assign(buildLogoutRedirect(options.logoutUrl));
+  options.onWebSignedOut();
 }

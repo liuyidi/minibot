@@ -62,25 +62,19 @@ Do not distribute operator `.env.models` to end users.
 
 Desktop unauthenticated UI shows a welcome / Sign in screen. **Packaged “production” installs still use the local gateway on `127.0.0.1:8766`** (not `bot.liuyidi.me`); only the IdP is public (`auth.liuyidi.me`).
 
-Flow:
+Packaged flow (preferred):
 
-1. WebUI sees `minibotHost.openLogin` → creates `desktop_login_id` → opens the system browser to the **loopback** URL  
-   `http://127.0.0.1:8766/auth/login?desktop=1&desktop_login_id=…&next=…`  
-   (`absoluteAuthUrl` = WebView `window.location.origin`, i.e. the local gateway)
-2. Gateway 302s to mini-auth (`https://auth.liuyidi.me/oauth/authorize`); after login, **redirect_uri** returns to loopback  
-   `http://127.0.0.1:8766/auth/mini-auth/callback` (session handoff is HTTP, not `minibot://`).  
-   That callback must be allowlisted on the mini-auth client.
-3. Callback stores a short-lived handoff and redirects the **browser** to `/auth/desktop/done`.
-4. In-app WebUI polls `GET /auth/desktop/handoff?id=…`, then navigates to  
-   `/auth/desktop/session?token=…` to set the cookie.
-5. Optional: `minibot://auth/done` only **focuses** the app window (no second PKCE). macOS  
-   `tauri:dev` does **not** register URL schemes — build/register a `.app` once:
+1. WebUI sees `minibotHost.openLogin` → `GET /auth/desktop/authorize` returns an authorize URL with **`minibot://auth/callback`** → system browser opens `https://auth.liuyidi.me/oauth/authorize?…` (no loopback in the address bar).
+2. Desktop stays on a “Signing in…” waiting screen with **Copy login link** / **Try again**.
+3. After login, the browser hits `minibot://auth/callback?code&state` → shell `POST /auth/desktop/complete` → WebView `/auth/desktop/session?token=…` sets the cookie.
+4. Optional: `minibot://auth/done` only focuses the window.
 
-```bash
-cd desktopV2 && ./scripts/register-url-scheme.sh
-```
+Dev fallback (`tauri:dev` without a registered scheme): loopback  
+`http://127.0.0.1:8766/auth/login?desktop=1&desktop_login_id=…` → HTTP callback → `/auth/desktop/handoff` poll.
 
-Note: Cursor/`HTTP_PROXY` must not break CONNECT from the local gateway to `auth.liuyidi.me` (gateway httpx uses `trust_env=False` for mini-auth).
+### Sign out
+
+After a confirmation dialog, only the local minibot session is cleared (`/auth/logout?local=1`). The system browser is **not** opened to clear the IdP, so re-login can reuse an existing account session.
 
 ## 3. Freeze sidecar (PyInstaller onedir)
 
