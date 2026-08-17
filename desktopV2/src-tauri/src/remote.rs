@@ -296,8 +296,43 @@ impl RemoteServer {
         cmd.env("MINIBOT_SERVER_HOST", &host)
             .env("MINIBOT_SERVER_PORT", port.to_string())
             .env("MINIBOT_SERVER_DATA_DIR", &engine_dir)
+            // Match design: local gateway uses hosted mini-auth (not tokenIssueSecret).
+            .env("MINIBOT_SERVER_AUTH_PROVIDER", "mini_auth")
+            .env(
+                "MINIBOT_SERVER_MINI_AUTH_BASE_URL",
+                std::env::var("MINIBOT_SERVER_MINI_AUTH_BASE_URL")
+                    .unwrap_or_else(|_| "https://auth.liuyidi.me".into()),
+            )
+            .env("MINIBOT_SERVER_REQUIRE_AUTH", "true")
+            .env(
+                "MINIBOT_SERVER_PLATFORM_PROXY_BASE_URL",
+                std::env::var("MINIBOT_SERVER_PLATFORM_PROXY_BASE_URL")
+                    .unwrap_or_else(|_| "https://bot.liuyidi.me".into()),
+            )
             .stdout(Stdio::from(stdout_file))
             .stderr(Stdio::from(stderr_file));
+
+        // Optional local .env.models for BYOK/dev only — shipped clients use
+        // PLATFORM_PROXY_BASE_URL (vendor keys stay on bot.liuyidi.me).
+        let models_loaded = apply_dotenv_files(
+            &mut cmd,
+            &[
+                std::env::var_os("MINIBOT_ENV_MODELS").map(PathBuf::from),
+                Some(engine_dir.join(".env.models")),
+                Some(engine_dir.join(".env")),
+            ],
+        );
+        if models_loaded > 0 {
+            let _ = append_log(
+                &logs_dir,
+                &format!("loaded {models_loaded} env vars from .env.models/.env"),
+            );
+        } else {
+            let _ = append_log(
+                &logs_dir,
+                "no platform .env.models under engine/ (demo models need keys)",
+            );
+        }
 
         let child = cmd.spawn().map_err(|e| {
             format!(
@@ -343,6 +378,65 @@ impl Drop for RemoteServer {
     fn drop(&mut self) {
         let _ = self.stop_local_engine();
     }
+}
+
+/// Load KEY=VALUE pairs from dotenv-style files into ``cmd`` (later files win).
+/// Skips keys already present in the parent process environment.
+/// Returns how many keys were applied.
+fn apply_dotenv_files(cmd: &mut Command, paths: &[Option<PathBuf>]) -> usize {
+    let mut merged: Vec<(String, String)> = Vec::new();
+    for path in paths.iter().flatten() {
+        let Ok(text) = std::fs::read_to_string(path) else {
+            continue;
+        };
+        for (key, value) in parse_dotenv(&text) {
+            if let Some((_, existing)) = merged.iter_mut().find(|(k, _)| k == &key) {
+                *existing = value;
+            } else {
+                merged.push((key, value));
+            }
+        }
+    }
+    let mut applied = 0usize;
+    for (key, value) in merged {
+        if std::env::var_os(&key).is_some() {
+            continue;
+        }
+        cmd.env(&key, &value);
+        applied += 1;
+    }
+    applied
+}
+
+fn parse_dotenv(text: &str) -> Vec<(String, String)> {
+    let mut out = Vec::new();
+    for raw in text.lines() {
+        let line = raw.trim();
+        if line.is_empty() || line.starts_with('#') {
+            continue;
+        }
+        let line = line.strip_prefix("export ").unwrap_or(line).trim();
+        let Some((key, value)) = line.split_once('=') else {
+            continue;
+        };
+        let key = key.trim();
+        if key.is_empty() {
+            continue;
+        }
+        let value = value.trim();
+        let value = if (value.starts_with('"') && value.ends_with('"') && value.len() >= 2)
+            || (value.starts_with('\'') && value.ends_with('\'') && value.len() >= 2)
+        {
+            value[1..value.len() - 1].to_string()
+        } else {
+            value.to_string()
+        };
+        if value.is_empty() {
+            continue;
+        }
+        out.push((key.to_string(), value));
+    }
+    out
 }
 
 fn parse_desktop_auth_callback(deep_link: &str) -> Result<(String, String), String> {

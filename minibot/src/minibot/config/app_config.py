@@ -205,13 +205,20 @@ def feishu_public_payload(feishu: FeishuPersistedConfig) -> dict[str, Any]:
 def settings_public_payload(config: AppConfig) -> dict[str, Any]:
     """Shape compatible enough for the existing WebUI SettingsView."""
     from minibot.config.keys import resolve_api_key
+    from minibot.config.platform_credentials import (
+        load_platform_credentials,
+        platform_proxy_mode_enabled,
+    )
     from minibot.config.platform_models import (
         any_platform_model_available,
         effective_chat_model,
         platform_models_public,
         resolve_platform_runtime,
+        resolve_platform_runtime_proxied,
     )
     from minibot.config.settings import get_settings
+    from minibot.security.principal_context import current_principal
+    from minibot.user_runtime import resolve_user_root
     from minibot.workspace import default_workspace
 
     ensure_presets(config)
@@ -219,13 +226,31 @@ def settings_public_payload(config: AppConfig) -> dict[str, Any]:
     masked = mask_key(user_key)
     presets = presets_public_list(config)
     settings = get_settings()
+    proxy_base = ""
+    proxy_token = ""
+    if platform_proxy_mode_enabled(settings):
+        proxy_base = settings.platform_proxy_base_url.strip()
+        principal = current_principal()
+        uid = principal.user_id if principal and principal.user_id else "system"
+        creds = load_platform_credentials(resolve_user_root(settings, uid))
+        if creds is not None and creds.platform_token_valid:
+            proxy_token = creds.access_token
     provider_name = (config.provider or "openai").strip() or "openai"
     platform_rt = None
     if provider_name == "auto":
-        has_key = bool(user_key) or any_platform_model_available()
+        has_key = bool(user_key) or any_platform_model_available(
+            proxy_base_url=proxy_base, proxy_token=proxy_token
+        )
         resolved_provider = config.provider
     elif getattr(config, "active_platform_model", ""):
-        platform_rt = resolve_platform_runtime(config.active_platform_model)
+        if proxy_base:
+            platform_rt = resolve_platform_runtime_proxied(
+                config.active_platform_model,
+                proxy_base_url=proxy_base,
+                proxy_token=proxy_token,
+            )
+        else:
+            platform_rt = resolve_platform_runtime(config.active_platform_model)
         has_key = bool(platform_rt and platform_rt.available) or bool(
             resolve_api_key(provider_name, user_key=user_key)
         )
@@ -244,7 +269,10 @@ def settings_public_payload(config: AppConfig) -> dict[str, Any]:
         "active_preset": config.active_preset,
         "active_platform_model": getattr(config, "active_platform_model", "") or "",
         "agent": {
-            "model": effective_chat_model(config) or config.model,
+            "model": effective_chat_model(
+                config, proxy_base_url=proxy_base, proxy_token=proxy_token
+            )
+            or config.model,
             "provider": config.provider,
             "resolved_provider": resolved_provider,
             "has_api_key": has_key,
@@ -259,7 +287,9 @@ def settings_public_payload(config: AppConfig) -> dict[str, Any]:
             "tool_hint_max_length": 80,
             "exec_sandbox": settings.normalized_exec_backend(),
         },
-        "platform_models": platform_models_public(user_key=user_key),
+        "platform_models": platform_models_public(
+            user_key=user_key, proxy_base_url=proxy_base, proxy_token=proxy_token
+        ),
         "model_presets": presets,
         "mcp_presets": mcp_presets_public_list(config),
         "channels": {

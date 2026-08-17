@@ -69,9 +69,32 @@ def build_user_runtime(
         auto_approve_channels=auto_approve_channels_from_settings(settings, config)
     )
     mcp = McpManager(tools)
+    from minibot.config.platform_credentials import (
+        ensure_platform_token_sync,
+        platform_proxy_mode_enabled,
+    )
     from minibot.providers.factory import build_provider_chain
 
-    runner = AgentRunner(build_provider_chain(config))
+    proxy_base = ""
+    proxy_token = ""
+    if platform_proxy_mode_enabled(settings):
+        proxy_base = settings.platform_proxy_base_url.strip()
+        try:
+            creds = ensure_platform_token_sync(
+                root,
+                proxy_base_url=proxy_base,
+                timeout_s=settings.mini_auth_timeout_s,
+            )
+            proxy_token = creds.access_token
+        except Exception:  # noqa: BLE001
+            proxy_token = ""
+    runner = AgentRunner(
+        build_provider_chain(
+            config,
+            proxy_base_url=proxy_base,
+            proxy_token=proxy_token,
+        )
+    )
     sessions = SessionStore(root)
     approvals = ApprovalStore(root)
     usage_budget = UsageBudget(

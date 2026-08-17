@@ -1,7 +1,7 @@
 # Desktop platform models via cloud proxy (Approach A extension)
 
 **Date:** 2026-08-17  
-**Status:** approved (design)  
+**Status:** implemented (v1 code landed; deploy ECS + rebuild desktop to roll out)  
 **Surface:** desktop V2 local gateway + `bot.liuyidi.me` `/platform/v1/*`  
 **Related:** [`2026-08-06-platform-models-keys-design.md`](./2026-08-06-platform-models-keys-design.md)
 

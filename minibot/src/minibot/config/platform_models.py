@@ -235,10 +235,67 @@ def resolve_platform_runtime(model_id: str) -> PlatformRuntime | None:
     )
 
 
-def platform_models_public(*, user_key: str = "") -> list[dict[str, Any]]:
+def proxy_chat_base(proxy_base_url: str) -> str:
+    return f"{(proxy_base_url or '').rstrip('/')}/platform/v1"
+
+
+def resolve_platform_runtime_proxied(
+    model_id: str,
+    *,
+    proxy_base_url: str,
+    proxy_token: str,
+) -> PlatformRuntime | None:
+    """Desktop/local: route platform models through cloud ``/platform/v1``."""
+    item = find_platform_model(model_id)
+    if item is None:
+        return None
+    token = (proxy_token or "").strip()
+    model = platform_slot_model(item.slot, default=item.default_model) or item.default_model
+    return PlatformRuntime(
+        id=item.id,
+        label=item.label,
+        slot=item.slot,
+        brand=item.brand,
+        # Wire format is always OpenAI chat; cloud converts anthropic slots.
+        backend="openai_compat",
+        model=model,
+        api_base=proxy_chat_base(proxy_base_url),
+        api_key=token,
+        context_window_tokens=item.context_window_tokens,
+        available=bool(token),
+    )
+
+
+def platform_models_public(
+    *,
+    user_key: str = "",
+    proxy_base_url: str = "",
+    proxy_token: str = "",
+) -> list[dict[str, Any]]:
     """Settings payload rows; never include secrets."""
-    del user_key  # platform availability is env-slot based, not user BYOK
+    del user_key  # platform availability is env-slot or proxy-token based, not user BYOK
+    proxy = (proxy_base_url or "").strip()
     rows: list[dict[str, Any]] = []
+    if proxy:
+        available = bool((proxy_token or "").strip())
+        base = proxy_chat_base(proxy)
+        for item in PLATFORM_MODELS:
+            model = platform_slot_model(item.slot, default=item.default_model) or item.default_model
+            rows.append(
+                {
+                    "id": item.id,
+                    "label": item.label,
+                    "provider": item.brand,
+                    "backend": "openai_compat",
+                    "slot": item.slot,
+                    "model": model,
+                    "api_base": base,
+                    "source": "platform",
+                    "available": available,
+                    "context_window_tokens": item.context_window_tokens,
+                }
+            )
+        return rows
     for item in PLATFORM_MODELS:
         runtime = resolve_platform_runtime(item.id)
         assert runtime is not None
@@ -259,13 +316,28 @@ def platform_models_public(*, user_key: str = "") -> list[dict[str, Any]]:
     return rows
 
 
-def any_platform_model_available() -> bool:
+def any_platform_model_available(*, proxy_token: str = "", proxy_base_url: str = "") -> bool:
+    if (proxy_base_url or "").strip():
+        return bool((proxy_token or "").strip())
     return any(
         (rt := resolve_platform_runtime(m.id)) is not None and rt.available for m in PLATFORM_MODELS
     )
 
 
-def first_available_platform_runtime() -> PlatformRuntime | None:
+def first_available_platform_runtime(
+    *,
+    proxy_base_url: str = "",
+    proxy_token: str = "",
+) -> PlatformRuntime | None:
+    proxy = (proxy_base_url or "").strip()
+    if proxy:
+        for item in PLATFORM_MODELS:
+            runtime = resolve_platform_runtime_proxied(
+                item.id, proxy_base_url=proxy, proxy_token=proxy_token
+            )
+            if runtime is not None and runtime.available:
+                return runtime
+        return None
     for item in PLATFORM_MODELS:
         runtime = resolve_platform_runtime(item.id)
         if runtime is not None and runtime.available:
@@ -273,11 +345,13 @@ def first_available_platform_runtime() -> PlatformRuntime | None:
     return None
 
 
-def apply_auto_model(config: Any) -> Any:
+def apply_auto_model(config: Any, *, proxy_base_url: str = "", proxy_token: str = "") -> Any:
     """Select Auto mode and sync live model/base to the first available platform slot."""
     config.provider = "auto"
     config.active_platform_model = ""
-    runtime = first_available_platform_runtime()
+    runtime = first_available_platform_runtime(
+        proxy_base_url=proxy_base_url, proxy_token=proxy_token
+    )
     if runtime is None:
         return config
     config.model = runtime.model
@@ -287,29 +361,49 @@ def apply_auto_model(config: Any) -> Any:
     return config
 
 
-def effective_chat_model(config: Any) -> str:
+def effective_chat_model(
+    config: Any, *, proxy_base_url: str = "", proxy_token: str = ""
+) -> str:
     """Model id for LLM calls — honor platform / Auto over stale config.model."""
     platform_id = (getattr(config, "active_platform_model", None) or "").strip()
     if platform_id:
-        runtime = resolve_platform_runtime(platform_id)
+        if (proxy_base_url or "").strip():
+            runtime = resolve_platform_runtime_proxied(
+                platform_id, proxy_base_url=proxy_base_url, proxy_token=proxy_token
+            )
+        else:
+            runtime = resolve_platform_runtime(platform_id)
         if runtime is not None and runtime.available and runtime.model:
             return runtime.model
     if (getattr(config, "provider", "") or "").strip() == "auto":
-        runtime = first_available_platform_runtime()
+        runtime = first_available_platform_runtime(
+            proxy_base_url=proxy_base_url, proxy_token=proxy_token
+        )
         if runtime is not None and runtime.model:
             return runtime.model
     return (getattr(config, "model", None) or "").strip()
 
 
-def apply_platform_model(config: Any, model_id: str) -> Any:
+def apply_platform_model(
+    config: Any,
+    model_id: str,
+    *,
+    proxy_base_url: str = "",
+    proxy_token: str = "",
+) -> Any:
     """Set live model/provider/base from catalog+env; do not write platform keys."""
-    runtime = resolve_platform_runtime(model_id)
+    if (proxy_base_url or "").strip():
+        runtime = resolve_platform_runtime_proxied(
+            model_id, proxy_base_url=proxy_base_url, proxy_token=proxy_token
+        )
+    else:
+        runtime = resolve_platform_runtime(model_id)
     if runtime is None:
         raise KeyError(f"unknown platform model: {model_id}")
     if not runtime.available:
         raise KeyError(f"platform model unavailable (missing env key): {model_id}")
     config.model = runtime.model
-    # Credentials stay in env; provider name selects openai_compat vs anthropic.
+    # Credentials stay in env/proxy token; provider name selects openai_compat vs anthropic.
     config.provider = runtime.provider
     if runtime.api_base:
         config.openai_base_url = runtime.api_base

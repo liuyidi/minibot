@@ -203,10 +203,34 @@ async def activate_platform_model(
     state: StateDep,
     model_id: str,
 ) -> dict[str, Any]:
+    from minibot.config.platform_credentials import (
+        ensure_platform_token_sync,
+        platform_proxy_mode_enabled,
+    )
     from minibot.config.platform_models import apply_platform_model
+    from minibot.user_runtime import resolve_user_root
 
+    proxy_base = ""
+    proxy_token = ""
+    if platform_proxy_mode_enabled(state.settings):
+        proxy_base = state.settings.platform_proxy_base_url.strip()
+        root = resolve_user_root(state.settings, state.current_user_id())
+        try:
+            creds = ensure_platform_token_sync(
+                root,
+                proxy_base_url=proxy_base,
+                timeout_s=state.settings.mini_auth_timeout_s,
+            )
+            proxy_token = creds.access_token
+        except Exception:  # noqa: BLE001
+            proxy_token = ""
     try:
-        apply_platform_model(state.config, model_id)
+        apply_platform_model(
+            state.config,
+            model_id,
+            proxy_base_url=proxy_base,
+            proxy_token=proxy_token,
+        )
     except KeyError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
     state.save_config()

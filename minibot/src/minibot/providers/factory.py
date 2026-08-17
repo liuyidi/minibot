@@ -60,6 +60,8 @@ def build_provider_chain(
     stats: FallbackStats | None = None,
     on_switch: Any | None = None,
     fault: Any | None = None,
+    proxy_base_url: str = "",
+    proxy_token: str = "",
 ) -> LLMProvider:
     """Build primary provider, wrapping FallbackProvider when preset.fallback is set.
 
@@ -70,6 +72,7 @@ def build_provider_chain(
     from minibot.config.platform_models import (
         first_available_platform_runtime,
         resolve_platform_runtime,
+        resolve_platform_runtime_proxied,
     )
     from minibot.config.presets import ensure_presets, find_preset
     from minibot.providers.fault_inject import FaultInjectingProvider
@@ -86,9 +89,17 @@ def build_provider_chain(
     )
     primary_base = config.openai_base_url or ""
 
+    proxy_base = (proxy_base_url or "").strip()
+    proxy_tok = (proxy_token or "").strip()
+
     platform_id = (getattr(config, "active_platform_model", None) or "").strip()
     if platform_id:
-        runtime = resolve_platform_runtime(platform_id)
+        if proxy_base:
+            runtime = resolve_platform_runtime_proxied(
+                platform_id, proxy_base_url=proxy_base, proxy_token=proxy_tok
+            )
+        else:
+            runtime = resolve_platform_runtime(platform_id)
         if runtime is not None and runtime.available:
             primary_id = runtime.id
             primary_label = runtime.label
@@ -97,7 +108,9 @@ def build_provider_chain(
             primary_key = runtime.api_key
             primary_base = runtime.api_base
     elif (primary_provider_name or "").strip() == "auto":
-        runtime = first_available_platform_runtime()
+        runtime = first_available_platform_runtime(
+            proxy_base_url=proxy_base, proxy_token=proxy_tok
+        )
         if runtime is not None:
             primary_id = runtime.id
             primary_label = runtime.label

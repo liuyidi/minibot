@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import logging
 import platform
 import subprocess
 import time
@@ -12,7 +13,7 @@ from urllib.parse import quote, urlencode
 
 import httpx
 from fastapi import APIRouter, Cookie, Header, HTTPException, Query, Request, status
-from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse, Response
 from pydantic import BaseModel, Field
 
 from minibot.api.deps import AUTH_COOKIE_NAME, StateDep
@@ -20,8 +21,10 @@ from minibot.app_state import MiniAuthLoginRecord
 from minibot.webui_static import resolve_webui_dist
 
 router = APIRouter(tags=["auth"])
+log = logging.getLogger("minibot.auth")
 
 _DESKTOP_DONE_PATH = "auth/desktop-done.html"
+_DESKTOP_LOGGED_OUT_PATH = "auth/desktop-logged-out.html"
 _FALLBACK_DESKTOP_DONE_HTML = """<!DOCTYPE html>
 <html lang="zh-CN">
 <head><meta charset="utf-8" /><title>登录成功</title></head>
@@ -33,14 +36,33 @@ _FALLBACK_DESKTOP_DONE_HTML = """<!DOCTYPE html>
 </body>
 </html>
 """
+_FALLBACK_DESKTOP_LOGGED_OUT_HTML = """<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="utf-8" /><title>已退出</title></head>
+<body style="font-family:system-ui;display:grid;place-items:center;min-height:100vh;margin:0">
+  <main style="text-align:center">
+    <h1>已退出登录</h1>
+    <p>可以关闭此浏览器标签。</p>
+  </main>
+</body>
+</html>
+"""
 
 
-def _desktop_done_file() -> Path | None:
+def _webui_auth_page(relative: str) -> Path | None:
     dist = resolve_webui_dist()
     if dist is None:
         return None
-    path = dist / _DESKTOP_DONE_PATH
+    path = dist / relative
     return path if path.is_file() else None
+
+
+def _desktop_done_file() -> Path | None:
+    return _webui_auth_page(_DESKTOP_DONE_PATH)
+
+
+def _desktop_logged_out_file() -> Path | None:
+    return _webui_auth_page(_DESKTOP_LOGGED_OUT_PATH)
 
 
 def _focus_desktop_app() -> dict[str, object]:
@@ -213,7 +235,7 @@ async def _exchange_mini_auth_code(
     code: str,
     login_record: MiniAuthLoginRecord,
     redirect_uri: str,
-) -> tuple[dict[str, str | None], int]:
+) -> tuple[dict[str, str | None], int, str]:
     base_url = state.settings.mini_auth_base_url.rstrip("/")
     token_url = f"{base_url}/oauth/token"
     userinfo_url = f"{base_url}/oauth/userinfo"
@@ -266,7 +288,55 @@ async def _exchange_mini_auth_code(
             detail=f"mini-auth callback failed: {exc}",
         ) from exc
 
-    return account_from_mini_auth_userinfo(userinfo), expires_in
+    return account_from_mini_auth_userinfo(userinfo), expires_in, str(access_token)
+
+
+async def _sync_platform_proxy_credentials(
+    state: StateDep,
+    account: dict[str, str | None],
+    mini_auth_access_token: str,
+) -> None:
+    """After login: persist mini-auth token and exchange for cloud platform token."""
+    from minibot.config.platform_credentials import (
+        PlatformCredentials,
+        ensure_platform_token,
+        platform_proxy_mode_enabled,
+        save_platform_credentials,
+    )
+    from minibot.user_runtime import resolve_user_root
+
+    if not platform_proxy_mode_enabled(state.settings):
+        return
+    user_id = str(account.get("id") or "").strip()
+    mini = (mini_auth_access_token or "").strip()
+    if not user_id or not mini:
+        return
+    root = resolve_user_root(state.settings, user_id)
+    proxy = state.settings.platform_proxy_base_url.strip()
+    try:
+        await ensure_platform_token(
+            root,
+            proxy_base_url=proxy,
+            mini_auth_access_token=mini,
+            timeout_s=state.settings.mini_auth_timeout_s,
+        )
+    except Exception as exc:  # noqa: BLE001 — login must still succeed
+        save_platform_credentials(
+            root,
+            PlatformCredentials(mini_auth_access_token=mini, access_token="", expires_at=0),
+        )
+        log.warning("platform token exchange failed user_id=%s: %s", user_id, exc)
+
+
+def _clear_platform_proxy_credentials(state: StateDep, token: str | None) -> None:
+    from minibot.config.platform_credentials import clear_platform_credentials
+    from minibot.user_runtime import resolve_user_root
+
+    account = state.token_account(token) if token else None
+    user_id = str((account or {}).get("id") or "").strip()
+    if not user_id:
+        return
+    clear_platform_credentials(resolve_user_root(state.settings, user_id))
 
 
 @router.get("/auth/config", response_model=AuthConfigResponse)
@@ -347,12 +417,13 @@ async def mini_auth_callback(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired login state")
 
     redirect_uri = login_record.redirect_uri or _http_callback_url(request, state)
-    account, expires_in = await _exchange_mini_auth_code(
+    account, expires_in, mini_access = await _exchange_mini_auth_code(
         state,
         code=code,
         login_record=login_record,
         redirect_uri=redirect_uri,
     )
+    await _sync_platform_proxy_credentials(state, account, mini_access)
     session_token = state.issue_token(ttl_s=expires_in, account=account)
     if login_record.desktop_login_id:
         state.put_desktop_handoff(
@@ -381,6 +452,18 @@ async def desktop_done():
     if path is not None:
         return FileResponse(path, media_type="text/html; charset=utf-8")
     return HTMLResponse(content=_FALLBACK_DESKTOP_DONE_HTML, status_code=status.HTTP_200_OK)
+
+
+@router.get("/auth/desktop/logged-out", response_model=None)
+async def desktop_logged_out():
+    """Browser landing page after desktop IdP logout."""
+    path = _desktop_logged_out_file()
+    if path is not None:
+        return FileResponse(path, media_type="text/html; charset=utf-8")
+    return HTMLResponse(
+        content=_FALLBACK_DESKTOP_LOGGED_OUT_HTML,
+        status_code=status.HTTP_200_OK,
+    )
 
 
 @router.post("/auth/desktop/focus")
@@ -421,12 +504,13 @@ async def desktop_complete(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired login state")
 
     redirect_uri = login_record.redirect_uri or _desktop_callback_url(state)
-    account, expires_in = await _exchange_mini_auth_code(
+    account, expires_in, mini_access = await _exchange_mini_auth_code(
         state,
         code=body.code,
         login_record=login_record,
         redirect_uri=redirect_uri,
     )
+    await _sync_platform_proxy_credentials(state, account, mini_access)
     session_token = state.issue_token(ttl_s=expires_in, account=account)
     return DesktopCompleteResponse(
         token=session_token,
@@ -466,11 +550,18 @@ async def logout(
     request: Request,
     state: StateDep,
     next: str | None = Query(default="/"),
+    local: bool = Query(default=False),
     x_minibot_auth: str | None = Header(default=None, alias="X-Minibot-Auth"),
     minibot_auth_token: str | None = Cookie(default=None, alias=AUTH_COOKIE_NAME),
-) -> RedirectResponse:
+) -> Response:
     supplied = _token_from_request(request, x_minibot_auth, minibot_auth_token)
+    _clear_platform_proxy_credentials(state, supplied)
     state.revoke_token(supplied)
+    # Desktop WebView clears its own cookie here; IdP logout happens in the system browser.
+    if local:
+        response: Response = Response(status_code=status.HTTP_204_NO_CONTENT)
+        response.delete_cookie(AUTH_COOKIE_NAME, path="/")
+        return response
     if state.settings.normalized_auth_provider() == "mini_auth":
         next_target = _absolute_next_url(request, next)
         mini_auth_logout = (

@@ -52,6 +52,11 @@ Useful overrides:
 |---|---|
 | `MINIBOT_API_BASE` | Gateway URL (default `http://127.0.0.1:8766`) |
 | `MINIBOT_SIDECAR` | Force engine binary (freeze output or `uv` shim) |
+| `MINIBOT_SERVER_PLATFORM_PROXY_BASE_URL` | Cloud platform LLM proxy (default `https://bot.liuyidi.me`) |
+| `MINIBOT_ENV_MODELS` | Optional local `.env.models` for **dev BYOK only** (not for shipping keys) |
+
+**Shipped desktop:** platform models use the cloud proxy (no vendor keys in the `.app`).  
+Do not distribute operator `.env.models` to end users.
 
 ## 2. Login flow (system browser)
 

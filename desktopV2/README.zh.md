@@ -52,6 +52,11 @@ npm run dev
 |---|---|
 | `MINIBOT_API_BASE` | Gateway 地址（默认 `http://127.0.0.1:8766`） |
 | `MINIBOT_SIDECAR` | 强制指定引擎二进制（冻结产物或 uv 入口） |
+| `MINIBOT_SERVER_PLATFORM_PROXY_BASE_URL` | 云端平台模型代理（默认 `https://bot.liuyidi.me`） |
+| `MINIBOT_ENV_MODELS` | 可选本地 `.env.models`（**仅开发 BYOK**，不要用来给用户发密钥） |
+
+**对外桌面端：** 平台模型走云端 `/platform/v1` 代理，`.app` 内不含厂商 key。  
+不要把运营方的 `.env.models` 分发给最终用户。
 
 ## 2. 登录流程（系统浏览器）
 

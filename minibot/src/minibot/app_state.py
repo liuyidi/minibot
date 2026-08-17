@@ -220,9 +220,35 @@ class AppState:
         return self.settings.normalized_auth_provider() == "mini_auth"
 
     def rebuild_provider(self) -> None:
-        # Platform keys stay in env; do not copy them into config.json.
+        # Platform keys stay in env / cloud proxy; do not copy them into config.json.
         runtime = self.runtime_for()
-        provider = build_provider_chain(runtime.config, stats=self.fallback_stats, fault=self.fault_controller)
+        proxy_base = ""
+        proxy_token = ""
+        from minibot.config.platform_credentials import (
+            ensure_platform_token_sync,
+            platform_proxy_mode_enabled,
+        )
+        from minibot.user_runtime import resolve_user_root
+
+        if platform_proxy_mode_enabled(self.settings):
+            proxy_base = self.settings.platform_proxy_base_url.strip()
+            root = resolve_user_root(self.settings, runtime.user_id)
+            try:
+                creds = ensure_platform_token_sync(
+                    root,
+                    proxy_base_url=proxy_base,
+                    timeout_s=self.settings.mini_auth_timeout_s,
+                )
+                proxy_token = creds.access_token
+            except Exception:  # noqa: BLE001
+                proxy_token = ""
+        provider = build_provider_chain(
+            runtime.config,
+            stats=self.fallback_stats,
+            fault=self.fault_controller,
+            proxy_base_url=proxy_base,
+            proxy_token=proxy_token,
+        )
         runtime.runner = AgentRunner(provider)
         runtime.loop.runner = runtime.runner
 
