@@ -20,6 +20,7 @@ English: [CHANGELOG.md](./CHANGELOG.md)
 
 - 公开下载改为本机 gateway 桌面端。源码目录为 `desktop/`（由 `desktopV2/` 改名）；旧远程薄壳目录已删除。
 - `liuyidi.me` 入口页改为 Direction 02：白底近黑、入口整卡、黑主按钮「打开 Agent」。
+- `liuyidi.me` 首页改为 minibot 产品页：突出多端 / 多渠道 / Agent，并给出 Desktop 下载。
 
 ## [1.0.13] - 2026-08-17
 

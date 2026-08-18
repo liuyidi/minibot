@@ -13,14 +13,25 @@ const messages = {
     "nav.auth": "认证",
     "nav.ship": "小工具",
     "nav.github": "GitHub",
-    "hero.eyebrow": "Agent Lab · Personal Stack",
-    "hero.title": "自己造的一套<br /><em>Agent 工程栈</em>",
+    "hero.eyebrow": "minibot",
+    "hero.title": "本地优先的 AI Agent 运行时",
     "hero.lede":
-      "Runtime · 可观测 · 知识库 · 认证 · 发布通知。可演示、可部署、可讲清楚取舍。",
+      "Web / Desktop / CLI / App 同一套协议；飞书、微信把任务交给同一个 runtime。能调工具、改文件、跑命令，不只是聊天。",
     "cta.agent": "打开 Agent",
-    "cta.devui": "看开发笔记 /ui",
+    "cta.desktop": "下载 Desktop",
+    "pillar.surfaces.title": "多端",
+    "pillar.surfaces.tags": "Web · Desktop · CLI · App",
+    "pillar.surfaces.body": "同一套 REST + WebSocket。会话协议不绑死在某一个客户端上。",
+    "pillar.channels.title": "多渠道",
+    "pillar.channels.tags": "飞书 · 微信 iLink",
+    "pillar.channels.body": "扫码接入与配对；IM 里的任务进同一个 Agent Loop。",
+    "pillar.agent.title": "Agent",
+    "pillar.agent.tags": "工具循环 · 文件 · exec / MCP / Skills · HITL · Cron",
+    "pillar.agent.body": "不像聊天框。更接近 OpenClaw 这类能交付结果的 runtime。",
+    "shot.caption": "本机 gateway，会话留在这台电脑。",
+    "series.title": "系列",
     "entry.bot.kicker": "01 · Agent",
-    "entry.bot.desc": "对话、工具循环、流式输出；可查知识库。",
+    "entry.bot.desc": "FastAPI runtime：工具循环、会话、MCP、流式输出。",
     "entry.bot.go": "打开 bot.liuyidi.me →",
     "entry.mlf.kicker": "02 · Observability",
     "entry.mlf.desc": "Traces / Sessions / Scores；看清每一轮 Agent。",
@@ -34,14 +45,7 @@ const messages = {
     "entry.ship.kicker": "05 · Tools",
     "entry.ship.desc": "发布与部署事件 → 飞书通知卡片。",
     "entry.ship.go": "打开 serverless-ship.liuyidi.me →",
-    "path":
-      "<strong>建议走查顺序：</strong>先在 Agent 里聊一句 → 打开可观测看 Trace → 再到知识库上传/检索；认证与发布通知可按需打开。",
-    "skills.title": "我能讲清楚的能力",
-    "skills.1": "<strong>Agent Loop</strong> — 多轮 tool calling、锁与并发、会话持久化",
-    "skills.2": "<strong>可观测</strong> — span/trace、评分、评测跑批、SSE 实时刷新",
-    "skills.3":
-      "<strong>工程交付</strong> — Docker Compose、Nginx HTTPS、国内镜像源、2C2G 省内存部署",
-    "skills.4": "<strong>产品化</strong> — 主站 WebUI + DevUI 双轨，既能用又能讲清实现",
+    "footer.devui": "开发笔记 DevUI /ui",
   },
   en: {
     "nav.overview": "Overview",
@@ -51,14 +55,25 @@ const messages = {
     "nav.auth": "Auth",
     "nav.ship": "Tools",
     "nav.github": "GitHub",
-    "hero.eyebrow": "Agent Lab · Personal Stack",
-    "hero.title": "A handmade<br /><em>Agent engineering stack</em>",
+    "hero.eyebrow": "minibot",
+    "hero.title": "A local-first AI agent runtime",
     "hero.lede":
-      "Runtime · observability · knowledge · auth · release notify. Demoable, deployable, explainable.",
+      "One protocol for Web / Desktop / CLI / App. Feishu and WeChat talk to the same runtime. Tools, files, and commands — not just chat.",
     "cta.agent": "Open Agent",
-    "cta.devui": "Dev notes /ui",
+    "cta.desktop": "Download Desktop",
+    "pillar.surfaces.title": "Surfaces",
+    "pillar.surfaces.tags": "Web · Desktop · CLI · App",
+    "pillar.surfaces.body": "The same REST + WebSocket stack. Sessions are not tied to one client.",
+    "pillar.channels.title": "Channels",
+    "pillar.channels.tags": "Feishu · WeChat iLink",
+    "pillar.channels.body": "Scan to pair. IM tasks enter the same agent loop.",
+    "pillar.agent.title": "Agent",
+    "pillar.agent.tags": "Tool loop · Files · exec / MCP / Skills · HITL · Cron",
+    "pillar.agent.body": "Closer to OpenClaw-style runtimes that ship work, not a chat box.",
+    "shot.caption": "Local gateway — sessions stay on this machine.",
+    "series.title": "Series",
     "entry.bot.kicker": "01 · Agent",
-    "entry.bot.desc": "Chat, tool loop, streaming; can query the knowledge base.",
+    "entry.bot.desc": "FastAPI runtime: tool loop, sessions, MCP, streaming.",
     "entry.bot.go": "Open bot.liuyidi.me →",
     "entry.mlf.kicker": "02 · Observability",
     "entry.mlf.desc": "Traces / Sessions / Scores — inspect every agent turn.",
@@ -72,15 +87,7 @@ const messages = {
     "entry.ship.kicker": "05 · Tools",
     "entry.ship.desc": "Release & deploy events → Feishu notification cards.",
     "entry.ship.go": "Open serverless-ship.liuyidi.me →",
-    "path":
-      "<strong>Suggested walkthrough:</strong> chat in Agent → open Observability for a Trace → upload/search in Knowledge; open Auth or ServerlessShip as needed.",
-    "skills.title": "What I can walk through",
-    "skills.1":
-      "<strong>Agent Loop</strong> — multi-turn tool calling, locks/concurrency, session persistence",
-    "skills.2": "<strong>Observability</strong> — span/trace, scoring, eval runs, live SSE",
-    "skills.3":
-      "<strong>Delivery</strong> — Docker Compose, Nginx HTTPS, CN mirrors, 2C2G-friendly deploy",
-    "skills.4": "<strong>Productization</strong> — WebUI + DevUI dual track: usable and explainable",
+    "footer.devui": "Dev notes DevUI /ui",
   },
 };
 
@@ -138,14 +145,45 @@ function onLocaleChange(event) {
     <main>
       <section class="hero">
         <p class="eyebrow">{{ t("hero.eyebrow") }}</p>
-        <h1 v-html="t('hero.title')" />
+        <h1>{{ t("hero.title") }}</h1>
         <p class="lede">{{ t("hero.lede") }}</p>
         <div class="cta">
           <a class="btn primary" href="https://bot.liuyidi.me/">{{ t("cta.agent") }}</a>
-          <a class="btn ghost" href="https://bot.liuyidi.me/ui/">{{ t("cta.devui") }}</a>
+          <a class="btn ghost" href="https://bot.liuyidi.me/#/download/">{{
+            t("cta.desktop")
+          }}</a>
         </div>
       </section>
 
+      <section class="pillars" aria-label="Capabilities">
+        <article class="pillar">
+          <h2>{{ t("pillar.surfaces.title") }}</h2>
+          <p class="tags">{{ t("pillar.surfaces.tags") }}</p>
+          <p>{{ t("pillar.surfaces.body") }}</p>
+        </article>
+        <article class="pillar">
+          <h2>{{ t("pillar.channels.title") }}</h2>
+          <p class="tags">{{ t("pillar.channels.tags") }}</p>
+          <p>{{ t("pillar.channels.body") }}</p>
+        </article>
+        <article class="pillar">
+          <h2>{{ t("pillar.agent.title") }}</h2>
+          <p class="tags">{{ t("pillar.agent.tags") }}</p>
+          <p>{{ t("pillar.agent.body") }}</p>
+        </article>
+      </section>
+
+      <figure class="shot">
+        <img
+          src="/minibot/macos-client-preview.png"
+          width="1600"
+          height="1000"
+          alt="minibot Desktop：侧栏对话与频道，主区是输入、权限和模型"
+        />
+        <p>{{ t("shot.caption") }}</p>
+      </figure>
+
+      <p class="section-title">{{ t("series.title") }}</p>
       <section class="entries" aria-label="Product entries">
         <a class="entry" href="https://bot.liuyidi.me/">
           <span class="kicker">{{ t("entry.bot.kicker") }}</span>
@@ -178,22 +216,12 @@ function onLocaleChange(event) {
           <span class="go">{{ t("entry.ship.go") }}</span>
         </a>
       </section>
-
-      <section class="below">
-        <p class="path" v-html="t('path')" />
-        <details>
-          <summary>{{ t("skills.title") }}</summary>
-          <ul>
-            <li v-html="t('skills.1')" />
-            <li v-html="t('skills.2')" />
-            <li v-html="t('skills.3')" />
-            <li v-html="t('skills.4')" />
-          </ul>
-        </details>
-      </section>
     </main>
 
     <footer>
+      <p class="note">
+        <a href="https://bot.liuyidi.me/ui/">{{ t("footer.devui") }}</a>
+      </p>
       <p class="beian">
         <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer"
           >浙ICP备2026062548号-1</a

@@ -1,7 +1,7 @@
 # liuyidi.me 首页改为 minibot 产品页
 
 日期：2026-08-18  
-状态：设计已定稿，待实现  
+状态：已实现  
 关联：Direction 02 门户已上线；本轮补信息层次，不改视觉语言。
 
 ## 问题
@@ -53,8 +53,8 @@
 
 ## 验收
 
-- [ ] 首屏能读出 minibot 是什么，以及多端 / 多渠道 / Agent 三点。
-- [ ] 主次 CTA 为 Web 与 Desktop 下载；无 App 安装按钮。
-- [ ] 系列五入口仍在，靠后。
-- [ ] Direction 02 规则仍成立。
-- [ ] `cd site && npm run docs:build && npm run docs:check` 通过。
+- [x] 首屏能读出 minibot 是什么，以及多端 / 多渠道 / Agent 三点。
+- [x] 主次 CTA 为 Web 与 Desktop 下载；无 App 安装按钮。
+- [x] 系列五入口仍在，靠后。
+- [x] Direction 02 规则仍成立。
+- [x] `cd site && npm run docs:build && npm run docs:check` 通过。

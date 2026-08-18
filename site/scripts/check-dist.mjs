@@ -45,11 +45,17 @@ for (const href of live) {
 if (!portal.includes("打开 Agent") && !portal.includes("Open Agent")) {
   throw new Error("portal is missing the primary Agent CTA");
 }
+if (!portal.includes("#/download/") && !portal.includes("#/download")) {
+  throw new Error("portal is missing the Desktop download CTA");
+}
+if (!portal.includes('class="pillars"') && !portal.includes("class='pillars'")) {
+  throw new Error("portal is missing capability pillars");
+}
+if (!portal.includes("macos-client-preview")) {
+  throw new Error("portal is missing the desktop screenshot");
+}
 if (!portal.includes('class="entry"') && !portal.includes("class='entry'")) {
   throw new Error("portal is missing entry tiles");
-}
-if (!portal.includes("<details")) {
-  throw new Error("portal is missing collapsed skills");
 }
 
 if (!portal.includes("/minibot/")) {
