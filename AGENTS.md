@@ -11,6 +11,7 @@ Layout:
 minibot/     # Python package (agent loop, channels, tools, API)
 webui/       # Vite React SPA (build → webui/dist)
 desktop/     # Desktop app (local gateway + sidecar)
+site/        # VitePress public site (liuyidi.me / minibot overview)
 Dockerfile.minibot
 ```
 
@@ -30,6 +31,10 @@ cd minibot && uv run ruff check src/minibot
 cd webui && npm install && npm run dev    # MINIBOT_API_URL=http://127.0.0.1:8766
 cd webui && npm run build                # → webui/dist
 cd webui && npm test
+
+# Public site (https://liuyidi.me)
+cd site && npm ci && npm run docs:dev    # / and /minibot/
+cd site && npm run docs:build && npm run docs:check
 ```
 
 Demo image:

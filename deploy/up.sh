@@ -40,6 +40,8 @@ echo "Health:"
 curl -fsS http://127.0.0.1:8766/health && echo "  minibot ok" || echo "  minibot FAIL"
 curl -fsS -o /dev/null -w "  webui / %{http_code}\n" http://127.0.0.1:8766/ || true
 curl -fsS -o /dev/null -w "  landing %{http_code}\n" https://liuyidi.me/ || true
+curl -fsS -o /dev/null -w "  overview %{http_code}\n" https://liuyidi.me/minibot/ || true
+curl -fsS -o /dev/null -w "  changelog %{http_code}\n" https://liuyidi.me/minibot/changelog/ || true
 curl -fsS -o /dev/null -w "  bot %{http_code}\n" https://bot.liuyidi.me/ || true
 curl -fsS https://kb.liuyidi.me/health >/dev/null \
   && echo "  minikb (public) ok" \

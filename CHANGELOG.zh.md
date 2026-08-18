@@ -9,6 +9,7 @@ English: [CHANGELOG.md](./CHANGELOG.md)
 
 ---
 
+<!-- #region site-changelog -->
 ## [Unreleased]
 
 ### 变更
@@ -356,3 +357,4 @@ English: [CHANGELOG.md](./CHANGELOG.md)
 - 多会话 **JSONL** 历史；OpenAI 兼容 Provider。
 - 内嵌 Dev UI（`/ui/` Chat / Trace / Runtime 等）与产品 WebUI 路径骨架。
 - 配置密钥后的 bootstrap 鉴权（`X-Minibot-Auth` / Bearer）。
+<!-- #endregion -->

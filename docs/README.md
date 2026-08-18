@@ -6,7 +6,8 @@
 
 | 文档 | 用途 |
 |------|------|
-| [`CHANGELOG.md`](../CHANGELOG.md) / [`CHANGELOG.zh.md`](../CHANGELOG.zh.md) | **产品更新日志**（用户向时间线） |
+| [`CHANGELOG.md`](../CHANGELOG.md) / [`CHANGELOG.zh.md`](../CHANGELOG.zh.md) | **产品更新日志**（用户向时间线；公网：[liuyidi.me/minibot/changelog](https://liuyidi.me/minibot/changelog/)） |
+| 公网简介 | [https://liuyidi.me/minibot/](https://liuyidi.me/minibot/) |
 | [`getting-started.md`](./getting-started.md) | 本地启动 minibot + Dev UI / WebUI |
 | [`status.md`](./status.md) | **现状快照**：已实现能力、配置位置、下一刀 |
 | [`migration.md`](./migration.md) | **主路线图**（Phase / MSV / checklist） |

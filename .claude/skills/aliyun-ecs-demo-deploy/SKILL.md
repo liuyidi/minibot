@@ -14,7 +14,7 @@ description: >-
 
 | 域名 | 服务 | 本机 |
 |------|------|------|
-| https://liuyidi.me | 静态落地页 | `deploy/landing/` |
+| https://liuyidi.me | VitePress 公开站 | `site/` → `site/.vitepress/dist` |
 | https://bot.liuyidi.me | minibot + WebUI | `:8766` |
 | https://kb.liuyidi.me | minikb（Volcengine） | nginx 反代 `101.96.224.232:80` |
 | https://mlf.liuyidi.me | mini-langfuse | **腾讯云**（不要在本机起） |
@@ -32,9 +32,10 @@ Compose 入口：`/opt/demo/minibot/deploy/`（`.env`、`docker-compose.yml`、`
 ## 何时用哪条路径
 
 1. **只改了 minibot / WebUI** → 拉 `minibot` + `./up.sh`（或只 `build` + `up -d minibot`）
-2. **只改了 minikb** → minikb 仓 `publish-volcengine-minikb.yml`
-3. **改了 mlf** → 腾讯云 / mini-langfuse `deploy/`（不要碰阿里云 compose）
-4. **kb 反代** → 改 `deploy/nginx.liuyidi.me.conf.example` 中 `upstream demo_kb` 后 reload nginx
+2. **改了 `site/` 或 `CHANGELOG.zh.md`（liuyidi.me）** → 拉代码 + `deploy/build-site.sh`；若 nginx 片段变了再 `nginx -t && reload`
+3. **只改了 minikb** → minikb 仓 `publish-volcengine-minikb.yml`
+4. **改了 mlf** → 腾讯云 / mini-langfuse `deploy/`（不要碰阿里云 compose）
+5. **kb 反代** → 改 `deploy/nginx.liuyidi.me.conf.example` 中 `upstream demo_kb` 后 reload nginx
 
 ## SSH
 
@@ -56,6 +57,9 @@ git fetch origin main
 git reset --hard origin/main
 git rev-parse --short HEAD
 
+# Public site (liuyidi.me) — keep previous dist if this fails
+/opt/demo/minibot/deploy/build-site.sh
+
 cd /opt/demo/minibot/deploy
 # 不要 bash source .env（SCOPE 含空格会炸）
 export LANGFUSE_SDK_DIR=/opt/demo/mini-langfuse/sdk-python
@@ -65,6 +69,9 @@ docker compose -f docker-compose.yml --env-file .env up -d minibot
 sleep 2
 curl -fsS http://127.0.0.1:8766/health
 curl -fsS -o /dev/null -w "webui %{http_code}\n" http://127.0.0.1:8766/
+curl -fsS -o /dev/null -w "landing %{http_code}\n" https://liuyidi.me/
+curl -fsS -o /dev/null -w "overview %{http_code}\n" https://liuyidi.me/minibot/
+curl -fsS -o /dev/null -w "changelog %{http_code}\n" https://liuyidi.me/minibot/changelog/
 '
 ```
 
@@ -73,6 +80,8 @@ curl -fsS -o /dev/null -w "webui %{http_code}\n" http://127.0.0.1:8766/
 ```bash
 curl -fsS http://127.0.0.1:8766/health
 curl -fsS -o /dev/null -w "landing %{http_code}\n" https://liuyidi.me/
+curl -fsS -o /dev/null -w "overview %{http_code}\n" https://liuyidi.me/minibot/
+curl -fsS -o /dev/null -w "changelog %{http_code}\n" https://liuyidi.me/minibot/changelog/
 curl -fsS -o /dev/null -w "bot %{http_code}\n" https://bot.liuyidi.me/
 curl -fsS https://kb.liuyidi.me/health
 curl -fsS -o /dev/null -w "mlf %{http_code}\n" https://mlf.liuyidi.me/
@@ -88,6 +97,7 @@ docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 | 会话数据丢了 | `.env` 里 `MINIBOT_DATA_VOLUME=agent-demo_demo_minibot` |
 | 侧边栏仍旧 | 重建镜像 + 浏览器硬刷新 |
 | 误起 mlf | 阿里云不要再 `up` mini-langfuse；mlf 只在腾讯云 |
+| `/minibot/` 仍是门户 | nginx 还在 `deploy/landing` 且 `try_files … /index.html`；切到 `site/.vitepress/dist` 并无 SPA 回退 |
 
 ## 快速口令
 
@@ -96,6 +106,7 @@ PEM=~/Downloads/agent.pem
 HOST=root@116.62.35.76
 ssh -i "$PEM" -o StrictHostKeyChecking=no "$HOST" \
   'cd /opt/demo/minibot && git fetch origin main && git reset --hard origin/main && \
+   ./deploy/build-site.sh && \
    cd deploy && export LANGFUSE_SDK_DIR=/opt/demo/mini-langfuse/sdk-python && \
    docker compose -f docker-compose.yml --env-file .env build minibot && \
    docker compose -f docker-compose.yml --env-file .env up -d minibot && \

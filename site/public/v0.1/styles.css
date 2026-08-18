@@ -1,0 +1,215 @@
+/* V0.1 — extends parent tokens; entry tiles are the first-viewport focus. */
+@import url("../styles.css");
+
+.preview-banner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0.65rem 1.5rem 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.preview-banner a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.preview-banner a:hover {
+  text-decoration: underline;
+}
+
+.top.compact nav a:not(.ghost-link) {
+  display: none;
+}
+
+.top.compact .ghost-link {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.top.compact .ghost-link:hover {
+  color: var(--ink);
+}
+
+.hero.v01 {
+  padding: 2.5rem 1.5rem 1.5rem;
+}
+
+.hero.v01 .lede {
+  margin-bottom: 1.75rem;
+  max-width: 32rem;
+}
+
+.entries {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 1.5rem 2.5rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.entry {
+  display: flex;
+  flex-direction: column;
+  min-height: 11.5rem;
+  padding: 1.35rem 1.25rem;
+  border-radius: 1rem;
+  border: 1px solid var(--line);
+  background: var(--card);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  animation: rise 0.75s ease-out both;
+}
+
+.entry:nth-child(2) {
+  animation-delay: 0.08s;
+}
+
+.entry:nth-child(3) {
+  animation-delay: 0.16s;
+}
+
+.entry:nth-child(4) {
+  animation-delay: 0.24s;
+}
+
+.entry:nth-child(5) {
+  animation-delay: 0.32s;
+}
+
+.entry:hover {
+  border-color: rgba(61, 214, 198, 0.45);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+}
+
+.entry .kicker {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 0.55rem;
+}
+
+.entry h2 {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 1.55rem;
+  margin: 0 0 0.55rem;
+  line-height: 1.15;
+}
+
+.entry p {
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.5;
+  margin: 0;
+  flex: 1;
+}
+
+.entry .go {
+  margin-top: 1.1rem;
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.secondary-links {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 1.5rem 2.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 1.5rem;
+  font-size: 0.9rem;
+}
+
+.secondary-links a {
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.secondary-links a:hover {
+  color: var(--ink);
+}
+
+.below {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 1.5rem 3rem;
+  border-top: 1px solid var(--line);
+  padding-top: 2rem;
+}
+
+.below details {
+  border: 1px solid var(--line);
+  border-radius: 0.85rem;
+  background: var(--card);
+  padding: 0.85rem 1.1rem;
+}
+
+.below summary {
+  cursor: pointer;
+  font-family: var(--serif);
+  font-size: 1.35rem;
+  list-style: none;
+  color: var(--ink);
+}
+
+.below summary::-webkit-details-marker {
+  display: none;
+}
+
+.below summary::after {
+  content: " +";
+  color: var(--accent);
+  font-family: var(--sans);
+  font-size: 0.95rem;
+}
+
+.below details[open] summary::after {
+  content: " −";
+}
+
+.below ul {
+  list-style: none;
+  padding: 1rem 0 0.25rem;
+  margin: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.below li {
+  border-left: 3px solid var(--accent);
+  padding: 0.25rem 0 0.25rem 0.9rem;
+  color: var(--muted);
+  line-height: 1.5;
+  font-size: 0.95rem;
+}
+
+.below strong {
+  color: var(--ink);
+}
+
+.path {
+  margin-bottom: 1.25rem;
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+.path strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+@media (max-width: 840px) {
+  .entries {
+    grid-template-columns: 1fr;
+  }
+}

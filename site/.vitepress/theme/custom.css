@@ -1,0 +1,21 @@
+@import "./mini-brand.tokens.css";
+
+:root {
+  --vp-c-brand-1: var(--mini-color-ink);
+  --vp-c-brand-2: var(--mini-color-ink-soft);
+  --vp-c-brand-3: var(--mini-color-ink);
+  --vp-c-bg: var(--mini-color-canvas);
+  --vp-c-bg-alt: var(--mini-color-surface);
+  --vp-c-bg-elv: var(--mini-color-canvas);
+  --vp-c-bg-soft: var(--mini-color-surface);
+  --vp-c-text-1: var(--mini-color-ink);
+  --vp-c-text-2: var(--mini-color-ink-soft);
+  --vp-c-text-3: var(--mini-color-muted);
+  --vp-c-divider: var(--mini-color-border-soft);
+  --vp-c-gutter: var(--mini-color-border-soft);
+  --vp-c-border: var(--mini-color-border-soft);
+  --vp-button-brand-bg: var(--mini-color-ink);
+  --vp-button-brand-hover-bg: var(--mini-color-ink-soft);
+  --vp-button-brand-text: var(--mini-color-canvas);
+  --vp-font-family-base: var(--mini-font-sans);
+}

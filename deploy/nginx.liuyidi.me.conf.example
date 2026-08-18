@@ -5,9 +5,9 @@
 # this host; leave that alone when installing this template.
 #
 # Layout on ECS:
-#   /opt/demo/minibot/deploy/landing/   → https://liuyidi.me
-#   minibot container                   → 127.0.0.1:8766
-#   Volcengine minikb                   → 101.96.224.232:80
+#   /opt/demo/minibot/site/.vitepress/dist  → https://liuyidi.me
+#   minibot container                       → 127.0.0.1:8766
+#   Volcengine minikb                       → 101.96.224.232:80
 #
 # Install (after Certbot already issued certs for liuyidi.me / bot / kb):
 #   1. Merge ssl_certificate lines from the live site into each 443 server
@@ -48,11 +48,12 @@ server {
     # ssl_certificate     /etc/letsencrypt/live/mlf.liuyidi.me/fullchain.pem;
     # ssl_certificate_key /etc/letsencrypt/live/mlf.liuyidi.me/privkey.pem;
 
-    root /opt/demo/minibot/deploy/landing;
+    root /opt/demo/minibot/site/.vitepress/dist;
     index index.html;
+    error_page 404 /404.html;
 
     location / {
-        try_files $uri $uri/ /index.html;
+        try_files $uri $uri.html $uri/index.html =404;
     }
 }
 

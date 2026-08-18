@@ -42,6 +42,7 @@
 minibot/              # Python 包（Agent、API、频道、工具）
 webui/                # Vite + React SPA（构建 → webui/dist）
 desktop/              # 桌面端（本机 gateway + sidecar）
+site/                 # VitePress 公开站（liuyidi.me / minibot 简介）
 Dockerfile.minibot    # 运行时 + WebUI 一体镜像
 docs/                 # 设计与分阶段文档
 packages/             # 可选共享客户端包
@@ -162,7 +163,10 @@ cd webui && npm test
 
 ## 更新日志
 
-见 [`CHANGELOG.zh.md`](./CHANGELOG.zh.md)（[English](./CHANGELOG.md)）。
+公网：[https://liuyidi.me/minibot/changelog/](https://liuyidi.me/minibot/changelog/)  
+源文件：[`CHANGELOG.zh.md`](./CHANGELOG.zh.md)（[English](./CHANGELOG.md)）。
+
+产品简介：[https://liuyidi.me/minibot/](https://liuyidi.me/minibot/)。
 
 ## 许可
 

@@ -42,6 +42,7 @@
 minibot/              # Python package (agent, API, channels, tools)
 webui/                # Vite + React SPA (build → webui/dist)
 desktop/              # Desktop app (local gateway + sidecar)
+site/                 # VitePress public site (liuyidi.me / minibot overview)
 Dockerfile.minibot    # Runtime + WebUI image
 docs/                 # Design and phase docs
 packages/             # Optional shared client packages
@@ -162,7 +163,10 @@ See [`AGENTS.md`](./AGENTS.md) for agent-oriented repo guidance.
 
 ## Changelog
 
-See [`CHANGELOG.md`](./CHANGELOG.md) ([中文](./CHANGELOG.zh.md)).
+Public: [https://liuyidi.me/minibot/changelog/](https://liuyidi.me/minibot/changelog/)  
+Source: [`CHANGELOG.md`](./CHANGELOG.md) ([中文](./CHANGELOG.zh.md)).
+
+Product overview: [https://liuyidi.me/minibot/](https://liuyidi.me/minibot/).
 
 ## License
 

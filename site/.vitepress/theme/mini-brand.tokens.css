@@ -1,0 +1,25 @@
+/* Copied from mini-design-system/tokens/mini-brand.tokens.css
+   Direction 02 tokens. Do not invent a second palette here; update the source repo first. */
+
+:root {
+  --mini-color-canvas: #ffffff;
+  --mini-color-ink: #080808;
+  --mini-color-ink-soft: #2a2a2a;
+  --mini-color-muted: #666666;
+  --mini-color-subtle: #8a8a8a;
+  --mini-color-surface: #f5f5f5;
+  --mini-color-surface-hover: #eeeeee;
+  --mini-color-border: #a8a8a8;
+  --mini-color-border-soft: #dedede;
+  --mini-color-focus: #4f46e5;
+  --mini-color-danger: #b42318;
+  --mini-color-danger-surface: #fff1f0;
+  --mini-font-sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI",
+    "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --mini-radius-control: 10px;
+  --mini-radius-surface: 18px;
+  --mini-space-auth-width: 400px;
+  --mini-space-auth-top: 96px;
+  --mini-control-height: 48px;
+  --mini-control-height-compact: 44px;
+}
