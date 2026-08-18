@@ -7,7 +7,7 @@ description: minikb 是面向 Agent 的知识库：文档摄入、切片、向�
 
 **minikb** 是面向 Agent / 应用的通用知识库后台：文档摄入、切片、向量化、检索和问答放在一个独立服务里，通过 REST 与 [minibot](https://bot.liuyidi.me/) 等消费方集成。
 
-公网：[kb.liuyidi.me](https://kb.liuyidi.me/)（火山引擎；阿里云 nginx 只做 TLS 入口）。
+公网：[kb.liuyidi.me](https://kb.liuyidi.me/)（火山引擎直连 TLS）。
 
 ## 一、核心能力
 

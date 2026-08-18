@@ -1,13 +1,13 @@
 # minibot 部署（阿里云 ECS）
 
 本目录是 **minibot + WebUI + `liuyidi.me` 公开站** 的唯一部署入口。  
-mini-langfuse 在腾讯云（`https://mlf.liuyidi.me`）；minikb 在 Volcengine（本机 nginx 只反代 `kb.liuyidi.me`）。
+mini-langfuse 在腾讯云（`https://mlf.liuyidi.me`）；minikb 在火山引擎直连 TLS（`https://kb.liuyidi.me`），本机 nginx **不要**再反代 kb。
 
 | 域名 | 本机角色 |
 |------|----------|
 | https://liuyidi.me | VitePress SSG（`site/` → `site/.vitepress/dist`） |
 | https://bot.liuyidi.me | minibot `:8766` |
-| https://kb.liuyidi.me | nginx → Volcengine `101.96.224.232:80` |
+| https://kb.liuyidi.me | **不在本机**（火山引擎） |
 | https://mlf.liuyidi.me | **不在本机**（腾讯云） |
 
 ECS：`root@116.62.35.76`，代码 `/opt/demo/minibot/`。  
@@ -17,7 +17,7 @@ ECS：`root@116.62.35.76`，代码 `/opt/demo/minibot/`。
 
 - `docker-compose.yml` / `up.sh` / `.env.example`
 - `build-site.sh` — ECS 上用 `node:22` 容器构建公开站（`../site/` → `../site/.vitepress/dist/`）
-- `nginx.liuyidi.me.conf.example` — apex + bot + kb（不含 mlf）
+- `nginx.liuyidi.me.conf.example` — apex + bot（不含 kb / mlf）
 - `setup-swap.sh` / `setup-docker-mirror.sh` — 2C2G 宿主机一次性脚本
 
 ## 生产认证

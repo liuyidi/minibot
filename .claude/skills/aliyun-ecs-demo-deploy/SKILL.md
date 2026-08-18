@@ -14,7 +14,7 @@ description: >-
 | 域名 | 仓 | 云 | Skill |
 |------|----|----|-------|
 | `liuyidi.me` / `bot.liuyidi.me` | minibot | 阿里云 ECS `root@116.62.35.76` | **本文件** |
-| `kb.liuyidi.me` | minikb | 火山引擎 `101.96.224.232`（本机 nginx 只 TLS 反代） | minikb `deploying-volcengine-minikb` |
+| `kb.liuyidi.me` | minikb | 火山引擎 `101.96.224.232`（本机 **不**反代） | minikb `deploying-volcengine-minikb` |
 | `mlf.liuyidi.me` | mini-langfuse | 腾讯云 `ubuntu@124.223.108.72` | mini-langfuse `deploying-tencent-mlf` |
 | `auth.liuyidi.me` | mini-auth | 腾讯云 CVM | mini-auth `deploying-tencent-mini-auth` |
 | `serverless-ship.liuyidi.me` | serverless-ship | Vercel | serverless-ship `deploying-vercel-serverless-ship` |
@@ -28,8 +28,7 @@ Compose 入口：`/opt/demo/minibot/deploy/`（`.env`、`docker-compose.yml`、`
 
 1. **只改了 minibot / WebUI** → 拉 `minibot` + `./up.sh`（或 `build` + `up -d minibot`）。必须 `--build`（WebUI 打进 `Dockerfile.minibot`）。
 2. **改了 `site/` 或 `CHANGELOG.zh.md`（liuyidi.me）** → 拉代码 + `deploy/build-site.sh`；nginx 片段变了再 `nginx -t && reload`。
-3. **只改 kb 反代** → 改 `deploy/nginx.liuyidi.me.conf.example` 的 `upstream demo_kb` 后 reload。不要去火山引擎乱 SSH，除非用户明确要动 minikb 应用。
-4. **改了 minikb / mlf / auth / serverless-ship** → 换仓，读上表 skill。不要碰阿里云 compose。
+3. **改了 minikb / mlf / auth / serverless-ship** → 换仓，读上表 skill。不要碰阿里云 compose，也不要再给 `kb.liuyidi.me` 加 nginx server。
 
 ## SSH
 

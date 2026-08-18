@@ -19,7 +19,7 @@ outline: deep
 
 ### 变更
 
-- 生产从「阿里云本机跑 minikb」改为 **火山引擎**；`kb.liuyidi.me` 在阿里云 nginx 只做 TLS 反代。
+- 生产从「阿里云本机跑 minikb」改为 **火山引擎**；备案后 `kb.liuyidi.me` 直连火山 TLS，不再经阿里云 nginx 反代。
 - 发布工作流改为 `publish-volcengine-minikb`，镜像走 GHCR。
 
 ### 新增
