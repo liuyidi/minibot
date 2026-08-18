@@ -13,7 +13,7 @@ Versions follow SemVer for product narrative. Package metadata may lag until a f
 
 ### Fixed
 
-- Switching Default Permission / Full Access now persists on the current chat; Full Access no longer prompts for out-of-sandbox `exec`.
+- Switching Default Permission / Full Access now persists on the current chat, and Full Access no longer prompts for out-of-sandbox `exec`.
 
 ### Changed
 
