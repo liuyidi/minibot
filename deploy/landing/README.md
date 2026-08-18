@@ -1,15 +1,7 @@
-# Landing page (legacy nginx root)
+# Landing fallback (static)
 
-**Cutover:** source of truth is now `../../site/` (VitePress). After ECS nginx `root` points at `site/.vitepress/dist` and `../build-site.sh` has been run, delete this directory.
+Canonical public site is `../../site/` → `site/.vitepress/dist` (see `../nginx.liuyidi.me.conf.example`).
 
-Until then, host nginx may still use:
+This directory is a Direction 02 visual mirror of the VitePress portal for hosts whose nginx `root` has not switched yet.
 
-```text
-root /opt/demo/minibot/deploy/landing;
-```
-
-See `../nginx.liuyidi.me.conf.example` and `../README.md`.
-
-Previews (do not replace `index.html` until approved):
-
-- V0.1 Option A → https://liuyidi.me/v0.1/ (copied to `site/public/v0.1/` for the new site)
+Do not add features here first — change `site/.vitepress/theme/PortalLayout.vue` then copy.

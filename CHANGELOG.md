@@ -18,6 +18,7 @@ Versions follow SemVer for product narrative. Package metadata may lag until a f
 ### Changed
 
 - Public desktop downloads ship the local-gateway app. Source tree is `desktop/` (renamed from `desktopV2/`); the old remote thin-shell tree is gone.
+- `liuyidi.me` home uses Direction 02: white canvas, entry tiles, black “Open Agent” button.
 
 ## [1.0.13] - 2026-08-17
 

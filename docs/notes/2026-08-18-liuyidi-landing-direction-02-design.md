@@ -1,7 +1,7 @@
 # liuyidi.me 入口页对齐 Direction 02
 
 日期：2026-08-18  
-状态：设计已定稿，待实现  
+状态：已实现  
 关联：[`docs/plans/2026-08-18-daily.md`](../../plans/2026-08-18-daily.md) 第 2 / 5 项
 
 ## 目标
@@ -60,12 +60,12 @@
 
 ## 验收
 
-- [ ] 本地 `site` 构建后首页为白底 Direction 02；无渐变 / grain / 玻璃卡。
-- [ ] 五个产品入口 + hero 主/次 CTA 均可点且 URL 正确。
-- [ ] 中英切换正常；能力列表默认折叠。
-- [ ] `deploy/landing/` 与 site 门户视觉一致（兜底可用）。
-- [ ] `v0.1` 预览目录已删除；文档 / daily 计划勾选更新。
-- [ ] `npm run docs:check`（或等价 site check）通过。
+- [x] 本地 `site` 构建后首页为白底 Direction 02；无渐变 / grain / 玻璃卡。
+- [x] 五个产品入口 + hero 主/次 CTA 均可点且 URL 正确。
+- [x] 中英切换正常；能力列表默认折叠。
+- [x] `deploy/landing/` 与 site 门户视觉一致（兜底可用）。
+- [x] `v0.1` 预览目录已删除；文档 / daily 计划勾选更新。
+- [x] `npm run docs:check`（或等价 site check）通过。
 
 ## 风险与注意
 
