@@ -170,7 +170,7 @@ class AgentLoop:
             effective_ws = session.workspace_path
 
         t0 = time.perf_counter()
-        ws_token = bind_workspace(effective_ws)
+        ws_token = bind_workspace(effective_ws, access_mode=getattr(session, "access_mode", "restricted"))
         from minibot.security.session_context import bind_session, reset_session
 
         session_token = bind_session(session_id)
@@ -346,7 +346,10 @@ class AgentLoop:
             raise KeyError("session not found")
 
         async with self.session_lock(approval.session_id):
-            ws_token = bind_workspace(session.workspace_path)
+            ws_token = bind_workspace(
+                session.workspace_path,
+                access_mode=getattr(session, "access_mode", "restricted"),
+            )
             try:
                 approval = self.approvals.decide(approval_id, decision)
                 assert approval is not None

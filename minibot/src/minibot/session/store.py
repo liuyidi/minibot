@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from minibot.agent.runner import new_chat_id
+from minibot.security.workspace_access import normalize_access_mode
 from minibot.workspace import WorkspaceError, default_workspace, normalize_workspace
 
 _UNSAFE = re.compile(r"[^\w.\-]+", re.UNICODE)
@@ -32,12 +33,23 @@ class Session:
     title: str = ""
     messages: list[dict[str, Any]] = field(default_factory=list)
     workspace_path: str = field(default_factory=lambda: str(default_workspace()))
+    access_mode: str = "restricted"
     summary: str = ""
     created_at: str = field(default_factory=_now)
     updated_at: str = field(default_factory=_now)
 
     def touch(self) -> None:
         self.updated_at = _now()
+
+    def workspace_scope(self) -> dict[str, Any]:
+        mode = normalize_access_mode(self.access_mode)
+        name = self.workspace_path.rstrip("/").rsplit("/", 1)[-1] or self.workspace_path
+        return {
+            "project_path": self.workspace_path,
+            "project_name": name,
+            "access_mode": mode,
+            "restrict_to_workspace": mode == "restricted",
+        }
 
     def preview(self) -> str:
         for msg in reversed(self.messages):
@@ -69,6 +81,7 @@ class SessionStore:
         title: str = "",
         session_id: str | None = None,
         workspace: Path | str | None = None,
+        access_mode: str | None = None,
     ) -> Session:
         sid = session_id or new_chat_id()
         if not sid:
@@ -77,12 +90,23 @@ class SessionStore:
         if existing is not None:
             return existing
         ws = normalize_workspace(workspace, must_exist=True)
-        session = Session(id=sid, title=title, workspace_path=str(ws))
+        session = Session(
+            id=sid,
+            title=title,
+            workspace_path=str(ws),
+            access_mode=normalize_access_mode(access_mode),
+        )
         self._save(session)
         self._cache[session.id] = session
         return session
 
-    def set_workspace(self, session_id: str, workspace: Path | str) -> Session:
+    def set_workspace(
+        self,
+        session_id: str,
+        workspace: Path | str,
+        *,
+        access_mode: str | None = None,
+    ) -> Session:
         """Update ``workspace_path`` (must exist and be a directory)."""
         session = self.get(session_id)
         if session is None:
@@ -92,6 +116,8 @@ class SessionStore:
         except WorkspaceError:
             raise
         session.workspace_path = str(ws)
+        if access_mode is not None:
+            session.access_mode = normalize_access_mode(access_mode)
         session.touch()
         self._save(session)
         self._cache[session.id] = session
@@ -227,6 +253,7 @@ class SessionStore:
             updated_at = created_at
             file_id = session_id
             workspace_path = str(default_workspace())
+            access_mode = "restricted"
             summary = ""
 
             with path.open(encoding="utf-8") as f:
@@ -247,6 +274,8 @@ class SessionStore:
                             updated_at = str(data["updated_at"])
                         if data.get("workspace_path"):
                             workspace_path = str(data["workspace_path"])
+                        if data.get("access_mode"):
+                            access_mode = normalize_access_mode(str(data["access_mode"]))
                         if data.get("summary"):
                             summary = str(data["summary"])
                     else:
@@ -257,6 +286,7 @@ class SessionStore:
                 title=title,
                 messages=messages,
                 workspace_path=workspace_path,
+                access_mode=access_mode,
                 summary=summary,
                 created_at=created_at,
                 updated_at=updated_at,
@@ -272,6 +302,7 @@ class SessionStore:
             "id": session.id,
             "title": session.title,
             "workspace_path": session.workspace_path,
+            "access_mode": normalize_access_mode(session.access_mode),
             "summary": session.summary,
             "created_at": session.created_at,
             "updated_at": session.updated_at,

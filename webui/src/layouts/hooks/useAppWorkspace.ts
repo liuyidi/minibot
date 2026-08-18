@@ -154,6 +154,7 @@ export function useAppWorkspace({
       const next = normalizeWorkspaceScope(scope);
       setWorkspaceError(null);
       if (activeChatId) {
+        setWorkspaceOverrides((current) => ({ ...current, [activeChatId]: next }));
         if (!activeChatRunning) {
           client.setWorkspaceScope(activeChatId, next);
         }

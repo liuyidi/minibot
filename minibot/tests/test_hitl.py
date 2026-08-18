@@ -68,6 +68,30 @@ def test_escape_exec_waits_for_approval_then_resumes(tmp_path: Path) -> None:
     asyncio.run(run())
 
 
+def test_full_access_exec_does_not_wait_for_approval(tmp_path: Path) -> None:
+    provider = FakeProvider(
+        responses=[
+            tool_response("exec", {"command": "cat /etc/passwd"}),
+            text_response("Ran without asking."),
+        ]
+    )
+    sessions = SessionStore(tmp_path)
+    session = sessions.create(workspace=tmp_path, access_mode="full")
+    loop = AgentLoop(
+        sessions=sessions,
+        tools=register_default_tools(),
+        runner=AgentRunner(provider),
+        config=AppConfig(),
+    )
+
+    async def run() -> None:
+        result = await loop.handle_turn(session.id, "read passwd")
+        assert result.stop_reason != "paused_for_approval"
+        assert result.content == "Ran without asking."
+
+    asyncio.run(run())
+
+
 def test_rest_turn_returns_approval_and_rest_resolve(
     client, auth_headers, fake_provider: FakeProvider, data_dir: Path
 ) -> None:

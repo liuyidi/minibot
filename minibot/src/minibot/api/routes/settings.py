@@ -147,6 +147,39 @@ async def update_settings(
     return settings_public_payload(state.config)
 
 
+@router.get("/network-safety/update")
+@router.post("/network-safety/update")
+async def update_network_safety(
+    _auth: AuthDep,
+    state: StateDep,
+    webui_allow_local_service_access: str | None = None,
+    webui_default_access_mode: str | None = None,
+) -> dict[str, Any]:
+    from minibot.security.principal_context import current_data_dir
+    from minibot.webui.workspace_state import (
+        read_webui_workspace_state,
+        write_webui_workspace_state,
+    )
+
+    data_dir = current_data_dir() or state.settings.data_dir
+    state_payload = read_webui_workspace_state(data_dir)
+    if webui_default_access_mode is not None:
+        mode = webui_default_access_mode.strip().lower()
+        if mode == "restricted":
+            mode = "default"
+        if mode not in {"default", "full"}:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="webui_default_access_mode must be default or full",
+            )
+        state_payload["default_access_mode"] = mode
+    if webui_allow_local_service_access is not None:
+        raw = webui_allow_local_service_access.strip().lower()
+        state_payload["webui_allow_local_service_access"] = raw in {"1", "true", "yes", "on"}
+    write_webui_workspace_state(data_dir, state_payload)
+    return settings_public_payload(state.config)
+
+
 @router.get("/model-configurations/create")
 @router.post("/model-configurations/create")
 @router.post("/model-configurations")

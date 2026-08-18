@@ -12,6 +12,10 @@ English: [CHANGELOG.md](./CHANGELOG.md)
 <!-- #region site-changelog -->
 ## [Unreleased]
 
+### 修复
+
+- Web 端切换「默认权限 / 完全访问权限」会写入当前会话；完全访问下越界 `exec` 不再弹出审批。
+
 ### 变更
 
 - 公开下载改为本机 gateway 桌面端。源码目录为 `desktop/`（由 `desktopV2/` 改名）；旧远程薄壳目录已删除。

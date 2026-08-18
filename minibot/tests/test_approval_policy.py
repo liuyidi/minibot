@@ -71,6 +71,20 @@ def test_escape_exec_requires_approval(tmp_path: Path) -> None:
         reset_workspace(token)
 
 
+def test_full_access_skips_escape_exec(tmp_path: Path) -> None:
+    policy = ApprovalPolicy()
+    token = bind_workspace(tmp_path, access_mode="full")
+    try:
+        need, reason, _ = policy.check(
+            _Tool("exec", risk="critical"),
+            {"command": "cat /etc/passwd"},
+        )
+        assert need is False
+        assert reason == ""
+    finally:
+        reset_workspace(token)
+
+
 def test_command_escapes_sandbox_heuristics(tmp_path: Path) -> None:
     assert command_escapes_sandbox("ls", workspace=tmp_path) is False
     assert command_escapes_sandbox("python -c 'print(1)'", workspace=tmp_path) is False
@@ -87,6 +101,16 @@ def test_approval_mode_always_still_gates() -> None:
     policy = ApprovalPolicy()
     need, *_ = policy.check(_Tool("echo", approval_mode="always"), {})
     assert need is True
+
+
+def test_approval_mode_always_still_gates_under_full_access(tmp_path: Path) -> None:
+    policy = ApprovalPolicy()
+    token = bind_workspace(tmp_path, access_mode="full")
+    try:
+        need, *_ = policy.check(_Tool("echo", approval_mode="always"), {})
+        assert need is True
+    finally:
+        reset_workspace(token)
 
 
 def test_auto_approve_channel_skips_even_escape_exec() -> None:

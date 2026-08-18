@@ -6,6 +6,7 @@ Application-level guard — not a replacement for an OS sandbox.
 from __future__ import annotations
 
 from contextvars import ContextVar, Token
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
 
@@ -22,13 +23,48 @@ class WorkspaceBoundaryError(PermissionError):
 
 
 _workspace_var: ContextVar[Path | None] = ContextVar("minibot_tool_workspace", default=None)
+_access_mode_var: ContextVar[str] = ContextVar("minibot_access_mode", default="restricted")
 
 
-def bind_workspace(workspace: str | Path) -> Token:
-    return _workspace_var.set(Path(workspace).expanduser().resolve(strict=False))
+@dataclass(slots=True)
+class WorkspaceBind:
+    workspace: Token
+    access_mode: Token
 
 
-def reset_workspace(token: Token) -> None:
+def normalize_access_mode(value: str | None) -> str:
+    raw = str(value or "").strip().lower().replace("_", "-")
+    if raw in {"full", "full-access"}:
+        return "full"
+    return "restricted"
+
+
+def default_mode_to_access_mode(value: str | None) -> str:
+    """Map settings ``webui_default_access_mode`` (default|full) to session access_mode."""
+    raw = str(value or "").strip().lower()
+    if raw == "restricted":
+        return "restricted"
+    if raw == "full":
+        return "full"
+    return "restricted"
+
+
+def bind_workspace(
+    workspace: str | Path,
+    *,
+    access_mode: str = "restricted",
+) -> WorkspaceBind:
+    return WorkspaceBind(
+        workspace=_workspace_var.set(Path(workspace).expanduser().resolve(strict=False)),
+        access_mode=_access_mode_var.set(normalize_access_mode(access_mode)),
+    )
+
+
+def reset_workspace(token: WorkspaceBind | Token) -> None:
+    if isinstance(token, WorkspaceBind):
+        _workspace_var.reset(token.workspace)
+        _access_mode_var.reset(token.access_mode)
+        return
     _workspace_var.reset(token)
 
 
@@ -39,6 +75,10 @@ def current_workspace(default: str | Path | None = None) -> Path:
     if default is not None:
         return Path(default).expanduser().resolve(strict=False)
     return Path.cwd().resolve(strict=False)
+
+
+def current_access_mode() -> str:
+    return normalize_access_mode(_access_mode_var.get())
 
 
 def is_path_within(path: str | Path, root: str | Path) -> bool:

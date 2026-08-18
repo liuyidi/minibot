@@ -8,6 +8,9 @@ from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, Field
 
 from minibot.api.deps import AuthDep, StateDep
+from minibot.security.principal_context import current_data_dir
+from minibot.security.workspace_access import default_mode_to_access_mode, normalize_access_mode
+from minibot.webui.workspace_state import read_webui_default_access_mode
 from minibot.workspace import WorkspaceError, default_workspace, normalize_workspace
 
 router = APIRouter(tags=["workspaces"])
@@ -17,7 +20,7 @@ class WorkspaceSetBody(BaseModel):
     workspace_path: str = Field(min_length=1)
     # Compatibility with minibot WebUI scope shape (optional).
     project_path: str | None = None
-    access_mode: str = "restricted"
+    access_mode: str | None = None
 
 
 def _workspace_entry(path: str, *, is_default: bool = False) -> dict[str, Any]:
@@ -35,6 +38,8 @@ def _workspace_entry(path: str, *, is_default: bool = False) -> dict[str, Any]:
 async def list_workspaces(_auth: AuthDep, state: StateDep) -> dict[str, Any]:
     """Return default cwd + unique workspace paths from sessions."""
     default = str(default_workspace())
+    default_access = read_webui_default_access_mode(current_data_dir() or state.settings.data_dir)
+    session_access = default_mode_to_access_mode(default_access)
     seen: dict[str, dict[str, Any]] = {
         default: _workspace_entry(default, is_default=True),
     }
@@ -52,10 +57,11 @@ async def list_workspaces(_auth: AuthDep, state: StateDep) -> dict[str, Any]:
     return {
         "workspaces": list(seen.values()),
         "default_workspace": default,
-        "default_access_mode": "default",
+        "default_access_mode": default_access,
         "default_scope": {
             "project_path": default,
-            "access_mode": "restricted",
+            "access_mode": session_access,
+            "restrict_to_workspace": session_access == "restricted",
         },
         "controls": {
             # Browser WebUI ignores this and hides the picker without a native host.
@@ -78,7 +84,11 @@ async def set_session_workspace(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="session not found")
     raw = (body.project_path or body.workspace_path or "").strip()
     try:
-        session = state.sessions.set_workspace(sid, raw)
+        session = state.sessions.set_workspace(
+            sid,
+            raw,
+            access_mode=normalize_access_mode(body.access_mode) if body.access_mode else None,
+        )
     except WorkspaceError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     except KeyError:

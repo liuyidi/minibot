@@ -219,6 +219,7 @@ def settings_public_payload(config: AppConfig) -> dict[str, Any]:
     from minibot.config.settings import get_settings
     from minibot.security.principal_context import current_principal
     from minibot.user_runtime import resolve_user_root
+    from minibot.webui.workspace_state import read_webui_workspace_state
     from minibot.workspace import default_workspace
 
     ensure_presets(config)
@@ -226,6 +227,10 @@ def settings_public_payload(config: AppConfig) -> dict[str, Any]:
     masked = mask_key(user_key)
     presets = presets_public_list(config)
     settings = get_settings()
+    data_dir = current_data_dir() or Path(settings.data_dir)
+    workspace_state = read_webui_workspace_state(data_dir)
+    default_access_mode = str(workspace_state.get("default_access_mode") or "default")
+    allow_local = bool(workspace_state.get("webui_allow_local_service_access", True))
     proxy_base = ""
     proxy_token = ""
     if platform_proxy_mode_enabled(settings):
@@ -330,15 +335,15 @@ def settings_public_payload(config: AppConfig) -> dict[str, Any]:
             "providers": [],
         },
         "network_safety": {
-            "webui_allow_local_service_access": True,
-            "webui_default_access_mode": "default",
+            "webui_allow_local_service_access": allow_local,
+            "webui_default_access_mode": default_access_mode,
         },
         "advanced": {
             "restrict_to_workspace": False,
             "ssrf_whitelist_count": 0,
-            "webui_allow_local_service_access": True,
+            "webui_allow_local_service_access": allow_local,
             "allow_local_preview_access": True,
-            "webui_default_access_mode": "default",
+            "webui_default_access_mode": default_access_mode,
             "private_service_protection_enabled": True,
             "mcp_server_count": len(getattr(config, "mcp_presets", None) or []),
             "exec_enabled": True,

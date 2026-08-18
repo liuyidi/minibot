@@ -25,6 +25,7 @@ class SessionSummary(BaseModel):
     title: str
     preview: str
     workspace_path: str
+    workspace_scope: dict[str, Any]
     created_at: str
     updated_at: str
 
@@ -64,6 +65,7 @@ def _summary(session) -> SessionSummary:
         title=session.title,
         preview=session.preview(),
         workspace_path=session.workspace_path,
+        workspace_scope=session.workspace_scope(),
         created_at=session.created_at,
         updated_at=session.updated_at,
     )

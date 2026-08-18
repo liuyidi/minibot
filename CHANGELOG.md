@@ -11,6 +11,10 @@ Versions follow SemVer for product narrative. Package metadata may lag until a f
 
 ## [Unreleased]
 
+### Fixed
+
+- Switching Default Permission / Full Access now persists on the current chat; Full Access no longer prompts for out-of-sandbox `exec`.
+
 ### Changed
 
 - Public desktop downloads ship the local-gateway app. Source tree is `desktop/` (renamed from `desktopV2/`); the old remote thin-shell tree is gone.

@@ -16,7 +16,9 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from minibot.api.deps import bind_token_context
 from minibot.app_state import AppState
 from minibot.bus.events import InboundMessage, OutboundMessage
-from minibot.security.principal_context import current_principal
+from minibot.security.principal_context import current_data_dir, current_principal
+from minibot.security.workspace_access import default_mode_to_access_mode, normalize_access_mode
+from minibot.webui.workspace_state import read_webui_default_access_mode
 from minibot.workspace import WorkspaceError
 
 router = APIRouter()
@@ -28,6 +30,35 @@ def _session_id(chat_id: str) -> str:
     if raw.startswith("websocket:"):
         return raw.split(":", 1)[1].strip()
     return raw
+
+
+def _default_session_access_mode(state: AppState) -> str:
+    data_dir = current_data_dir() or state.settings.data_dir
+    return default_mode_to_access_mode(read_webui_default_access_mode(data_dir))
+
+
+def _scope_payload(session: Any) -> dict[str, Any]:
+    return session.workspace_scope()
+
+
+def _apply_workspace_scope(state: AppState, session_id: str, scope: dict[str, Any]):
+    project = str(
+        scope.get("project_path")
+        or scope.get("workspace_path")
+        or scope.get("path")
+        or ""
+    ).strip()
+    access_mode = normalize_access_mode(str(scope.get("access_mode") or "restricted"))
+    if project:
+        return state.sessions.set_workspace(session_id, project, access_mode=access_mode)
+    session = state.sessions.get(session_id)
+    if session is None:
+        raise KeyError(f"unknown session: {session_id}")
+    if session.access_mode != access_mode:
+        return state.sessions.set_workspace(
+            session_id, session.workspace_path, access_mode=access_mode
+        )
+    return session
 
 
 class ConnectionHub:
@@ -330,8 +361,13 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
             if msg_type == "new_chat":
                 scope = frame.get("workspace_scope") if isinstance(frame.get("workspace_scope"), dict) else {}
                 project = str(scope.get("project_path") or "").strip() or None
+                access_mode = (
+                    normalize_access_mode(str(scope.get("access_mode") or ""))
+                    if scope.get("access_mode")
+                    else _default_session_access_mode(state)
+                )
                 try:
-                    session = state.sessions.create(workspace=project)
+                    session = state.sessions.create(workspace=project, access_mode=access_mode)
                 except WorkspaceError as exc:
                     await websocket.send_json(
                         {"event": "error", "detail": f"workspace: {exc}"}
@@ -344,6 +380,7 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
                         "event": "attached",
                         "chat_id": session.id,
                         "workspace_path": session.workspace_path,
+                        "workspace_scope": _scope_payload(session),
                     }
                 )
                 continue
@@ -372,7 +409,9 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
                     )
                     continue
                 try:
-                    session = state.sessions.set_workspace(chat_id, project)
+                    merged = dict(scope)
+                    merged["project_path"] = project
+                    session = _apply_workspace_scope(state, chat_id, merged)
                 except WorkspaceError as exc:
                     await websocket.send_json(
                         {
@@ -384,17 +423,14 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
                     continue
                 known.add(chat_id)
                 hub.attach(chat_id, websocket)
-                await websocket.send_json(
-                    {
-                        "event": "workspace_updated",
-                        "chat_id": chat_id,
-                        "workspace_path": session.workspace_path,
-                        "workspace_scope": {
-                            "project_path": session.workspace_path,
-                            "access_mode": str(scope.get("access_mode") or "restricted"),
-                        },
-                    }
-                )
+                payload = {
+                    "event": "session_updated",
+                    "chat_id": chat_id,
+                    "scope": "metadata",
+                    "workspace_path": session.workspace_path,
+                    "workspace_scope": _scope_payload(session),
+                }
+                await websocket.send_json(payload)
                 continue
 
             if msg_type == "attach":
@@ -466,6 +502,20 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
                         {"event": "error", "chat_id": chat_id, "detail": "unknown_chat"}
                     )
                     continue
+                scope = frame.get("workspace_scope") if isinstance(frame.get("workspace_scope"), dict) else {}
+                if scope:
+                    try:
+                        session = _apply_workspace_scope(state, chat_id, scope)
+                    except WorkspaceError as exc:
+                        await websocket.send_json(
+                            {
+                                "event": "error",
+                                "chat_id": chat_id,
+                                "detail": "workspace_scope_rejected",
+                                "reason": str(exc),
+                            }
+                        )
+                        continue
                 known.add(chat_id)
                 hub.attach(chat_id, websocket)
                 await hub.send(chat_id, {"event": "goal_status", "chat_id": chat_id, "status": "running"})

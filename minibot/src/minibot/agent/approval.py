@@ -223,6 +223,11 @@ class ApprovalPolicy:
         if mode == "always":
             return True, f"{name} requires explicit approval.", risk
 
+        from minibot.security.workspace_access import current_access_mode
+
+        if current_access_mode() == "full":
+            return False, "", risk
+
         if name == "exec":
             command = str(arguments.get("command") or arguments.get("cmd") or "")
             from minibot.security.workspace_access import current_workspace

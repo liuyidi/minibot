@@ -364,6 +364,34 @@ describe("MinibotClient", () => {
     expect(chatHandler).not.toHaveBeenCalled();
   });
 
+  it("treats workspace_updated as a session update", () => {
+    const client = new MinibotClient({
+      url: "ws://test",
+      reconnect: false,
+      socketFactory: (url) => new FakeSocket(url) as unknown as WebSocket,
+    });
+    const globalHandler = vi.fn();
+    client.onSessionUpdate(globalHandler);
+    client.connect();
+    lastSocket().fakeOpen();
+
+    lastSocket().fakeMessage({
+      event: "workspace_updated",
+      chat_id: "chat-title",
+      workspace_scope: {
+        project_path: "/tmp/project",
+        access_mode: "full",
+        restrict_to_workspace: false,
+      },
+    });
+
+    expect(globalHandler).toHaveBeenCalledWith(
+      "chat-title",
+      undefined,
+      expect.objectContaining({ access_mode: "full" }),
+    );
+  });
+
   it("resolves newChat() via the server-assigned chat_id", async () => {
     const client = new MinibotClient({
       url: "ws://test",

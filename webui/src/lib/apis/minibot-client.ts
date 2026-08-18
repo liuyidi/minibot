@@ -497,7 +497,7 @@ export class MinibotClient {
       return;
     }
 
-    if (parsed.event === "session_updated") {
+    if (parsed.event === "session_updated" || parsed.event === "workspace_updated") {
       this.emitSessionUpdate(parsed.chat_id, parsed.scope, parsed.workspace_scope);
       return;
     }

@@ -58,6 +58,25 @@ def test_session_persists_workspace_path(tmp_path: Path) -> None:
     assert reloaded.workspace_path == session.workspace_path
 
 
+def test_session_persists_access_mode(tmp_path: Path) -> None:
+    store = SessionStore(data_dir=tmp_path)
+    ws = tmp_path / "proj-full"
+    ws.mkdir()
+    session = store.create(workspace=ws, access_mode="full")
+    assert session.access_mode == "full"
+    assert session.workspace_scope()["access_mode"] == "full"
+    assert session.workspace_scope()["restrict_to_workspace"] is False
+
+    reloaded = SessionStore(data_dir=tmp_path).get(session.id)
+    assert reloaded is not None
+    assert reloaded.access_mode == "full"
+
+    store.set_workspace(session.id, ws, access_mode="restricted")
+    again = SessionStore(data_dir=tmp_path).get(session.id)
+    assert again is not None
+    assert again.access_mode == "restricted"
+
+
 def test_legacy_jsonl_without_workspace_defaults_home_workspace(tmp_path: Path) -> None:
     store = SessionStore(data_dir=tmp_path)
     session = store.create()
@@ -181,8 +200,24 @@ def test_ws_set_workspace_scope(
             }
         )
         evt = sock.receive_json()
-        assert evt.get("event") == "workspace_updated"
+        assert evt.get("event") == "session_updated"
         assert evt.get("workspace_path") == str(ws.resolve())
+        assert evt.get("workspace_scope", {}).get("access_mode") == "restricted"
+
+        sock.send_json(
+            {
+                "type": "set_workspace_scope",
+                "chat_id": sid,
+                "workspace_scope": {"project_path": str(ws), "access_mode": "full"},
+            }
+        )
+        full = sock.receive_json()
+        assert full.get("event") == "session_updated"
+        assert full.get("workspace_scope", {}).get("access_mode") == "full"
+
+        listed = client.get("/api/sessions", headers=auth_headers).json()["sessions"]
+        row = next(item for item in listed if item["id"] == sid)
+        assert row["workspace_scope"]["access_mode"] == "full"
 
         sock.send_json(
             {
@@ -201,3 +236,27 @@ def test_runtime_page_mentions_workspace(client: TestClient) -> None:
     assert page.status_code == 200
     assert "Phase 0.5" in page.text
     assert "Workspaces" in page.text
+
+
+def test_network_safety_default_access_mode_updates_workspaces(
+    client: TestClient, auth_headers: dict[str, str]
+) -> None:
+    before = client.get("/api/workspaces", headers=auth_headers).json()
+    assert before["default_access_mode"] == "default"
+    assert before["default_scope"]["access_mode"] == "restricted"
+
+    updated = client.get(
+        "/api/settings/network-safety/update",
+        headers=auth_headers,
+        params={
+            "webui_allow_local_service_access": "true",
+            "webui_default_access_mode": "full",
+        },
+    )
+    assert updated.status_code == 200
+    body = updated.json()
+    assert body["advanced"]["webui_default_access_mode"] == "full"
+
+    after = client.get("/api/workspaces", headers=auth_headers).json()
+    assert after["default_access_mode"] == "full"
+    assert after["default_scope"]["access_mode"] == "full"
