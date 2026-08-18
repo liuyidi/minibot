@@ -6,6 +6,12 @@ const STORAGE_KEY = "landing.locale";
 
 const messages = {
   "zh-CN": {
+    "nav.overview": "简介",
+    "nav.agent": "Agent",
+    "nav.obs": "可观测",
+    "nav.kb": "知识库",
+    "nav.auth": "认证",
+    "nav.ship": "小工具",
     "nav.github": "GitHub",
     "hero.eyebrow": "Agent Lab · Personal Stack",
     "hero.title": "自己造的一套<br /><em>Agent 工程栈</em>",
@@ -28,7 +34,6 @@ const messages = {
     "entry.ship.kicker": "05 · Tools",
     "entry.ship.desc": "发布与部署事件 → 飞书通知卡片。",
     "entry.ship.go": "打开 serverless-ship.liuyidi.me →",
-    "sec.overview": "简介",
     "path":
       "<strong>建议走查顺序：</strong>先在 Agent 里聊一句 → 打开可观测看 Trace → 再到知识库上传/检索；认证与发布通知可按需打开。",
     "skills.title": "我能讲清楚的能力",
@@ -39,6 +44,12 @@ const messages = {
     "skills.4": "<strong>产品化</strong> — 主站 WebUI + DevUI 双轨，既能用又能讲清实现",
   },
   en: {
+    "nav.overview": "Overview",
+    "nav.agent": "Agent",
+    "nav.obs": "Observability",
+    "nav.kb": "Knowledge",
+    "nav.auth": "Auth",
+    "nav.ship": "Tools",
     "nav.github": "GitHub",
     "hero.eyebrow": "Agent Lab · Personal Stack",
     "hero.title": "A handmade<br /><em>Agent engineering stack</em>",
@@ -61,7 +72,6 @@ const messages = {
     "entry.ship.kicker": "05 · Tools",
     "entry.ship.desc": "Release & deploy events → Feishu notification cards.",
     "entry.ship.go": "Open serverless-ship.liuyidi.me →",
-    "sec.overview": "Overview",
     "path":
       "<strong>Suggested walkthrough:</strong> chat in Agent → open Observability for a Trace → upload/search in Knowledge; open Auth or ServerlessShip as needed.",
     "skills.title": "What I can walk through",
@@ -103,6 +113,12 @@ function onLocaleChange(event) {
     <header class="top">
       <a class="brand" href="/">liuyidi.me</a>
       <nav>
+        <a href="/minibot/">{{ t("nav.overview") }}</a>
+        <a href="https://bot.liuyidi.me/">{{ t("nav.agent") }}</a>
+        <a href="https://mlf.liuyidi.me/">{{ t("nav.obs") }}</a>
+        <a href="https://kb.liuyidi.me/">{{ t("nav.kb") }}</a>
+        <a href="https://auth.liuyidi.me/">{{ t("nav.auth") }}</a>
+        <a href="https://serverless-ship.liuyidi.me/">{{ t("nav.ship") }}</a>
         <a href="https://github.com/liuyidi" target="_blank" rel="noopener">{{
           t("nav.github")
         }}</a>
@@ -162,17 +178,6 @@ function onLocaleChange(event) {
           <span class="go">{{ t("entry.ship.go") }}</span>
         </a>
       </section>
-
-      <div class="secondary-links">
-        <a href="/minibot/">minibot {{ t("sec.overview") }}</a>
-        <a href="/mini-langfuse/">mini-langfuse {{ t("sec.overview") }}</a>
-        <a href="/minikb/">minikb {{ t("sec.overview") }}</a>
-        <a href="/mini-auth/">mini-auth {{ t("sec.overview") }}</a>
-        <a href="/serverless-ship/">ServerlessShip {{ t("sec.overview") }}</a>
-        <a href="https://github.com/liuyidi" target="_blank" rel="noopener">{{
-          t("nav.github")
-        }}</a>
-      </div>
 
       <section class="below">
         <p class="path" v-html="t('path')" />

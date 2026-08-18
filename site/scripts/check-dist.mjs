@@ -52,14 +52,8 @@ if (!portal.includes("<details")) {
   throw new Error("portal is missing collapsed skills");
 }
 
-if (
-  !portal.includes("/minibot/") ||
-  !portal.includes("/minikb/") ||
-  !portal.includes("/mini-langfuse/") ||
-  !portal.includes("/mini-auth/") ||
-  !portal.includes("/serverless-ship/")
-) {
-  throw new Error("portal is missing sibling overview links");
+if (!portal.includes("/minibot/")) {
+  throw new Error("portal is missing the overview link");
 }
 
 const products = [

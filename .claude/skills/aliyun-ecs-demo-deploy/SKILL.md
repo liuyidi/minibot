@@ -90,7 +90,7 @@ docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 | 会话数据丢了 | `.env` 里 `MINIBOT_DATA_VOLUME=agent-demo_demo_minibot` |
 | 侧边栏仍旧 | 重建镜像 + 浏览器硬刷新 |
 | 误起 mlf / minikb / auth | 阿里云 compose 只有 minibot；换仓发其它应用 |
-| `/minibot/` 仍是门户 | nginx 还在 `deploy/landing` 且 SPA 回退；切到 `site/.vitepress/dist` 并无 `try_files … /index.html` |
+| `/minibot/` 仍是门户 | nginx `root` 必须是 `site/.vitepress/dist`，且 `try_files $uri $uri.html $uri/index.html =404`（不要 SPA 回退到 `/index.html`） |
 
 ## 快速口令
 

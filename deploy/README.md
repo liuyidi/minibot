@@ -16,8 +16,7 @@ ECS：`root@116.62.35.76`，代码 `/opt/demo/minibot/`。
 ## 现有资产
 
 - `docker-compose.yml` / `up.sh` / `.env.example`
-- `landing/` — Direction 02 静态镜像；正式源是 `../site/`，构建产物 `../site/.vitepress/dist/`
-- `build-site.sh` — ECS 上用 `node:22` 容器构建公开站
+- `build-site.sh` — ECS 上用 `node:22` 容器构建公开站（`../site/` → `../site/.vitepress/dist/`）
 - `nginx.liuyidi.me.conf.example` — apex + bot + kb（不含 mlf）
 - `setup-swap.sh` / `setup-docker-mirror.sh` — 2C2G 宿主机一次性脚本
 

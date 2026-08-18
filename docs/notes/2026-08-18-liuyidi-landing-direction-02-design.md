@@ -20,10 +20,8 @@
 |------|------|
 | 正式源 | `site/`：`PortalLayout.vue` + `portal.css` + `mini-brand.tokens.css` |
 | 构建产物 | `site/.vitepress/dist`（nginx `root`，见 `deploy/nginx.liuyidi.me.conf.example`） |
-| 切流前兜底 | `deploy/landing/` 镜像同一套 IA + 视觉 |
-| 预览归档 | 升正后删除 `site/public/v0.1/` 与 `deploy/landing/v0.1/` |
 
-实现顺序：**先改 site，再镜像 deploy/landing，再删 v0.1**。
+实现顺序：**改 site → `deploy/build-site.sh`。** 不要再维护独立静态落地页。
 
 ## 信息架构（升 v0.1 + hero 主按钮）
 
@@ -63,11 +61,11 @@
 - [x] 本地 `site` 构建后首页为白底 Direction 02；无渐变 / grain / 玻璃卡。
 - [x] 五个产品入口 + hero 主/次 CTA 均可点且 URL 正确。
 - [x] 中英切换正常；能力列表默认折叠。
-- [x] `deploy/landing/` 与 site 门户视觉一致（兜底可用）。
+- [x] `deploy/landing/` 已删除；nginx `root` 只指向 `site/.vitepress/dist`。
 - [x] `v0.1` 预览目录已删除；文档 / daily 计划勾选更新。
 - [x] `npm run docs:check`（或等价 site check）通过。
 
 ## 风险与注意
 
-- 现网若仍短暂指向旧 `deploy/landing`，镜像更新可避免回退到暗色页。
-- 产品简介侧栏 / Overview 不在本轮范围；若首页去掉产品 nav，简介入口依赖卡片外的次要链或用户已知 `/minibot/`——本设计不强制顶栏「简介」链（已定稿）。
+- nginx `root` 必须是 `site/.vitepress/dist`。不要再提供独立静态落地页。
+- 顶栏保留「简介 / Agent / 可观测 / 知识库 / 认证 / 小工具 / GitHub」；产品简介页入口是顶栏「简介」→ `/minibot/`。
