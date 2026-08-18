@@ -1,9 +1,9 @@
 ---
-title: 简介
+title: 功能介绍
 description: mini-auth 是统一身份中心：注册、登录、GitHub、OIDC / JWT，供 minibot 等业务接入。公网 auth.liuyidi.me。
 ---
 
-# mini-auth 简介
+# mini-auth 功能介绍
 
 **mini-auth** 是独立的统一身份认证服务。邮箱注册 / 登录、JWT 刷新 / 登出、GitHub OAuth，以及给 [minibot](/minibot/) Web / Desktop 用的 OIDC。
 
@@ -37,6 +37,6 @@ description: mini-auth 是统一身份中心：注册、登录、GitHub、OIDC /
 ## 四、建议阅读顺序
 
 1. [打开认证](https://auth.liuyidi.me/) — 一般会从 minibot 跳过来
-2. 本页简介
+2. 本页功能介绍
 3. [更新日志](/mini-auth/changelog/)
 4. 自建看 [GitHub README](https://github.com/liuyidi/mini-auth/blob/main/README.md)

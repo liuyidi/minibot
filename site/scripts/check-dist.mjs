@@ -45,6 +45,15 @@ for (const [slug, marker] of products) {
   if (!overview.includes(`/${slug}/changelog`)) {
     throw new Error(`${slug} overview is missing the changelog link`);
   }
+  if (slug === "minikb" || slug === "mini-langfuse") {
+    if (!overview.includes(">简介<") && !overview.includes("简介</p>")) {
+      throw new Error(`${slug} sidebar should keep 简介`);
+    }
+  } else if (slug === "minibot" || slug === "mini-auth" || slug === "serverless-ship") {
+    if (!overview.includes("功能介绍")) {
+      throw new Error(`${slug} should use 功能介绍`);
+    }
+  }
   if (slug === "minibot" && !overview.includes("macos-client-preview")) {
     throw new Error("minibot overview is missing the desktop screenshot");
   }

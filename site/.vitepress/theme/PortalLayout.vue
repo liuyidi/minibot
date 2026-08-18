@@ -6,7 +6,7 @@ const STORAGE_KEY = "landing.locale";
 
 const messages = {
   "zh-CN": {
-    "nav.overview": "简介",
+    "nav.overview": "功能介绍",
     "nav.agent": "Agent",
     "nav.obs": "可观测",
     "nav.kb": "知识库",
@@ -21,7 +21,7 @@ const messages = {
     "projects.title": "项目与小工具",
     "projects.bot":
       "FastAPI Agent runtime：工具循环、会话、MCP、流式输出；主站是 nanobot WebUI，附属 /ui 讲清实现思路。",
-    "projects.overview": "功能简介 →",
+    "projects.overview": "功能介绍 →",
     "projects.mlf":
       "自研可观测：Traces / Sessions / Scores / Evaluators / Playground，Python SDK + LangChain 接入，minibot 每轮对话可上报。",
     "projects.kb":

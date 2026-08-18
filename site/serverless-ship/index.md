@@ -1,9 +1,9 @@
 ---
-title: 简介
+title: 功能介绍
 description: ServerlessShip 把 GitHub Release / 部署事件变成飞书消息卡片。Vercel + Supabase，给 minibot 等项目做交付通知。
 ---
 
-# ServerlessShip 简介
+# ServerlessShip 功能介绍
 
 **ServerlessShip** 是轻量的发布通知服务：GitHub Release 或部署流水线结束时，把事件收成飞书应用消息卡片。跑在 Vercel Hobby，状态放在 Supabase Free，不养一台常驻通知后端。
 
@@ -37,6 +37,6 @@ description: ServerlessShip 把 GitHub Release / 部署事件变成飞书消息�
 ## 四、建议阅读顺序
 
 1. [打开小工具](https://serverless-ship.liuyidi.me/)
-2. 本页简介
+2. 本页功能介绍
 3. [更新日志](/serverless-ship/changelog/)
 4. 接入看 [GitHub README](https://github.com/liuyidi/serverless-ship/blob/main/README.md)
