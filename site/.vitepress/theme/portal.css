@@ -315,8 +315,16 @@ body:has(.portal-root) {
   }
 
   footer .note a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
     color: inherit;
     text-decoration: none;
+  }
+
+  footer .note-icon {
+    flex-shrink: 0;
+    opacity: 0.85;
   }
 
   footer .note a:hover {

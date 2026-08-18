@@ -16,11 +16,11 @@ const messages = {
     "hero.eyebrow": "minibot",
     "hero.title": "本地优先的 AI Agent 运行时",
     "hero.lede":
-      "Web / Desktop / CLI / App 同一套协议；飞书、微信把任务交给同一个 runtime。能调工具、改文件、跑命令，不只是聊天。",
+      "Web / Desktop / App 同一套协议；飞书、微信把任务交给同一个 runtime。能调工具、改文件、跑命令，不只是聊天。",
     "cta.agent": "打开 Agent",
     "cta.desktop": "下载 Desktop",
     "pillar.surfaces.title": "多端",
-    "pillar.surfaces.tags": "Web · Desktop · CLI · App",
+    "pillar.surfaces.tags": "Web · Desktop · App",
     "pillar.surfaces.body": "同一套 REST + WebSocket。会话协议不绑死在某一个客户端上。",
     "pillar.channels.title": "多渠道",
     "pillar.channels.tags": "飞书 · 微信 iLink",
@@ -45,7 +45,7 @@ const messages = {
     "entry.ship.kicker": "05 · Tools",
     "entry.ship.desc": "发布与部署事件 → 飞书通知卡片。",
     "entry.ship.go": "打开 serverless-ship.liuyidi.me →",
-    "footer.devui": "开发笔记 DevUI /ui",
+    "footer.devui": "开发实验室 DevUI",
   },
   en: {
     "nav.overview": "Overview",
@@ -58,11 +58,11 @@ const messages = {
     "hero.eyebrow": "minibot",
     "hero.title": "A local-first AI agent runtime",
     "hero.lede":
-      "One protocol for Web / Desktop / CLI / App. Feishu and WeChat talk to the same runtime. Tools, files, and commands — not just chat.",
+      "One protocol for Web / Desktop / App. Feishu and WeChat talk to the same runtime. Tools, files, and commands — not just chat.",
     "cta.agent": "Open Agent",
     "cta.desktop": "Download Desktop",
     "pillar.surfaces.title": "Surfaces",
-    "pillar.surfaces.tags": "Web · Desktop · CLI · App",
+    "pillar.surfaces.tags": "Web · Desktop · App",
     "pillar.surfaces.body": "The same REST + WebSocket stack. Sessions are not tied to one client.",
     "pillar.channels.title": "Channels",
     "pillar.channels.tags": "Feishu · WeChat iLink",
@@ -87,7 +87,7 @@ const messages = {
     "entry.ship.kicker": "05 · Tools",
     "entry.ship.desc": "Release & deploy events → Feishu notification cards.",
     "entry.ship.go": "Open serverless-ship.liuyidi.me →",
-    "footer.devui": "Dev notes DevUI /ui",
+    "footer.devui": "Dev Lab DevUI",
   },
 };
 
@@ -220,7 +220,22 @@ function onLocaleChange(event) {
 
     <footer>
       <p class="note">
-        <a href="https://bot.liuyidi.me/ui/">{{ t("footer.devui") }}</a>
+        <a href="https://bot.liuyidi.me/ui/">
+          <svg
+            class="note-icon"
+            viewBox="0 0 24 24"
+            width="14"
+            height="14"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <path
+              fill="currentColor"
+              d="M9.5 3a1 1 0 0 0-.95.68L7.1 8H4a1 1 0 1 0 0 2h.55l1.2 7.2A2 2 0 0 0 7.73 19h8.54a2 2 0 0 0 1.98-1.8L19.45 10H20a1 1 0 1 0 0-2h-3.1l-1.45-4.32A1 1 0 0 0 14.5 3h-5Zm.72 2h3.56l1.1 3.25H9.12L10.22 5ZM8.58 17l-.83-5h8.5l-.83 5H8.58Z"
+            />
+          </svg>
+          {{ t("footer.devui") }}
+        </a>
       </p>
       <p class="beian">
         <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer"
