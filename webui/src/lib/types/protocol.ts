@@ -138,6 +138,12 @@ export type InboundEvent =
       scope?: "metadata" | "thread" | string;
       workspace_scope?: WorkspaceScopePayload;
     }
+  | {
+      event: "workspace_updated";
+      chat_id: string;
+      scope?: "metadata" | "thread" | string;
+      workspace_scope?: WorkspaceScopePayload;
+    }
   | { event: "transcription_result"; request_id: string; text: string }
   | {
       event: "transcription_error";
