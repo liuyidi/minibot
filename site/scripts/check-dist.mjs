@@ -26,12 +26,26 @@ if (portal.includes("核心能力")) {
   throw new Error("portal HTML looks like the overview page");
 }
 
-const overview = mustRead("minibot/index.html");
-if (!overview.includes("核心能力")) {
-  throw new Error("overview is missing 核心能力");
+if (!portal.includes("/minikb/") || !portal.includes("/mini-langfuse/") || !portal.includes("/mini-auth/") || !portal.includes("/serverless-ship/")) {
+  throw new Error("portal is missing sibling overview links");
 }
-if (!overview.includes("/minibot/changelog")) {
-  throw new Error("overview is missing the changelog link");
+
+const products = [
+  ["minibot", "核心能力"],
+  ["minikb", "核心能力"],
+  ["mini-langfuse", "核心能力"],
+  ["mini-auth", "核心能力"],
+  ["serverless-ship", "核心能力"],
+];
+for (const [slug, marker] of products) {
+  const overview = mustRead(`${slug}/index.html`);
+  if (!overview.includes(marker)) {
+    throw new Error(`${slug} overview is missing ${marker}`);
+  }
+  if (!overview.includes(`/${slug}/changelog`)) {
+    throw new Error(`${slug} overview is missing the changelog link`);
+  }
+  mustRead(`${slug}/changelog/index.html`);
 }
 
 const changelog = mustRead("minibot/changelog/index.html");

@@ -161,22 +161,34 @@ function onLocaleChange(event) {
           <article class="card">
             <h3>mini-langfuse</h3>
             <p>{{ t("projects.mlf") }}</p>
-            <a href="https://mlf.liuyidi.me/">mlf.liuyidi.me →</a>
+            <p class="card-links">
+              <a href="https://mlf.liuyidi.me/">mlf.liuyidi.me →</a>
+              <a href="/mini-langfuse/">{{ t("projects.overview") }}</a>
+            </p>
           </article>
           <article class="card">
             <h3>minikb</h3>
             <p>{{ t("projects.kb") }}</p>
-            <a href="https://kb.liuyidi.me/">kb.liuyidi.me →</a>
+            <p class="card-links">
+              <a href="https://kb.liuyidi.me/">kb.liuyidi.me →</a>
+              <a href="/minikb/">{{ t("projects.overview") }}</a>
+            </p>
           </article>
           <article class="card">
             <h3>mini-auth</h3>
             <p>{{ t("projects.auth") }}</p>
-            <a href="https://auth.liuyidi.me/">auth.liuyidi.me →</a>
+            <p class="card-links">
+              <a href="https://auth.liuyidi.me/">auth.liuyidi.me →</a>
+              <a href="/mini-auth/">{{ t("projects.overview") }}</a>
+            </p>
           </article>
           <article class="card">
             <h3>ServerlessShip</h3>
             <p>{{ t("projects.ship") }}</p>
-            <a href="https://serverless-ship.liuyidi.me/">serverless-ship.liuyidi.me →</a>
+            <p class="card-links">
+              <a href="https://serverless-ship.liuyidi.me/">serverless-ship.liuyidi.me →</a>
+              <a href="/serverless-ship/">{{ t("projects.overview") }}</a>
+            </p>
           </article>
         </div>
       </section>

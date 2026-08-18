@@ -1,6 +1,9 @@
 # Public site (liuyidi.me)
 
-VitePress SSG for `https://liuyidi.me` (portal) and `https://liuyidi.me/minibot/` (简介 / 更新日志).
+VitePress SSG for `https://liuyidi.me` (portal) and product docs:
+
+- `/minibot/` `/mini-langfuse/` `/minikb/` `/mini-auth/` `/serverless-ship/`
+- each has `/changelog/`
 
 ```bash
 cd site

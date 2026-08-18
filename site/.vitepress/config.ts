@@ -1,36 +1,50 @@
 import { defineConfig } from "vitepress";
 
+function productSidebar(name, base) {
+  return {
+    text: name,
+    items: [
+      { text: "简介", link: `${base}/` },
+      { text: "更新日志", link: `${base}/changelog/` },
+    ],
+  };
+}
+
 export default defineConfig({
   lang: "zh-CN",
-  title: "minibot",
+  title: "liuyidi.me",
   titleTemplate: ":title · liuyidi.me",
   description:
-    "刘一帝个人页与 minibot 产品简介：Agent runtime、Desktop、更新日志。",
+    "刘一帝个人页与 Agent 工程栈简介：minibot、mini-langfuse、minikb、mini-auth、ServerlessShip。",
   cleanUrls: true,
   lastUpdated: false,
   srcExclude: ["README.md", ".generated/**"],
   themeConfig: {
-    siteTitle: "minibot",
+    siteTitle: "liuyidi.me",
     nav: [
-      { text: "liuyidi.me", link: "/" },
+      { text: "门户", link: "/" },
+      {
+        text: "产品",
+        items: [
+          { text: "minibot", link: "/minibot/" },
+          { text: "mini-langfuse", link: "/mini-langfuse/" },
+          { text: "minikb", link: "/minikb/" },
+          { text: "mini-auth", link: "/mini-auth/" },
+          { text: "ServerlessShip", link: "/serverless-ship/" },
+        ],
+      },
       { text: "打开 Agent", link: "https://bot.liuyidi.me/" },
-      { text: "GitHub", link: "https://github.com/liuyidi/minibot" },
+      { text: "GitHub", link: "https://github.com/liuyidi" },
     ],
     sidebar: {
-      "/minibot/": [
-        {
-          text: "minibot",
-          items: [
-            { text: "简介", link: "/minibot/" },
-            { text: "更新日志", link: "/minibot/changelog/" },
-          ],
-        },
-      ],
+      "/minibot/": [productSidebar("minibot", "/minibot")],
+      "/mini-langfuse/": [productSidebar("mini-langfuse", "/mini-langfuse")],
+      "/minikb/": [productSidebar("minikb", "/minikb")],
+      "/mini-auth/": [productSidebar("mini-auth", "/mini-auth")],
+      "/serverless-ship/": [productSidebar("ServerlessShip", "/serverless-ship")],
     },
     outline: "deep",
-    socialLinks: [
-      { icon: "github", link: "https://github.com/liuyidi/minibot" },
-    ],
+    socialLinks: [{ icon: "github", link: "https://github.com/liuyidi" }],
   },
   vite: {
     server: {
