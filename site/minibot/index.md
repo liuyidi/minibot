@@ -1,9 +1,9 @@
 ---
-title: 功能介绍
+title: 简介
 description: minibot 是本地优先的 AI Agent 运行时：模型、工具、会话闭环，Web / Desktop / IM 同一套协议。
 ---
 
-# minibot 功能介绍
+# minibot 简介
 
 **minibot** 是一个本地优先的 **AI Agent 运行时**：用 FastAPI 承载「大模型 + 工具 + 会话」闭环，并用 React WebUI（及飞书 / 微信等 IM）与人对齐协作。
 
@@ -45,6 +45,6 @@ description: minibot 是本地优先的 AI Agent 运行时：模型、工具、�
 
 1. [打开 Web](https://bot.liuyidi.me/) — 先走通一轮对话
 2. [下载 Desktop](https://bot.liuyidi.me/#/download/) — 需要本机文件和本机会话时
-3. 本页功能介绍 — 搞清系列能做什么
+3. 本页简介 — 搞清系列能做什么
 4. [更新日志](/minibot/changelog/) — 当前版本用户能感知的变更
 5. 要自建再看 [GitHub README](https://github.com/liuyidi/minibot/blob/main/README.zh.md)

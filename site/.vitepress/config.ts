@@ -38,7 +38,7 @@ export default defineConfig({
       { text: "GitHub", link: "https://github.com/liuyidi" },
     ],
     sidebar: [
-      productSidebar("minibot", "/minibot"),
+      productSidebar("minibot", "/minibot", "简介"),
       productSidebar("minikb", "/minikb", "简介"),
       productSidebar("mini-langfuse", "/mini-langfuse", "简介"),
       productSidebar("mini-auth", "/mini-auth"),
