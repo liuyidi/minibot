@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Download a published v* GitHub Release and publish selected
+# Download a published Desktop V2 GitHub Release and publish selected
 # installers to Aliyun OSS + releases.json (macOS arm+intel / Windows / Linux).
 set -euo pipefail
 
@@ -9,12 +9,24 @@ cd "$ROOT"
 usage() {
   cat <<'EOF'
 Usage:
-  scripts/sync-desktop-release-to-oss.sh --tag v1.0.1 [--run-id 123456789] [--dry-run]
+  scripts/sync-desktop-release-to-oss.sh --tag desktop-v2-v1.0.13 [--run-id 123456789] [--dry-run]
+
+Accepts desktop-v2-v*, v*, or historical desktop-v* tags.
 
 Requires: gh, ossutil, node.
 OSS env: OSS_BUCKET, OSS_REGION, OSS_ENDPOINT, OSS_PUBLIC_BASE_URL,
          OSS_ACCESS_KEY_ID, OSS_ACCESS_KEY_SECRET
 EOF
+}
+
+release_version_from_tag() {
+  local tag="$1"
+  case "$tag" in
+    desktop-v2-v*) printf '%s' "${tag#desktop-v2-v}" ;;
+    desktop-v*) printf '%s' "${tag#desktop-v}" ;;
+    v*) printf '%s' "${tag#v}" ;;
+    *) return 1 ;;
+  esac
 }
 
 tag=""
@@ -32,12 +44,10 @@ while [[ $# -gt 0 ]]; do
 done
 
 [[ -n "$tag" ]] || { usage >&2; exit 2; }
-[[ "$tag" == v* ]] || {
-  echo "Expected tag matching v* (got: $tag)" >&2
+version="$(release_version_from_tag "$tag")" || {
+  echo "Expected tag matching desktop-v2-v*, v*, or desktop-v* (got: $tag)" >&2
   exit 2
 }
-
-version="${tag#v}"
 tmpdir="$(mktemp -d "${TMPDIR:-/tmp}/minibot-desktop-release.XXXXXX")"
 cleanup() { rm -rf "$tmpdir"; }
 trap cleanup EXIT

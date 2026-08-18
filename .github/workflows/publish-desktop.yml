@@ -1,14 +1,11 @@
 name: Publish Desktop
 
-# Builds minibot Tauri shell for macOS / Windows / Linux, publishes a GitHub
-# Release, then lets the OSS sync workflow mirror the assets.
-# Trigger: manual run or push tag v*.
+# Retired thin-shell builder (`desktop/`). Public downloads use Desktop V2:
+# `.github/workflows/publish-desktop-v2.yml` + Sync Desktop Release to OSS.
+# Manual only — do not run on v* tags (that would race V2 OSS sync).
 
 on:
   workflow_dispatch:
-  push:
-    tags:
-      - "v*"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

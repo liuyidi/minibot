@@ -2,7 +2,7 @@
 
 [English](./README.md) | 简体中文
 
-> 与 `desktop/`（远程薄壳）并存的实验目录。  
+> 默认桌面端。`desktop/` 远程薄壳已退役。  
 > 设计：[`docs/superpowers/specs/2026-08-14-desktop-local-gateway-design.md`](../docs/superpowers/specs/2026-08-14-desktop-local-gateway-design.md)  
 > 计划：[`docs/superpowers/plans/2026-08-14-desktop-v2-local-gateway.md`](../docs/superpowers/plans/2026-08-14-desktop-v2-local-gateway.md)
 
@@ -135,22 +135,23 @@ open "/Applications/minibot V2.app"
 
 | | |
 |---|---|
-| 触发 | 仅手动 `workflow_dispatch`（下载页切换前） |
+| 触发 | 统一 **Release** tag `v*`，或手动 `workflow_dispatch` |
 | 矩阵 | macOS arm64 / macOS x86_64（`macos-15-intel`）/ Linux / Windows |
 | 步骤 | `uv sync` → 构建 WebUI → freeze → prepare → `tauri-action` |
-| Release tag | `desktop-v2-v__VERSION__`（**不**与薄壳 `v*` 冲突） |
-| 通知 | 成功后 → ServerlessShip → 飞书（`channel: GitHub Release (Desktop V2)`） |
+| Release tag | `desktop-v2-v__VERSION__`（**不**与编排 tag `v*` 冲突） |
+| OSS | 发布成功后自动跑 **Sync Desktop Release to OSS** |
+| 通知 | 成功后 → ServerlessShip → 飞书；OSS 同步再发一次 |
 
-薄壳仍走 [`.github/workflows/publish-desktop.yml`](../.github/workflows/publish-desktop.yml)（`desktop/`，tag `v*`）。
+已退役薄壳仍在 [`.github/workflows/publish-desktop.yml`](../.github/workflows/publish-desktop.yml)（`desktop/`，**仅手动**）。
 
-下载页切到 V2 安装包需等 CI 产物验证通过后再做。
+公开下载页：`https://bot.liuyidi.me/#/download/`（清单 `https://downloads.liuyidi.me/minibot/releases.json`）。
 
-## 与 V1 对比
+## 与已退役 V1 对比
 
-| | desktop (V1) | desktopV2 |
+| | desktop (V1，已退役) | desktopV2（默认） |
 |---|---|---|
 | 默认 API | `bot.liuyidi.me` | `127.0.0.1:8766` |
 | 进程 | 不拉起 | sidecar / `minibot` |
 | 登录 | Web 同源 | 系统浏览器 + HTTP handoff（可选 `minibot://` 聚焦） |
 | bundle id | `me.liuyidi.minibot.desktop` | `me.liuyidi.minibot.desktopv2` |
-| 发布 | `Publish Desktop` → `v*` | `Publish Desktop V2` → `desktop-v2-v*` |
+| 发布 | `Publish Desktop`（手动） | `Publish Desktop V2` → `desktop-v2-v*` + OSS |

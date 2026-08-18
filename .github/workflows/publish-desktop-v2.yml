@@ -1,11 +1,15 @@
 name: Publish Desktop V2
 
-# Builds desktopV2 with a frozen minibot sidecar (PyInstaller onedir).
-# Does not replace publish-desktop.yml (thin shell under desktop/).
-# Trigger: manual only until download cutover.
+# Default desktop publisher: desktopV2 + frozen minibot sidecar (PyInstaller onedir).
+# Trigger: unified Release tag v*, or manual workflow_dispatch.
+# GitHub Release tag stays desktop-v2-v<version> so it does not collide with
+# the orchestration tag v* (client package) or historical thin-shell tags.
 
 on:
   workflow_dispatch:
+  push:
+    tags:
+      - "v*"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -119,16 +123,16 @@ jobs:
           tagName: desktop-v2-v__VERSION__
           releaseName: minibot Desktop V2 v__VERSION__
           releaseBody: |
-            Desktop V2 (local gateway + frozen minibot sidecar).
+            Desktop app with a local minibot gateway (frozen sidecar).
 
             Unsigned CI builds use macOS ad-hoc signing. If Gatekeeper says the app is
             “damaged”: `xattr -cr "/Applications/minibot V2.app"` then
             `codesign --force --deep --sign - "/Applications/minibot V2.app"`.
             Windows SmartScreen may warn until Developer ID signed.
 
-            Thin-shell releases remain under `v*` via Publish Desktop.
+            Installers are mirrored to OSS (`downloads.liuyidi.me/minibot/releases.json`).
           releaseDraft: false
-          prerelease: true
+          prerelease: false
           uploadUpdaterJson: false
           uploadUpdaterSignatures: false
           uploadWorkflowArtifacts: true

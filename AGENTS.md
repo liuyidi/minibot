@@ -10,6 +10,7 @@ Layout:
 ```text
 minibot/     # Python package (agent loop, channels, tools, API)
 webui/       # Vite React SPA (build → webui/dist)
+desktopV2/   # Desktop app (local gateway + sidecar)
 Dockerfile.minibot
 ```
 

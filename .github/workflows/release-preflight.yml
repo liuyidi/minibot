@@ -6,6 +6,7 @@ on:
     paths:
       - "webui/**"
       - "desktop/**"
+      - "desktopV2/**"
       - "minibot/**"
       - "packages/minibot-client/**"
       - "CHANGELOG.md"
@@ -19,6 +20,7 @@ on:
     paths:
       - "webui/**"
       - "desktop/**"
+      - "desktopV2/**"
       - "minibot/**"
       - "packages/minibot-client/**"
       - "CHANGELOG.md"
@@ -70,7 +72,7 @@ jobs:
           changelog_files=()
           for file in "${changed_files[@]}"; do
             case "$file" in
-              webui/package.json|webui/package-lock.json|desktop/package.json|desktop/package-lock.json|desktop/src-tauri/Cargo.toml|desktop/src-tauri/Cargo.lock|desktop/src-tauri/tauri.conf.json|minibot/pyproject.toml|minibot/src/minibot/__init__.py|packages/minibot-client/package.json)
+              webui/package.json|webui/package-lock.json|desktop/package.json|desktop/package-lock.json|desktop/src-tauri/Cargo.toml|desktop/src-tauri/Cargo.lock|desktop/src-tauri/tauri.conf.json|desktopV2/package.json|desktopV2/package-lock.json|desktopV2/src-tauri/Cargo.toml|desktopV2/src-tauri/Cargo.lock|desktopV2/src-tauri/tauri.conf.json|minibot/pyproject.toml|minibot/src/minibot/__init__.py|packages/minibot-client/package.json)
                 version_files+=("$file")
                 ;;
               CHANGELOG.md|CHANGELOG.zh.md)

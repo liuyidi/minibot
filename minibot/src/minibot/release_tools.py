@@ -17,6 +17,11 @@ VERSIONED_FILES = [
     "desktop/src-tauri/Cargo.toml",
     "desktop/src-tauri/Cargo.lock",
     "desktop/src-tauri/tauri.conf.json",
+    "desktopV2/package.json",
+    "desktopV2/package-lock.json",
+    "desktopV2/src-tauri/Cargo.toml",
+    "desktopV2/src-tauri/Cargo.lock",
+    "desktopV2/src-tauri/tauri.conf.json",
     "minibot/pyproject.toml",
     "minibot/src/minibot/__init__.py",
     "packages/minibot-client/package.json",
@@ -28,8 +33,16 @@ SOURCE_PREFIXES = (
     "webui/src/",
     "desktop/src/",
     "desktop/src-tauri/src/",
+    "desktopV2/src/",
+    "desktopV2/src-tauri/src/",
     "minibot/src/",
     "packages/minibot-client/src/",
+)
+
+# prefix → Cargo package name in Cargo.lock
+_TAURI_PACKAGES = (
+    ("desktop", "minibot-desktop"),
+    ("desktopV2", "minibot-desktop-v2"),
 )
 
 
@@ -89,32 +102,8 @@ def sync_release_versions(repo_root: Path, version: str, release_date: str) -> l
             data.setdefault("packages", {}).setdefault("", {}).__setitem__("version", version),
         ),
     )
-    write_json("desktop/package.json", lambda data: data.__setitem__("version", version))
-    write_json(
-        "desktop/package-lock.json",
-        lambda data: (
-            data.__setitem__("version", version),
-            data.setdefault("packages", {}).setdefault("", {}).__setitem__("version", version),
-        ),
-    )
-    write_text(
-        "desktop/src-tauri/Cargo.toml",
-        _replace_first_version_line((repo_root / "desktop/src-tauri/Cargo.toml").read_text(encoding="utf-8"), version),
-    )
-    write_text(
-        "desktop/src-tauri/Cargo.lock",
-        _replace_cargo_lock_version((repo_root / "desktop/src-tauri/Cargo.lock").read_text(encoding="utf-8"), version),
-    )
-    write_json(
-        "desktop/src-tauri/tauri.conf.json",
-        lambda data: (
-            data.__setitem__("version", version),
-            data.setdefault("bundle", {})
-            .setdefault("windows", {})
-            .setdefault("wix", {})
-            .__setitem__("version", _installer_version(version)),
-        ),
-    )
+    for prefix, cargo_name in _TAURI_PACKAGES:
+        _sync_tauri_package(repo_root, write_json, write_text, prefix, cargo_name, version)
     write_text(
         "minibot/pyproject.toml",
         _replace_first_version_line((repo_root / "minibot/pyproject.toml").read_text(encoding="utf-8"), version),
@@ -158,6 +147,46 @@ def _has_release_source_changes(changed_files: Iterable[str]) -> bool:
     return False
 
 
+def _sync_tauri_package(
+    repo_root: Path,
+    write_json,
+    write_text,
+    prefix: str,
+    cargo_name: str,
+    version: str,
+) -> None:
+    write_json(f"{prefix}/package.json", lambda data: data.__setitem__("version", version))
+    write_json(
+        f"{prefix}/package-lock.json",
+        lambda data: (
+            data.__setitem__("version", version),
+            data.setdefault("packages", {}).setdefault("", {}).__setitem__("version", version),
+        ),
+    )
+    write_text(
+        f"{prefix}/src-tauri/Cargo.toml",
+        _replace_first_version_line((repo_root / f"{prefix}/src-tauri/Cargo.toml").read_text(encoding="utf-8"), version),
+    )
+    write_text(
+        f"{prefix}/src-tauri/Cargo.lock",
+        _replace_cargo_lock_version(
+            (repo_root / f"{prefix}/src-tauri/Cargo.lock").read_text(encoding="utf-8"),
+            version,
+            cargo_name,
+        ),
+    )
+    write_json(
+        f"{prefix}/src-tauri/tauri.conf.json",
+        lambda data: (
+            data.__setitem__("version", version),
+            data.setdefault("bundle", {})
+            .setdefault("windows", {})
+            .setdefault("wix", {})
+            .__setitem__("version", _installer_version(version)),
+        ),
+    )
+
+
 def _installer_version(version: str) -> str:
     parts = version.split(".")
     if len(parts) == 3 and all(part.isdigit() for part in parts):
@@ -174,8 +203,8 @@ def _replace_first_assignment(source: str, name: str, version: str) -> str:
     return re.sub(pattern, f'{name} = "{version}"', source, count=1)
 
 
-def _replace_cargo_lock_version(source: str, version: str) -> str:
-    pattern = r'(?ms)(\[\[package\]\]\nname = "minibot-desktop"\nversion = ")([^"]+)(")'
+def _replace_cargo_lock_version(source: str, version: str, package_name: str = "minibot-desktop") -> str:
+    pattern = rf'(?ms)(\[\[package\]\]\nname = "{re.escape(package_name)}"\nversion = ")([^"]+)(")'
     updated, count = re.subn(pattern, rf"\g<1>{version}\3", source, count=1)
     if count:
         return updated

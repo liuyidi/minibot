@@ -1,6 +1,11 @@
-# minibot Desktop (thin remote shell)
+# minibot Desktop (retired thin remote shell)
 
 [简体中文](./README.zh.md) | English
+
+> **Retired.** Public downloads and CI publish **Desktop V2** (`../desktopV2/`),
+> which runs a local minibot gateway. This `desktop/` tree is the old remote
+> WebUI shell (default `https://bot.liuyidi.me`). Do not use
+> **Publish Desktop** for OSS packages.
 
 [![Publish Desktop](https://github.com/liuyidi/minibot/actions/workflows/publish-desktop.yml/badge.svg)](https://github.com/liuyidi/minibot/actions/workflows/publish-desktop.yml)
 
@@ -76,19 +81,10 @@ When sharing an unsigned build:
 xattr -dr com.apple.quarantine /Applications/minibot.app
 ```
 
-## Packaging (CI: macOS / Windows / Linux)
+## Packaging (retired)
 
-GitHub Actions workflow: [`.github/workflows/publish-desktop.yml`](../.github/workflows/publish-desktop.yml).
+Do **not** use this workflow for public OSS packages. Use **Publish Desktop V2**.
 
-- **Automatic**: push to `main` that touches `desktop/**` (or this workflow file)
-- **Manual**: Actions → **Publish Desktop** → Run workflow
-- **Tag**: `git tag desktop-v1.0.0-beta.2 && git push origin desktop-v1.0.0-beta.2`
-
-Builds in parallel on `macos-latest` (arm64 + x64), `ubuntu-22.04`, and `windows-latest` via `tauri build`, then publishes a GitHub Release (`desktop-v__VERSION__` from `src-tauri/tauri.conf.json`). Signing/notarization is not configured; verify artifacts in the Release before wider distribution.
-
-After the GitHub Release is published, the pipeline syncs artifacts to OSS automatically in most cases (no manual sync click).
-It also sends a Feishu release notification so you can confirm the desktop build finished.
-
-The **Sync Desktop Release to OSS** workflow uploads macOS / Windows / Linux installers to Aliyun OSS and updates the `releases.json` used by the download page (see `docs/download-releases.md` for Variables/Secrets).
+GitHub Actions workflow: [`.github/workflows/publish-desktop.yml`](../.github/workflows/publish-desktop.yml) (**manual only**).
 
 Windows MSI (WiX) only accepts numeric versions. The app still uses semver (e.g. `1.0.0-beta.2`), but `bundle.windows.wix.version` in `tauri.conf.json` must stay numeric (currently `1.0.0.1`). For `beta.N`, set that field to `1.0.0.N`.

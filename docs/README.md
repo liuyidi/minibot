@@ -22,14 +22,14 @@
 | 目录 | 内容 |
 |------|------|
 | [`phases/`](./phases/) | 已完成 / 进行中 Phase 短记（验收与要点） |
-| [`plans/`](./plans/) | 待执行切片计划（如 [API GET→POST](./plans/api-mutation-post-body.md)） |
-| [`notes/`](./notes/) | 工程笔记（如 Dev UI Trace、[vs OpenClaw](./notes/minibot-vs-openclaw-gap.md)、[vs nanobot](./notes/minibot-vs-nanobot-gap.md)） |
+| [`plans/`](./plans/) | 待执行切片计划（如 [今日 2026-08-18](./plans/2026-08-18-daily.md)、[API GET→POST](./plans/api-mutation-post-body.md)） |
+| [`notes/`](./notes/) | 工程笔记（如 Dev UI Trace、[vs OpenClaw](./notes/minibot-vs-openclaw-gap.md)、[vs nanobot](./notes/minibot-vs-nanobot-gap.md)、[vs DeerFlow](./notes/minibot-vs-deer-flow.md)） |
 | [`roadmap/`](./roadmap/) | 尚未并入主路线图的独立提案（如 A2A） |
 
 ## 客户端怎么接
 
 ```text
-CLI / webui / desktop / React Native
+CLI / webui / desktopV2 / React Native
         │
         ▼
   minibot Client API   ← 见 client-api.md

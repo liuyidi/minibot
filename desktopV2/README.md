@@ -2,7 +2,7 @@
 
 [简体中文](./README.zh.md) | English
 
-> Experimental tree next to `desktop/` (remote thin shell).  
+> Default desktop app. The remote thin shell under `desktop/` is retired.  
 > Design: [`docs/superpowers/specs/2026-08-14-desktop-local-gateway-design.md`](../docs/superpowers/specs/2026-08-14-desktop-local-gateway-design.md)  
 > Plan: [`docs/superpowers/plans/2026-08-14-desktop-v2-local-gateway.md`](../docs/superpowers/plans/2026-08-14-desktop-v2-local-gateway.md)
 
@@ -135,22 +135,23 @@ Workflow: [`.github/workflows/publish-desktop-v2.yml`](../.github/workflows/publ
 
 | | |
 |---|---|
-| Trigger | **Manual** `workflow_dispatch` only (until download cutover) |
+| Trigger | Unified **Release** tag `v*`, or manual `workflow_dispatch` |
 | Matrix | macOS arm64 / macOS x86_64 (`macos-15-intel`) / Linux / Windows |
 | Steps | `uv sync` → WebUI build → freeze → prepare → `tauri-action` |
-| Release tag | `desktop-v2-v__VERSION__` (does **not** collide with thin-shell `v*`) |
-| Notify | On success → ServerlessShip → Feishu (`channel: GitHub Release (Desktop V2)`) |
+| Release tag | `desktop-v2-v__VERSION__` (does **not** collide with orchestration `v*`) |
+| OSS | **Sync Desktop Release to OSS** runs after a successful publish |
+| Notify | On success → ServerlessShip → Feishu; OSS sync posts again |
 
-Thin shell stays on [`.github/workflows/publish-desktop.yml`](../.github/workflows/publish-desktop.yml) (`desktop/`, tags `v*`).
+The retired thin shell remains at [`.github/workflows/publish-desktop.yml`](../.github/workflows/publish-desktop.yml) (`desktop/`, **manual only**).
 
-Download-page cutover to V2 installers is **gated** until CI artifacts are verified.
+Public download page: `https://bot.liuyidi.me/#/download/` (manifest `https://downloads.liuyidi.me/minibot/releases.json`).
 
-## vs V1
+## vs retired V1
 
-| | desktop (V1) | desktopV2 |
+| | desktop (V1, retired) | desktopV2 (default) |
 |---|---|---|
 | Default API | `bot.liuyidi.me` | `127.0.0.1:8766` |
 | Process | none | sidecar / `minibot` |
 | Auth | same-origin Web | system browser + HTTP handoff (+ optional `minibot://` focus) |
 | Bundle id | `me.liuyidi.minibot.desktop` | `me.liuyidi.minibot.desktopv2` |
-| Release | `Publish Desktop` → `v*` | `Publish Desktop V2` → `desktop-v2-v*` |
+| Release | `Publish Desktop` (manual) | `Publish Desktop V2` → `desktop-v2-v*` + OSS |

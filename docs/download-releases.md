@@ -15,9 +15,9 @@ Use object storage (Aliyun OSS or Tencent COS) behind CDN, for example
 minibot/
   releases.json
   android/minibot-android-v1.0.4.apk
-  macos/minibot-1.0.0-beta.1-….dmg
-  windows/minibot-1.0.0-beta.1-…-setup.exe
-  linux/minibot-1.0.0-beta.1-….deb
+  macos/minibot-1.0.13-minibot.V2_1.0.13_aarch64.dmg
+  windows/minibot-1.0.13-minibot.V2_1.0.13_x64-setup.exe
+  linux/minibot-1.0.13-minibot.V2_1.0.13_amd64.deb
 ```
 
 The `releases.json` served from OSS should contain absolute artifact URLs, for
@@ -26,12 +26,12 @@ example:
 ```json
 {
   "macos": {
-    "version": "1.0.0-beta.1",
-    "fileName": "minibot-1.0.0-beta.1-….dmg",
+    "version": "1.0.13",
+    "fileName": "minibot-1.0.13-minibot.V2_1.0.13_aarch64.dmg",
     "url": "https://downloads.liuyidi.me/minibot/macos/…"
   },
-  "windows": { "version": null, "url": null },
-  "linux": { "version": null, "url": null }
+  "windows": { "version": "1.0.13", "url": "https://downloads.liuyidi.me/minibot/windows/…" },
+  "linux": { "version": "1.0.13", "url": "https://downloads.liuyidi.me/minibot/linux/…" }
 }
 ```
 
@@ -40,18 +40,20 @@ shows it as coming soon rather than exposing a broken download link.
 
 ## Automated desktop publishing (recommended)
 
+Public desktop packages are **Desktop V2** (local gateway + sidecar under `desktopV2/`).
+The remote thin shell under `desktop/` is retired from this pipeline.
+
 1. Merge the release commit to `main`, then run **Release** manually to create
    the shared `v<version>` tag.
-2. Workflow **Publish Desktop** (`.github/workflows/publish-desktop.yml`) runs
-   on that tag, builds the installers, and publishes the GitHub Release.
+2. Workflow **Publish Desktop V2** (`.github/workflows/publish-desktop-v2.yml`)
+   runs on that tag (or via manual `workflow_dispatch`), builds the installers,
+   and publishes GitHub Release `desktop-v2-v<version>`.
 3. Workflow **Sync Desktop Release to OSS**
    (`.github/workflows/sync-oss-desktop.yml`) runs automatically after
-   **Publish Desktop** completes, downloads the workflow artifacts or published
+   **Publish Desktop V2** completes, downloads the workflow artifacts or published
    release assets, and executes `scripts/sync-desktop-release-to-oss.sh` to
    upload installers and update `minibot/releases.json` on OSS.
-4. Release notifications are sent to Feishu as card messages:
-   - `publish-desktop` posts when the GitHub Release is published.
-   - `sync-oss-desktop` posts again after OSS sync completes.
+4. `sync-oss-desktop` posts to Feishu after OSS sync completes.
 
 Configure repository **Variables**: `OSS_BUCKET`, `OSS_REGION`, `OSS_ENDPOINT`,
 `OSS_PUBLIC_BASE_URL` (optional `OSS_PREFIX`, `OSS_OBJECT_ACL`).
@@ -61,7 +63,10 @@ Configure repository **Secrets**: `OSS_ACCESS_KEY_ID`, `OSS_ACCESS_KEY_SECRET`
 (Feishu custom bot webhook used by both release notifications).
 
 You can also re-run sync manually: Actions → Sync Desktop Release to OSS →
-  provide tag `v…`.
+  provide tag `desktop-v2-v…`.
+
+The retired thin-shell workflow (`.github/workflows/publish-desktop.yml`) is
+manual-only and must **not** be used for public OSS packages.
 
 ## Manual publishing
 
@@ -82,7 +87,7 @@ scripts/publish-oss-releases.sh --version 1.0.0-beta.1 \
 Or sync from an already-published GitHub release:
 
 ```bash
-scripts/sync-desktop-release-to-oss.sh --tag v1.0.1
+scripts/sync-desktop-release-to-oss.sh --tag desktop-v2-v1.0.13
 ```
 
 ## Release checklist

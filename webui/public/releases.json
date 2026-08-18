@@ -12,23 +12,24 @@
     "url": null
   },
   "macos": {
-    "version": "1.0.0-beta.1",
-    "fileName": "minibot-1.0.0-beta.1-minibot_1.0.0-beta.1_aarch64.dmg",
-    "url": "https://downloads.liuyidi.me/minibot/macos/minibot-1.0.0-beta.1-minibot_1.0.0-beta.1_aarch64.dmg",
-    "size": "3.7M",
-    "intelFileName": "minibot-1.0.0-beta.1-minibot_1.0.0-beta.1_x64.dmg",
-    "intelUrl": "https://downloads.liuyidi.me/minibot/macos/minibot-1.0.0-beta.1-minibot_1.0.0-beta.1_x64.dmg"
+    "version": "1.0.13",
+    "fileName": "minibot-1.0.13-minibot.V2_1.0.13_aarch64.dmg",
+    "url": "https://downloads.liuyidi.me/minibot/macos/minibot-1.0.13-minibot.V2_1.0.13_aarch64.dmg",
+    "size": "47M",
+    "intelFileName": "minibot-1.0.13-minibot.V2_1.0.13_x64.dmg",
+    "intelUrl": "https://downloads.liuyidi.me/minibot/macos/minibot-1.0.13-minibot.V2_1.0.13_x64.dmg",
+    "intelSize": "47M"
   },
   "windows": {
-    "version": "1.0.0-beta.1",
-    "url": "https://downloads.liuyidi.me/minibot/windows/minibot-1.0.0-beta.1-minibot_1.0.0-beta.1_x64-setup.exe",
-    "size": "2.1M",
-    "fileName": "minibot-1.0.0-beta.1-minibot_1.0.0-beta.1_x64-setup.exe"
+    "version": "1.0.13",
+    "url": "https://downloads.liuyidi.me/minibot/windows/minibot-1.0.13-minibot.V2_1.0.13_x64-setup.exe",
+    "size": "35M",
+    "fileName": "minibot-1.0.13-minibot.V2_1.0.13_x64-setup.exe"
   },
   "linux": {
-    "version": "1.0.0-beta.1",
-    "url": "https://downloads.liuyidi.me/minibot/linux/minibot-1.0.0-beta.1-minibot_1.0.0-beta.1_amd64.deb",
-    "size": "3.0M",
-    "fileName": "minibot-1.0.0-beta.1-minibot_1.0.0-beta.1_amd64.deb"
+    "version": "1.0.13",
+    "url": "https://downloads.liuyidi.me/minibot/linux/minibot-1.0.13-minibot.V2_1.0.13_amd64.deb",
+    "size": "53M",
+    "fileName": "minibot-1.0.13-minibot.V2_1.0.13_amd64.deb"
   }
 }

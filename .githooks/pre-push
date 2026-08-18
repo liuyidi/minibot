@@ -35,6 +35,11 @@ while IFS=' ' read -r local_ref local_sha remote_ref remote_sha; do
       "desktop/src-tauri/Cargo.toml" \
       "desktop/src-tauri/Cargo.lock" \
       "desktop/src-tauri/tauri.conf.json" \
+      "desktopV2/package.json" \
+      "desktopV2/package-lock.json" \
+      "desktopV2/src-tauri/Cargo.toml" \
+      "desktopV2/src-tauri/Cargo.lock" \
+      "desktopV2/src-tauri/tauri.conf.json" \
       "minibot/pyproject.toml" \
       "minibot/src/minibot/__init__.py" \
       "packages/minibot-client/package.json"; do

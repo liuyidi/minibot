@@ -59,15 +59,52 @@ prefix="${OSS_PREFIX:-minibot}"
 object_acl="${OSS_OBJECT_ACL:-public-read}"
 manifest="webui/public/releases.json"
 
-upload() {
-  local source="$1" object="$2"
-  local command=(ossutil cp "$source" "oss://${OSS_BUCKET}/${object}" --force --region "$OSS_REGION" --endpoint "$OSS_ENDPOINT" --acl "$object_acl" --meta "Cache-Control:public,max-age=31536000,immutable")
+# ossutil v1 uses --meta Cache-Control:…; v2 uses --cache-control.
+ossutil_major="1"
+if command -v ossutil >/dev/null 2>&1; then
+  if ver="$(ossutil version 2>/dev/null | head -n1)"; then
+    ossutil_major="${ver%%.*}"
+  fi
+fi
+
+ossutil_cp() {
+  local source="$1" object="$2" cache_control="$3"
+  local dest="oss://${OSS_BUCKET}/${object}"
+  local command=(ossutil cp "$source" "$dest" --force --region "$OSS_REGION" --endpoint "$OSS_ENDPOINT" --acl "$object_acl")
+  if [[ -n "${OSS_ACCESS_KEY_ID:-}" && -n "${OSS_ACCESS_KEY_SECRET:-}" ]]; then
+    command+=(--access-key-id "$OSS_ACCESS_KEY_ID" --access-key-secret "$OSS_ACCESS_KEY_SECRET")
+  fi
+  if [[ "$ossutil_major" == "2" ]]; then
+    command+=(--cache-control "$cache_control")
+  else
+    command+=(--meta "Cache-Control:${cache_control}")
+  fi
   printf 'Uploading %s -> oss://%s/%s (force overwrite)\n' "$source" "$OSS_BUCKET" "$object"
   if [[ "$dry_run" == true ]]; then
-    printf 'DRY RUN:'; printf ' %q' "${command[@]}"; printf '\n'
+    # Redact credentials in dry-run output.
+    local shown=()
+    local skip_next=false
+    local arg
+    for arg in "${command[@]}"; do
+      if [[ "$skip_next" == true ]]; then
+        shown+=('***')
+        skip_next=false
+        continue
+      fi
+      case "$arg" in
+        --access-key-id|--access-key-secret|-i|-k) shown+=("$arg"); skip_next=true ;;
+        *) shown+=("$arg") ;;
+      esac
+    done
+    printf 'DRY RUN:'; printf ' %q' "${shown[@]}"; printf '\n'
   else
     "${command[@]}"
   fi
+}
+
+upload() {
+  local source="$1" object="$2"
+  ossutil_cp "$source" "$object" "public,max-age=31536000,immutable"
 }
 
 android_name=""
@@ -140,6 +177,6 @@ fi
 
 "${manifest_command[@]}"
 echo "Publishing releases manifest -> oss://${OSS_BUCKET}/${prefix}/releases.json (force overwrite)"
-ossutil cp "$manifest" "oss://${OSS_BUCKET}/${prefix}/releases.json" --force --region "$OSS_REGION" --endpoint "$OSS_ENDPOINT" --acl "$object_acl" --meta "Cache-Control:no-cache"
+ossutil_cp "$manifest" "${prefix}/releases.json" "no-cache"
 
 echo "Published ${prefix}/releases.json. Configure VITE_MINIBOT_RELEASES_URL=${OSS_PUBLIC_BASE_URL%/}/${prefix}/releases.json for the WebUI build."

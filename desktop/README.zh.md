@@ -1,6 +1,10 @@
-# minibot Desktop（远程薄壳）
+# minibot Desktop（已退役：远程薄壳）
 
 [English](./README.md) | 简体中文
+
+> **已退役。** 公开下载与 CI 发布走 **Desktop V2**（`../desktopV2/`，本机 gateway）。
+> 本目录是旧的远程 WebUI 薄壳（默认 `https://bot.liuyidi.me`）。
+> 不要用 **Publish Desktop** 往 OSS 发安装包。
 
 [![Publish Desktop](https://github.com/liuyidi/minibot/actions/workflows/publish-desktop.yml/badge.svg)](https://github.com/liuyidi/minibot/actions/workflows/publish-desktop.yml)
 
@@ -76,19 +80,10 @@ npm run build          # 产出 .app + .dmg，并复制到 dist-bundle/
 xattr -dr com.apple.quarantine /Applications/minibot.app
 ```
 
-## 打包（CI：macOS / Windows / Linux）
+## 打包（已退役）
 
-GitHub Actions 工作流：[`.github/workflows/publish-desktop.yml`](../.github/workflows/publish-desktop.yml)。
+**不要**用这个工作流发公开 OSS 安装包。公开下载走 **Publish Desktop V2**。
 
-- **自动**：`main` 上变更 `desktop/**`（或本 workflow 文件）并 push
-- **手动**：Actions → **Publish Desktop** → Run workflow
-- **打 tag**：`git tag desktop-v1.0.0-beta.2 && git push origin desktop-v1.0.0-beta.2`
-
-会在 `macos-latest`（arm64 + x64）、`ubuntu-22.04`、`windows-latest` 上并行 `tauri build`，并直接发布 GitHub Release（`desktop-v__VERSION__`，版本取自 `src-tauri/tauri.conf.json`）。未配置签名/公证；正式分发前请在 Release 里核对产物。
-
-发布流程会在 GitHub Release 发布完成后自动同步到 OSS，正常情况下不需要再手动点同步。
-同时会自动发送飞书发布通知，方便快速确认这次桌面版本是否已经完成。
-
-发布完成后，工作流 **Sync Desktop Release to OSS** 会把 macOS / Windows / Linux 安装包同步到阿里云 OSS，并更新下载页读取的 `releases.json`（需配置仓库 Variables/Secrets，见 `docs/download-releases.md`）。
+GitHub Actions 工作流：[`.github/workflows/publish-desktop.yml`](../.github/workflows/publish-desktop.yml)（**仅手动**）。
 
 Windows MSI（WiX）只接受数字版号。应用仍用 semver（如 `1.0.0-beta.2`），但 `tauri.conf.json` 里 `bundle.windows.wix.version` 需同步为数字形式（当前 `1.0.0.1`）。升到 `beta.N` 时把该字段改成 `1.0.0.N`。
