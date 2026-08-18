@@ -7,6 +7,8 @@ description: minibot 是本地优先的 AI Agent 运行时：模型、工具、�
 
 **minibot** 是一个本地优先的 **AI Agent 运行时**：用 FastAPI 承载「大模型 + 工具 + 会话」闭环，并用 React WebUI（及飞书 / 微信等 IM）与人对齐协作。
 
+![minibot Desktop：侧栏里是对话、IM 频道、定时任务、技能和知识库；主区是对话输入、权限、项目和模型选择](/minibot/macos-client-preview.png)
+
 ## 一、核心能力
 
 - **Agent 对话**：WebSocket 流式回复；多会话；中途 Stop；侧边栏「对话 / 频道」分流 WebUI 与 IM

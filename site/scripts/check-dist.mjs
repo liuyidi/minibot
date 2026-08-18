@@ -45,6 +45,9 @@ for (const [slug, marker] of products) {
   if (!overview.includes(`/${slug}/changelog`)) {
     throw new Error(`${slug} overview is missing the changelog link`);
   }
+  if (slug === "minibot" && !overview.includes("macos-client-preview")) {
+    throw new Error("minibot overview is missing the desktop screenshot");
+  }
   mustRead(`${slug}/changelog/index.html`);
 }
 
@@ -59,5 +62,6 @@ if (!changelog.includes(version[1])) {
 }
 
 mustRead("v0.1/index.html");
+mustRead("minibot/macos-client-preview.png");
 
 console.log(`check-dist ok (${distRel}, latest ${version[1]})`);
