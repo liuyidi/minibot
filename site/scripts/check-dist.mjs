@@ -19,14 +19,46 @@ const portal = mustRead("index.html");
 if (!portal.includes("liuyidi.me")) {
   throw new Error("portal is missing the brand");
 }
-if (!portal.includes("/minibot/")) {
-  throw new Error("portal is missing the overview link");
-}
 if (portal.includes("核心能力")) {
   throw new Error("portal HTML looks like the overview page");
 }
+if (portal.includes('class="grain"') || portal.includes("class='grain'")) {
+  throw new Error("portal still has decorative grain");
+}
+if (portal.includes("fonts.googleapis.com") || portal.includes("Instrument Serif")) {
+  throw new Error("portal still loads marketing fonts");
+}
 
-if (!portal.includes("/minikb/") || !portal.includes("/mini-langfuse/") || !portal.includes("/mini-auth/") || !portal.includes("/serverless-ship/")) {
+const live = [
+  "https://bot.liuyidi.me/",
+  "https://mlf.liuyidi.me/",
+  "https://kb.liuyidi.me/ui/",
+  "https://auth.liuyidi.me/",
+  "https://serverless-ship.liuyidi.me/",
+];
+for (const href of live) {
+  if (!portal.includes(href)) {
+    throw new Error(`portal is missing live entry ${href}`);
+  }
+}
+
+if (!portal.includes("打开 Agent") && !portal.includes("Open Agent")) {
+  throw new Error("portal is missing the primary Agent CTA");
+}
+if (!portal.includes('class="entry"') && !portal.includes("class='entry'")) {
+  throw new Error("portal is missing entry tiles");
+}
+if (!portal.includes("<details")) {
+  throw new Error("portal is missing collapsed skills");
+}
+
+if (
+  !portal.includes("/minibot/") ||
+  !portal.includes("/minikb/") ||
+  !portal.includes("/mini-langfuse/") ||
+  !portal.includes("/mini-auth/") ||
+  !portal.includes("/serverless-ship/")
+) {
   throw new Error("portal is missing sibling overview links");
 }
 
@@ -70,7 +102,9 @@ if (!changelog.includes(version[1])) {
   throw new Error(`changelog page is missing version ${version[1]}`);
 }
 
-mustRead("v0.1/index.html");
+if (existsSync(join(dist, "v0.1/index.html"))) {
+  throw new Error("v0.1 preview must be removed after promotion");
+}
 mustRead("minibot/macos-client-preview.png");
 
 const minibotPage = mustRead("minibot/index.html");
