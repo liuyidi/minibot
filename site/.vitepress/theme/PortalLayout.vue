@@ -6,30 +6,31 @@ const STORAGE_KEY = "landing.locale";
 
 const messages = {
   "zh-CN": {
-    "nav.overview": "简介",
-    "nav.agent": "Agent",
-    "nav.obs": "可观测",
-    "nav.kb": "知识库",
-    "nav.auth": "认证",
-    "nav.ship": "小工具",
+    "nav.github": "GitHub",
     "hero.eyebrow": "Agent Lab · Personal Stack",
     "hero.title": "自己造的一套<br /><em>Agent 工程栈</em>",
     "hero.lede":
-      "从 runtime、可观测、知识库到认证与发布通知：可演示、可部署、可讲清楚设计取舍。不是套壳 demo，是我亲手落地的工程能力。",
+      "Runtime · 可观测 · 知识库 · 认证 · 发布通知。可演示、可部署、可讲清楚取舍。",
     "cta.agent": "打开 Agent",
     "cta.devui": "看开发笔记 /ui",
-    "projects.title": "项目与小工具",
-    "projects.bot":
-      "FastAPI Agent runtime：工具循环、会话、MCP、流式输出；主站是 nanobot WebUI，附属 /ui 讲清实现思路。",
-    "projects.overview": "简介 →",
-    "projects.mlf":
-      "自研可观测：Traces / Sessions / Scores / Evaluators / Playground，Python SDK + LangChain 接入，minibot 每轮对话可上报。",
-    "projects.kb":
-      "Agent 知识库：文档摄入、切片、向量检索、RAG QA。与 minibot 通过 REST 集成（持续演进中）。",
-    "projects.auth":
-      "统一身份认证：注册 / 登录 / JWT 刷新 / 登出。FastAPI + PostgreSQL，独立部署在 auth.liuyidi.me。",
-    "projects.ship":
-      "发布通知小工具：GitHub Release / ECS 部署事件 → 飞书消息卡片。Vercel + Supabase，服务 minibot 等项目的交付闭环。",
+    "entry.bot.kicker": "01 · Agent",
+    "entry.bot.desc": "对话、工具循环、流式输出；可查知识库。",
+    "entry.bot.go": "打开 bot.liuyidi.me →",
+    "entry.mlf.kicker": "02 · Observability",
+    "entry.mlf.desc": "Traces / Sessions / Scores；看清每一轮 Agent。",
+    "entry.mlf.go": "打开 mlf.liuyidi.me →",
+    "entry.kb.kicker": "03 · Knowledge",
+    "entry.kb.desc": "上传、切片、检索、RAG；给 Agent 喂知识。",
+    "entry.kb.go": "打开 kb.liuyidi.me →",
+    "entry.auth.kicker": "04 · Auth",
+    "entry.auth.desc": "注册 / 登录 / JWT；统一身份认证服务。",
+    "entry.auth.go": "打开 auth.liuyidi.me →",
+    "entry.ship.kicker": "05 · Tools",
+    "entry.ship.desc": "发布与部署事件 → 飞书通知卡片。",
+    "entry.ship.go": "打开 serverless-ship.liuyidi.me →",
+    "sec.overview": "简介",
+    "path":
+      "<strong>建议走查顺序：</strong>先在 Agent 里聊一句 → 打开可观测看 Trace → 再到知识库上传/检索；认证与发布通知可按需打开。",
     "skills.title": "我能讲清楚的能力",
     "skills.1": "<strong>Agent Loop</strong> — 多轮 tool calling、锁与并发、会话持久化",
     "skills.2": "<strong>可观测</strong> — span/trace、评分、评测跑批、SSE 实时刷新",
@@ -38,30 +39,31 @@ const messages = {
     "skills.4": "<strong>产品化</strong> — 主站 WebUI + DevUI 双轨，既能用又能讲清实现",
   },
   en: {
-    "nav.overview": "Overview",
-    "nav.agent": "Agent",
-    "nav.obs": "Observability",
-    "nav.kb": "Knowledge",
-    "nav.auth": "Auth",
-    "nav.ship": "Tools",
+    "nav.github": "GitHub",
     "hero.eyebrow": "Agent Lab · Personal Stack",
     "hero.title": "A handmade<br /><em>Agent engineering stack</em>",
     "hero.lede":
-      "From runtime, observability, and knowledge base to auth and release notifications: demable, deployable, and explainable. Not a wrapper demo — engineering I shipped myself.",
+      "Runtime · observability · knowledge · auth · release notify. Demoable, deployable, explainable.",
     "cta.agent": "Open Agent",
     "cta.devui": "Dev notes /ui",
-    "projects.title": "Projects & tools",
-    "projects.bot":
-      "FastAPI agent runtime: tool loop, sessions, MCP, streaming. Main site is nanobot WebUI; /ui explains the implementation.",
-    "projects.overview": "Overview →",
-    "projects.mlf":
-      "Homegrown observability: Traces / Sessions / Scores / Evaluators / Playground, with Python SDK + LangChain. Minibot reports every turn.",
-    "projects.kb":
-      "Agent knowledge base: ingest, chunking, vector retrieval, RAG QA. Integrated with minibot over REST (still evolving).",
-    "projects.auth":
-      "Unified auth: sign-up / login / JWT refresh / logout. FastAPI + PostgreSQL at auth.liuyidi.me.",
-    "projects.ship":
-      "Release notifier: GitHub Release / ECS deploy events → Feishu cards. Vercel + Supabase for the delivery loop around minibot.",
+    "entry.bot.kicker": "01 · Agent",
+    "entry.bot.desc": "Chat, tool loop, streaming; can query the knowledge base.",
+    "entry.bot.go": "Open bot.liuyidi.me →",
+    "entry.mlf.kicker": "02 · Observability",
+    "entry.mlf.desc": "Traces / Sessions / Scores — inspect every agent turn.",
+    "entry.mlf.go": "Open mlf.liuyidi.me →",
+    "entry.kb.kicker": "03 · Knowledge",
+    "entry.kb.desc": "Ingest, chunk, retrieve, RAG — feed knowledge to the agent.",
+    "entry.kb.go": "Open kb.liuyidi.me →",
+    "entry.auth.kicker": "04 · Auth",
+    "entry.auth.desc": "Sign-up / login / JWT — unified auth service.",
+    "entry.auth.go": "Open auth.liuyidi.me →",
+    "entry.ship.kicker": "05 · Tools",
+    "entry.ship.desc": "Release & deploy events → Feishu notification cards.",
+    "entry.ship.go": "Open serverless-ship.liuyidi.me →",
+    "sec.overview": "Overview",
+    "path":
+      "<strong>Suggested walkthrough:</strong> chat in Agent → open Observability for a Trace → upload/search in Knowledge; open Auth or ServerlessShip as needed.",
     "skills.title": "What I can walk through",
     "skills.1":
       "<strong>Agent Loop</strong> — multi-turn tool calling, locks/concurrency, session persistence",
@@ -98,36 +100,17 @@ function onLocaleChange(event) {
 
 <template>
   <div class="portal-root">
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;1,9..40,400&family=Instrument+Serif:ital@0;1&display=swap"
-      rel="stylesheet"
-    />
-    <div class="grain" aria-hidden="true" />
     <header class="top">
-      <a class="brand" href="/">liuyidi<span>.me</span></a>
+      <a class="brand" href="/">liuyidi.me</a>
       <nav>
-        <a href="/minibot/">{{ t("nav.overview") }}</a>
-        <a href="https://bot.liuyidi.me/">{{ t("nav.agent") }}</a>
-        <a href="https://mlf.liuyidi.me/">{{ t("nav.obs") }}</a>
-        <a href="https://kb.liuyidi.me/">{{ t("nav.kb") }}</a>
-        <a href="https://auth.liuyidi.me/">{{ t("nav.auth") }}</a>
-        <a href="https://serverless-ship.liuyidi.me/">{{ t("nav.ship") }}</a>
-        <a href="https://github.com/liuyidi" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://github.com/liuyidi" target="_blank" rel="noopener">{{
+          t("nav.github")
+        }}</a>
         <select
           id="lang"
+          class="lang"
           :value="locale"
           aria-label="Language"
-          style="
-            margin-left: 8px;
-            font: inherit;
-            font-size: 12px;
-            padding: 2px 6px;
-            border-radius: 6px;
-            border: 1px solid rgba(0, 0, 0, 0.15);
-            background: transparent;
-          "
           @change="onLocaleChange"
         >
           <option value="zh-CN">简体中文</option>
@@ -147,60 +130,61 @@ function onLocaleChange(event) {
         </div>
       </section>
 
-      <section id="projects" class="projects">
-        <h2>{{ t("projects.title") }}</h2>
-        <div class="cards">
-          <article class="card">
-            <h3>minibot + WebUI</h3>
-            <p>{{ t("projects.bot") }}</p>
-            <p class="card-links">
-              <a href="https://bot.liuyidi.me/">bot.liuyidi.me →</a>
-              <a href="/minibot/">{{ t("projects.overview") }}</a>
-            </p>
-          </article>
-          <article class="card">
-            <h3>mini-langfuse</h3>
-            <p>{{ t("projects.mlf") }}</p>
-            <p class="card-links">
-              <a href="https://mlf.liuyidi.me/">mlf.liuyidi.me →</a>
-              <a href="/mini-langfuse/">{{ t("projects.overview") }}</a>
-            </p>
-          </article>
-          <article class="card">
-            <h3>minikb</h3>
-            <p>{{ t("projects.kb") }}</p>
-            <p class="card-links">
-              <a href="https://kb.liuyidi.me/">kb.liuyidi.me →</a>
-              <a href="/minikb/">{{ t("projects.overview") }}</a>
-            </p>
-          </article>
-          <article class="card">
-            <h3>mini-auth</h3>
-            <p>{{ t("projects.auth") }}</p>
-            <p class="card-links">
-              <a href="https://auth.liuyidi.me/">auth.liuyidi.me →</a>
-              <a href="/mini-auth/">{{ t("projects.overview") }}</a>
-            </p>
-          </article>
-          <article class="card">
-            <h3>ServerlessShip</h3>
-            <p>{{ t("projects.ship") }}</p>
-            <p class="card-links">
-              <a href="https://serverless-ship.liuyidi.me/">serverless-ship.liuyidi.me →</a>
-              <a href="/serverless-ship/">{{ t("projects.overview") }}</a>
-            </p>
-          </article>
-        </div>
+      <section class="entries" aria-label="Product entries">
+        <a class="entry" href="https://bot.liuyidi.me/">
+          <span class="kicker">{{ t("entry.bot.kicker") }}</span>
+          <h2>minibot</h2>
+          <p>{{ t("entry.bot.desc") }}</p>
+          <span class="go">{{ t("entry.bot.go") }}</span>
+        </a>
+        <a class="entry" href="https://mlf.liuyidi.me/">
+          <span class="kicker">{{ t("entry.mlf.kicker") }}</span>
+          <h2>mini-langfuse</h2>
+          <p>{{ t("entry.mlf.desc") }}</p>
+          <span class="go">{{ t("entry.mlf.go") }}</span>
+        </a>
+        <a class="entry" href="https://kb.liuyidi.me/ui/">
+          <span class="kicker">{{ t("entry.kb.kicker") }}</span>
+          <h2>minikb</h2>
+          <p>{{ t("entry.kb.desc") }}</p>
+          <span class="go">{{ t("entry.kb.go") }}</span>
+        </a>
+        <a class="entry" href="https://auth.liuyidi.me/">
+          <span class="kicker">{{ t("entry.auth.kicker") }}</span>
+          <h2>mini-auth</h2>
+          <p>{{ t("entry.auth.desc") }}</p>
+          <span class="go">{{ t("entry.auth.go") }}</span>
+        </a>
+        <a class="entry" href="https://serverless-ship.liuyidi.me/">
+          <span class="kicker">{{ t("entry.ship.kicker") }}</span>
+          <h2>ServerlessShip</h2>
+          <p>{{ t("entry.ship.desc") }}</p>
+          <span class="go">{{ t("entry.ship.go") }}</span>
+        </a>
       </section>
 
-      <section id="skills" class="skills">
-        <h2>{{ t("skills.title") }}</h2>
-        <ul>
-          <li v-html="t('skills.1')" />
-          <li v-html="t('skills.2')" />
-          <li v-html="t('skills.3')" />
-          <li v-html="t('skills.4')" />
-        </ul>
+      <div class="secondary-links">
+        <a href="/minibot/">minibot {{ t("sec.overview") }}</a>
+        <a href="/mini-langfuse/">mini-langfuse {{ t("sec.overview") }}</a>
+        <a href="/minikb/">minikb {{ t("sec.overview") }}</a>
+        <a href="/mini-auth/">mini-auth {{ t("sec.overview") }}</a>
+        <a href="/serverless-ship/">ServerlessShip {{ t("sec.overview") }}</a>
+        <a href="https://github.com/liuyidi" target="_blank" rel="noopener">{{
+          t("nav.github")
+        }}</a>
+      </div>
+
+      <section class="below">
+        <p class="path" v-html="t('path')" />
+        <details>
+          <summary>{{ t("skills.title") }}</summary>
+          <ul>
+            <li v-html="t('skills.1')" />
+            <li v-html="t('skills.2')" />
+            <li v-html="t('skills.3')" />
+            <li v-html="t('skills.4')" />
+          </ul>
+        </details>
       </section>
     </main>
 
@@ -213,4 +197,3 @@ function onLocaleChange(event) {
     </footer>
   </div>
 </template>
-
