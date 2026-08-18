@@ -1,7 +1,14 @@
-# minibot production stack
+# minibot production stack (Aliyun ECS → bot.liuyidi.me + WebUI)
 #
-# Run on the ECS host that serves bot.liuyidi.me.
-# This compose keeps the runtime minimal: just minibot itself.
+# Layout on host:
+#   /opt/demo/minibot/              this repo
+#   /opt/demo/mini-langfuse/        only needed at image build time (sdk-python)
+#
+# From this directory:
+#   cp .env.example .env   # fill secrets
+#   ./up.sh
+#
+# Data volume reuses the historical demo volume so sessions survive the cutover.
 
 name: minibot
 
@@ -10,12 +17,50 @@ services:
     build:
       context: ..
       dockerfile: Dockerfile.minibot
+      args:
+        VITE_MINIBOT_RELEASES_URL: ${VITE_MINIBOT_RELEASES_URL:-https://downloads.liuyidi.me/minibot/releases.json}
+      additional_contexts:
+        # Build-time only. Runtime talks to https://mlf.liuyidi.me (Tencent).
+        langfuse_sdk: ${LANGFUSE_SDK_DIR:-../../mini-langfuse/sdk-python}
+    image: minibot:local
+    container_name: minibot
+    restart: unless-stopped
     env_file: .env
-    ports:
-      - "8766:8766"
+    environment:
+      MINIBOT_SERVER_HOST: 0.0.0.0
+      MINIBOT_SERVER_PORT: "8766"
+      MINIBOT_SERVER_DATA_DIR: /data
+      MINIBOT_WEBUI_DIST: /app/webui-dist
+      MINIBOT_SERVER_LANGFUSE_ENABLED: ${MINIBOT_SERVER_LANGFUSE_ENABLED:-true}
+      MINIBOT_SERVER_LANGFUSE_HOST: ${MINIBOT_SERVER_LANGFUSE_HOST:-https://mlf.liuyidi.me}
+      MINIBOT_SERVER_LANGFUSE_PUBLIC_KEY: ${MINIBOT_SERVER_LANGFUSE_PUBLIC_KEY:-${LANGFUSE_PUBLIC_KEY:-}}
+      MINIBOT_SERVER_LANGFUSE_SECRET_KEY: ${MINIBOT_SERVER_LANGFUSE_SECRET_KEY:-${LANGFUSE_SECRET_KEY:-}}
+      MINIBOT_SERVER_OPENAI_API_KEY: ${MINIBOT_SERVER_OPENAI_API_KEY:-${OPENAI_API_KEY:-}}
+      MINIBOT_SERVER_OPENAI_BASE_URL: ${MINIBOT_SERVER_OPENAI_BASE_URL:-${OPENAI_BASE_URL:-https://api.deepseek.com/v1}}
+      MINIBOT_SERVER_OPENAI_MODEL: ${MINIBOT_SERVER_OPENAI_MODEL:-${MINIBOT_MODEL:-deepseek-v4-flash}}
+      MINIBOT_SERVER_MODEL: ${MINIBOT_SERVER_MODEL:-${MINIBOT_MODEL:-deepseek-v4-flash}}
+      MINIBOT_SERVER_MINIKB_BASE_URL: ${MINIBOT_SERVER_MINIKB_BASE_URL:-${MINIBOT_MINIKB_BASE_URL:-https://kb.liuyidi.me}}
+      MINIBOT_SERVER_MINIKB_API_KEY: ${MINIBOT_SERVER_MINIKB_API_KEY:-${MINIBOT_MINIKB_API_KEY:-}}
+      MINIBOT_SERVER_MINIKB_UI_URL: ${MINIBOT_SERVER_MINIKB_UI_URL:-${MINIBOT_MINIKB_UI_URL:-https://kb.liuyidi.me/ui/}}
+      MINIBOT_SERVER_DAILY_TURN_LIMIT: ${MINIBOT_SERVER_DAILY_TURN_LIMIT:-${MINIBOT_DAILY_TURN_LIMIT:-200}}
+      MINIBOT_SERVER_DAILY_TOKEN_LIMIT: ${MINIBOT_SERVER_DAILY_TOKEN_LIMIT:-${MINIBOT_DAILY_TOKEN_LIMIT:-2000000}}
+      MINIBOT_SERVER_DESKTOP_DAILY_TURN_LIMIT: ${MINIBOT_SERVER_DESKTOP_DAILY_TURN_LIMIT:-${MINIBOT_DESKTOP_DAILY_TURN_LIMIT:-100}}
+      MINIBOT_SERVER_DESKTOP_DAILY_TOKEN_LIMIT: ${MINIBOT_SERVER_DESKTOP_DAILY_TOKEN_LIMIT:-${MINIBOT_DESKTOP_DAILY_TOKEN_LIMIT:-1000000}}
+      MINIBOT_SERVER_EXEC_BACKEND: ${MINIBOT_SERVER_EXEC_BACKEND:-${MINIBOT_EXEC_BACKEND:-local}}
+      MINIBOT_SERVER_E2B_API_KEY: ${MINIBOT_SERVER_E2B_API_KEY:-${E2B_API_KEY:-}}
     volumes:
       - minibot-data:/data
-    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8766:8766"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8766/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 40s
+    mem_limit: 512m
 
 volumes:
   minibot-data:
+    # On Aliyun ECS set MINIBOT_DATA_VOLUME=agent-demo_demo_minibot to keep sessions.
+    name: ${MINIBOT_DATA_VOLUME:-minibot_data}

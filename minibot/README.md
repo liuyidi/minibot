@@ -27,10 +27,11 @@ Default listen: `http://127.0.0.1:8766`
 
 ### Docker
 
-Standalone image (no langfuse SDK). For the interview demo stack that wires
-langfuse + minikb, use `mini-langfuse/deploy/demo` instead.
+生产镜像用仓库根目录 `Dockerfile.minibot`（含 WebUI + langfuse SDK）。  
+部署见 [`../deploy/README.md`](../deploy/README.md)。
 
 ```bash
+# 本地仅 runtime（无 WebUI / 无 langfuse SDK 时）
 docker build -t minibot .
 docker run --rm -p 8766:8766 \
   -e MINIBOT_SERVER_HOST=0.0.0.0 \

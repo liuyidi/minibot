@@ -66,9 +66,8 @@ jobs:
           command_timeout: 35m
           script: |
             set -euo pipefail
-            cd /opt/demo/mini-langfuse/deploy/demo
-            export MINIBOT_REPO_DIR=/opt/demo/minibot
-            export MLF_DIR=/opt/demo/mini-langfuse
+            cd /opt/demo/minibot/deploy
+            export LANGFUSE_SDK_DIR=/opt/demo/mini-langfuse/sdk-python
             docker compose -f docker-compose.yml --env-file .env build minibot
 
       - name: Restart minibot container
@@ -81,11 +80,10 @@ jobs:
           command_timeout: 5m
           script: |
             set -euo pipefail
-            cd /opt/demo/mini-langfuse/deploy/demo
-            export MINIBOT_REPO_DIR=/opt/demo/minibot
-            export MLF_DIR=/opt/demo/mini-langfuse
+            cd /opt/demo/minibot/deploy
+            export LANGFUSE_SDK_DIR=/opt/demo/mini-langfuse/sdk-python
             docker compose -f docker-compose.yml --env-file .env up -d minibot
-            docker ps --filter name=demo-minibot --format 'table {{.Names}}\t{{.Status}}\t{{.Image}}'
+            docker ps --filter name=minibot --format 'table {{.Names}}\t{{.Status}}\t{{.Image}}'
 
       - name: Wait for minibot /health
         uses: appleboy/ssh-action@v1.2.2
@@ -109,7 +107,7 @@ jobs:
             done
             if [[ "$ok" -ne 1 ]]; then
               echo "minibot health check failed; recent logs:"
-              docker logs demo-minibot --tail 120 || true
+              docker logs minibot --tail 120 || true
               exit 1
             fi
 

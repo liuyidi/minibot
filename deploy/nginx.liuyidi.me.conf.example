@@ -1,0 +1,138 @@
+# Aliyun ECS nginx: apex landing + bot + kb reverse proxy.
+#
+# mlf.liuyidi.me lives on Tencent Cloud — do NOT proxy it here.
+# auth.liuyidi.me may already have a separate Certbot-managed server block on
+# this host; leave that alone when installing this template.
+#
+# Layout on ECS:
+#   /opt/demo/minibot/deploy/landing/   → https://liuyidi.me
+#   minibot container                   → 127.0.0.1:8766
+#   Volcengine minikb                   → 101.96.224.232:80
+#
+# Install (after Certbot already issued certs for liuyidi.me / bot / kb):
+#   1. Merge ssl_certificate lines from the live site into each 443 server
+#   2. sudo nginx -t && sudo systemctl reload nginx
+#
+# Cert name on this host is historically still under
+#   /etc/letsencrypt/live/mlf.liuyidi.me/
+# even though the SAN list is liuyidi.me / www / bot / kb (no mlf).
+
+map $http_upgrade $connection_upgrade {
+    default upgrade;
+    ''      close;
+}
+
+upstream demo_bot { server 127.0.0.1:8766; keepalive 16; }
+upstream demo_kb  { server 101.96.224.232:80; keepalive 8; }
+
+# ---------- Landing: liuyidi.me ----------
+server {
+    listen 80;
+    listen [::]:80;
+    server_name liuyidi.me www.liuyidi.me;
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name liuyidi.me www.liuyidi.me;
+
+    # ssl_certificate     /etc/letsencrypt/live/mlf.liuyidi.me/fullchain.pem;
+    # ssl_certificate_key /etc/letsencrypt/live/mlf.liuyidi.me/privkey.pem;
+
+    root /opt/demo/minibot/deploy/landing;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}
+
+# ---------- minibot ----------
+server {
+    listen 80;
+    listen [::]:80;
+    server_name bot.liuyidi.me;
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name bot.liuyidi.me;
+
+    # ssl_certificate     /etc/letsencrypt/live/mlf.liuyidi.me/fullchain.pem;
+    # ssl_certificate_key /etc/letsencrypt/live/mlf.liuyidi.me/privkey.pem;
+
+    client_max_body_size 16m;
+
+    location / {
+        proxy_pass http://demo_bot;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $connection_upgrade;
+        proxy_read_timeout 3600s;
+    }
+}
+
+# ---------- minikb (Aliyun TLS → Volcengine) ----------
+server {
+    listen 80;
+    listen [::]:80;
+    server_name kb.liuyidi.me;
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name kb.liuyidi.me;
+
+    # ssl_certificate     /etc/letsencrypt/live/mlf.liuyidi.me/fullchain.pem;
+    # ssl_certificate_key /etc/letsencrypt/live/mlf.liuyidi.me/privkey.pem;
+
+    client_max_body_size 64m;
+
+    location = / {
+        return 302 /ui/;
+    }
+
+    location / {
+        proxy_pass http://demo_kb;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-Port 443;
+        proxy_connect_timeout 10s;
+        proxy_read_timeout 300s;
+    }
+}

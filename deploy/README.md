@@ -1,33 +1,26 @@
-# minibot 部署
+# minibot 部署（阿里云 ECS）
 
-本目录用于 **minibot（含 WebUI）独立部署** 文档与 Compose 模板。
+本目录是 **minibot + WebUI + `liuyidi.me` 落地页** 的唯一部署入口。  
+mini-langfuse 在腾讯云（`https://mlf.liuyidi.me`）；minikb 在 Volcengine（本机 nginx 只反代 `kb.liuyidi.me`）。
 
-此前面试 Demo 把 minibot 和 mini-langfuse、minikb 挤在同一台 2C2G 上，配置在：
+| 域名 | 本机角色 |
+|------|----------|
+| https://liuyidi.me | 静态落地页 `deploy/landing/` |
+| https://bot.liuyidi.me | minibot `:8766` |
+| https://kb.liuyidi.me | nginx → Volcengine `101.96.224.232:80` |
+| https://mlf.liuyidi.me | **不在本机**（腾讯云） |
 
-- [`mini-langfuse/deploy/demo/`](https://github.com/liuyidi/mini-langfuse/tree/main/deploy/demo)
-
-后续约定：
-
-| 应用 | 部署文档位置 |
-|------|----------------|
-| mini-langfuse | `mini-langfuse/deploy/`（生产）+ `docs/tencent-lighthouse-mlf-migrate.md`（迁腾讯云） |
-| minibot | **本目录** `minibot/deploy/` |
-| minikb | `minikb/deploy/` |
-
-## 现状（过渡）
-
-当前线上仍可能由 `mini-langfuse/deploy/demo/docker-compose.yml` 的 `minibot` 服务拉起（域名如 `https://bot.liuyidi.me`）。  
-mlf 迁到腾讯云 4C4G 后，建议阿里云旧机 **只保留 minibot**（+ 可选 minikb），并逐步把 Compose / Nginx / 运维说明迁入本目录。
+ECS：`root@116.62.35.76`，代码 `/opt/demo/minibot/`。  
+`/opt/demo/mini-langfuse/` 只在 **构建镜像** 时提供 `sdk-python`（`LANGFUSE_SDK_DIR`），不要在阿里云再起 mlf。
 
 ## 现有资产
 
-- `docker-compose.yml`：minibot 独立服务
-- `.env.example`：生产运行时配置草案
-- `nginx.bot.liuyidi.me.conf.example`：`bot.liuyidi.me` 反向代理片段
+- `docker-compose.yml` / `up.sh` / `.env.example`
+- `landing/` — `https://liuyidi.me`
+- `nginx.liuyidi.me.conf.example` — apex + bot + kb（不含 mlf）
+- `setup-swap.sh` / `setup-docker-mirror.sh` — 2C2G 宿主机一次性脚本
 
-### 生产认证接入
-
-`minibot` 已支持共享认证服务 `mini-auth`。生产环境建议设置：
+## 生产认证
 
 ```bash
 MINIBOT_SERVER_AUTH_PROVIDER=mini_auth
@@ -38,6 +31,17 @@ MINIBOT_SERVER_MINI_AUTH_CALLBACK_PATH=/auth/mini-auth/callback
 MINIBOT_SERVER_REQUIRE_AUTH=true
 ```
 
-部署后，`GET /auth/login?next=...` 会跳转到 `https://auth.liuyidi.me/oauth/authorize`，再由 `minibot` 的 `/auth/mini-auth/callback` 完成会话落地。
+可观测上报：`MINIBOT_SERVER_LANGFUSE_HOST=https://mlf.liuyidi.me`（密钥在项目 Settings）。
+
+## 启动
+
+```bash
+cd /opt/demo/minibot/deploy
+cp .env.example .env   # 首次：从旧 demo/.env 拷密钥，不要 bash source
+./up.sh
+curl -fsS http://127.0.0.1:8766/health
+```
+
+不要 `source .env`：`MINI_AUTH_SCOPE` 含空格会把 shell 搞挂。始终 `--env-file .env`。
 
 本地开发仍以仓库根目录 / `minibot/README.md` 为准。
