@@ -2,7 +2,7 @@
   "name": "minibot-desktop",
   "private": true,
   "version": "1.0.13",
-  "description": "Tauri thin shell for minibot WebUI",
+  "description": "Tauri desktop — local minibot gateway shell",
   "type": "module",
   "scripts": {
     "dev": "./scripts/run-tauri.sh dev",

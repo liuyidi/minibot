@@ -13,7 +13,7 @@ English: [CHANGELOG.md](./CHANGELOG.md)
 
 ### 变更
 
-- 公开下载与 OSS `releases.json` 改为 Desktop V2（本机 gateway，默认 `:8766`）。远程薄壳 `desktop/` 不再作为默认发布产物。
+- 公开下载改为本机 gateway 桌面端。源码目录为 `desktop/`（由 `desktopV2/` 改名）；旧远程薄壳目录已删除。
 
 ## [1.0.13] - 2026-08-17
 

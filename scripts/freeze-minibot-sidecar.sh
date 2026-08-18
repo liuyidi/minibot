@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Freeze minibot as an onedir sidecar for desktopV2 bundling.
+# Freeze minibot as an onedir sidecar for desktop bundling.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"

@@ -41,7 +41,7 @@
 ```text
 minibot/              # Python package (agent, API, channels, tools)
 webui/                # Vite + React SPA (build → webui/dist)
-desktopV2/            # Desktop app (local gateway + sidecar)
+desktop/              # Desktop app (local gateway + sidecar)
 Dockerfile.minibot    # Runtime + WebUI image
 docs/                 # Design and phase docs
 packages/             # Optional shared client packages

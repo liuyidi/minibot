@@ -1,8 +1,11 @@
 node_modules/
 dist/
+dist-app/
 dist-bundle/
 src-tauri/target/
 src-tauri/resources/__pycache__/
+src-tauri/resources/minibot-sidecar/
+!src-tauri/resources/README.md
 .DS_Store
 *.log
 .vscode/

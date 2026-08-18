@@ -1,11 +1,15 @@
 name: Publish Desktop
 
-# Retired thin-shell builder (`desktop/`). Public downloads use Desktop V2:
-# `.github/workflows/publish-desktop-v2.yml` + Sync Desktop Release to OSS.
-# Manual only — do not run on v* tags (that would race V2 OSS sync).
+# Default desktop publisher: desktop/ + frozen minibot sidecar (PyInstaller onedir).
+# Trigger: unified Release tag v*, or manual workflow_dispatch.
+# GitHub Release tag stays desktop-v2-v<version> so it does not collide with
+# the orchestration tag v* (client package).
 
 on:
   workflow_dispatch:
+  push:
+    tags:
+      - "v*"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -19,21 +23,27 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # macos-latest is arm64; macos-13 is retired — use macos-15-intel for x86_64.
           - platform: macos-latest
             args: --target aarch64-apple-darwin
-            bundle_name: macos-aarch64
-          - platform: macos-latest
+            triple: aarch64-apple-darwin
+          - platform: macos-15-intel
             args: --target x86_64-apple-darwin
-            bundle_name: macos-x86_64
+            triple: x86_64-apple-darwin
           - platform: ubuntu-22.04
             args: ""
-            bundle_name: linux
+            triple: x86_64-unknown-linux-gnu
           - platform: windows-latest
             args: ""
-            bundle_name: windows
+            triple: x86_64-pc-windows-msvc
 
     runs-on: ${{ matrix.platform }}
-    timeout-minutes: 60
+    timeout-minutes: 90
+    # Windows defaults to pwsh; .sh freeze/prepare must run under Git Bash or they
+    # can "succeed" without executing (then Tauri fails: resources/minibot-sidecar missing).
+    defaults:
+      run:
+        shell: bash
 
     steps:
       - uses: actions/checkout@v6
@@ -54,19 +64,53 @@ jobs:
         with:
           node-version: "20"
           cache: npm
-          cache-dependency-path: desktop/package-lock.json
+          cache-dependency-path: |
+            webui/package-lock.json
+            desktop/package-lock.json
 
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin' || matrix.platform == 'macos-15-intel' && 'x86_64-apple-darwin' || '' }}
 
       - name: Rust cache
         uses: swatinem/rust-cache@v2
         with:
           workspaces: desktop/src-tauri -> target
 
-      - name: Install frontend dependencies
+      - name: Setup uv / Python
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+
+      - name: Sync minibot dependencies
+        working-directory: minibot
+        run: uv sync --extra feishu --extra weixin
+
+      - name: Build WebUI dist
+        working-directory: webui
+        run: |
+          npm ci
+          npm run build
+          test -f dist/index.html
+
+      - name: Freeze minibot sidecar
+        run: ./scripts/freeze-minibot-sidecar.sh ${{ matrix.triple }}
+
+      - name: Prepare sidecar for Tauri
+        run: |
+          set -euo pipefail
+          ./desktop/scripts/prepare-sidecar.sh ${{ matrix.triple }}
+          dest="desktop/src-tauri/resources/minibot-sidecar"
+          ls -la "$dest"
+          if [[ -f "$dest/minibot-sidecar.exe" || -f "$dest/minibot-sidecar" ]]; then
+            echo "prepare-sidecar: launcher present"
+          else
+            echo "prepare-sidecar: missing launcher under $dest" >&2
+            exit 1
+          fi
+
+      - name: Install desktop frontend dependencies
         working-directory: desktop
         run: npm ci
 
@@ -76,16 +120,19 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           projectPath: desktop
-          tagName: v__VERSION__
-          releaseName: minibot v__VERSION__
+          tagName: desktop-v2-v__VERSION__
+          releaseName: minibot Desktop V2 v__VERSION__
           releaseBody: |
-            Desktop thin shell for minibot WebUI (macOS / Windows / Linux).
+            Desktop app with a local minibot gateway (frozen sidecar).
 
-            Unsigned CI builds: macOS may need `xattr -dr com.apple.quarantine` after install;
-            Windows SmartScreen may warn until code-signed.
+            Unsigned CI builds use macOS ad-hoc signing. If Gatekeeper says the app is
+            “damaged”: `xattr -cr "/Applications/minibot V2.app"` then
+            `codesign --force --deep --sign - "/Applications/minibot V2.app"`.
+            Windows SmartScreen may warn until Developer ID signed.
+
+            Installers are mirrored to OSS (`downloads.liuyidi.me/minibot/releases.json`).
           releaseDraft: false
           prerelease: false
-          # No updater signing keys in CI yet — don't require .sig / updater JSON.
           uploadUpdaterJson: false
           uploadUpdaterSignatures: false
           uploadWorkflowArtifacts: true
@@ -119,10 +166,9 @@ jobs:
         run: |
           set -euo pipefail
 
-          version="${RELEASE_VERSION}"
           serverlessship_release_url="${SERVERLESSSHIP_RELEASE_URL:-https://serverless-ship.liuyidi.me/api/releases}"
 
-          payload="$(node -e 'const version = process.env.RELEASE_VERSION; process.stdout.write(JSON.stringify({ project: "minibot", version, tag: `v${version}`, repository: process.env.GITHUB_REPOSITORY, releaseUrl: process.env.RELEASE_URL, workflowUrl: process.env.WORKFLOW_URL, channel: "GitHub Release" }));')"
+          payload="$(node -e 'const version = process.env.RELEASE_VERSION; const tag = process.env.RELEASE_TAG; process.stdout.write(JSON.stringify({ project: "minibot", version, tag, repository: process.env.GITHUB_REPOSITORY, releaseUrl: process.env.RELEASE_URL, workflowUrl: process.env.WORKFLOW_URL, channel: "GitHub Release (Desktop)" }));')"
 
           response="$(
             curl -fsS \
@@ -135,5 +181,6 @@ jobs:
           echo "$response"
         env:
           RELEASE_VERSION: ${{ steps.release-version.outputs.value }}
-          RELEASE_URL: ${{ github.server_url }}/${{ github.repository }}/releases/tag/v${{ steps.release-version.outputs.value }}
+          RELEASE_TAG: desktop-v2-v${{ steps.release-version.outputs.value }}
+          RELEASE_URL: ${{ github.server_url }}/${{ github.repository }}/releases/tag/desktop-v2-v${{ steps.release-version.outputs.value }}
           WORKFLOW_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}

@@ -4,7 +4,7 @@ name: Release
 # 1. Confirm version/changelog are already updated on main.
 # 2. Dispatch this workflow from the Actions tab.
 # 3. It tags the current main commit as v<version>.
-# 4. Desktop V2 + client release workflows react to that tag.
+# 4. Desktop + client release workflows react to that tag.
 
 on:
   workflow_dispatch:

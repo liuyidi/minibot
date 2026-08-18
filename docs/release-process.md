@@ -13,11 +13,11 @@ This document describes the current release flow for `minibot`.
 
 ## Versioning rules
 
-- Use one shared release version across WebUI, Desktop V2, backend, and shared packages.
-- Keep `webui/package.json`, `desktopV2/package.json`, `minibot/pyproject.toml`, and the other versioned files aligned.
+- Use one shared release version across WebUI, Desktop, backend, and shared packages.
+- Keep `webui/package.json`, `desktop/package.json`, `minibot/pyproject.toml`, and the other versioned files aligned.
 - Keep the current release notes in `CHANGELOG.md` and `CHANGELOG.zh.md`.
 - Use `v<version>` tags for release orchestration, for example `v1.0.1`.
-  Desktop V2 GitHub Releases use `desktop-v2-v<version>` so they do not collide
+  Desktop GitHub Releases use `desktop-v2-v<version>` so they do not collide
   with that orchestration tag.
 
 ## Day-to-day development flow
@@ -36,9 +36,9 @@ This document describes the current release flow for `minibot`.
 3. The workflow reads the version from `webui/package.json`.
 4. It creates and pushes a tag like `v1.0.1`.
 5. That tag triggers downstream release workflows:
-   - `Publish Desktop V2`
+   - `Publish Desktop`
    - `Publish @liuyidi/minibot-client`
-6. Desktop V2 release artifacts are mirrored to OSS by **Sync Desktop Release to OSS**.
+6. Desktop release artifacts are mirrored to OSS by **Sync Desktop Release to OSS**.
 7. Feishu notifications are sent after OSS sync.
 
 ## What each workflow does
@@ -54,14 +54,11 @@ This document describes the current release flow for `minibot`.
 - Runs on PRs and pushes that touch release-related files.
 - Fails if source changes were made without version and changelog updates.
 
-### `Publish Desktop V2`
+### `Publish Desktop`
 
-- Builds the Tauri desktop app with a frozen local minibot sidecar (`desktopV2/`).
+- Builds the Tauri desktop app with a frozen local minibot sidecar (`desktop/`).
 - Publishes GitHub Release `desktop-v2-v<version>`.
 - Sends a release notification to ServerlessShip / Feishu.
-
-The retired thin-shell workflow `Publish Desktop` (`desktop/`) is manual-only
-and is not part of the public download path.
 
 ### `Publish @liuyidi/minibot-client`
 

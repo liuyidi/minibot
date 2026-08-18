@@ -1,12 +1,12 @@
 name: Sync Desktop Release to OSS
 
-# After Publish Desktop V2 completes, download installers from workflow artifacts
+# After Publish Desktop completes, download installers from workflow artifacts
 # or GitHub Release assets and sync macOS / Windows / Linux packages + releases.json
 # to Aliyun OSS.
 
 on:
   workflow_run:
-    workflows: ["Publish Desktop V2"]
+    workflows: ["Publish Desktop"]
     types: [completed]
   workflow_dispatch:
     inputs:
@@ -29,7 +29,7 @@ jobs:
       github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'workflow_run' &&
        github.event.workflow_run.conclusion == 'success' &&
-       github.event.workflow_run.name == 'Publish Desktop V2')
+       github.event.workflow_run.name == 'Publish Desktop')
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -61,7 +61,7 @@ jobs:
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             echo "value=${{ inputs.tag }}" >> "$GITHUB_OUTPUT"
           else
-            version="$(node -p "require('./desktopV2/package.json').version")"
+            version="$(node -p "require('./desktop/package.json').version")"
             echo "value=desktop-v2-v${version}" >> "$GITHUB_OUTPUT"
           fi
 
@@ -140,7 +140,7 @@ jobs:
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             tag="${{ inputs.tag }}"
           else
-            version="$(node -p "require('./desktopV2/package.json').version")"
+            version="$(node -p "require('./desktop/package.json').version")"
             tag="desktop-v2-v${version}"
           fi
           case "$tag" in
@@ -153,7 +153,7 @@ jobs:
           workflow_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
           manifest_url="${OSS_PUBLIC_BASE_URL%/}/${OSS_PREFIX}/releases.json"
 
-          FEISHU_RELEASE_TITLE="minibot Desktop V2 已同步到 OSS" \
+          FEISHU_RELEASE_TITLE="minibot Desktop 已同步到 OSS" \
           FEISHU_RELEASE_PHASE="OSS 同步完成" \
           FEISHU_RELEASE_SUBTITLE="v${version} · OSS Sync" \
           FEISHU_RELEASE_SUMMARY="GitHub Release 产物已同步到 OSS，下载清单已更新。" \

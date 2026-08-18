@@ -29,7 +29,7 @@
 ## 客户端怎么接
 
 ```text
-CLI / webui / desktopV2 / React Native
+CLI / webui / desktop / React Native
         │
         ▼
   minibot Client API   ← 见 client-api.md

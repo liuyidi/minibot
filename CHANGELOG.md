@@ -13,7 +13,7 @@ Versions follow SemVer for product narrative. Package metadata may lag until a f
 
 ### Changed
 
-- Public desktop downloads and OSS `releases.json` now ship Desktop V2 (local gateway on `:8766`). The remote thin-shell `desktop/` app is retired from the default publish path.
+- Public desktop downloads ship the local-gateway app. Source tree is `desktop/` (renamed from `desktopV2/`); the old remote thin-shell tree is gone.
 
 ## [1.0.13] - 2026-08-17
 

@@ -41,7 +41,7 @@
 ```text
 minibot/              # Python 包（Agent、API、频道、工具）
 webui/                # Vite + React SPA（构建 → webui/dist）
-desktopV2/            # 桌面端（本机 gateway + sidecar）
+desktop/              # 桌面端（本机 gateway + sidecar）
 Dockerfile.minibot    # 运行时 + WebUI 一体镜像
 docs/                 # 设计与分阶段文档
 packages/             # 可选共享客户端包

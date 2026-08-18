@@ -17,11 +17,6 @@ VERSIONED_FILES = [
     "desktop/src-tauri/Cargo.toml",
     "desktop/src-tauri/Cargo.lock",
     "desktop/src-tauri/tauri.conf.json",
-    "desktopV2/package.json",
-    "desktopV2/package-lock.json",
-    "desktopV2/src-tauri/Cargo.toml",
-    "desktopV2/src-tauri/Cargo.lock",
-    "desktopV2/src-tauri/tauri.conf.json",
     "minibot/pyproject.toml",
     "minibot/src/minibot/__init__.py",
     "packages/minibot-client/package.json",
@@ -33,8 +28,6 @@ SOURCE_PREFIXES = (
     "webui/src/",
     "desktop/src/",
     "desktop/src-tauri/src/",
-    "desktopV2/src/",
-    "desktopV2/src-tauri/src/",
     "minibot/src/",
     "packages/minibot-client/src/",
 )
@@ -42,7 +35,6 @@ SOURCE_PREFIXES = (
 # prefix → Cargo package name in Cargo.lock
 _TAURI_PACKAGES = (
     ("desktop", "minibot-desktop"),
-    ("desktopV2", "minibot-desktop-v2"),
 )
 
 

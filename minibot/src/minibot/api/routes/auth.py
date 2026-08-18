@@ -58,7 +58,7 @@ def _focus_desktop_app() -> dict[str, object]:
     # Prefer direct process name (works with `tauri:dev` binary).
     scripts = [
         'tell application "System Events" to set frontmost of process '
-        '"minibot-desktop-v2" to true',
+        '"minibot-desktop" to true',
         'tell application "System Events" to set frontmost of process '
         '"minibot V2" to true',
         'tell application id "me.liuyidi.minibot.desktopv2" to activate',

@@ -40,17 +40,16 @@ shows it as coming soon rather than exposing a broken download link.
 
 ## Automated desktop publishing (recommended)
 
-Public desktop packages are **Desktop V2** (local gateway + sidecar under `desktopV2/`).
-The remote thin shell under `desktop/` is retired from this pipeline.
+Public desktop packages are the local-gateway app under `desktop/`.
 
 1. Merge the release commit to `main`, then run **Release** manually to create
    the shared `v<version>` tag.
-2. Workflow **Publish Desktop V2** (`.github/workflows/publish-desktop-v2.yml`)
+2. Workflow **Publish Desktop** (`.github/workflows/publish-desktop.yml`)
    runs on that tag (or via manual `workflow_dispatch`), builds the installers,
    and publishes GitHub Release `desktop-v2-v<version>`.
 3. Workflow **Sync Desktop Release to OSS**
    (`.github/workflows/sync-oss-desktop.yml`) runs automatically after
-   **Publish Desktop V2** completes, downloads the workflow artifacts or published
+   **Publish Desktop** completes, downloads the workflow artifacts or published
    release assets, and executes `scripts/sync-desktop-release-to-oss.sh` to
    upload installers and update `minibot/releases.json` on OSS.
 4. `sync-oss-desktop` posts to Feishu after OSS sync completes.
@@ -64,9 +63,6 @@ Configure repository **Secrets**: `OSS_ACCESS_KEY_ID`, `OSS_ACCESS_KEY_SECRET`
 
 You can also re-run sync manually: Actions → Sync Desktop Release to OSS →
   provide tag `desktop-v2-v…`.
-
-The retired thin-shell workflow (`.github/workflows/publish-desktop.yml`) is
-manual-only and must **not** be used for public OSS packages.
 
 ## Manual publishing
 
