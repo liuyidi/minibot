@@ -3,6 +3,7 @@ import { defineConfig } from "vitepress";
 function productSidebar(name, base) {
   return {
     text: name,
+    collapsed: false,
     items: [
       { text: "简介", link: `${base}/` },
       { text: "更新日志", link: `${base}/changelog/` },
@@ -27,8 +28,8 @@ export default defineConfig({
         text: "产品",
         items: [
           { text: "minibot", link: "/minibot/" },
-          { text: "mini-langfuse", link: "/mini-langfuse/" },
           { text: "minikb", link: "/minikb/" },
+          { text: "mini-langfuse", link: "/mini-langfuse/" },
           { text: "mini-auth", link: "/mini-auth/" },
           { text: "ServerlessShip", link: "/serverless-ship/" },
         ],
@@ -36,13 +37,13 @@ export default defineConfig({
       { text: "打开 Agent", link: "https://bot.liuyidi.me/" },
       { text: "GitHub", link: "https://github.com/liuyidi" },
     ],
-    sidebar: {
-      "/minibot/": [productSidebar("minibot", "/minibot")],
-      "/mini-langfuse/": [productSidebar("mini-langfuse", "/mini-langfuse")],
-      "/minikb/": [productSidebar("minikb", "/minikb")],
-      "/mini-auth/": [productSidebar("mini-auth", "/mini-auth")],
-      "/serverless-ship/": [productSidebar("ServerlessShip", "/serverless-ship")],
-    },
+    sidebar: [
+      productSidebar("minibot", "/minibot"),
+      productSidebar("minikb", "/minikb"),
+      productSidebar("mini-langfuse", "/mini-langfuse"),
+      productSidebar("mini-auth", "/mini-auth"),
+      productSidebar("ServerlessShip", "/serverless-ship"),
+    ],
     outline: "deep",
     socialLinks: [{ icon: "github", link: "https://github.com/liuyidi" }],
   },

@@ -64,4 +64,11 @@ if (!changelog.includes(version[1])) {
 mustRead("v0.1/index.html");
 mustRead("minibot/macos-client-preview.png");
 
+const minibotPage = mustRead("minibot/index.html");
+for (const slug of ["minikb", "mini-langfuse", "mini-auth", "serverless-ship"]) {
+  if (!minibotPage.includes(`/${slug}/changelog/`)) {
+    throw new Error(`unified sidebar missing /${slug}/changelog/ on minibot page`);
+  }
+}
+
 console.log(`check-dist ok (${distRel}, latest ${version[1]})`);
