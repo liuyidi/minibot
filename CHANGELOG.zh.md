@@ -14,6 +14,7 @@ English: [CHANGELOG.md](./CHANGELOG.md)
 
 ### 修复
 
+- Web 端退出登录会走 `/auth/logout` 清掉 mini-auth SSO；原先只清本地再跳登录，会被 SSO 立刻登回去。
 - Web 端切换「默认权限 / 完全访问权限」会写入当前会话，完全访问下越界 `exec` 不再弹出审批。
 
 ### 变更

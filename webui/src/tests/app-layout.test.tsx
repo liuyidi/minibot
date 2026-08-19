@@ -2118,7 +2118,7 @@ describe("App layout", () => {
     unmount();
   });
 
-  it("confirms before mini-auth sign-out and clears locally only", async () => {
+  it("confirms before mini-auth sign-out and navigates to IdP logout on web", async () => {
     const assignSpy = vi
       .spyOn(window.location, "assign")
       .mockImplementation(() => undefined);
@@ -2137,9 +2137,6 @@ describe("App layout", () => {
       const url = String(input);
       if (url.includes("/api/settings")) {
         return jsonResponse(baseSettingsPayload());
-      }
-      if (url.includes("/auth/logout")) {
-        return { ok: true, status: 204, json: async () => ({}) } as Response;
       }
       return { ok: false, status: 404, json: async () => ({}) } as Response;
     });
@@ -2165,14 +2162,11 @@ describe("App layout", () => {
     fireEvent.click(within(confirmDialog).getByRole("button", { name: "Confirm sign out" }));
 
     await waitFor(() => {
-      expect(
-        fetchMock.mock.calls.some(([u]) => String(u).includes("/auth/logout") && String(u).includes("local=1")),
-      ).toBe(true);
+      expect(assignSpy).toHaveBeenCalledWith("/auth/logout?next=%2F");
     });
-    await waitFor(() => {
-      expect(assignSpy).toHaveBeenCalledWith("/auth/login?next=%2F");
-    });
-    expect(assignSpy.mock.calls.every(([u]) => !String(u).includes("/auth/logout"))).toBe(true);
+    expect(
+      fetchMock.mock.calls.some(([u]) => String(u).includes("/auth/logout")),
+    ).toBe(false);
     expect(
       screen.queryByText(/tokenIssueSecret|Enter the secret configured/i),
     ).not.toBeInTheDocument();

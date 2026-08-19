@@ -134,6 +134,19 @@ def _normalized_next_url(next_url: str | None) -> str:
     return value or "/"
 
 
+def _clear_auth_cookie(response: Response) -> None:
+    """Clear the session cookie with the same flags used when it was set.
+
+    Browsers ignore ``delete_cookie`` when HttpOnly/SameSite do not match.
+    """
+    response.delete_cookie(
+        AUTH_COOKIE_NAME,
+        path="/",
+        httponly=True,
+        samesite="lax",
+    )
+
+
 def _absolute_next_url(request: Request, next_url: str | None) -> str:
     value = _normalized_next_url(next_url)
     if value.startswith(("http://", "https://")):
@@ -556,7 +569,7 @@ async def logout(
     # local=1: clear minibot session only (desktop / SPA). Otherwise redirect to IdP logout.
     if local:
         response: Response = Response(status_code=status.HTTP_204_NO_CONTENT)
-        response.delete_cookie(AUTH_COOKIE_NAME, path="/")
+        _clear_auth_cookie(response)
         return response
     if state.settings.normalized_auth_provider() == "mini_auth":
         next_target = _absolute_next_url(request, next)
@@ -566,5 +579,5 @@ async def logout(
         response = RedirectResponse(url=mini_auth_logout, status_code=status.HTTP_302_FOUND)
     else:
         response = RedirectResponse(url=_normalized_next_url(next), status_code=status.HTTP_302_FOUND)
-    response.delete_cookie(AUTH_COOKIE_NAME, path="/")
+    _clear_auth_cookie(response)
     return response

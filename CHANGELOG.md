@@ -13,6 +13,7 @@ Versions follow SemVer for product narrative. Package metadata may lag until a f
 
 ### Fixed
 
+- Web sign-out now clears mini-auth SSO (navigates to `/auth/logout`) instead of local-only clear + login, which immediately signed the user back in.
 - Switching Default Permission / Full Access now persists on the current chat, and Full Access no longer prompts for out-of-sandbox `exec`.
 
 ### Changed

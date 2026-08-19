@@ -25,7 +25,6 @@ import {
 import { accountDisplayName } from "@/lib/auth-account";
 import {
   bootstrapTokenExpiresAt,
-  buildLoginRedirect,
   desktopSessionUrl,
   isMiniAuth,
   tokenRefreshDelayMs,
@@ -97,11 +96,6 @@ export default function App() {
     void redirectToMiniAuthLogout({
       logoutUrl: authConfigRef.current?.logout_url,
       onDesktopWelcome: () => setState({ status: "desktop_welcome" }),
-      onWebSignedOut: () => {
-        window.location.assign(
-          buildLoginRedirect(authConfigRef.current?.login_url, { next: "/" }),
-        );
-      },
     });
   }, []);
 

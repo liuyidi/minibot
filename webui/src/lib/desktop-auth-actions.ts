@@ -67,28 +67,29 @@ export async function showDesktopWelcomeOrBrowserLogin(options: {
 }
 
 /**
- * WorkBuddy-style: clear only the local minibot session.
- * Do not open a browser or hit mini-auth /logout.
+ * Sign out of mini-auth.
+ * - Desktop: clear only the local minibot session (reuse browser IdP login).
+ * - Web: top-level navigate to `/auth/logout` so mini-auth SSO is cleared too.
+ *   Local-only clear + `/auth/login` would immediately SSO the user back in.
  */
 export async function redirectToMiniAuthLogout(options: {
   logoutUrl: string | null | undefined;
   onDesktopWelcome: () => void;
-  onWebSignedOut: () => void;
 }): Promise<void> {
   if (typeof window === "undefined") return;
-  try {
-    await fetch(buildLogoutRedirect(options.logoutUrl, { local: true }), {
-      method: "GET",
-      credentials: "same-origin",
-    });
-  } catch {
-    // Best-effort local clear.
-  }
   clearSavedSecret();
   const host = await waitForDesktopOpenLogin();
   if (host?.openLogin) {
+    try {
+      await fetch(buildLogoutRedirect(options.logoutUrl, { local: true }), {
+        method: "GET",
+        credentials: "same-origin",
+      });
+    } catch {
+      // Best-effort local clear.
+    }
     options.onDesktopWelcome();
     return;
   }
-  options.onWebSignedOut();
+  window.location.assign(buildLogoutRedirect(options.logoutUrl, { next: "/" }));
 }

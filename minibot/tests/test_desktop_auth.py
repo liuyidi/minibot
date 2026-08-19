@@ -131,8 +131,12 @@ def test_logout_local_clears_cookie_without_idp_redirect(client: TestClient) -> 
     res = client.get("/auth/logout?local=1", follow_redirects=False)
     assert res.status_code == 204
     assert not state.check_token(token)
-    # Set-Cookie delete is present (empty value / expired).
-    assert any(AUTH_COOKIE_NAME in v for v in res.headers.get_list("set-cookie"))
+    # Set-Cookie delete is present (empty value / expired) with matching flags.
+    set_cookies = res.headers.get_list("set-cookie")
+    assert any(AUTH_COOKIE_NAME in v for v in set_cookies)
+    joined = "\n".join(set_cookies).lower()
+    assert "httponly" in joined
+    assert "samesite=lax" in joined
 
 
 def test_desktop_complete_exchanges_code_and_session_sets_cookie(client: TestClient) -> None:
