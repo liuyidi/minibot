@@ -21,10 +21,13 @@ outline: deep
 
 - 生产登录 / 注册 SPA；已登录访问认证页会回到 minibot。
 - GitHub OAuth；验证邮箱一致时自动绑定已有账号。
+- Google OAuth；验证邮箱一致时自动绑定已有账号（与 GitHub 同一套外部登录流程）。
+- 隐私政策 / 服务条款页（`/privacy`、`/terms`），供 OAuth 同意屏幕使用。
 - OIDC userinfo 带上已绑定身份。
 - Desktop：允许 `minibot://auth/callback` 作为 redirect。
 - 自定义 scheme 授权时的「选择账号」页。
 - 腾讯云 CVM 自动发布（成功后经 ServerlessShip 发飞书）。
+- Google 登录在国内源站经境外 token relay（`auth-relay.liuyidi.me`）完成换票，浏览器仍只访问 `auth.liuyidi.me`。
 
 ### 修复
 
