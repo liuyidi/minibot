@@ -482,7 +482,9 @@
       "createdAt": "注册时间",
       "unknownValue": "—",
       "github": "GitHub",
-      "githubBound": "已绑定"
+      "githubBound": "已绑定",
+      "google": "Google",
+      "googleBound": "已绑定"
     },
     "usage": {
       "title": "Token 活动",

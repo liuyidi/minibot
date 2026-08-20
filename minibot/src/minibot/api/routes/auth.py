@@ -163,29 +163,40 @@ def _desktop_callback_url(state: StateDep) -> str:
     return (state.settings.mini_auth_desktop_redirect_uri or "minibot://auth/callback").strip()
 
 
-def account_from_mini_auth_userinfo(userinfo: dict) -> dict[str, str | None]:
-    identities = userinfo.get("identities") or []
-    github = next(
+def _identity_display_name(identities: object, provider: str) -> tuple[bool, str | None]:
+    if not isinstance(identities, list):
+        return False, None
+    match = next(
         (
             item
             for item in identities
-            if isinstance(item, dict) and item.get("provider") == "github"
+            if isinstance(item, dict) and item.get("provider") == provider
         ),
         None,
     )
+    if match is None:
+        return False, None
     display_name = None
-    if isinstance(github, dict):
-        raw = github.get("display_name")
-        if isinstance(raw, str) and raw.strip():
-            display_name = raw.strip()
+    raw = match.get("display_name")
+    if isinstance(raw, str) and raw.strip():
+        display_name = raw.strip()
+    return True, display_name
+
+
+def account_from_mini_auth_userinfo(userinfo: dict) -> dict[str, str | None]:
+    identities = userinfo.get("identities") or []
+    github_bound, github_display_name = _identity_display_name(identities, "github")
+    google_bound, google_display_name = _identity_display_name(identities, "google")
     return {
         "id": userinfo.get("sub"),
         "email": userinfo.get("email"),
         "name": userinfo.get("preferred_username") or userinfo.get("name") or userinfo.get("email"),
         "picture": userinfo.get("picture"),
         "created_at": userinfo.get("created_at"),
-        "github_bound": "true" if github is not None else "false",
-        "github_display_name": display_name,
+        "github_bound": "true" if github_bound else "false",
+        "github_display_name": github_display_name,
+        "google_bound": "true" if google_bound else "false",
+        "google_display_name": google_display_name,
     }
 
 

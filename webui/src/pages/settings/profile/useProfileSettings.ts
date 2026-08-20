@@ -61,6 +61,8 @@ export function useProfileSettings() {
     createdAtLabel: formatProfileDate(resolved.createdAt),
     githubBound: resolved.githubBound,
     githubDisplayName: resolved.githubDisplayName,
+    googleBound: resolved.googleBound,
+    googleDisplayName: resolved.googleDisplayName,
     accountReady,
     saveDisplayName,
     randomizeAvatar,

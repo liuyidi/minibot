@@ -331,7 +331,9 @@
       "createdAt": "登録日",
       "unknownValue": "—",
       "github": "GitHub",
-      "githubBound": "Bound"
+      "githubBound": "Bound",
+      "google": "Google",
+      "googleBound": "Bound"
     },
     "usage": {
       "title": "Token アクティビティ",

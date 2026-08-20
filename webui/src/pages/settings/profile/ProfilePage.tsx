@@ -18,6 +18,8 @@ export function ProfilePage() {
         createdAtLabel={model.createdAtLabel}
         githubBound={model.githubBound}
         githubDisplayName={model.githubDisplayName}
+        googleBound={model.googleBound}
+        googleDisplayName={model.googleDisplayName}
         onSaveDisplayName={model.saveDisplayName}
         onRandomizeAvatar={model.randomizeAvatar}
       />

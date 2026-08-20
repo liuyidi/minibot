@@ -10,6 +10,8 @@ export type ProfileAccount = {
   picture: string | null;
   githubBound: boolean;
   githubDisplayName: string;
+  googleBound: boolean;
+  googleDisplayName: string;
 };
 
 export type ResolveProfileAccountOptions = {
@@ -41,6 +43,8 @@ export function resolveProfileAccount(
     picture: auth?.picture?.trim() || null,
     githubBound: auth?.github_bound === "true",
     githubDisplayName: auth?.github_display_name?.trim() || "",
+    googleBound: auth?.google_bound === "true",
+    googleDisplayName: auth?.google_display_name?.trim() || "",
   };
 }
 

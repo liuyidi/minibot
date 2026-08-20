@@ -55,6 +55,8 @@ describe("profile helpers", () => {
       picture: null,
       githubBound: false,
       githubDisplayName: "",
+      googleBound: false,
+      googleDisplayName: "",
     });
 
     const unnamed = writeLocalProfile({ ...local, displayName: null });
@@ -68,7 +70,7 @@ describe("profile helpers", () => {
     ).toBe("");
   });
 
-  it("resolves github bind fields from auth account", () => {
+  it("resolves github and google bind fields from auth account", () => {
     const local = writeLocalProfile({
       displayName: "Studio",
       avatarSeed: "seed-1",
@@ -82,17 +84,25 @@ describe("profile helpers", () => {
           id: "user-demo",
           github_bound: "true",
           github_display_name: "octocat",
+          google_bound: "true",
+          google_display_name: "Ada G",
         },
         "minibot",
       ),
     ).toMatchObject({
       githubBound: true,
       githubDisplayName: "octocat",
+      googleBound: true,
+      googleDisplayName: "Ada G",
     });
     expect(resolveProfileAccount(local, { github_bound: "false" }, "minibot").githubBound).toBe(
       false,
     );
+    expect(resolveProfileAccount(local, { google_bound: "false" }, "minibot").googleBound).toBe(
+      false,
+    );
     expect(resolveProfileAccount(local, null, "minibot").githubBound).toBe(false);
+    expect(resolveProfileAccount(local, null, "minibot").googleBound).toBe(false);
   });
 
   it("persists a generated local profile on first read", () => {

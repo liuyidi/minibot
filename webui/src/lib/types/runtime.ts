@@ -23,6 +23,8 @@ export interface AuthConfigResponse {
     created_at?: string | null;
     github_bound?: string | null;
     github_display_name?: string | null;
+    google_bound?: string | null;
+    google_display_name?: string | null;
   } | null;
 }
 

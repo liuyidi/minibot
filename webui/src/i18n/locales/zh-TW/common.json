@@ -331,7 +331,9 @@
       "createdAt": "註冊時間",
       "unknownValue": "—",
       "github": "GitHub",
-      "githubBound": "已綁定"
+      "githubBound": "已綁定",
+      "google": "Google",
+      "googleBound": "已綁定"
     },
     "usage": {
       "title": "Token 活動",

@@ -482,7 +482,9 @@
       "createdAt": "Registration date",
       "unknownValue": "—",
       "github": "GitHub",
-      "githubBound": "Bound"
+      "githubBound": "Bound",
+      "google": "Google",
+      "googleBound": "Bound"
     },
     "usage": {
       "title": "Token activity",
