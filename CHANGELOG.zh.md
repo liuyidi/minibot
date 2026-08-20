@@ -12,6 +12,12 @@ English: [CHANGELOG.md](./CHANGELOG.md)
 <!-- #region site-changelog -->
 ## [Unreleased]
 
+## [1.0.14] - 2026-08-20
+
+### 新增
+
+- 设置「个人资料」在已绑定 Google 时展示账号（展示名），行为与 GitHub 一致。
+
 ### 修复
 
 - Web 端退出登录会走 `/auth/logout` 清掉 mini-auth SSO；原先只清本地再跳登录，会被 SSO 立刻登回去。

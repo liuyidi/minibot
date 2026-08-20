@@ -1998,7 +1998,7 @@ checksum = "6877bb514081ee2a7ff5ef9de3281f14a4dd4bceac4c09388074a6b5df8a139a"
 
 [[package]]
 name = "minibot-desktop"
-version = "1.0.13"
+version = "1.0.14"
 dependencies = [
  "objc2",
  "objc2-app-kit",

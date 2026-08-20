@@ -11,6 +11,12 @@ Versions follow SemVer for product narrative. Package metadata may lag until a f
 
 ## [Unreleased]
 
+## [1.0.14] - 2026-08-20
+
+### Added
+
+- Settings profile shows a bound Google account (display name), same pattern as GitHub.
+
 ### Fixed
 
 - Web sign-out now clears mini-auth SSO (navigates to `/auth/logout`) instead of local-only clear + login, which immediately signed the user back in.
