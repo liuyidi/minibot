@@ -147,6 +147,7 @@ jobs:
       contents: read
     env:
       SERVERLESSSHIP_RELEASE_URL: ${{ vars.SERVERLESSSHIP_RELEASE_URL }}
+      SERVERLESSSHIP_TOKEN: ${{ secrets.SERVERLESSSHIP_TOKEN_MINIBOT || secrets.SERVERLESSSHIP_TOKEN }}
 
     steps:
       - uses: actions/checkout@v6
@@ -166,6 +167,11 @@ jobs:
         run: |
           set -euo pipefail
 
+          if [[ -z "${SERVERLESSSHIP_TOKEN:-}" ]]; then
+            echo "Missing SERVERLESSSHIP_TOKEN_MINIBOT (or SERVERLESSSHIP_TOKEN) secret." >&2
+            exit 1
+          fi
+
           serverlessship_release_url="${SERVERLESSSHIP_RELEASE_URL:-https://serverless-ship.liuyidi.me/api/releases}"
 
           payload="$(node -e 'const version = process.env.RELEASE_VERSION; const tag = process.env.RELEASE_TAG; process.stdout.write(JSON.stringify({ project: "minibot", version, tag, repository: process.env.GITHUB_REPOSITORY, releaseUrl: process.env.RELEASE_URL, workflowUrl: process.env.WORKFLOW_URL, channel: "GitHub Release (Desktop)" }));')"
@@ -173,6 +179,7 @@ jobs:
           response="$(
             curl -fsS \
               -X POST \
+              -H "Authorization: Bearer ${SERVERLESSSHIP_TOKEN}" \
               -H "Content-Type: application/json" \
               -d "$payload" \
               "$serverlessship_release_url"

@@ -133,11 +133,17 @@ jobs:
       contents: read
     env:
       SERVERLESSSHIP_RELEASE_URL: ${{ vars.SERVERLESSSHIP_RELEASE_URL }}
+      SERVERLESSSHIP_TOKEN: ${{ secrets.SERVERLESSSHIP_TOKEN_MINIBOT || secrets.SERVERLESSSHIP_TOKEN }}
 
     steps:
       - name: Send deploy notification to ServerlessShip
         run: |
           set -euo pipefail
+
+          if [[ -z "${SERVERLESSSHIP_TOKEN:-}" ]]; then
+            echo "Missing SERVERLESSSHIP_TOKEN_MINIBOT (or SERVERLESSSHIP_TOKEN) secret." >&2
+            exit 1
+          fi
 
           serverlessship_release_url="${SERVERLESSSHIP_RELEASE_URL:-https://serverless-ship.liuyidi.me/api/releases}"
 
@@ -154,6 +160,7 @@ jobs:
           response="$(
             curl -fsS \
               -X POST \
+              -H "Authorization: Bearer ${SERVERLESSSHIP_TOKEN}" \
               -H "Content-Type: application/json" \
               -d "$payload" \
               "$serverlessship_release_url"
