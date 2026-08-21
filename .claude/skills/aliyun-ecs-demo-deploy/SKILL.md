@@ -9,98 +9,58 @@ description: >-
 
 # Aliyun ECS Deploy（只 minibot + 落地页）
 
-应用已经拆开，**先选仓**。本 skill 只覆盖第一行；其它域名立刻换仓读对应 skill，不要在本机 compose 里起别的应用。
+应用已经拆开，**先选仓**。本 skill 只覆盖第一行；其它域名立刻换仓读对应 skill。
 
 | 域名 | 仓 | 云 | Skill |
 |------|----|----|-------|
-| `liuyidi.me` / `bot.liuyidi.me` | minibot | 阿里云 ECS `root@116.62.35.76` | **本文件** |
-| `kb.liuyidi.me` | minikb | 火山引擎 `101.96.224.232`（本机 **不**反代） | minikb `deploying-volcengine-minikb` |
-| `mlf.liuyidi.me` | mini-langfuse | 腾讯云 `ubuntu@124.223.108.72` | mini-langfuse `deploying-tencent-mlf` |
+| `liuyidi.me` / `bot.liuyidi.me` | minibot | 阿里云 ECS | **本文件** |
+| `kb.liuyidi.me` | minikb | 火山引擎 | minikb `deploying-volcengine-minikb` |
+| `mlf.liuyidi.me` | mini-langfuse | 腾讯云 | mini-langfuse `deploying-tencent-mlf` |
 | `auth.liuyidi.me` | mini-auth | 腾讯云 CVM | mini-auth `deploying-tencent-mini-auth` |
 | `serverless-ship.liuyidi.me` | serverless-ship | Vercel | serverless-ship `deploying-vercel-serverless-ship` |
 
-ECS 密钥 `~/Downloads/agent.pem`，代码 `/opt/demo/minibot/`。  
-`/opt/demo/mini-langfuse/` **只给构建** `sdk-python`（`LANGFUSE_SDK_DIR`），不要在阿里云再起 mlf。
+## 硬性发布规则（必须遵守）
 
-Compose 入口：`/opt/demo/minibot/deploy/`（`.env`、`docker-compose.yml`、`up.sh`）。
+**所有部署必须：commit → `git push`（到 `main`）→ 由 GitHub Actions workflow 发布。**
 
-## 何时用哪条路径
+- **允许**：把改动 commit / push；用 `gh run list` / `gh run watch` 跟发布；验收公网 URL。
+- **禁止**：本机 `ssh` / `rsync` / `scp` 直接改服务器；在 ECS 上手动 `git pull` + `docker compose` / `./up.sh` 当发布路径；绕过 workflow 的「热修」。
+- **例外**：仅当用户**明确**要求排障（看日志、查挂载）且**不是**发布代码时，才可只读 SSH。排障后若需上线代码，仍走 push → workflow。
 
-1. **只改了 minibot / WebUI** → 拉 `minibot` + `./up.sh`（或 `build` + `up -d minibot`）。必须 `--build`（WebUI 打进 `Dockerfile.minibot`）。
-2. **改了 `site/` 或 `CHANGELOG.zh.md`（liuyidi.me）** → 拉代码 + `deploy/build-site.sh`；nginx 片段变了再 `nginx -t && reload`。
-3. **改了 minikb / mlf / auth / serverless-ship** → 换仓，读上表 skill。不要碰阿里云 compose，也不要再给 `kb.liuyidi.me` 加 nginx server。
+Workflow：`.github/workflows/publish-web-server-ecs.yml`（`Publish Web & Server (ECS)`）。
 
-## SSH
+触发：
 
-```bash
-chmod 600 ~/Downloads/agent.pem
-ssh -i ~/Downloads/agent.pem -o StrictHostKeyChecking=no root@116.62.35.76
-```
+1. `git push origin main`（命中 workflow `paths`：`minibot/**`、`webui/**`、`Dockerfile.minibot`、该 workflow 自身等）
+2. 或 push 后 / 无 path 命中时：`gh workflow run "Publish Web & Server (ECS)" --ref main`
 
-远程操作默认 `required_permissions: ["all"]`。
+发布前确认工作区干净、分支已推到 `origin/main`。
 
-## 更新 minibot（最常见）
+## Agent 发布步骤
 
 ```bash
-ssh -i ~/Downloads/agent.pem -o StrictHostKeyChecking=no root@116.62.35.76 'set -euo pipefail
-cd /opt/demo/minibot
-git fetch origin main
-git reset --hard origin/main
-git rev-parse --short HEAD
+# 1) 确认改动已 commit 且已 push 到 main
+git status -sb
+git push -u origin HEAD
 
-/opt/demo/minibot/deploy/build-site.sh
+# 2) 若本次 push 未自动触发（路径未命中），手动触发
+gh workflow run "Publish Web & Server (ECS)" --ref main
 
-cd /opt/demo/minibot/deploy
-# 不要 bash source .env（SCOPE 含空格会炸）
-export LANGFUSE_SDK_DIR=/opt/demo/mini-langfuse/sdk-python
-docker compose -f docker-compose.yml --env-file .env build minibot
-docker compose -f docker-compose.yml --env-file .env up -d minibot
-
-sleep 2
-curl -fsS http://127.0.0.1:8766/health
-curl -fsS -o /dev/null -w "webui %{http_code}\n" http://127.0.0.1:8766/
-curl -fsS -o /dev/null -w "landing %{http_code}\n" https://liuyidi.me/
-curl -fsS -o /dev/null -w "overview %{http_code}\n" https://liuyidi.me/minibot/
-curl -fsS -o /dev/null -w "changelog %{http_code}\n" https://liuyidi.me/minibot/changelog/
-curl -fsS -o /dev/null -w "bot %{http_code}\n" https://bot.liuyidi.me/
-'
+# 3) 跟跑
+gh run list --workflow "Publish Web & Server (ECS)" --limit 3
+gh run watch
 ```
 
 ## 验收
 
-本仓部署只验 landing + bot。跨应用冒烟是可选的，失败不要在本机 `up` 别人的栈。
-
 ```bash
-curl -fsS http://127.0.0.1:8766/health
-curl -fsS -o /dev/null -w "landing %{http_code}\n" https://liuyidi.me/
+curl -fsS https://bot.liuyidi.me/health
 curl -fsS -o /dev/null -w "bot %{http_code}\n" https://bot.liuyidi.me/
-docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
-# 可选：curl -fsS https://kb.liuyidi.me/health
-# 可选：curl -fsS -o /dev/null -w "mlf %{http_code}\n" https://mlf.liuyidi.me/
-# 可选：curl -fsS https://auth.liuyidi.me/health
+curl -fsS -o /dev/null -w "landing %{http_code}\n" https://liuyidi.me/
 ```
 
-## 常见坑
+## 约定
 
-| 现象 | 处理 |
-|------|------|
-| `source .env` 报 `profile: command not found` | 用 `--env-file`，不要 source |
-| 构建缺 langfuse_sdk | 确认 `/opt/demo/mini-langfuse/sdk-python` 存在（只克隆 SDK，不起 mlf） |
-| 会话数据丢了 | `.env` 里 `MINIBOT_DATA_VOLUME=agent-demo_demo_minibot` |
-| 侧边栏仍旧 | 重建镜像 + 浏览器硬刷新 |
-| 误起 mlf / minikb / auth | 阿里云 compose 只有 minibot；换仓发其它应用 |
-| `/minibot/` 仍是门户 | nginx `root` 必须是 `site/.vitepress/dist`，且 `try_files $uri $uri.html $uri/index.html =404`（不要 SPA 回退到 `/index.html`） |
-
-## 快速口令
-
-```bash
-PEM=~/Downloads/agent.pem
-HOST=root@116.62.35.76
-ssh -i "$PEM" -o StrictHostKeyChecking=no "$HOST" \
-  'cd /opt/demo/minibot && git fetch origin main && git reset --hard origin/main && \
-   ./deploy/build-site.sh && \
-   cd deploy && export LANGFUSE_SDK_DIR=/opt/demo/mini-langfuse/sdk-python && \
-   docker compose -f docker-compose.yml --env-file .env build minibot && \
-   docker compose -f docker-compose.yml --env-file .env up -d minibot && \
-   curl -fsS http://127.0.0.1:8766/health'
-```
+1. 不要在阿里云 compose 里起 mlf / minikb / auth。
+2. 不要把 pem / 生产 `.env` 写入 commit。
+3. 改了 minikb / mlf / auth / serverless-ship → 换仓读对应 skill，不要在本仓 workflow 里混发。

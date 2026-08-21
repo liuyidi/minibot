@@ -57,4 +57,4 @@ Config / data default under `~/.minibot/` (`MINIBOT_SERVER_DATA_DIR`).
 - WebUI static resolve: `MINIBOT_WEBUI_DIST` or `webui/dist` / Docker `/app/webui-dist`.
 - Auth header: `X-Minibot-Auth` (or Bearer token).
 - WebUI coding conventions (`.cursor/rules/`): component structure, i18n/icons, React/TS, Tailwind, Vitest.
-- Deploy skills are per app (do not mix hosts): Aliyun minibot `.claude/skills/aliyun-ecs-demo-deploy/SKILL.md`; mlf is Tencent (`mini-langfuse` `deploying-tencent-mlf`); minikb is Volcengine (`deploying-volcengine-minikb`); auth is Tencent CVM (`deploying-tencent-mini-auth`); serverless-ship is Vercel (`deploying-vercel-serverless-ship`).
+- Deploy skills are per app (do not mix hosts): Aliyun minibot `.claude/skills/aliyun-ecs-demo-deploy/SKILL.md`; mlf is Tencent (`mini-langfuse` `deploying-tencent-mlf`); minikb is Volcengine (`deploying-volcengine-minikb`); auth is Tencent CVM (`deploying-tencent-mini-auth`); serverless-ship is Vercel (`deploying-vercel-serverless-ship`). **All app deploys must go through git push → GitHub Actions workflow** (no local ssh/rsync publish).
