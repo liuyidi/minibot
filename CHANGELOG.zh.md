@@ -12,6 +12,13 @@ English: [CHANGELOG.md](./CHANGELOG.md)
 <!-- #region site-changelog -->
 ## [Unreleased]
 
+## [1.0.15] - 2026-08-21
+
+### 新增
+
+- CLI（`minibot`）远程客户端：`status` / `sessions` / `chat`，走统一 Client API。
+- Gateway bootstrap 支持 mini-auth `Authorization: Bearer`，CLI `login` 后无需共享 gateway secret 即可开聊。
+
 ## [1.0.14] - 2026-08-20
 
 ### 新增

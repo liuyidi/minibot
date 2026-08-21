@@ -11,6 +11,13 @@ Versions follow SemVer for product narrative. Package metadata may lag until a f
 
 ## [Unreleased]
 
+## [1.0.15] - 2026-08-21
+
+### Added
+
+- CLI (`minibot`) remote client: `status`, `sessions`, and `chat` over the shared Client API.
+- Gateway bootstrap accepts mini-auth `Authorization: Bearer` so CLI login can open cloud/local chat without a shared gateway secret.
+
 ## [1.0.14] - 2026-08-20
 
 ### Added
