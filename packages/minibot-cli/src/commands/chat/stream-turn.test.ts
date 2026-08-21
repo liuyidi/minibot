@@ -40,6 +40,28 @@ describe("streamTurn", () => {
     expect(chunks.join("")).toBe("Hello world\n");
   });
 
+  it("handles sync flush during onChat subscribe without TDZ", async () => {
+    const chunks: string[] = [];
+    const send = vi.fn();
+    const ws = {
+      onChat(_chatId: string, handler: (ev: InboundEvent) => void) {
+        // Mimic MinibotWsClient: flush pending events before returning unsub.
+        handler({ event: "stream_end", chat_id: "c1" });
+        return () => undefined;
+      },
+      sendMessage: vi.fn(),
+      send,
+      abort: vi.fn()
+    } as unknown as MinibotWsClient;
+    await streamTurn({
+      ws,
+      chatId: "c1",
+      content: "hi",
+      write: (t) => chunks.push(t)
+    });
+    expect(chunks.join("")).toBe("\n");
+  });
+
   it("auto-rejects approval_required", async () => {
     const approvalEv = {
       event: "approval_required",

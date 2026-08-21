@@ -63,7 +63,7 @@ export async function runStatus(options: StatusOptions = {}): Promise<void> {
     console.log(`  Health: ok (${health.status}${health.runtime ? `, ${health.runtime}` : ""})`);
   } catch (err) {
     console.log(chalk.red(`  Health: fail (${err instanceof Error ? err.message : String(err)})`));
-    printGatewayHint();
+    printGatewayHint(baseUrl);
     process.exitCode = 1;
     return;
   }
@@ -78,7 +78,7 @@ export async function runStatus(options: StatusOptions = {}): Promise<void> {
       if (credentials.path === "session") {
         console.log(
           chalk.gray(
-            "  Tip: local gateway must run the new Bearer-bootstrap code and use the same mini-auth issuer as login."
+            "  Tip: local gateway must run Bearer-bootstrap and the same mini-auth issuer as login."
           )
         );
         console.log(
@@ -88,7 +88,7 @@ export async function runStatus(options: StatusOptions = {}): Promise<void> {
         );
         console.log(
           chalk.gray(
-            "  Or point CLI at cloud after deploy: MINIBOT_API_URL=https://bot.liuyidi.me minibot status"
+            "  Local CLI override: MINIBOT_API_URL=http://127.0.0.1:8766 minibot status"
           )
         );
       } else {

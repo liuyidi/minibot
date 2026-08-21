@@ -5,7 +5,7 @@ describe("loadEnv", () => {
   it("uses defaults", () => {
     const env = loadEnv({});
     expect(env.authBaseUrl).toBe("https://auth.liuyidi.me");
-    expect(env.gatewayBaseUrl).toBe("http://127.0.0.1:8766");
+    expect(env.gatewayBaseUrl).toBe("https://bot.liuyidi.me");
     expect(env.authSecret).toBe("");
     expect(env.configDir).toBe("");
     expect(env.noColor).toBe(false);

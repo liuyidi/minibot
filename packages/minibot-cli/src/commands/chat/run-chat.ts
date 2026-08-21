@@ -75,6 +75,6 @@ export async function runChat(options: RunChatOptions = {}): Promise<void> {
       ws.close();
     }
   } catch (err) {
-    handleClientError(err);
+    handleClientError(err, baseUrl);
   }
 }

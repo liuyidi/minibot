@@ -25,6 +25,8 @@ export function streamTurn(options: StreamTurnOptions): Promise<void> {
 
   return new Promise((resolve, reject) => {
     let settled = false;
+    // onChat may flush pending events synchronously before the assignment below.
+    let unsub: () => void = () => undefined;
     const finish = (err?: Error) => {
       if (settled) return;
       settled = true;
@@ -33,7 +35,7 @@ export function streamTurn(options: StreamTurnOptions): Promise<void> {
       else resolve();
     };
 
-    const unsub = options.ws.onChat(options.chatId, (ev) => {
+    unsub = options.ws.onChat(options.chatId, (ev) => {
       if (ev.event === "delta" && typeof ev.text === "string") {
         write(ev.text);
         return;
@@ -78,11 +80,13 @@ export function streamTurn(options: StreamTurnOptions): Promise<void> {
 export function waitForWsOpen(ws: MinibotWsClient, timeoutMs = 10_000): Promise<void> {
   if (ws.status === "open") return Promise.resolve();
   return new Promise((resolve, reject) => {
+    // onStatus invokes the handler immediately with the current status.
+    let unsub: () => void = () => undefined;
     const timer = setTimeout(() => {
       unsub();
       reject(new Error("WebSocket connect timed out"));
     }, timeoutMs);
-    const unsub = ws.onStatus((status) => {
+    unsub = ws.onStatus((status) => {
       if (status === "open") {
         clearTimeout(timer);
         unsub();

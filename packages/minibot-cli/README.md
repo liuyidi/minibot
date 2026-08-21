@@ -5,7 +5,7 @@
 By default:
 
 - Auth (login): `https://auth.liuyidi.me`
-- Gateway (chat/sessions/status): `http://127.0.0.1:8766`
+- Gateway (chat/sessions/status): `https://bot.liuyidi.me`
 
 ## Install
 
@@ -22,15 +22,24 @@ minibot whoami
 minibot logout
 ```
 
-## Gateway
-
-Start the Python gateway in another terminal (`uv run minibot` from the `minibot/` package), then:
+## Gateway (cloud default)
 
 ```bash
 minibot status
 minibot sessions list
 minibot chat -m "hello"
 minibot chat                 # interactive REPL
+```
+
+### Local gateway
+
+```bash
+# terminal 1
+cd minibot && uv run minibot
+
+# terminal 2
+MINIBOT_API_URL=http://127.0.0.1:8766 minibot status
+# or: minibot status --base-url http://127.0.0.1:8766
 ```
 
 ### Credential precedence
@@ -40,9 +49,8 @@ minibot chat                 # interactive REPL
 3. Anonymous — only when the Gateway allows open bootstrap
 
 ```bash
-export MINIBOT_AUTH_SECRET=your-secret   # local/CI bypass
-# or:
-minibot login && minibot chat -m "hi"    # product path
+minibot login && minibot chat -m "hi"    # product path (cloud)
+export MINIBOT_AUTH_SECRET=your-secret   # local/CI bypass when needed
 ```
 
 ### Env
@@ -50,6 +58,6 @@ minibot login && minibot chat -m "hi"    # product path
 | Variable | Meaning |
 | --- | --- |
 | `MINIBOT_AUTH_URL` | mini-auth base (login) |
-| `MINIBOT_API_URL` | Gateway base (default `http://127.0.0.1:8766`) |
+| `MINIBOT_API_URL` | Gateway base (default `https://bot.liuyidi.me`) |
 | `MINIBOT_AUTH_SECRET` | Optional `X-Minibot-Auth` bypass |
 | `MINIBOT_CONFIG_DIR` | Config dir (default `~/.minibot`) |

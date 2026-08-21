@@ -58,6 +58,6 @@ export async function runSessions(options: RunSessionsOptions): Promise<void> {
     await client.sessions.delete(options.id);
     console.log(chalk.green(`Deleted ${options.id}`));
   } catch (err) {
-    handleClientError(err);
+    handleClientError(err, baseUrl);
   }
 }

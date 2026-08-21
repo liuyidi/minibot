@@ -23,7 +23,7 @@ export function loadEnv(rawEnv: Record<string, string | undefined>): MinibotEnv 
 
   return {
     authBaseUrl: env.MINIBOT_AUTH_URL ?? "https://auth.liuyidi.me",
-    gatewayBaseUrl: env.MINIBOT_API_URL ?? "http://127.0.0.1:8766",
+    gatewayBaseUrl: env.MINIBOT_API_URL ?? "https://bot.liuyidi.me",
     authSecret: env.MINIBOT_AUTH_SECRET ?? "",
     configDir: env.MINIBOT_CONFIG_DIR ?? "",
     deviceLocation: env.MINIBOT_DEVICE_LOCATION ?? "",
