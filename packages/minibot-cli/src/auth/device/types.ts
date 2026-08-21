@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+export const DEVICE_CODE_GRANT_TYPE = "urn:ietf:params:oauth:grant-type:device_code";
+
 export const deviceStartResponseSchema = z.object({
   device_code: z.string(),
   user_code: z.string(),

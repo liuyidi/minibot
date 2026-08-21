@@ -7,8 +7,10 @@ import { MinibotWsClient, type WebSocketConstructor } from "./ws.js";
 export interface CreateClientOptions {
   /** Absolute gateway origin, e.g. ``http://127.0.0.1:8766`` (required for RN). */
   baseUrl: string;
-  /** Optional gateway secret (``X-Minibot-Auth``). */
+  /** Optional gateway secret (``X-Minibot-Auth``). Takes precedence over access token. */
   getSecret?: () => string | Promise<string | undefined> | undefined;
+  /** Optional IdP access token (``Authorization: Bearer``) for CLI mini-auth login. */
+  getAccessToken?: () => string | Promise<string | undefined> | undefined;
   fetch?: FetchLike;
   WebSocket?: WebSocketConstructor;
   socketFactory?: (url: string) => WebSocket;
@@ -60,9 +62,11 @@ export function createClient(options: CreateClientOptions): MinibotClient {
 
   async function bootstrap(): Promise<BootstrapResponse> {
     const secret = (await options.getSecret?.()) || "";
+    const accessToken = secret ? "" : (await options.getAccessToken?.()) || "";
     const info = await fetchBootstrap({
       baseUrl,
-      secret,
+      secret: secret || undefined,
+      accessToken: accessToken || undefined,
       fetchImpl,
     });
     token = info.token;

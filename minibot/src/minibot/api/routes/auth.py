@@ -9,6 +9,7 @@ import platform
 import subprocess
 import time
 from pathlib import Path
+from typing import Any
 from urllib.parse import quote, urlencode
 
 import httpx
@@ -127,6 +128,34 @@ def _token_from_request(
     minibot_auth_token: str | None,
 ) -> str | None:
     return x_minibot_auth or minibot_auth_token or request.query_params.get("token")
+
+
+def _extract_bearer(authorization: str | None) -> str | None:
+    if not authorization:
+        return None
+    parts = authorization.split(" ", 1)
+    if len(parts) != 2 or parts[0].lower() != "bearer":
+        return None
+    return parts[1].strip() or None
+
+
+async def _userinfo_account_from_mini_auth_bearer(
+    state: StateDep,
+    access_token: str,
+) -> dict[str, str | None]:
+    """Validate a mini-auth access token and map it to a minibot account dict."""
+    # Lazy import avoids circular import with platform_proxy.
+    from minibot.api.routes.platform_proxy import fetch_mini_auth_userinfo
+
+    userinfo = await fetch_mini_auth_userinfo(state, access_token)
+    account = account_from_mini_auth_userinfo(userinfo)
+    user_id = str(account.get("id") or "").strip()
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="mini-auth user missing sub",
+        )
+    return account
 
 
 def _normalized_next_url(next_url: str | None) -> str:
@@ -378,15 +407,39 @@ async def auth_config(
 async def bootstrap(
     request: Request,
     state: StateDep,
+    authorization: str | None = Header(default=None),
     x_minibot_auth: str | None = Header(default=None, alias="X-Minibot-Auth"),
     minibot_auth_token: str | None = Cookie(default=None, alias=AUTH_COOKIE_NAME),
 ) -> BootstrapResponse:
+    """Issue a short-lived API/WS token.
+
+    Accepts (in order):
+    1. Cookie / ``X-Minibot-Auth`` / ``?token=`` (existing WebUI / secret paths)
+    2. ``Authorization: Bearer`` that is already a gateway-issued token or auth secret
+    3. ``Authorization: Bearer`` mini-auth access token (CLI device login) when
+       ``auth_provider=mini_auth`` — validated via mini-auth ``/oauth/userinfo``
+    """
     supplied = _token_from_request(request, x_minibot_auth, minibot_auth_token)
-    if not state.check_token(supplied):
+    bearer = _extract_bearer(authorization)
+
+    account: dict[str, Any] | None = None
+    authenticated = False
+
+    if state.check_token(supplied):
+        authenticated = True
+        account = state.token_account(supplied)
+    elif bearer and state.check_token(bearer):
+        authenticated = True
+        account = state.token_account(bearer)
+    elif bearer and state.is_mini_auth_enabled():
+        account = await _userinfo_account_from_mini_auth_bearer(state, bearer)
+        authenticated = True
+
+    if not authenticated:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
-    # Short-lived API/WS token must inherit the login cookie's account, otherwise
-    # every WebUI client collapses onto the shared ``system`` user runtime.
-    account = state.token_account(supplied)
+
+    # Short-lived API/WS token must inherit the login account, otherwise
+    # every WebUI/CLI client collapses onto the shared ``system`` user runtime.
     token = state.issue_token(account=dict(account) if account else None)
     return BootstrapResponse(
         token=token,

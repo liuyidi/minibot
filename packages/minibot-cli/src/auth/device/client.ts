@@ -2,6 +2,7 @@ import os from "node:os";
 import { readFileSync } from "node:fs";
 import { z } from "zod";
 import {
+  DEVICE_CODE_GRANT_TYPE,
   deviceStartResponseSchema,
   deviceTokenResponseSchema,
   toDeviceStartResponse,
@@ -84,7 +85,7 @@ export function createDeviceFlowClient(
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          grant_type: "device_code",
+          grant_type: DEVICE_CODE_GRANT_TYPE,
           client_id: clientId,
           device_code: deviceCode
         })

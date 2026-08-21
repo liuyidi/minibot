@@ -208,6 +208,11 @@ export class MinibotWsClient {
     this.queueSend({ type: "abort", chat_id: chatId });
   }
 
+  /** Send an arbitrary outbound frame (e.g. approval_response). */
+  send(frame: OutboundFrame): void {
+    this.queueSend(frame);
+  }
+
   private setStatus(status: ConnectionStatus): void {
     if (this.status_ === status) return;
     this.status_ = status;

@@ -4,6 +4,8 @@ import type { BootstrapResponse } from "./types.js";
 export interface BootstrapOptions {
   baseUrl: string;
   secret?: string;
+  /** mini-auth (or other IdP) access token → Authorization Bearer on bootstrap. */
+  accessToken?: string;
   fetchImpl: FetchLike;
   timeoutMs?: number;
 }
@@ -14,6 +16,8 @@ export async function fetchBootstrap(options: BootstrapOptions): Promise<Bootstr
   const headers: Record<string, string> = {};
   if (options.secret) {
     headers["X-Minibot-Auth"] = options.secret;
+  } else if (options.accessToken) {
+    headers.Authorization = `Bearer ${options.accessToken}`;
   }
   const res = await fetchWithTimeout(
     options.fetchImpl,

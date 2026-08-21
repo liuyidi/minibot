@@ -105,6 +105,44 @@ describe("createClient", () => {
     expect(headers["X-Minibot-Auth"]).toBe("sekrit");
   });
 
+  it("fetchBootstrap sends Authorization Bearer for accessToken", async () => {
+    const fetchImpl = vi.fn(async () => {
+      return new Response(
+        JSON.stringify({ token: "t", ws_path: "/ws", expires_in: 1 }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      );
+    });
+    await fetchBootstrap({
+      baseUrl: "http://127.0.0.1:8766",
+      accessToken: "mini-tok",
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+    });
+    const init = fetchImpl.mock.calls[0][1] as RequestInit;
+    const headers = init.headers as Record<string, string>;
+    expect(headers.Authorization).toBe("Bearer mini-tok");
+    expect(headers["X-Minibot-Auth"]).toBeUndefined();
+  });
+
+  it("createClient prefers secret over accessToken", async () => {
+    const fetchImpl = vi.fn(async () => {
+      return new Response(
+        JSON.stringify({ token: "t", ws_path: "/ws", expires_in: 1 }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      );
+    });
+    const client = createClient({
+      baseUrl: "http://127.0.0.1:8766",
+      getSecret: () => "sekrit",
+      getAccessToken: () => "mini-tok",
+      fetch: fetchImpl as unknown as typeof fetch,
+    });
+    await client.bootstrap();
+    const init = fetchImpl.mock.calls[0][1] as RequestInit;
+    const headers = init.headers as Record<string, string>;
+    expect(headers["X-Minibot-Auth"]).toBe("sekrit");
+    expect(headers.Authorization).toBeUndefined();
+  });
+
   it("maps HTML error to ApiError", async () => {
     const fetchImpl = vi.fn(async () => {
       return new Response("<!doctype html>", {

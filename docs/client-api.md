@@ -220,17 +220,18 @@ webui/src/lib/nanobot-client.ts → export { MinibotClient as NanobotClient } fr
 
 ### M5 — CLI remote **并行**（默认行为不变）
 
-- 新增：`minibot chat --remote [--base-url http://127.0.0.1:8766]` → Python 客户端走 bootstrap + turns 或 WS  
-- **默认**仍：`cli_chat` 进程内 Loop（现有脚本/CI 不炸）  
-- **验收：** 起 gateway 后 `--remote` 能聊；不传 flag 行为与今天一致  
-- **回滚：** 去掉 subcommand / flag  
+- **已落地（TS）**：`packages/minibot-cli` → `minibot status|sessions|chat`，经 `@minibot/client`（bootstrap + REST + WS）。  
+- Gateway bootstrap 支持 mini-auth `Authorization: Bearer`（CLI `login` 会话可直接开聊）。  
+- Python `cli_chat` 进程内 Loop **仍保留**作过渡；不作为新产品路径。  
+- **验收：** 起 gateway 后 `minibot chat -m "…"` 能聊；`--secret` / open auth / `login` 三选一。  
+- Spec：`docs/superpowers/specs/2026-08-21-minibot-cli-remote-client-design.md`
 
 ### M6 — CLI 默认切 remote
 
-- 默认走 Client API；`--embed` 保留给单测/无 server 场景  
-- 文档 / README 更新「先 `minibot` 再 chat」或「chat 自动 spawn server」  
-- **验收：** 新用户路径；旧 CI 加 `--embed`  
-- **回滚：** 默认改回 embed  
+- 产品 CLI 已是 remote（npm `minibot`）；Python 入口继续只起 Gateway。  
+- 可选后续：无参 `minibot` ≡ `chat`；`--embed` 仅保留给旧 Python 脚本（若仍需要）。  
+- **验收：** 新用户路径「起 gateway → `minibot login` → `minibot chat`」  
+- **回滚：** 不用 npm CLI；继续用 WebUI / Desktop 
 
 ### M7 — RN / Desktop / 命名
 
@@ -285,9 +286,9 @@ webui/src/lib/nanobot-client.ts → export { MinibotClient as NanobotClient } fr
 
 ### CLI
 
-- [ ] remote 经同合同客户端  
-- [ ] embed 仅显式 flag（M6 后）  
-- [ ] 文档写清「先起 gateway」  
+- [x] remote 经同合同客户端（`@liuyidi/minibot-cli` + `@minibot/client`）  
+- [ ] embed 仅显式 flag（旧 Python `cli_chat`；可后续标 deprecated）  
+- [x] 文档写清「先起 gateway」（`packages/minibot-cli/README.md`）  
 
 ### Desktop / RN
 

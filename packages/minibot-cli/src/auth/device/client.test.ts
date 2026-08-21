@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createDeviceFlowClient } from "./client.js";
+import { DEVICE_CODE_GRANT_TYPE } from "./types.js";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -40,6 +41,32 @@ describe("createDeviceFlowClient", () => {
       "content-type": "application/json",
       "x-device-label": "DdeMacBook-Pro.local @ minibot-cli v1.0.0 darwin (arm64)",
       "user-agent": "DdeMacBook-Pro.local @ minibot-cli v1.0.0 darwin (arm64)"
+    });
+  });
+
+  it("uses the RFC device authorization grant type when polling", async () => {
+    const fetchMock = vi.fn(async () => {
+      return new Response(
+        JSON.stringify({
+          access_token: "access-token",
+          token_type: "Bearer",
+          expires_in: 3600
+        }),
+        { status: 200, headers: { "content-type": "application/json" } }
+      );
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const client = createDeviceFlowClient("https://auth.example", "minibot", {});
+
+    await client.pollDeviceToken("device-code");
+
+    const call = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    const [, init] = call;
+    expect(JSON.parse(String(init.body))).toMatchObject({
+      grant_type: DEVICE_CODE_GRANT_TYPE,
+      client_id: "minibot",
+      device_code: "device-code"
     });
   });
 });
