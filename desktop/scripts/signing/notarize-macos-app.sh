@@ -54,11 +54,12 @@ for var in APPLE_ID APPLE_PASSWORD APPLE_TEAM_ID; do
 done
 
 NOTARY_ARGS=(--apple-id "$APPLE_ID" --password "$APPLE_PASSWORD" --team-id "$APPLE_TEAM_ID")
+NOTARY_TIMEOUT_SEC="${MINIBOT_NOTARIZE_TIMEOUT_SEC:-1800}"
 
 TIPS=(
   "Apple 正在扫描 app 内所有 Mach-O（含 PyInstaller sidecar，约 100+ 个）"
   "状态 In Progress 表示正常排队/审核，不是卡死"
-  "含 Python 运行时的首次公证常见 5–20 分钟"
+  "CI 默认 ${NOTARY_TIMEOUT_SEC}s 超时；含 Python 运行时常见 5–20 分钟"
   "请勿关闭终端或 Ctrl+C；中断后需重新上传 zip"
   "审核通过后脚本会自动 staple 公证票到 .app"
   "若失败会拉取 notarytool log，便于定位未签名二进制"
@@ -71,7 +72,8 @@ format_elapsed() {
 
 fake_percent() {
   local s="$1"
-  local pct=$((s * 100 / 900))
+  local cap="${NOTARY_TIMEOUT_SEC:-1800}"
+  local pct=$((s * 100 / cap))
   if (( pct > 95 )); then
     pct=95
   fi
@@ -181,7 +183,7 @@ staple_if_ready() {
 
 echo "    上传完成"
 echo "    submission id: $SUBMISSION_ID"
-echo "    轮询审核状态（约每 15s 刷新；进度条为预估）"
+echo "    轮询审核状态（约每 15s 刷新；进度条为预估；超时 ${NOTARY_TIMEOUT_SEC}s）"
 echo "    提示：Apple API 偶发长期 In Progress，但 Gatekeeper 已认可时会自动完成 staple"
 echo
 
@@ -257,6 +259,21 @@ PY
       printf '\n    → 状态变更: %s (submitted %s)\n' "$STATUS" "$CREATED"
     fi
     LAST_STATUS="$STATUS"
+  fi
+
+  if (( ELAPSED >= NOTARY_TIMEOUT_SEC )); then
+    echo
+    echo
+    echo "❌ 公证超时（${NOTARY_TIMEOUT_SEC}s），状态仍为 $STATUS" >&2
+    echo "    submission id: $SUBMISSION_ID" >&2
+    LOG_FILE="$LOG_DIR/${SUBMISSION_ID}.json"
+    xcrun notarytool log "$SUBMISSION_ID" \
+      "${NOTARY_ARGS[@]}" \
+      --output-format json >"$LOG_FILE" 2>/dev/null || true
+    if [[ -s "$LOG_FILE" ]]; then
+      echo "    最近 notary log: $LOG_FILE" >&2
+    fi
+    exit 1
   fi
 
   sleep 15

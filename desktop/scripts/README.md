@@ -96,7 +96,7 @@ cd desktop
 | 文件 | 作用 |
 |------|------|
 | `generate-dmg-background.py` | 生成 macOS DMG 安装窗口背景（浅灰底 + 虚线箭头，布局对齐 Multica/Pen 风格）。输出 `src-tauri/dmg/background.png`。 |
-| `create-styled-dmg.sh` | 对已签名的 `.app` 调用 `tauri bundle --bundles dmg`（**`CI=false`**），走 create-dmg + `tauri.conf.json` 里的背景与图标坐标。 |
+| `create-styled-dmg.sh` | 对已签名/已公证的 `.app` 直接调 **create-dmg**（不重签、不二次公证），布局与 `tauri.conf.json` 的 `bundle.macOS.dmg` 一致。 |
 | `../src-tauri/dmg/background.png` | Tauri `bundle.macOS.dmg.background` 引用的 PNG（660×400，与 `appPosition` / `applicationFolderPosition` 配套）。 |
 
 用法：

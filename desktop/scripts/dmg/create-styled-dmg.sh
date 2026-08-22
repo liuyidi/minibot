@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
-# Build a macOS .dmg with background + Applications drop target via Tauri/create-dmg.
+# Build a styled macOS .dmg from an already-signed (and usually notarized) .app.
 #
-# GitHub Actions sets CI=true, which makes Tauri's bundler pass --skip-jenkins to
-# create-dmg (no Finder layout → no background / icon positions). Override with
-# CI=false for this step only. See create-dmg/create-dmg#72, tauri#9920.
+# Does NOT call `tauri bundle --bundles dmg` — that re-signs the bundle and can
+# trigger a second notarization pass that breaks PyInstaller sidecar signatures.
+# Uses create-dmg directly with layout from src-tauri/tauri.conf.json.
 set -euo pipefail
 
 DESKTOP_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-cd "$DESKTOP_ROOT"
+TAURI_DIR="$DESKTOP_ROOT/src-tauri"
+CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$TAURI_DIR/target}"
 
-APP="${1:-$DESKTOP_ROOT/src-tauri/target/release/bundle/macos/minibot.app}"
+APP="${1:-$CARGO_TARGET_DIR/release/bundle/macos/minibot.app}"
 if [[ ! -d "$APP" ]]; then
   echo "create-styled-dmg: missing app bundle: $APP" >&2
   exit 1
@@ -20,20 +21,43 @@ if ! codesign -dv "$APP" >/dev/null 2>&1; then
   exit 1
 fi
 
-CARGO_TARGET_DIR="$DESKTOP_ROOT/src-tauri/target"
-export CARGO_TARGET_DIR
-
-echo "==> Styled DMG via Tauri bundle (CI=false for create-dmg Finder layout)"
-# Keep GITHUB_ACTIONS so other tooling still knows it is CI; only CI affects skip-jenkins.
-CI=false npm run tauri -- bundle --bundles dmg
-
-DMG_DIR="$CARGO_TARGET_DIR/release/bundle/dmg"
-shopt -s nullglob
-dmgs=("$DMG_DIR"/*.dmg)
-if [[ ${#dmgs[@]} -eq 0 ]]; then
-  echo "create-styled-dmg: no .dmg under $DMG_DIR" >&2
+APP_NAME="$(basename "$APP")"
+BACKGROUND="$TAURI_DIR/dmg/background.png"
+if [[ ! -f "$BACKGROUND" ]]; then
+  echo "create-styled-dmg: missing background: $BACKGROUND" >&2
   exit 1
 fi
+
+# Matches bundle.macOS.dmg in tauri.conf.json
+WINDOW_W=660
+WINDOW_H=400
+APP_X=180
+APP_Y=170
+DROP_X=480
+DROP_Y=170
+ICON_SIZE=128
+
+resolve_create_dmg() {
+  if [[ -n "${CREATE_DMG:-}" && -x "$CREATE_DMG" ]]; then
+    return 0
+  fi
+  if command -v create-dmg >/dev/null 2>&1; then
+    CREATE_DMG="$(command -v create-dmg)"
+    return 0
+  fi
+  local cache="$CARGO_TARGET_DIR/create-dmg/create-dmg"
+  if [[ -x "$cache" ]]; then
+    CREATE_DMG="$cache"
+    return 0
+  fi
+  mkdir -p "$(dirname "$cache")"
+  echo "create-styled-dmg: fetching create-dmg → $cache"
+  curl -fsSL "https://raw.githubusercontent.com/create-dmg/create-dmg/master/create-dmg" -o "$cache"
+  chmod +x "$cache"
+  CREATE_DMG="$cache"
+}
+
+resolve_create_dmg
 
 VERSION="$(node -p "require('$DESKTOP_ROOT/package.json').version")"
 machine="$(uname -m)"
@@ -42,13 +66,32 @@ case "$machine" in
   x86_64) ARCH_TAG=x64 ;;
   *) ARCH_TAG="$machine" ;;
 esac
-CANON="$DMG_DIR/minibot_${VERSION}_${ARCH_TAG}.dmg"
 
-# Tauri names vary by version; normalize for release upload scripts.
-if [[ "${dmgs[0]}" != "$CANON" ]]; then
-  rm -f "$CANON"
-  cp -f "${dmgs[0]}" "$CANON"
-fi
+DMG_DIR="$CARGO_TARGET_DIR/release/bundle/dmg"
+mkdir -p "$DMG_DIR"
+CANON="$DMG_DIR/minibot_${VERSION}_${ARCH_TAG}.dmg"
+VOLNAME="minibot ${VERSION}"
+
+STAGE="$(mktemp -d -t minibot-dmg-stage.XXXXXX)"
+cleanup_stage() { rm -rf "$STAGE"; }
+trap cleanup_stage EXIT
+
+echo "==> Stage app for create-dmg (does not modify source bundle)"
+ditto "$APP" "$STAGE/$APP_NAME"
+
+rm -f "$CANON"
+echo "==> Styled DMG via create-dmg (no Tauri re-sign / re-notarize)"
+"$CREATE_DMG" \
+  --volname "$VOLNAME" \
+  --background "$BACKGROUND" \
+  --window-size "$WINDOW_W" "$WINDOW_H" \
+  --icon-size "$ICON_SIZE" \
+  --icon "$APP_NAME" "$APP_X" "$APP_Y" \
+  --hide-extension "$APP_NAME" \
+  --app-drop-link "$DROP_X" "$DROP_Y" \
+  --no-internet-enable \
+  "$CANON" \
+  "$STAGE/"
 
 echo "    DMG: $CANON"
 if xcrun stapler validate "$CANON" 2>/dev/null; then
@@ -56,5 +99,5 @@ if xcrun stapler validate "$CANON" 2>/dev/null; then
 elif xcrun stapler staple "$CANON" 2>/dev/null; then
   xcrun stapler validate "$CANON" 2>/dev/null || true
 else
-  echo "    注意：DMG 本身未 staple（常见）；.app 内已公证即可"
+  echo "    注意：DMG 未 staple（常见）；.app 内已公证即可"
 fi
