@@ -22,7 +22,8 @@ if [[ ${#CERT_B64} -lt 100 ]]; then
 fi
 
 P12="$(mktemp -t minibot-cert.XXXXXX.p12)"
-cleanup() { rm -f "$P12"; }
+P12_IMPORT="$(mktemp -t minibot-cert-import.XXXXXX.p12)"
+cleanup() { rm -f "$P12" "$P12_IMPORT"; }
 trap cleanup EXIT
 
 python3 - "$CERT_B64" "$P12" <<'PY'
@@ -62,6 +63,36 @@ if ! p12_verify "$P12" "$APPLE_CERTIFICATE_PASSWORD" 2>/tmp/p12-verify.err; then
 fi
 rm -f /tmp/p12-verify.err
 
+# Keychain exports (RC2-40-CBC) often pass openssl -legacy but fail security import
+# with "Unknown format in import". Re-export to AES-256 PKCS#12 for macOS security.
+normalize_p12_for_security_import() {
+  local src="$1"
+  local dst="$2"
+  local pass="$3"
+  local err
+  err="$(mktemp)"
+  if openssl pkcs12 -in "$src" -passin "pass:$pass" -legacy \
+    -export -out "$dst" -passout "pass:$pass" \
+    -keypbe AES-256-CBC -certpbe AES-256-CBC -maciter 2>"$err"; then
+    rm -f "$err"
+    return 0
+  fi
+  if openssl pkcs12 -in "$src" -passin "pass:$pass" \
+    -export -out "$dst" -passout "pass:$pass" \
+    -keypbe AES-256-CBC -certpbe AES-256-CBC -maciter 2>"$err"; then
+    rm -f "$err"
+    return 0
+  fi
+  echo "import-apple-certificate: could not normalize .p12 for security import" >&2
+  sed 's/^/  openssl: /' "$err" >&2
+  rm -f "$err"
+  return 1
+}
+
+if ! normalize_p12_for_security_import "$P12" "$P12_IMPORT" "$APPLE_CERTIFICATE_PASSWORD"; then
+  exit 1
+fi
+
 KEYCHAIN="${MINIBOT_SIGNING_KEYCHAIN:-build.keychain}"
 KEYCHAIN_PASSWORD="${MINIBOT_SIGNING_KEYCHAIN_PASSWORD:-$(openssl rand -base64 32)}"
 
@@ -69,8 +100,19 @@ security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
 security default-keychain -s "$KEYCHAIN"
 security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
 security set-keychain-settings -t 3600 -u "$KEYCHAIN"
-security import "$P12" -k "$KEYCHAIN" -P "$APPLE_CERTIFICATE_PASSWORD" \
-  -T /usr/bin/codesign -T /usr/bin/security
+
+IMPORT_ERR="$(mktemp)"
+if ! security import "$P12_IMPORT" -k "$KEYCHAIN" -P "$APPLE_CERTIFICATE_PASSWORD" \
+  -f pkcs12 -A -T /usr/bin/codesign -T /usr/bin/security 2>"$IMPORT_ERR"; then
+  echo "import-apple-certificate: security import failed" >&2
+  cat "$IMPORT_ERR" >&2
+  echo "  file(1): $(file -b "$P12_IMPORT" 2>/dev/null || echo unknown)" >&2
+  echo "  If this persists, re-run encode-apple-certificate-for-ci.sh and update APPLE_CERTIFICATE." >&2
+  rm -f "$IMPORT_ERR"
+  exit 1
+fi
+rm -f "$IMPORT_ERR"
+
 security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
 
 if [[ -n "${GITHUB_ENV:-}" ]]; then

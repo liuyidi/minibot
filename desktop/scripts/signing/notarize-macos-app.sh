@@ -270,25 +270,7 @@ fi
 
 if [[ "$MAKE_DMG" == true ]]; then
   echo "==> 生成 DMG"
-  CARGO_TARGET_DIR="$DESKTOP_ROOT/src-tauri/target"
-  DMG_DIR="$CARGO_TARGET_DIR/release/bundle/dmg"
-  mkdir -p "$DMG_DIR"
-  VERSION="$(node -p "require('$DESKTOP_ROOT/package.json').version")"
-  machine="$(uname -m)"
-  case "$machine" in
-    arm64) ARCH_TAG=aarch64 ;;
-    x86_64) ARCH_TAG=x64 ;;
-    *) ARCH_TAG="$machine" ;;
-  esac
-  DMG_PATH="$DMG_DIR/minibot_${VERSION}_${ARCH_TAG}.dmg"
-  rm -f "$DMG_PATH"
-  hdiutil create -volname "minibot" -srcfolder "$APP" -ov -format UDZO "$DMG_PATH"
-  if xcrun stapler staple "$DMG_PATH" 2>/dev/null; then
-    xcrun stapler validate "$DMG_PATH" 2>/dev/null || true
-  else
-    echo "    注意：DMG 本身未 staple（正常）；.app 内已公证，用户拖入 Applications 即可"
-  fi
-  echo "    DMG: $DMG_PATH"
+  "$DESKTOP_ROOT/scripts/dmg/create-styled-dmg.sh" "$APP"
 fi
 
 echo

@@ -129,6 +129,8 @@ jobs:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
           GITHUB_ACTIONS: true
+          # Tauri/create-dmg skips Finder DMG layout when CI=true (--skip-jenkins).
+          CI: false
         run: ./desktop/scripts/signing/build-signed-macos.sh ${{ matrix.triple }}
 
       - name: Publish macOS GitHub Release assets

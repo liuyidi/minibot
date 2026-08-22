@@ -35,6 +35,30 @@ else
   echo "Tip: export APPLE_CERTIFICATE_PASSWORD first to verify the .p12 before encoding" >&2
 fi
 
+# CI security import rejects legacy RC2 Keychain exports; emit AES-256 PKCS#12.
+P12_OUT="$(mktemp -t minibot-cert-ci.XXXXXX.p12)"
+cleanup() { rm -f "$P12_OUT"; }
+trap cleanup EXIT
+
+normalize_err="$(mktemp)"
+if [[ -n "$PASS" ]]; then
+  if ! openssl pkcs12 -in "$P12" -passin "pass:$PASS" -legacy \
+    -export -out "$P12_OUT" -passout "pass:$PASS" \
+    -keypbe AES-256-CBC -certpbe AES-256-CBC -maciter 2>"$normalize_err"; then
+    if ! openssl pkcs12 -in "$P12" -passin "pass:$PASS" \
+      -export -out "$P12_OUT" -passout "pass:$PASS" \
+      -keypbe AES-256-CBC -certpbe AES-256-CBC -maciter 2>"$normalize_err"; then
+      echo "encode-apple-certificate-for-ci: could not normalize .p12" >&2
+      sed 's/^/  openssl: /' "$normalize_err" >&2
+      rm -f "$normalize_err"
+      exit 1
+    fi
+  fi
+else
+  cp "$P12" "$P12_OUT"
+fi
+rm -f "$normalize_err"
+
 echo "Paste the next line into GitHub → Settings → Secrets → APPLE_CERTIFICATE (no quotes):"
-base64 -i "$P12" | tr -d '\n'
+base64 -i "$P12_OUT" | tr -d '\n'
 echo

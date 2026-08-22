@@ -10,6 +10,7 @@ scripts/
 ├── sidecar/        # PyInstaller sidecar 准备（本地 + CI 共用）
 ├── signing/        # macOS Developer ID 签名与公证
 ├── deeplink/       # 开发态 minibot:// 协议注册
+├── dmg/            # macOS DMG 安装窗口背景图
 └── README.md       # 本文件
 ```
 
@@ -89,6 +90,31 @@ cd desktop
 ```
 
 开发态若未注册协议，仍可用 loopback 兜底：`http://127.0.0.1:8766/auth/login?desktop=1&…`（见 `desktop/README.zh.md` §2）。
+
+## dmg/
+
+| 文件 | 作用 |
+|------|------|
+| `generate-dmg-background.py` | 生成 macOS DMG 安装窗口背景（浅灰底 + 虚线箭头，布局对齐 Multica/Pen 风格）。输出 `src-tauri/dmg/background.png`。 |
+| `create-styled-dmg.sh` | 对已签名的 `.app` 调用 `tauri bundle --bundles dmg`（**`CI=false`**），走 create-dmg + `tauri.conf.json` 里的背景与图标坐标。 |
+| `../src-tauri/dmg/background.png` | Tauri `bundle.macOS.dmg.background` 引用的 PNG（660×400，与 `appPosition` / `applicationFolderPosition` 配套）。 |
+
+用法：
+
+```bash
+cd minibot
+uv run --with pillow python ../desktop/scripts/dmg/generate-dmg-background.py
+
+# 本地 ad-hoc（通常 CI 未设，背景会生效）：
+cd desktop && npm run build
+
+# 已签名 .app 后（与 notarize-macos-app.sh --dmg 相同）：
+./scripts/dmg/create-styled-dmg.sh path/to/minibot.app
+```
+
+**CI 注意：** GitHub Actions 默认 `CI=true`，Tauri 会给 create-dmg 传 `--skip-jenkins`，DMG 会缺少背景与 Applications 拖放布局（[create-dmg#72](https://github.com/create-dmg/create-dmg/issues/72)、[tauri#9920](https://github.com/tauri-apps/tauri/issues/9920)）。`publish-desktop.yml` 在 macOS 签名步骤设 `CI: false`；若 DMG 打包 flaky，可改回 `true` 并改用 plain `hdiutil` DMG。
+
+修改箭头或窗口尺寸后重新生成背景图，并同步更新 `src-tauri/tauri.conf.json` 里的 `dmg` 坐标。
 
 ## 典型流程
 
