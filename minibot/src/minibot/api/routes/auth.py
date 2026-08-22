@@ -362,6 +362,15 @@ async def _sync_platform_proxy_credentials(
             mini_auth_access_token=mini,
             timeout_s=state.settings.mini_auth_timeout_s,
         )
+        from minibot.config.app_config import load_app_config, save_app_config
+        from minibot.config.platform_models import bootstrap_model_selection
+
+        config_path = root / "config.json"
+        if config_path.exists():
+            config = load_app_config(path=config_path)
+            if not (getattr(config, "active_platform_model", "") or "").strip():
+                bootstrap_model_selection(config, settings=state.settings, user_root=root)
+                save_app_config(config, path=config_path)
     except Exception as exc:  # noqa: BLE001 — login must still succeed
         save_platform_credentials(
             root,

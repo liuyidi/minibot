@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils";
 import { AndroidIcon, LinuxIcon, WindowsIcon } from "./DownloadPlatformIcons";
 import { usePreferredMacArch } from "./usePreferredMacArch";
 
-const RELEASE_MANIFEST_URL = import.meta.env.VITE_MINIBOT_RELEASES_URL || "/releases.json";
+const RELEASE_MANIFEST_URL = import.meta.env.VITE_MINIBOT_RELEASES_URL || (import.meta.env.DEV ? "/releases.json" : "https://downloads.liuyidi.me/minibot/releases.json");
 
 type DownloadPageProps = {
   onOpenApp: () => void;

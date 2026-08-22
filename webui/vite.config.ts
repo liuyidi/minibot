@@ -66,10 +66,11 @@ export default defineConfig(({ mode }) => {
         host: "127.0.0.1",
         path: hmrPath,
       },
-      proxy: {
+        proxy: {
         "/webui": { target, changeOrigin: true },
         "/api": { target, changeOrigin: true },
         "/auth": { target, changeOrigin: true },
+        "/ui": { target, changeOrigin: true },
       },
     },
     test: {

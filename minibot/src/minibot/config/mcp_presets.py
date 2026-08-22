@@ -84,6 +84,36 @@ def presets_public_list(config: Any) -> list[dict[str, Any]]:
     return [preset_public(p) for p in getattr(config, "mcp_presets", []) or []]
 
 
+def ensure_default_mcp_presets(config: Any) -> Any:
+    """Seed starter MCP connectors for @ mentions when the user has none."""
+    presets = list(getattr(config, "mcp_presets", None) or [])
+    if presets:
+        return config
+    config.mcp_presets = [
+        McpPreset(
+            id="fs",
+            label="Filesystem",
+            enabled=True,
+            type="stdio",
+            command="npx",
+            args=["-y", "@modelcontextprotocol/server-filesystem", "/tmp"],
+            tool_timeout=30,
+            enabled_tools=["*"],
+        ),
+        McpPreset(
+            id="context7",
+            label="Context7",
+            enabled=False,
+            type="stdio",
+            command="npx",
+            args=["-y", "@upstash/context7-mcp@latest"],
+            tool_timeout=60,
+            enabled_tools=["*"],
+        ),
+    ]
+    return config
+
+
 def find_preset(config: Any, preset_id: str) -> McpPreset | None:
     for preset in getattr(config, "mcp_presets", []) or []:
         if preset.id == preset_id:
@@ -198,7 +228,7 @@ MCP_TEMPLATES: list[dict[str, Any]] = [
     {
         "id": "context7-stdio",
         "label": "Context7 (stdio / npx)",
-        "hint": "本地 npx 拉起 @upstash/context7-mcp；可填 API key（--api-key）或留空试用。",
+        "hint": "Run @upstash/context7-mcp via npx; optional API key (--api-key) for higher limits.",
         "preset": {
             "id": "context7",
             "label": "Context7",
@@ -221,7 +251,7 @@ MCP_TEMPLATES: list[dict[str, Any]] = [
     {
         "id": "context7-http",
         "label": "Context7 (remote HTTP)",
-        "hint": "直连 https://mcp.context7.com/mcp；在 headers.CONTEXT7_API_KEY 填密钥。",
+        "hint": "Remote HTTP MCP at mcp.context7.com; set CONTEXT7_API_KEY in headers.",
         "preset": {
             "id": "context7",
             "label": "Context7 HTTP",
@@ -243,7 +273,7 @@ MCP_TEMPLATES: list[dict[str, Any]] = [
     {
         "id": "filesystem",
         "label": "Filesystem (stdio)",
-        "hint": "官方 filesystem MCP；默认根目录 /tmp。",
+        "hint": "Official filesystem MCP; default root is /tmp.",
         "preset": {
             "id": "fs",
             "label": "Filesystem",

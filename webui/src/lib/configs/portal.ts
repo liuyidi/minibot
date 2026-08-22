@@ -9,6 +9,6 @@ export const PORTAL = {
   home: envOr("VITE_PORTAL_HOME", "https://liuyidi.me"),
   langfuse: envOr("VITE_PORTAL_LANGFUSE", "https://mlf.liuyidi.me"),
   knowledge: envOr("VITE_PORTAL_KB", "https://kb.liuyidi.me"),
-  /** Same-origin DevUI for interview walkthrough */
-  devui: envOr("VITE_PORTAL_DEVUI", "/ui/"),
+  devui: envOr("VITE_PORTAL_DEVUI", "https://bot.liuyidi.me/ui/"),
+  download: envOr("VITE_PORTAL_DOWNLOAD", "https://bot.liuyidi.me/#/download/"),
 } as const;

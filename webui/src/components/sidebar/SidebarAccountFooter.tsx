@@ -95,7 +95,7 @@ export function SidebarAccountFooter({
                 className="w-[min(17.5rem,calc(100vw-1.5rem))]"
               >
                 <AccountLinkItem
-                  href="/#/download/"
+                  href={PORTAL.download}
                   label={downloadAppLabel}
                   icon={<Download className="h-4 w-4" />}
                   newTab
@@ -151,7 +151,7 @@ export function SidebarAccountFooter({
 
           <SidebarDockLink
             label={downloadAppLabel}
-            href="/#/download/"
+            href={PORTAL.download}
             icon={<Download className="h-4 w-4" />}
             newTab
           />
@@ -192,7 +192,7 @@ export function SidebarAccountFooter({
             className="w-[min(17.5rem,calc(100vw-1.5rem))]"
           >
             <AccountLinkItem
-              href="/#/download/"
+              href={PORTAL.download}
               label={downloadAppLabel}
               icon={<Download className="h-4 w-4" />}
               newTab

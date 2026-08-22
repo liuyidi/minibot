@@ -110,7 +110,13 @@ def default_config_from_settings(settings: Settings | None = None) -> AppConfig:
         temperature=settings.temperature,
         max_iterations=settings.max_iterations,
     )
-    return ensure_presets(config)
+    config = ensure_presets(config)
+    from minibot.config.mcp_presets import ensure_default_mcp_presets
+    from minibot.config.platform_models import bootstrap_model_selection
+
+    ensure_default_mcp_presets(config)
+    bootstrap_model_selection(config, settings=settings)
+    return config
 
 
 def load_app_config(path: Path | None = None) -> AppConfig:

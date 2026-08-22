@@ -61,7 +61,13 @@ def build_user_runtime(
     root = resolve_user_root(settings, user_id)
     root.mkdir(parents=True, exist_ok=True)
     config_path = root / "config.json"
+    is_new_config = not config_path.exists()
     config = load_app_config(path=config_path) if config_path.exists() else default_config_from_settings(settings)
+    if is_new_config:
+        from minibot.config.platform_models import bootstrap_model_selection
+
+        bootstrap_model_selection(config, settings=settings, user_root=root)
+        save_app_config(config, path=config_path)
     tools = register_default_tools(backend=sandbox_backend)
     from minibot.agent.approval import ApprovalPolicy
 

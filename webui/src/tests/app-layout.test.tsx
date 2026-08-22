@@ -406,7 +406,7 @@ describe("App layout", () => {
     const sidebar = screen.getByRole("navigation", { name: "Sidebar navigation" });
     await openSidebarAccountMenu(sidebar);
     const downloadLink = await screen.findByRole("menuitem", { name: "Download app" });
-    expect(downloadLink).toHaveAttribute("href", "/#/download/");
+    expect(downloadLink).toHaveAttribute("href", "https://bot.liuyidi.me/#/download/");
     expect(downloadLink).toHaveAttribute("target", "_blank");
 
     window.history.replaceState(null, "", "/#/download");

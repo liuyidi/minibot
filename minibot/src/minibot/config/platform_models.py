@@ -345,6 +345,53 @@ def first_available_platform_runtime(
     return None
 
 
+def bootstrap_model_selection(
+    config: Any,
+    *,
+    settings: Any | None = None,
+    user_root: Path | None = None,
+) -> Any:
+    """Pick the first available platform model for first-run / empty configs."""
+    from minibot.config.settings import get_settings
+
+    settings = settings or get_settings()
+    proxy_base = ""
+    proxy_token = ""
+    from minibot.config.platform_credentials import (
+        ensure_platform_token_sync,
+        platform_proxy_mode_enabled,
+    )
+
+    if platform_proxy_mode_enabled(settings):
+        proxy_base = settings.platform_proxy_base_url.strip()
+        if user_root is not None:
+            try:
+                creds = ensure_platform_token_sync(
+                    user_root,
+                    proxy_base_url=proxy_base,
+                    timeout_s=settings.mini_auth_timeout_s,
+                )
+                proxy_token = creds.access_token
+            except Exception:  # noqa: BLE001 — bootstrap must not block startup
+                proxy_token = ""
+
+    runtime = first_available_platform_runtime(
+        proxy_base_url=proxy_base, proxy_token=proxy_token
+    )
+    if runtime is None:
+        return config
+    try:
+        apply_platform_model(
+            config,
+            runtime.id,
+            proxy_base_url=proxy_base,
+            proxy_token=proxy_token,
+        )
+    except KeyError:
+        return config
+    return config
+
+
 def apply_auto_model(config: Any, *, proxy_base_url: str = "", proxy_token: str = "") -> Any:
     """Select Auto mode and sync live model/base to the first available platform slot."""
     config.provider = "auto"

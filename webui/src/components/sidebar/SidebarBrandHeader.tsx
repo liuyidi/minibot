@@ -82,12 +82,12 @@ export function SidebarBrandHeader({
                 "-ml-0.5 w-9 hover:bg-sidebar-accent/75",
               )}
             >
-              <span
-                className="flex h-8 w-8 items-center justify-center rounded-lg bg-sidebar-foreground/90 text-[13px] font-semibold tracking-tight text-sidebar"
-                aria-hidden
-              >
-                M
-              </span>
+            <span
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+              aria-hidden
+            >
+              <img src="/brand/minibot_mark.svg" alt="" className="h-8 w-8 rounded-lg" />
+            </span>
             </button>
           </TooltipTrigger>
           <TooltipContent side="right" align="center" sideOffset={10}>
@@ -106,12 +106,12 @@ export function SidebarBrandHeader({
             "pointer-events-none -ml-0.5 gap-2 px-1",
           )}
         >
-          <span
-            className="flex h-8 w-8 items-center justify-center rounded-lg bg-sidebar-foreground/90 text-[13px] font-semibold tracking-tight text-sidebar"
-            aria-hidden
-          >
-            M
-          </span>
+            <span
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+              aria-hidden
+            >
+              <img src="/brand/minibot_mark.svg" alt="" className="h-8 w-8 rounded-lg" />
+            </span>
           <span className="flex min-w-0 items-baseline gap-1.5">
             <span className="max-w-[7rem] truncate text-[13px] font-semibold tracking-tight text-sidebar-foreground">
               {t("app.brand")}
