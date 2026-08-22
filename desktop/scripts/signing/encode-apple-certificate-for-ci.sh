@@ -3,48 +3,48 @@
 # Usage: ./encode-apple-certificate-for-ci.sh [/path/to/cert.p12]
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+# shellcheck source=openssl-pass.sh
+source "$SCRIPT_DIR/openssl-pass.sh"
+
 P12="${1:-$HOME/Library/Keychains/证书.p12}"
-PASS="${APPLE_CERTIFICATE_PASSWORD:-}"
+RAW_PASS="${APPLE_CERTIFICATE_PASSWORD:-}"
+PASS="$(p12_sanitize_password "$RAW_PASS")"
 
 if [[ ! -f "$P12" ]]; then
   echo "encode-apple-certificate-for-ci: missing $P12" >&2
   exit 1
 fi
 
-PASSFILE=""
-if [[ -n "$PASS" ]]; then
-  PASSFILE="$(mktemp -t minibot-encode-pass.XXXXXX)"
-  printf '%s' "$PASS" >"$PASSFILE"
-  chmod 600 "$PASSFILE"
-  trap 'rm -f "$PASSFILE"' EXIT
+if [[ -n "$RAW_PASS" && "$PASS" != "$RAW_PASS" ]]; then
+  echo "encode-apple-certificate-for-ci: stripped newlines from APPLE_CERTIFICATE_PASSWORD" >&2
+  echo "  Use a single line: export APPLE_CERTIFICATE_PASSWORD='your-password'" >&2
 fi
 
-p12_verify_password() {
-  local p12="$1"
-  if openssl pkcs12 -in "$p12" -passin "file:$PASSFILE" -noout 2>/dev/null; then
-    return 0
-  fi
-  openssl pkcs12 -in "$p12" -passin "file:$PASSFILE" -legacy -noout 2>/dev/null
+PASSIN_FILE=""
+PASSOUT_FILE=""
+P12_OUT=""
+cleanup_encode() {
+  rm -f "${PASSIN_FILE:-}" "${PASSOUT_FILE:-}" "${P12_OUT:-}"
 }
+trap cleanup_encode EXIT
 
-p12_has_private_key() {
-  local p12="$1"
-  if openssl pkcs12 -in "$p12" -passin "file:$PASSFILE" -legacy -nocerts -nodes -out /dev/null 2>/dev/null; then
-    return 0
-  fi
-  openssl pkcs12 -in "$p12" -passin "file:$PASSFILE" -nocerts -nodes -out /dev/null 2>/dev/null
-}
+if [[ -n "$PASS" ]]; then
+  PASSIN_FILE="$(mktemp -t minibot-encode-passin.XXXXXX)"
+  PASSOUT_FILE="$(mktemp -t minibot-encode-passout.XXXXXX)"
+  p12_write_pass_files "$PASS" "$PASSIN_FILE" "$PASSOUT_FILE"
+fi
 
 if [[ -n "$PASS" ]]; then
   err="$(mktemp)"
-  if ! p12_verify_password "$P12" 2>"$err"; then
+  if ! p12_verify_password "$P12" "$PASSIN_FILE" 2>"$err"; then
     echo "encode-apple-certificate-for-ci: .p12 password check failed for: $P12" >&2
     sed 's/^/  openssl: /' "$err" >&2
     echo "  The password must match the one you chose when exporting this .p12 from Keychain." >&2
     rm -f "$err"
     exit 1
   fi
-  if ! p12_has_private_key "$P12"; then
+  if ! p12_has_private_key "$P12" "$PASSIN_FILE"; then
     echo "encode-apple-certificate-for-ci: .p12 has no private key" >&2
     echo "  Re-export from Keychain Access as .p12 with the private key included." >&2
     rm -f "$err"
@@ -53,31 +53,23 @@ if [[ -n "$PASS" ]]; then
   rm -f "$err"
 else
   echo "Tip: export APPLE_CERTIFICATE_PASSWORD first to verify the .p12 before encoding" >&2
+  echo "  Example: export APPLE_CERTIFICATE_PASSWORD='your-export-password'" >&2
 fi
 
 # CI security import rejects legacy RC2 Keychain exports; emit AES-256 PKCS#12.
 P12_OUT="$(mktemp -t minibot-cert-ci.XXXXXX.p12)"
-cleanup_out() { rm -f "$P12_OUT"; }
-trap cleanup_out EXIT
-
-normalize_err="$(mktemp)"
 if [[ -n "$PASS" ]]; then
-  if ! openssl pkcs12 -in "$P12" -passin "file:$PASSFILE" -legacy \
-    -export -out "$P12_OUT" -passout "file:$PASSFILE" \
-    -keypbe AES-256-CBC -certpbe AES-256-CBC -maciter 2>"$normalize_err"; then
-    if ! openssl pkcs12 -in "$P12" -passin "file:$PASSFILE" \
-      -export -out "$P12_OUT" -passout "file:$PASSFILE" \
-      -keypbe AES-256-CBC -certpbe AES-256-CBC -maciter 2>"$normalize_err"; then
-      echo "encode-apple-certificate-for-ci: could not normalize .p12" >&2
-      sed 's/^/  openssl: /' "$normalize_err" >&2
-      rm -f "$normalize_err"
-      exit 1
-    fi
+  normalize_err="$(mktemp)"
+  if ! normalize_p12_for_security_import "$P12" "$P12_OUT" "$PASSIN_FILE" "$PASSOUT_FILE" 2>"$normalize_err"; then
+    echo "encode-apple-certificate-for-ci: could not normalize .p12" >&2
+    sed 's/^/  openssl: /' "$normalize_err" >&2
+    rm -f "$normalize_err"
+    exit 1
   fi
+  rm -f "$normalize_err"
 else
   cp "$P12" "$P12_OUT"
 fi
-rm -f "$normalize_err"
 
 echo "Paste the next line into GitHub → Settings → Secrets → APPLE_CERTIFICATE (no quotes):"
 base64 -i "$P12_OUT" | tr -d '\n'

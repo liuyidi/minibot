@@ -3,15 +3,25 @@
 # Requires: APPLE_CERTIFICATE (base64 .p12, single line), APPLE_CERTIFICATE_PASSWORD
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+# shellcheck source=openssl-pass.sh
+source "$SCRIPT_DIR/openssl-pass.sh"
+
 if [[ -z "${APPLE_CERTIFICATE:-}" ]]; then
   echo "import-apple-certificate: APPLE_CERTIFICATE is empty" >&2
   echo "  Run: ./desktop/scripts/signing/encode-apple-certificate-for-ci.sh" >&2
   exit 1
 fi
 
-if [[ -z "${APPLE_CERTIFICATE_PASSWORD:-}" ]]; then
+RAW_PASS="${APPLE_CERTIFICATE_PASSWORD:-}"
+PASS="$(p12_sanitize_password "$RAW_PASS")"
+if [[ -z "$PASS" ]]; then
   echo "import-apple-certificate: APPLE_CERTIFICATE_PASSWORD is empty" >&2
   exit 1
+fi
+
+if [[ -n "$RAW_PASS" && "$PASS" != "$RAW_PASS" ]]; then
+  echo "import-apple-certificate: stripped newlines from APPLE_CERTIFICATE_PASSWORD" >&2
 fi
 
 CERT_B64="$(printf '%s' "$APPLE_CERTIFICATE" | tr -d '[:space:]')"
@@ -23,12 +33,12 @@ fi
 
 P12="$(mktemp -t minibot-cert.XXXXXX.p12)"
 P12_IMPORT="$(mktemp -t minibot-cert-import.XXXXXX.p12)"
-PASSFILE="$(mktemp -t minibot-cert-pass.XXXXXX)"
-cleanup() { rm -f "$P12" "$P12_IMPORT" "$PASSFILE"; }
+PASSIN_FILE="$(mktemp -t minibot-cert-passin.XXXXXX)"
+PASSOUT_FILE="$(mktemp -t minibot-cert-passout.XXXXXX)"
+cleanup() { rm -f "$P12" "$P12_IMPORT" "$PASSIN_FILE" "$PASSOUT_FILE"; }
 trap cleanup EXIT
 
-printf '%s' "$APPLE_CERTIFICATE_PASSWORD" >"$PASSFILE"
-chmod 600 "$PASSFILE"
+p12_write_pass_files "$PASS" "$PASSIN_FILE" "$PASSOUT_FILE"
 
 python3 - "$CERT_B64" "$P12" <<'PY'
 import base64, sys
@@ -54,23 +64,7 @@ if head -c 5 "$P12" | grep -q '^-----'; then
   exit 1
 fi
 
-p12_verify_password() {
-  local p12="$1"
-  if openssl pkcs12 -in "$p12" -passin "file:$PASSFILE" -noout 2>/dev/null; then
-    return 0
-  fi
-  openssl pkcs12 -in "$p12" -passin "file:$PASSFILE" -legacy -noout 2>/dev/null
-}
-
-p12_has_private_key() {
-  local p12="$1"
-  if openssl pkcs12 -in "$p12" -passin "file:$PASSFILE" -legacy -nocerts -nodes -out /dev/null 2>/dev/null; then
-    return 0
-  fi
-  openssl pkcs12 -in "$p12" -passin "file:$PASSFILE" -nocerts -nodes -out /dev/null 2>/dev/null
-}
-
-if ! p12_verify_password "$P12" 2>/tmp/p12-verify.err; then
+if ! p12_verify_password "$P12" "$PASSIN_FILE" 2>/tmp/p12-verify.err; then
   echo "import-apple-certificate: decoded file is not a valid .p12 with APPLE_CERTIFICATE_PASSWORD" >&2
   cat /tmp/p12-verify.err >&2
   echo "  Check APPLE_CERTIFICATE_PASSWORD matches the export password." >&2
@@ -80,7 +74,7 @@ if ! p12_verify_password "$P12" 2>/tmp/p12-verify.err; then
 fi
 rm -f /tmp/p12-verify.err
 
-if ! p12_has_private_key "$P12"; then
+if ! p12_has_private_key "$P12" "$PASSIN_FILE"; then
   echo "import-apple-certificate: .p12 has no private key (certificate-only export)" >&2
   echo "  In Keychain Access export Developer ID Application again:" >&2
   echo "    File → Export → Personal Information Exchange (.p12)" >&2
@@ -89,34 +83,14 @@ if ! p12_has_private_key "$P12"; then
   exit 1
 fi
 
-# Keychain exports (RC2-40-CBC) often pass openssl -legacy but fail security import
-# with "Unknown format in import". Re-export to AES-256 PKCS#12 for macOS security.
-normalize_p12_for_security_import() {
-  local src="$1"
-  local dst="$2"
-  local err
-  err="$(mktemp)"
-  if openssl pkcs12 -in "$src" -passin "file:$PASSFILE" -legacy \
-    -export -out "$dst" -passout "file:$PASSFILE" \
-    -keypbe AES-256-CBC -certpbe AES-256-CBC -maciter 2>"$err"; then
-    rm -f "$err"
-    return 0
-  fi
-  if openssl pkcs12 -in "$src" -passin "file:$PASSFILE" \
-    -export -out "$dst" -passout "file:$PASSFILE" \
-    -keypbe AES-256-CBC -certpbe AES-256-CBC -maciter 2>"$err"; then
-    rm -f "$err"
-    return 0
-  fi
+normalize_err="$(mktemp)"
+if ! normalize_p12_for_security_import "$P12" "$P12_IMPORT" "$PASSIN_FILE" "$PASSOUT_FILE" 2>"$normalize_err"; then
   echo "import-apple-certificate: could not normalize .p12 for security import" >&2
-  sed 's/^/  openssl: /' "$err" >&2
-  rm -f "$err"
-  return 1
-}
-
-if ! normalize_p12_for_security_import "$P12" "$P12_IMPORT"; then
+  sed 's/^/  openssl: /' "$normalize_err" >&2
+  rm -f "$normalize_err"
   exit 1
 fi
+rm -f "$normalize_err"
 
 KEYCHAIN="${MINIBOT_SIGNING_KEYCHAIN:-build.keychain}"
 KEYCHAIN_PASSWORD="${MINIBOT_SIGNING_KEYCHAIN_PASSWORD:-$(openssl rand -base64 32)}"
@@ -127,7 +101,7 @@ security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
 security set-keychain-settings -t 3600 -u "$KEYCHAIN"
 
 IMPORT_ERR="$(mktemp)"
-if ! security import "$P12_IMPORT" -k "$KEYCHAIN" -P "$APPLE_CERTIFICATE_PASSWORD" \
+if ! security import "$P12_IMPORT" -k "$KEYCHAIN" -P "$PASS" \
   -f pkcs12 -A -T /usr/bin/codesign -T /usr/bin/security 2>"$IMPORT_ERR"; then
   echo "import-apple-certificate: security import failed" >&2
   cat "$IMPORT_ERR" >&2
