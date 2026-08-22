@@ -6,7 +6,7 @@
 > 设计：[`docs/superpowers/specs/2026-08-14-desktop-local-gateway-design.md`](../docs/superpowers/specs/2026-08-14-desktop-local-gateway-design.md)  
 > 发布流程：[`docs/release-process.md`](../docs/release-process.md)
 
-**默认连本机 `http://127.0.0.1:8766`**，由壳拉起本地 minibot，WebUI 由该 gateway 提供。会话 / 配置落在 Tauri app data 的 `engine/`（`MINIBOT_SERVER_DATA_DIR`）。
+**默认连本机 `http://127.0.0.1:8766`**，由壳拉起本地 minibot，WebUI 由该 gateway 提供。会话 / 配置落在 `~/.minibot`（`MINIBOT_SERVER_DATA_DIR`；可用 `MINIBOT_HOME` 覆盖）。
 
 ## 整体架构
 

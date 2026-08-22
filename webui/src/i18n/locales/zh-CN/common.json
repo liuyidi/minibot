@@ -839,6 +839,36 @@
       "installedCount": "我安装的 {{count}}",
       "installedSkillsCount": "已安装 {{count}}",
       "installedConnectorsCount": "已安装 {{count}}",
+      "builtin": {
+        "github": {
+          "title": "GitHub",
+          "description": "通过 gh CLI 操作 Issue、PR、CI 与工作流。"
+        },
+        "weather": {
+          "title": "天气",
+          "description": "查询当前天气与预报（无需 API Key）。"
+        },
+        "memory": {
+          "title": "记忆",
+          "description": "通过 MEMORY.md 与读写工具管理长期记忆。"
+        },
+        "summarize": {
+          "title": "摘要",
+          "description": "总结网页、播客与本地文件内容。"
+        },
+        "clawhub": {
+          "title": "ClawHub",
+          "description": "搜索并安装公开技能库中的 Agent 技能。"
+        },
+        "tmux": {
+          "title": "tmux",
+          "description": "远程控制 tmux 会话，向交互式 CLI 发送按键。"
+        },
+        "skill-creator": {
+          "title": "技能创作",
+          "description": "创建或更新 Agent 技能（SKILL.md、脚本与资源）。"
+        }
+      },
       "addSkill": "添加技能",
       "addConnector": "添加连接器",
       "addSkillHint": "粘贴 SKILL.md，将保存到当前工作区的 skills/ 目录。",

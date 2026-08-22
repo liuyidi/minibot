@@ -264,7 +264,7 @@ impl RemoteServer {
         }
 
         let (bin, label) = resolve_sidecar_command()?;
-        let (data_dir, logs_dir, api_base) = {
+        let (_data_dir, logs_dir, api_base) = {
             let g = self
                 .inner
                 .lock()
@@ -272,7 +272,9 @@ impl RemoteServer {
             (g.data_dir.clone(), g.logs_dir.clone(), g.api_base.clone())
         };
 
-        let engine_dir = data_dir.join("engine");
+        let server_data_dir = minibot_home_dir();
+        std::fs::create_dir_all(&server_data_dir)
+            .map_err(|e| format!("create minibot home dir: {e}"))?;
         let (host, port) = host_port_from_api_base(&api_base)?;
         let stdout_path = logs_dir.join("engine.stdout.log");
         let stderr_path = logs_dir.join("engine.stderr.log");
@@ -295,7 +297,7 @@ impl RemoteServer {
         let mut cmd = Command::new(&bin);
         cmd.env("MINIBOT_SERVER_HOST", &host)
             .env("MINIBOT_SERVER_PORT", port.to_string())
-            .env("MINIBOT_SERVER_DATA_DIR", &engine_dir)
+            .env("MINIBOT_SERVER_DATA_DIR", &server_data_dir)
             // Match design: local gateway uses hosted mini-auth (not tokenIssueSecret).
             .env("MINIBOT_SERVER_AUTH_PROVIDER", "mini_auth")
             .env(
@@ -318,8 +320,8 @@ impl RemoteServer {
             &mut cmd,
             &[
                 std::env::var_os("MINIBOT_ENV_MODELS").map(PathBuf::from),
-                Some(engine_dir.join(".env.models")),
-                Some(engine_dir.join(".env")),
+                Some(server_data_dir.join(".env.models")),
+                Some(server_data_dir.join(".env")),
             ],
         );
         if models_loaded > 0 {
@@ -330,7 +332,7 @@ impl RemoteServer {
         } else {
             let _ = append_log(
                 &logs_dir,
-                "no platform .env.models under engine/ (demo models need keys)",
+                "no platform .env.models under ~/.minibot (demo models need keys)",
             );
         }
 
@@ -664,15 +666,30 @@ fn probe_curl(probe_url: &str, bypass_proxy: bool) -> Result<(), String> {
     Err(format!("HTTP {code}"))
 }
 
+fn minibot_home_dir() -> PathBuf {
+    if let Ok(raw) = std::env::var("MINIBOT_HOME") {
+        let trimmed = raw.trim();
+        if !trimmed.is_empty() {
+            return PathBuf::from(trimmed);
+        }
+    }
+    std::env::var_os("HOME")
+        .or_else(|| std::env::var_os("USERPROFILE"))
+        .map(PathBuf::from)
+        .map(|home| home.join(".minibot"))
+        .unwrap_or_else(|| PathBuf::from(".minibot"))
+}
+
 fn runtime_info_from_inner(g: &RemoteInner) -> HostRuntimeInfo {
+    let server_data = minibot_home_dir();
     HostRuntimeInfo {
         surface: "native",
         app_version: g.app_version.clone(),
         engine_status: g.status,
-        data_dir: g.data_dir.display().to_string(),
+        data_dir: server_data.display().to_string(),
         logs_dir: g.logs_dir.display().to_string(),
         config_path: g.config_path.display().to_string(),
-        workspace_path: g.data_dir.join("engine").display().to_string(),
+        workspace_path: server_data.join("workspace").display().to_string(),
         python: g.sidecar_label.clone(),
         api_base: g.api_base.clone(),
     }

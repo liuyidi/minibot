@@ -12,6 +12,12 @@ English: [CHANGELOG.md](./CHANGELOG.md)
 <!-- #region site-changelog -->
 ## [Unreleased]
 
+### 修复
+
+- 桌面端本地引擎改用 `~/.minibot`（工作区 `~/.minibot/workspace`），不再使用 Tauri app data 下的 `engine/`。
+- 对话：首条用户消息从顶部区域出现，不再贴在输入框上方。
+- 技能：技能页与 `/` 面板中的内置技能标题/描述统一中英文（zh-CN / en）。
+
 ## [1.0.16] - 2026-08-23
 
 ### 修复

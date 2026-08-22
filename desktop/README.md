@@ -6,7 +6,7 @@
 > Design: [`docs/superpowers/specs/2026-08-14-desktop-local-gateway-design.md`](../docs/superpowers/specs/2026-08-14-desktop-local-gateway-design.md)  
 > Plan: [`docs/release-process.md`](../docs/release-process.md)
 
-**Defaults to `http://127.0.0.1:8766`**, spawns a local minibot engine, and serves the WebUI from that gateway. Chats / config live under Tauri app data (`engine/` via `MINIBOT_SERVER_DATA_DIR`).
+**Defaults to `http://127.0.0.1:8766`**, spawns a local minibot engine, and serves the WebUI from that gateway. Chats / config live under `~/.minibot` (`MINIBOT_SERVER_DATA_DIR`; override with `MINIBOT_HOME`).
 
 ## Architecture (end-to-end)
 

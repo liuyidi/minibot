@@ -11,6 +11,12 @@ Versions follow SemVer for product narrative. Package metadata may lag until a f
 
 ## [Unreleased]
 
+### Fixed
+
+- Desktop local engine now uses `~/.minibot` (workspace at `~/.minibot/workspace`) instead of the Tauri app-data `engine/` folder.
+- Chat: first user messages render from the top of the thread instead of sticking to the composer.
+- Skills: localized builtin skill titles/descriptions in the skills hub and `/` slash palette (zh-CN / en).
+
 ## [1.0.16] - 2026-08-23
 
 ### Fixed

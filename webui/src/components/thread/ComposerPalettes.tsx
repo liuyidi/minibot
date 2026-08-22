@@ -33,6 +33,7 @@ import {
 } from "./CliAppMentionText";
 import type { MentionCandidate } from "@/lib/chat/mentions";
 import type { SlashCommand } from "@/lib/types";
+import { resolveSlashCommandLabel } from "@/lib/skills/display";
 import { logoFallbackUrls } from "@/lib/constants/provider-brand";
 import { cn } from "@/lib/utils";
 
@@ -66,10 +67,6 @@ const COMMAND_ICONS: Record<string, LucideIcon> = {
   "square-pen": SquarePen,
   "undo-2": Undo2,
 };
-
-function slashCommandI18nKey(command: string): string {
-  return command.replace(/^\//, "").replace(/-/g, "_");
-}
 
 function useSelectedOptionScroll(selectedIndex: number) {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -318,13 +315,8 @@ export function SlashCommandPalette({
         {commands.map((command, index) => {
           const Icon = COMMAND_ICONS[command.icon] ?? CircleHelp;
           const selected = index === selectedIndex;
-          const commandKey = slashCommandI18nKey(command.command);
-          const title = t(`thread.composer.slash.commands.${commandKey}.title`, {
-            defaultValue: command.title,
-          });
-          const description = t(`thread.composer.slash.commands.${commandKey}.description`, {
-            defaultValue: command.description,
-          });
+          const title = resolveSlashCommandLabel(command, t, "title");
+          const description = resolveSlashCommandLabel(command, t, "description");
           return (
             <button
               key={command.command}

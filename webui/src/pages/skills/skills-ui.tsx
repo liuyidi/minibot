@@ -24,6 +24,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import type { SkillDetail, SkillSummary } from "@/lib/types";
+import { resolveSkillDescription, resolveSkillTitle } from "@/lib/skills/display";
 import { cn } from "@/lib/utils";
 
 import { useSkillDetail } from "./useSkillDetail";
@@ -127,9 +128,9 @@ export function SkillCard({
           <Brain className="h-5 w-5" strokeWidth={1.8} aria-hidden />
         </div>
         <div className="min-w-0 flex-1">
-          <h3 className="truncate text-[15px] font-semibold text-foreground">{skill.name}</h3>
+          <h3 className="truncate text-[15px] font-semibold text-foreground">{resolveSkillTitle(skill, t)}</h3>
           <p className="mt-1 line-clamp-3 text-[12.5px] leading-5 text-muted-foreground">
-            {skill.description || t("settings.skills.noDescription", { defaultValue: "No description." })}
+            {resolveSkillDescription(skill, t) || t("settings.skills.noDescription", { defaultValue: "No description." })}
           </p>
           {!skill.available && skill.unavailable_reason ? (
             <p className="mt-1 truncate text-[12px] leading-4 text-muted-foreground/80">

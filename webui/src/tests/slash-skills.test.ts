@@ -5,8 +5,10 @@ import {
   RESERVED_SLASH_COMMAND_NAMES,
   skillsToSlashCommands,
 } from "@/lib/chat/slashSkills";
+import { resolveSlashCommandLabel, resolveSkillTitle } from "@/lib/skills/display";
 import { splitCapabilityMentionSegments } from "@/components/thread/CliAppMentionText";
 import type { SkillSummary, SlashCommand } from "@/lib/types";
+import { vi } from "vitest";
 
 const SKILLS: SkillSummary[] = [
   {
@@ -90,5 +92,24 @@ describe("slashSkills", () => {
   it("does not chip reserved slash commands even with empty skill catalog", () => {
     const segments = splitCapabilityMentionSegments("/history 5", [], [], []);
     expect(segments).toEqual([{ kind: "text", text: "/history 5" }]);
+  });
+
+  it("resolves builtin skill labels from locale keys", () => {
+    const t = vi.fn((key: string, opts?: { defaultValue?: string }) => {
+      if (key === "settings.skills.builtin.github.title") return "GitHub 技能";
+      if (key === "settings.skills.builtin.weather.description") return "查询天气";
+      return opts?.defaultValue ?? key;
+    });
+    expect(resolveSkillTitle({ name: "github", description: "Interact with GitHub" }, t)).toBe(
+      "GitHub 技能",
+    );
+    const command: SlashCommand = {
+      command: "/weather",
+      title: "weather",
+      description: "Get current weather",
+      icon: "hammer",
+      argHint: "",
+    };
+    expect(resolveSlashCommandLabel(command, t, "description")).toBe("查询天气");
   });
 });

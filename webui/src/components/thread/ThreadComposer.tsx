@@ -80,6 +80,7 @@ import {
 } from "@/lib/chat/mentions";
 import { stripMentionChipPads, withMentionChipSuffix } from "@/lib/chat/mentionAtoms";
 import { mergeSlashPaletteCommands } from "@/lib/chat/slashSkills";
+import { resolveSlashCommandLabel } from "@/lib/skills/display";
 import { handleComposerKeyDown } from "./composerKeyDown";
 import {
   commitComposerMentionPadChange,
@@ -272,10 +273,6 @@ interface CliAppMentionQuery {
   query: string;
   start: number;
   end: number;
-}
-
-function slashCommandI18nKey(command: string): string {
-  return command.replace(/^\//, "").replace(/-/g, "_");
 }
 
 function readSlashRecents(): string[] {
@@ -932,13 +929,8 @@ export function ThreadComposer({
     if (slashQuery === null) return [];
     const withDetails = visibleSlashCommands
       .filter((command) => {
-        const commandKey = slashCommandI18nKey(command.command);
-        const title = t(`thread.composer.slash.commands.${commandKey}.title`, {
-          defaultValue: command.title,
-        });
-        const description = t(`thread.composer.slash.commands.${commandKey}.description`, {
-          defaultValue: command.description,
-        });
+        const title = resolveSlashCommandLabel(command, t, "title");
+        const description = resolveSlashCommandLabel(command, t, "description");
         const haystack = [
           command.command,
           command.title,
@@ -950,10 +942,7 @@ export function ThreadComposer({
         return haystack.includes(slashQuery);
       })
       .map((command) => {
-        const commandKey = slashCommandI18nKey(command.command);
-        const description = t(`thread.composer.slash.commands.${commandKey}.description`, {
-          defaultValue: command.description,
-        });
+        const description = resolveSlashCommandLabel(command, t, "description");
         let detail = description;
         let badge: string | undefined;
         if (command.command === "/model" && modelLabel) {
