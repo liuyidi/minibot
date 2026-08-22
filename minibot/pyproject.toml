@@ -1,6 +1,6 @@
 [project]
 name = "minibot"
-version = "1.0.15"
+version = "1.0.16"
 description = "FastAPI agent runtime (minibot)"
 requires-python = ">=3.11"
 dependencies = [

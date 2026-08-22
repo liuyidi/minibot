@@ -11,6 +11,14 @@ Versions follow SemVer for product narrative. Package metadata may lag until a f
 
 ## [Unreleased]
 
+## [1.0.16] - 2026-08-23
+
+### Fixed
+
+- First-run WebUI: auto-select platform model, seed default MCP connectors, production download/devui portal links, settings workspace overview, empty chat layout, sidebar brand logo, and skills i18n gaps.
+- macOS DMG installer background now shows drag-to-Applications artwork.
+- Langfuse: ignore demo keys (`pk-lf-demo` / `sk-lf-demo`) so MLF no longer routes traces to the shared demo project.
+
 ## [1.0.15] - 2026-08-21
 
 ### Added

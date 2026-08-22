@@ -12,6 +12,14 @@ English: [CHANGELOG.md](./CHANGELOG.md)
 <!-- #region site-changelog -->
 ## [Unreleased]
 
+## [1.0.16] - 2026-08-23
+
+### 修复
+
+- 首次进入 WebUI：自动选择平台模型、预置 MCP 连接器、下载/开发笔记外链指向生产域名、设置页工作区展示、空对话布局、侧栏品牌 Logo、技能页中英文缺失项。
+- macOS DMG 安装背景增加「拖到应用程序」图示。
+- Langfuse：忽略 demo 密钥，避免 MLF 将 trace 写入共享 demo 项目。
+
 ## [1.0.15] - 2026-08-21
 
 ### 新增
