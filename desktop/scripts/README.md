@@ -42,6 +42,8 @@ scripts/
 | `build-signed-macos.sh` | **本地 macOS 正式打包主入口**：读取 `apple-signing.env` → codesign 预检 → prepare sidecar → 签名 sidecar 内 Mach-O → `npm run build` → 验证签名/公证票。需在 Terminal.app 运行（非 Cursor agent）。 |
 | `notarize-macos-app.sh` | 对已签名的 `.app` 提交公证，**每 15s 轮询状态 + 预估进度条 + 中文提示**；通过后 staple，可选 `--dmg`。 |
 | `fix-macos-sidecar-layout.sh` | Tauri 打包后恢复 PyInstaller `Python` 符号链接（避免公证报 invalid signature）。 |
+| `import-apple-certificate.sh` | CI 导入 `.p12` 到临时钥匙串（`openssl` 校验后再 `security import`）。 |
+| `encode-apple-certificate-for-ci.sh` | 本地生成 GitHub secret `APPLE_CERTIFICATE` 的一行 base64。 |
 | `sign-macos-sidecar.sh` | 对 PyInstaller onedir 内 Mach-O 做 Developer ID + hardened runtime 签名；`Python.framework` 按 bundle 规则签。 |
 | `entitlements.sidecar.plist` | sidecar 可执行文件所需的 entitlements（Python 运行时）。 |
 | `apple-signing.env.example` | 本地签名变量模板；复制为同目录 `apple-signing.env`（已 gitignore）。 |
