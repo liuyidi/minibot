@@ -14,6 +14,7 @@ English: [CHANGELOG.md](./CHANGELOG.md)
 
 ### 修复
 
+- 还原 Langfuse demo 密钥跳过逻辑，恢复使用 demo 密钥时的对话 👍/👎 反馈。
 - 桌面端本地引擎改用 `~/.minibot`（工作区 `~/.minibot/workspace`），不再使用 Tauri app data 下的 `engine/`。
 - 对话：首条用户消息从顶部区域出现，不再贴在输入框上方。
 - 技能：技能页与 `/` 面板中的内置技能标题/描述统一中英文（zh-CN / en）。

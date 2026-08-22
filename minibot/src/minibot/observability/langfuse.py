@@ -65,9 +65,9 @@ def init_from_settings(settings: Any) -> None:
 
     public_key = (getattr(settings, "langfuse_public_key", "") or "").strip()
     secret_key = (getattr(settings, "langfuse_secret_key", "") or "").strip()
-    host = (getattr(settings, "langfuse_host", "") or "https://mlf.liuyidi.me").strip()
-    if public_key in {"pk-lf-demo", ""} or secret_key in {"sk-lf-demo", ""}:
-        log.warning("langfuse enabled but keys missing or demo; skipping init")
+    host = (getattr(settings, "langfuse_host", "") or "http://localhost:8000").strip()
+    if not public_key or not secret_key:
+        log.warning("langfuse enabled but keys missing; skipping init")
         _enabled = False
         return
 

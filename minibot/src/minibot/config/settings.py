@@ -44,9 +44,9 @@ class Settings(BaseSettings):
 
     # mini-langfuse (optional; soft-import — see observability/langfuse.py)
     langfuse_enabled: bool = False
-    langfuse_host: str = "https://mlf.liuyidi.me"
-    langfuse_public_key: str = ""
-    langfuse_secret_key: str = ""
+    langfuse_host: str = "http://localhost:8000"
+    langfuse_public_key: str = "pk-lf-demo"
+    langfuse_secret_key: str = "sk-lf-demo"
 
     # minikb (optional; enables kb_list / kb_search / kb_answer when base_url set)
     minikb_base_url: str = ""
