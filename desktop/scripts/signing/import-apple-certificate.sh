@@ -23,8 +23,12 @@ fi
 
 P12="$(mktemp -t minibot-cert.XXXXXX.p12)"
 P12_IMPORT="$(mktemp -t minibot-cert-import.XXXXXX.p12)"
-cleanup() { rm -f "$P12" "$P12_IMPORT"; }
+PASSFILE="$(mktemp -t minibot-cert-pass.XXXXXX)"
+cleanup() { rm -f "$P12" "$P12_IMPORT" "$PASSFILE"; }
 trap cleanup EXIT
+
+printf '%s' "$APPLE_CERTIFICATE_PASSWORD" >"$PASSFILE"
+chmod 600 "$PASSFILE"
 
 python3 - "$CERT_B64" "$P12" <<'PY'
 import base64, sys
@@ -44,41 +48,62 @@ if len(data) < 100:
 open(out, "wb").write(data)
 PY
 
-p12_verify() {
+if head -c 5 "$P12" | grep -q '^-----'; then
+  echo "import-apple-certificate: decoded content looks like PEM text, not a .p12 file" >&2
+  echo "  Export from Keychain as Personal Information Exchange (.p12), then encode with encode-apple-certificate-for-ci.sh" >&2
+  exit 1
+fi
+
+p12_verify_password() {
   local p12="$1"
-  local pass="$2"
-  if openssl pkcs12 -in "$p12" -passin "pass:$pass" -noout 2>/dev/null; then
+  if openssl pkcs12 -in "$p12" -passin "file:$PASSFILE" -noout 2>/dev/null; then
     return 0
   fi
-  openssl pkcs12 -in "$p12" -passin "pass:$pass" -legacy -noout 2>/dev/null
+  openssl pkcs12 -in "$p12" -passin "file:$PASSFILE" -legacy -noout 2>/dev/null
 }
 
-if ! p12_verify "$P12" "$APPLE_CERTIFICATE_PASSWORD" 2>/tmp/p12-verify.err; then
-  echo "import-apple-certificate: decoded file is not a valid .p12 with this password" >&2
+p12_has_private_key() {
+  local p12="$1"
+  if openssl pkcs12 -in "$p12" -passin "file:$PASSFILE" -legacy -nocerts -nodes -out /dev/null 2>/dev/null; then
+    return 0
+  fi
+  openssl pkcs12 -in "$p12" -passin "file:$PASSFILE" -nocerts -nodes -out /dev/null 2>/dev/null
+}
+
+if ! p12_verify_password "$P12" 2>/tmp/p12-verify.err; then
+  echo "import-apple-certificate: decoded file is not a valid .p12 with APPLE_CERTIFICATE_PASSWORD" >&2
   cat /tmp/p12-verify.err >&2
-  echo "  Re-encode from Keychain export:" >&2
-  echo "    ./desktop/scripts/signing/encode-apple-certificate-for-ci.sh" >&2
+  echo "  Check APPLE_CERTIFICATE_PASSWORD matches the export password." >&2
+  echo "  Re-encode: ./desktop/scripts/signing/encode-apple-certificate-for-ci.sh" >&2
   rm -f /tmp/p12-verify.err
   exit 1
 fi
 rm -f /tmp/p12-verify.err
+
+if ! p12_has_private_key "$P12"; then
+  echo "import-apple-certificate: .p12 has no private key (certificate-only export)" >&2
+  echo "  In Keychain Access export Developer ID Application again:" >&2
+  echo "    File → Export → Personal Information Exchange (.p12)" >&2
+  echo "    Ensure the private key is included (not .cer / certificate only)." >&2
+  echo "  Then: ./desktop/scripts/signing/encode-apple-certificate-for-ci.sh" >&2
+  exit 1
+fi
 
 # Keychain exports (RC2-40-CBC) often pass openssl -legacy but fail security import
 # with "Unknown format in import". Re-export to AES-256 PKCS#12 for macOS security.
 normalize_p12_for_security_import() {
   local src="$1"
   local dst="$2"
-  local pass="$3"
   local err
   err="$(mktemp)"
-  if openssl pkcs12 -in "$src" -passin "pass:$pass" -legacy \
-    -export -out "$dst" -passout "pass:$pass" \
+  if openssl pkcs12 -in "$src" -passin "file:$PASSFILE" -legacy \
+    -export -out "$dst" -passout "file:$PASSFILE" \
     -keypbe AES-256-CBC -certpbe AES-256-CBC -maciter 2>"$err"; then
     rm -f "$err"
     return 0
   fi
-  if openssl pkcs12 -in "$src" -passin "pass:$pass" \
-    -export -out "$dst" -passout "pass:$pass" \
+  if openssl pkcs12 -in "$src" -passin "file:$PASSFILE" \
+    -export -out "$dst" -passout "file:$PASSFILE" \
     -keypbe AES-256-CBC -certpbe AES-256-CBC -maciter 2>"$err"; then
     rm -f "$err"
     return 0
@@ -89,7 +114,7 @@ normalize_p12_for_security_import() {
   return 1
 }
 
-if ! normalize_p12_for_security_import "$P12" "$P12_IMPORT" "$APPLE_CERTIFICATE_PASSWORD"; then
+if ! normalize_p12_for_security_import "$P12" "$P12_IMPORT"; then
   exit 1
 fi
 
@@ -107,7 +132,7 @@ if ! security import "$P12_IMPORT" -k "$KEYCHAIN" -P "$APPLE_CERTIFICATE_PASSWOR
   echo "import-apple-certificate: security import failed" >&2
   cat "$IMPORT_ERR" >&2
   echo "  file(1): $(file -b "$P12_IMPORT" 2>/dev/null || echo unknown)" >&2
-  echo "  If this persists, re-run encode-apple-certificate-for-ci.sh and update APPLE_CERTIFICATE." >&2
+  echo "  Re-run encode-apple-certificate-for-ci.sh and update APPLE_CERTIFICATE." >&2
   rm -f "$IMPORT_ERR"
   exit 1
 fi
