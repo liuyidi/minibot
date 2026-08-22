@@ -72,7 +72,10 @@ codesign "${CS_ARGS[@]}" "$APP/Contents/MacOS/minibot-desktop"
 codesign "${CS_ARGS[@]}" "$APP"
 
 echo "==> Notarize (with progress UI)"
-"$SIGNING_DIR/notarize-macos-app.sh" "$APP" --dmg
+APPLE_ID="$NOTARY_APPLE_ID" \
+APPLE_PASSWORD="$NOTARY_PASSWORD" \
+APPLE_TEAM_ID="$NOTARY_TEAM_ID" \
+  "$SIGNING_DIR/notarize-macos-app.sh" "$APP" --dmg
 
 DMG_DIR="$CARGO_TARGET_DIR/release/bundle/dmg"
 VERSION="$(node -p "require('$DESKTOP_ROOT/package.json').version")"
