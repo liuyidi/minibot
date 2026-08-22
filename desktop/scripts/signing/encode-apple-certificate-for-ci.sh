@@ -11,11 +11,26 @@ if [[ ! -f "$P12" ]]; then
   exit 1
 fi
 
+p12_verify() {
+  local p12="$1"
+  local pass="$2"
+  if openssl pkcs12 -in "$p12" -passin "pass:$pass" -noout 2>/dev/null; then
+    return 0
+  fi
+  # macOS Keychain exports often use RC2-40-CBC; OpenSSL 3 needs -legacy.
+  openssl pkcs12 -in "$p12" -passin "pass:$pass" -legacy -noout 2>/dev/null
+}
+
 if [[ -n "$PASS" ]]; then
-  if ! openssl pkcs12 -in "$P12" -passin "pass:$PASS" -noout 2>/dev/null; then
-    echo "encode-apple-certificate-for-ci: .p12 password check failed (set APPLE_CERTIFICATE_PASSWORD)" >&2
+  err="$(mktemp)"
+  if ! p12_verify "$P12" "$PASS" 2>"$err"; then
+    echo "encode-apple-certificate-for-ci: .p12 password check failed for: $P12" >&2
+    sed 's/^/  openssl: /' "$err" >&2
+    echo "  The password must match the one you chose when exporting this .p12 from Keychain." >&2
+    rm -f "$err"
     exit 1
   fi
+  rm -f "$err"
 else
   echo "Tip: export APPLE_CERTIFICATE_PASSWORD first to verify the .p12 before encoding" >&2
 fi

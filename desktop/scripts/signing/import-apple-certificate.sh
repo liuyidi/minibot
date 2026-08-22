@@ -43,7 +43,16 @@ if len(data) < 100:
 open(out, "wb").write(data)
 PY
 
-if ! openssl pkcs12 -in "$P12" -passin "pass:$APPLE_CERTIFICATE_PASSWORD" -noout 2>/tmp/p12-verify.err; then
+p12_verify() {
+  local p12="$1"
+  local pass="$2"
+  if openssl pkcs12 -in "$p12" -passin "pass:$pass" -noout 2>/dev/null; then
+    return 0
+  fi
+  openssl pkcs12 -in "$p12" -passin "pass:$pass" -legacy -noout 2>/dev/null
+}
+
+if ! p12_verify "$P12" "$APPLE_CERTIFICATE_PASSWORD" 2>/tmp/p12-verify.err; then
   echo "import-apple-certificate: decoded file is not a valid .p12 with this password" >&2
   cat /tmp/p12-verify.err >&2
   echo "  Re-encode from Keychain export:" >&2

@@ -116,3 +116,4 @@ temp/
 exp/
 .playwright-mcp/
 bridge/node_modules/
+node_modules/
