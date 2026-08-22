@@ -1362,7 +1362,7 @@
     "desktopNote": "可下载",
     "desktopFooter": "安装后启动本机 gateway，即可用账号登录。",
     "macosBody": "支持 Apple 芯片（Apple Silicon）与 Intel 芯片的 Mac。",
-    "macosFooter": "打开 DMG，将 minibot V2 拖入「应用程序」。若提示已损坏，在终端执行 xattr -cr '/Applications/minibot V2.app'。",
+    "macosFooter": "打开 DMG，将 minibot 拖入「应用程序」。若提示已损坏，在终端执行 xattr -cr '/Applications/minibot.app'。",
     "macosAppleSilicon": "下载 Apple Silicon 版",
     "macosIntel": "下载 Intel 版",
     "macosAlsoAvailable": "也可下载：{{arch}}",

@@ -17,7 +17,7 @@ This document describes the current release flow for `minibot`.
 - Keep `webui/package.json`, `desktop/package.json`, `minibot/pyproject.toml`, and the other versioned files aligned.
 - Keep the current release notes in `CHANGELOG.md` and `CHANGELOG.zh.md`.
 - Use `v<version>` tags for release orchestration, for example `v1.0.1`.
-  Desktop GitHub Releases use `desktop-v2-v<version>` so they do not collide
+  Desktop GitHub Releases use `desktop-v<version>` so they do not collide
   with that orchestration tag.
 
 ## Day-to-day development flow
@@ -57,7 +57,7 @@ This document describes the current release flow for `minibot`.
 ### `Publish Desktop`
 
 - Builds the Tauri desktop app with a frozen local minibot sidecar (`desktop/`).
-- Publishes GitHub Release `desktop-v2-v<version>`.
+- Publishes GitHub Release `desktop-v<version>`.
 - Sends a release notification to ServerlessShip / Feishu.
 
 ### `Publish @liuyidi/minibot-client`

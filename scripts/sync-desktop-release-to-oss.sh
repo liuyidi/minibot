@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Download a published Desktop V2 GitHub Release and publish selected
+# Download a published Desktop GitHub Release and publish selected
 # installers to Aliyun OSS + releases.json (macOS arm+intel / Windows / Linux).
 set -euo pipefail
 
@@ -9,9 +9,9 @@ cd "$ROOT"
 usage() {
   cat <<'EOF'
 Usage:
-  scripts/sync-desktop-release-to-oss.sh --tag desktop-v2-v1.0.13 [--run-id 123456789] [--dry-run]
+  scripts/sync-desktop-release-to-oss.sh --tag desktop-v1.0.15 [--run-id 123456789] [--dry-run]
 
-Accepts desktop-v2-v*, v*, or historical desktop-v* tags.
+Accepts desktop-v*, desktop-v2-v* (legacy), or v* orchestration tags.
 
 Requires: gh, ossutil, node.
 OSS env: OSS_BUCKET, OSS_REGION, OSS_ENDPOINT, OSS_PUBLIC_BASE_URL,
@@ -45,7 +45,7 @@ done
 
 [[ -n "$tag" ]] || { usage >&2; exit 2; }
 version="$(release_version_from_tag "$tag")" || {
-  echo "Expected tag matching desktop-v2-v*, v*, or desktop-v* (got: $tag)" >&2
+  echo "Expected tag matching desktop-v*, desktop-v2-v* (legacy), or v* (got: $tag)" >&2
   exit 2
 }
 tmpdir="$(mktemp -d "${TMPDIR:-/tmp}/minibot-desktop-release.XXXXXX")"

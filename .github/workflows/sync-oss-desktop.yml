@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: Release tag (e.g. desktop-v2-v1.0.13)
+        description: Release tag (e.g. desktop-v1.0.15)
         required: true
         type: string
 
@@ -62,7 +62,7 @@ jobs:
             echo "value=${{ inputs.tag }}" >> "$GITHUB_OUTPUT"
           else
             version="$(node -p "require('./desktop/package.json').version")"
-            echo "value=desktop-v2-v${version}" >> "$GITHUB_OUTPUT"
+            echo "value=desktop-v${version}" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Validate OSS configuration
@@ -141,7 +141,7 @@ jobs:
             tag="${{ inputs.tag }}"
           else
             version="$(node -p "require('./desktop/package.json').version")"
-            tag="desktop-v2-v${version}"
+            tag="desktop-v${version}"
           fi
           case "$tag" in
             desktop-v2-v*) version="${tag#desktop-v2-v}" ;;

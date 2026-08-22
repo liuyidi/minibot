@@ -1,7 +1,4 @@
 node_modules/
-dist/
-dist-app/
-dist-bundle/
 src-tauri/target/
 src-tauri/resources/__pycache__/
 src-tauri/resources/minibot-sidecar/
@@ -10,3 +7,5 @@ src-tauri/resources/minibot-sidecar/
 *.log
 .vscode/
 .idea/
+scripts/signing/apple-signing.env
+*.p12

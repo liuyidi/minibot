@@ -16,7 +16,7 @@
       <key>CFBundleTypeRole</key>
       <string>Editor</string>
       <key>CFBundleURLName</key>
-      <string>me.liuyidi.minibot.desktopv2</string>
+      <string>me.liuyidi.minibot.desktop</string>
       <key>CFBundleURLSchemes</key>
       <array>
         <string>minibot</string>

@@ -2,8 +2,8 @@
 # Copy PyInstaller onedir into src-tauri/resources for Tauri bundling.
 set -euo pipefail
 
-ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-REPO="$(cd "$ROOT/.." && pwd)"
+DESKTOP_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+REPO_ROOT="$(cd "$DESKTOP_ROOT/.." && pwd)"
 TRIPLE="${1:-}"
 if [[ -z "$TRIPLE" ]]; then
   if command -v rustc >/dev/null 2>&1; then
@@ -13,12 +13,12 @@ if [[ -z "$TRIPLE" ]]; then
   fi
 fi
 
-SRC="$REPO/dist/sidecar/$TRIPLE/minibot-sidecar"
-DEST="$ROOT/src-tauri/resources/minibot-sidecar"
+SRC="$REPO_ROOT/dist/sidecar/$TRIPLE/minibot-sidecar"
+DEST="$DESKTOP_ROOT/src-tauri/resources/minibot-sidecar"
 
 if [[ ! -d "$SRC" ]]; then
   echo "prepare-sidecar: missing freeze output at $SRC" >&2
-  echo "prepare-sidecar: run: $REPO/scripts/freeze-minibot-sidecar.sh $TRIPLE" >&2
+  echo "prepare-sidecar: run: $REPO_ROOT/scripts/freeze-minibot-sidecar.sh $TRIPLE" >&2
   exit 1
 fi
 

@@ -1362,7 +1362,7 @@
     "desktopNote": "Available",
     "desktopFooter": "Install the desktop app to run minibot locally on this computer.",
     "macosBody": "Built for Apple silicon and Intel Macs.",
-    "macosFooter": "Open the DMG and drag minibot V2 into Applications. If macOS says it is damaged, run xattr -cr '/Applications/minibot V2.app'.",
+    "macosFooter": "Open the DMG and drag minibot into Applications. If macOS says it is damaged, run xattr -cr '/Applications/minibot.app'.",
     "macosAppleSilicon": "Download Apple Silicon",
     "macosIntel": "Download Intel",
     "macosAlsoAvailable": "Also available: {{arch}}",

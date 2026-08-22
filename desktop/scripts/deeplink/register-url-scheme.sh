@@ -2,12 +2,13 @@
 # Register minibot:// with Launch Services using a debug/release .app bundle.
 # Required on macOS: tauri:dev alone does NOT register custom URL schemes.
 set -euo pipefail
-ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-export CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$ROOT/src-tauri/target}"
-APP="$CARGO_TARGET_DIR/debug/bundle/macos/minibot V2.app"
+
+DESKTOP_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+export CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$DESKTOP_ROOT/src-tauri/target}"
+APP="$CARGO_TARGET_DIR/debug/bundle/macos/minibot.app"
 if [[ ! -d "$APP" ]]; then
   echo "Building debug .app…"
-  cd "$ROOT"
+  cd "$DESKTOP_ROOT"
   ./node_modules/.bin/tauri build --debug --bundles app
 fi
 LSREG="/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister"

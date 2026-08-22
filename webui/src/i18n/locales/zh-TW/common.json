@@ -1366,7 +1366,7 @@
     "desktopNote": "可下載",
     "desktopFooter": "安裝後啟動本機 gateway，即可用帳號登入。",
     "macosBody": "支援搭載 Apple 晶片（Apple Silicon）與 Intel 晶片的 Mac。",
-    "macosFooter": "開啟 DMG，將 minibot V2 拖入「應用程式」。若提示已損壞，在終端執行 xattr -cr '/Applications/minibot V2.app'。",
+    "macosFooter": "開啟 DMG，將 minibot 拖入「應用程式」。若提示已損壞，在終端執行 xattr -cr '/Applications/minibot.app'。",
     "windowsBody": "Windows x64 安裝包（NSIS）。",
     "windowsFooter": "執行安裝程式即可。在程式碼簽章完成前，SmartScreen 可能會提示警告。",
     "footer": "桌面端與 Android 安裝包透過發布清單同步；iOS 開放後會在這裡更新。",

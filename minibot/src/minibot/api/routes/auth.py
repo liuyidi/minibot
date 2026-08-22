@@ -61,8 +61,8 @@ def _focus_desktop_app() -> dict[str, object]:
         'tell application "System Events" to set frontmost of process '
         '"minibot-desktop" to true',
         'tell application "System Events" to set frontmost of process '
-        '"minibot V2" to true',
-        'tell application id "me.liuyidi.minibot.desktopv2" to activate',
+        '"minibot" to true',
+        'tell application id "me.liuyidi.minibot.desktop" to activate',
     ]
     errors: list[str] = []
     for script in scripts:

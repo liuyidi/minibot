@@ -5,11 +5,10 @@
   "description": "Tauri desktop — local minibot gateway shell",
   "type": "module",
   "scripts": {
-    "dev": "./scripts/run-tauri.sh dev",
+    "dev": "./scripts/tauri/run-tauri.sh dev",
     "dev:renderer": "vite",
-    "build": "./scripts/run-tauri.sh build --bundles app,dmg && ./scripts/collect-bundle.sh",
-    "build:app": "./scripts/run-tauri.sh build --bundles app && ./scripts/collect-bundle.sh",
-    "collect-bundle": "./scripts/collect-bundle.sh",
+    "build": "./scripts/tauri/run-tauri.sh build --bundles app,dmg",
+    "build:app": "./scripts/tauri/run-tauri.sh build --bundles app",
     "build:renderer": "tsc -p tsconfig.json --noEmit && vite build",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "tauri": "tauri"

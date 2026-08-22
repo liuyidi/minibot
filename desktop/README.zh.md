@@ -4,7 +4,7 @@
 
 > 默认桌面端。  
 > 设计：[`docs/superpowers/specs/2026-08-14-desktop-local-gateway-design.md`](../docs/superpowers/specs/2026-08-14-desktop-local-gateway-design.md)  
-> 计划：[`docs/superpowers/plans/2026-08-14-desktop-v2-local-gateway.md`](../docs/superpowers/plans/2026-08-14-desktop-v2-local-gateway.md)
+> 发布流程：[`docs/release-process.md`](../docs/release-process.md)
 
 **默认连本机 `http://127.0.0.1:8766`**，由壳拉起本地 minibot，WebUI 由该 gateway 提供。会话 / 配置落在 Tauri app data 的 `engine/`（`MINIBOT_SERVER_DATA_DIR`）。
 
@@ -72,6 +72,15 @@ npm run dev
 开发态兜底（`tauri:dev` 未注册协议时）：仍可用 loopback  
 `http://127.0.0.1:8766/auth/login?desktop=1&desktop_login_id=…` → HTTP callback → `/auth/desktop/handoff` 轮询。
 
+要在开发机测试 **`minibot://` 浏览器回调**（与正式包一致），需先注册 URL scheme：
+
+```bash
+cd desktop
+./scripts/deeplink/register-url-scheme.sh
+```
+
+`npm run dev` 本身不会向系统注册 `minibot://`；上述脚本会构建 debug `.app` 并用 `lsregister` 注册。详见 [`scripts/README.md`](./scripts/README.md)。
+
 ### 退出登录
 
 确认对话框后只清本机 minibot 会话（`/auth/logout?local=1`），**不**打开浏览器清 IdP。再次登录时可沿用浏览器里已登录的账号。
@@ -109,24 +118,52 @@ curl -fsS http://127.0.0.1:8767/health
 ```bash
 # freeze 之后
 cd desktop
-./scripts/prepare-sidecar.sh                    # 或传入 <triple>
-npm run build:app                               # 仅 .app
-# npm run build                                 # app + dmg + collect
+./scripts/sidecar/prepare-sidecar.sh              # 或传入 <triple>
+npm run build:app                                 # 仅 .app（ad-hoc）
+# npm run build                                   # app + dmg（ad-hoc）
 ```
 
-`prepare-sidecar.sh` 把 onedir 拷到 `src-tauri/resources/minibot-sidecar/`  
+脚本目录说明：[`scripts/README.md`](./scripts/README.md)。
+
+打包产物统一在 `src-tauri/target/release/bundle/`（macOS：`macos/minibot.app`、`dmg/minibot_*.dmg`）。  
+Renderer 静态文件在同目录树的 `src-tauri/target/frontend-dist/`（构建中间产物，勿当安装包取用）。
+
+`sidecar/prepare-sidecar.sh` 把 onedir 拷到 `src-tauri/resources/minibot-sidecar/`  
 （已 gitignore；写入 `tauri.conf.json` 的 `bundle.resources`）。安装包内解析该路径时 label 为 `bundled`。
 
-### 打开未公证的 macOS 安装包
+### macOS 正式签名 + 公证（Developer ID）
 
-CI 使用 ad-hoc 签名（`signingIdentity: "-"`）。从 GitHub 下载后若仍提示「已损坏」：
+密钥不要进 Git。复制 `scripts/signing/apple-signing.env.example` → `scripts/signing/apple-signing.env`（已 gitignore），填入 Apple 开发者凭据后：
 
 ```bash
-# 把 minibot V2.app 拖进 /Applications 之后
-xattr -cr "/Applications/minibot V2.app"
+cd desktop
+./scripts/signing/build-signed-macos.sh           # 本机 triple
+# ./scripts/signing/build-signed-macos.sh aarch64-apple-darwin
+```
+
+该脚本会：codesign 预检 → prepare sidecar → **签名 sidecar 内 Mach-O** → `npm run build`（Tauri 签名 app 并公证）→ 验证产物。请在 **Terminal.app** 运行（Cursor agent 无法访问钥匙串）。
+
+| 变量 | 本地打包 | GitHub Actions |
+|---|---|---|
+| `APPLE_SIGNING_IDENTITY` | 需要 | 同名 secret |
+| `APPLE_TEAM_ID` | 需要 | 同名 secret |
+| `APPLE_ID` | 需要 | 同名 secret |
+| `APPLE_PASSWORD` | App 专用密码 | 同名 secret |
+| `APPLE_CERTIFICATE` | 通常不需要（用钥匙串） | base64 `.p12` |
+| `APPLE_CERTIFICATE_PASSWORD` | 通常不需要 | `.p12` 导出密码 |
+
+CI 在 [`.github/workflows/publish-desktop.yml`](../.github/workflows/publish-desktop.yml) 的 `tauri-action` 步骤注入上述 secrets 后，Release 里的 macOS 包即为 Developer ID 签名并公证的包。`tauri.conf.json` 中 `signingIdentity: "-"` 保留给本地 ad-hoc；CI 由 `APPLE_SIGNING_IDENTITY` 环境变量覆盖。
+
+### 打开 ad-hoc 本地包
+
+本地 `npm run build`（未走 `build-signed-macos.sh`）为 ad-hoc 签名。若 Gatekeeper 提示「已损坏」：
+
+```bash
+# 把 minibot.app 拖进 /Applications 之后
+xattr -cr "/Applications/minibot.app"
 # 若仍提示已损坏：
-codesign --force --deep --sign - "/Applications/minibot V2.app"
-open "/Applications/minibot V2.app"
+codesign --force --deep --sign - "/Applications/minibot.app"
+open "/Applications/minibot.app"
 ```
 
 ## 5. CI 发布 + 飞书通知
@@ -137,11 +174,11 @@ open "/Applications/minibot V2.app"
 |---|---|
 | 触发 | 统一 **Release** tag `v*`，或手动 `workflow_dispatch` |
 | 矩阵 | macOS arm64 / macOS x86_64（`macos-15-intel`）/ Linux / Windows |
-| 步骤 | `uv sync` → 构建 WebUI → freeze → prepare → `tauri-action` |
-| Release tag | `desktop-v2-v__VERSION__`（**不**与编排 tag `v*` 冲突） |
+| 步骤 | `uv sync` → 构建 WebUI → freeze → `sidecar/prepare-sidecar.sh` → `tauri-action` |
+| Release tag | `desktop-v__VERSION__`（**不**与编排 tag `v*` 冲突） |
 | OSS | 发布成功后自动跑 **Sync Desktop Release to OSS** |
 | 通知 | 成功后 → ServerlessShip → 飞书；OSS 同步再发一次 |
 
 公开下载页：`https://bot.liuyidi.me/#/download/`（清单 `https://downloads.liuyidi.me/minibot/releases.json`）。
 
-已安装包身份不变：应用名 `minibot V2`，bundle id `me.liuyidi.minibot.desktopv2`，GitHub tag `desktop-v2-v*`。
+已安装包身份：应用名 `minibot`，bundle id `me.liuyidi.minibot.desktop`，GitHub tag `desktop-v*`。

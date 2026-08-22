@@ -46,7 +46,7 @@ Public desktop packages are the local-gateway app under `desktop/`.
    the shared `v<version>` tag.
 2. Workflow **Publish Desktop** (`.github/workflows/publish-desktop.yml`)
    runs on that tag (or via manual `workflow_dispatch`), builds the installers,
-   and publishes GitHub Release `desktop-v2-v<version>`.
+   and publishes GitHub Release `desktop-v<version>`.
 3. Workflow **Sync Desktop Release to OSS**
    (`.github/workflows/sync-oss-desktop.yml`) runs automatically after
    **Publish Desktop** completes, downloads the workflow artifacts or published
@@ -62,7 +62,7 @@ Configure repository **Secrets**: `OSS_ACCESS_KEY_ID`, `OSS_ACCESS_KEY_SECRET`
 (Feishu custom bot webhook used by both release notifications).
 
 You can also re-run sync manually: Actions → Sync Desktop Release to OSS →
-  provide tag `desktop-v2-v…`.
+  provide tag `desktop-v…` (legacy `desktop-v2-v…` still accepted).
 
 ## Manual publishing
 
@@ -83,7 +83,7 @@ scripts/publish-oss-releases.sh --version 1.0.0-beta.1 \
 Or sync from an already-published GitHub release:
 
 ```bash
-scripts/sync-desktop-release-to-oss.sh --tag desktop-v2-v1.0.13
+scripts/sync-desktop-release-to-oss.sh --tag desktop-v1.0.15
 ```
 
 ## Release checklist

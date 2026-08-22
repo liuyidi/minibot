@@ -9,10 +9,10 @@ use std::time::{Duration, Instant};
 use serde::{Deserialize, Serialize};
 use url::Url;
 
-/// Local gateway default (desktop V2). Override with `MINIBOT_API_BASE`.
+/// Local gateway default (desktop). Override with `MINIBOT_API_BASE`.
 pub const LOCAL_GATEWAY_API_BASE: &str = "http://127.0.0.1:8766";
 
-/// Default api_base for desktop V2: always the local gateway.
+/// Default api_base for desktop: always the local gateway.
 pub const DEFAULT_API_BASE: &str = LOCAL_GATEWAY_API_BASE;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]

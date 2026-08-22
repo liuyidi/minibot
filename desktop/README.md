@@ -4,7 +4,7 @@
 
 > Default desktop app.  
 > Design: [`docs/superpowers/specs/2026-08-14-desktop-local-gateway-design.md`](../docs/superpowers/specs/2026-08-14-desktop-local-gateway-design.md)  
-> Plan: [`docs/superpowers/plans/2026-08-14-desktop-v2-local-gateway.md`](../docs/superpowers/plans/2026-08-14-desktop-v2-local-gateway.md)
+> Plan: [`docs/release-process.md`](../docs/release-process.md)
 
 **Defaults to `http://127.0.0.1:8766`**, spawns a local minibot engine, and serves the WebUI from that gateway. Chats / config live under Tauri app data (`engine/` via `MINIBOT_SERVER_DATA_DIR`).
 
@@ -72,6 +72,15 @@ Packaged flow (preferred):
 Dev fallback (`tauri:dev` without a registered scheme): loopback  
 `http://127.0.0.1:8766/auth/login?desktop=1&desktop_login_id=…` → HTTP callback → `/auth/desktop/handoff` poll.
 
+To test **`minibot://` browser callbacks** on a dev machine (same as production):
+
+```bash
+cd desktop
+./scripts/deeplink/register-url-scheme.sh
+```
+
+`npm run dev` does not register `minibot://` with the OS; the script builds a debug `.app` and runs `lsregister`. See [`scripts/README.md`](./scripts/README.md) (Chinese).
+
 ### Sign out
 
 After a confirmation dialog, only the local minibot session is cleared (`/auth/logout?local=1`). The system browser is **not** opened to clear the IdP, so re-login can reuse an existing account session.
@@ -109,24 +118,52 @@ Spec / entry: `minibot/packaging/pyinstaller/`.
 ```bash
 # After freeze
 cd desktop
-./scripts/prepare-sidecar.sh                    # or pass <triple>
-npm run build:app                               # .app only
-# npm run build                                 # app + dmg + collect
+./scripts/sidecar/prepare-sidecar.sh              # or pass <triple>
+npm run build:app                                 # .app only (ad-hoc)
+# npm run build                                   # app + dmg (ad-hoc)
 ```
 
-`prepare-sidecar.sh` copies the onedir into `src-tauri/resources/minibot-sidecar/`  
+Script layout: [`scripts/README.md`](./scripts/README.md) (Chinese).
+
+Installable artifacts: `src-tauri/target/release/bundle/` (macOS: `macos/minibot.app`, `dmg/minibot_*.dmg`).  
+Renderer static files: `src-tauri/target/frontend-dist/` (build intermediate, not the distributable).
+
+`sidecar/prepare-sidecar.sh` copies the onedir into `src-tauri/resources/minibot-sidecar/`  
 (gitignored; listed in `tauri.conf.json` → `bundle.resources`). Packaged apps resolve that path as label `bundled`.
 
-### Open an unsigned macOS build
+### macOS release signing + notarization (Developer ID)
 
-CI uses ad-hoc signing (`signingIdentity: "-"`). After downloading from GitHub you may still need:
+Never commit secrets. Copy `scripts/signing/apple-signing.env.example` → `scripts/signing/apple-signing.env` (gitignored), fill Apple credentials, then:
 
 ```bash
-# After dragging minibot V2.app into /Applications
-xattr -cr "/Applications/minibot V2.app"
+cd desktop
+./scripts/signing/build-signed-macos.sh           # host triple
+# ./scripts/signing/build-signed-macos.sh aarch64-apple-darwin
+```
+
+This runs: codesign preflight → prepare sidecar → **sign sidecar Mach-O** → `npm run build` (Tauri signs the app and notarizes) → verify artifacts. Run in **Terminal.app** (Cursor agents cannot access Keychain).
+
+| Variable | Local build | GitHub Actions |
+|---|---|---|
+| `APPLE_SIGNING_IDENTITY` | required | same-named secret |
+| `APPLE_TEAM_ID` | required | same-named secret |
+| `APPLE_ID` | required | same-named secret |
+| `APPLE_PASSWORD` | app-specific password | same-named secret |
+| `APPLE_CERTIFICATE` | usually omit (Keychain) | base64 `.p12` |
+| `APPLE_CERTIFICATE_PASSWORD` | usually omit | `.p12` export password |
+
+Wire the same secrets into the `tauri-action` step in [`.github/workflows/publish-desktop.yml`](../.github/workflows/publish-desktop.yml) for notarized macOS release assets. Keep `signingIdentity: "-"` in `tauri.conf.json` for local ad-hoc; CI overrides via `APPLE_SIGNING_IDENTITY`.
+
+### Open an ad-hoc local build
+
+Local `npm run build` (without `build-signed-macos.sh`) uses ad-hoc signing. If Gatekeeper says the app is “damaged”:
+
+```bash
+# After dragging minibot.app into /Applications
+xattr -cr "/Applications/minibot.app"
 # If Gatekeeper still says “damaged”:
-codesign --force --deep --sign - "/Applications/minibot V2.app"
-open "/Applications/minibot V2.app"
+codesign --force --deep --sign - "/Applications/minibot.app"
+open "/Applications/minibot.app"
 ```
 
 ## 5. CI publish + Feishu notify
@@ -137,11 +174,11 @@ Workflow: [`.github/workflows/publish-desktop.yml`](../.github/workflows/publish
 |---|---|
 | Trigger | Unified **Release** tag `v*`, or manual `workflow_dispatch` |
 | Matrix | macOS arm64 / macOS x86_64 (`macos-15-intel`) / Linux / Windows |
-| Steps | `uv sync` → WebUI build → freeze → prepare → `tauri-action` |
-| Release tag | `desktop-v2-v__VERSION__` (does **not** collide with orchestration `v*`) |
+| Steps | `uv sync` → WebUI build → freeze → `sidecar/prepare-sidecar.sh` → `tauri-action` |
+| Release tag | `desktop-v__VERSION__` (does **not** collide with orchestration `v*`) |
 | OSS | **Sync Desktop Release to OSS** runs after a successful publish |
 | Notify | On success → ServerlessShip → Feishu; OSS sync posts again |
 
 Public download page: `https://bot.liuyidi.me/#/download/` (manifest `https://downloads.liuyidi.me/minibot/releases.json`).
 
-Installed app identity is unchanged: product name `minibot V2`, bundle id `me.liuyidi.minibot.desktopv2`, GitHub tags `desktop-v2-v*`.
+Installed app identity: product name `minibot`, bundle id `me.liuyidi.minibot.desktop`, GitHub tags `desktop-v*`.

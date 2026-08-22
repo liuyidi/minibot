@@ -7,7 +7,7 @@ export default defineConfig({
   plugins: [react()],
   base: "./",
   build: {
-    outDir: "../dist",
+    outDir: "../src-tauri/target/frontend-dist",
     emptyOutDir: true,
   },
   server: {

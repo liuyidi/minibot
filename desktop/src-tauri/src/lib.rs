@@ -581,7 +581,7 @@ pub fn run() {
             host_set_native_chrome_dark,
         ])
         .build(tauri::generate_context!())
-        .expect("error while building minibot desktop v2")
+        .expect("error while building minibot desktop")
         .run(|app_handle, event| {
             match event {
                 RunEvent::ExitRequested { api, .. } => {

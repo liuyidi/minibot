@@ -1357,7 +1357,7 @@
     "desktopNote": "Available",
     "desktopFooter": "Install the desktop app to run minibot locally on this computer.",
     "macosBody": "Built for Apple silicon and Intel Macs.",
-    "macosFooter": "Open the DMG and drag minibot V2 into Applications. If macOS says it is damaged, run xattr -cr '/Applications/minibot V2.app'.",
+    "macosFooter": "Open the DMG and drag minibot into Applications. If macOS says it is damaged, run xattr -cr '/Applications/minibot.app'.",
     "windowsBody": "Windows x64 installer (NSIS).",
     "windowsFooter": "Run the setup executable. SmartScreen may warn until the build is code-signed.",
     "footer": "Desktop and Android packages are published via the release manifest. iOS will appear here when ready.",
