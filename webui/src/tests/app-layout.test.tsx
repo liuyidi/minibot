@@ -398,7 +398,7 @@ describe("App layout", () => {
     expect(screen.getByText(/Use GitHub CLI/)).toBeInTheDocument();
   });
 
-  it("opens the download page in a new tab from the sidebar and renders the download route", async () => {
+  it("opens the public download page from the sidebar and redirects legacy /#/download", async () => {
     render(<App />);
 
     await waitFor(() => expect(connectSpy).toHaveBeenCalled());
@@ -406,15 +406,22 @@ describe("App layout", () => {
     const sidebar = screen.getByRole("navigation", { name: "Sidebar navigation" });
     await openSidebarAccountMenu(sidebar);
     const downloadLink = await screen.findByRole("menuitem", { name: "Download app" });
-    expect(downloadLink).toHaveAttribute("href", "https://bot.liuyidi.me/#/download/");
+    expect(downloadLink).toHaveAttribute("href", "https://liuyidi.me/minibot/download/");
     expect(downloadLink).toHaveAttribute("target", "_blank");
 
+    const replaceSpy = vi.spyOn(window.location, "replace").mockImplementation(() => undefined);
     window.history.replaceState(null, "", "/#/download");
     window.dispatchEvent(new HashChangeEvent("hashchange"));
 
-    expect(await screen.findByRole("heading", { name: "Keep minibot with you on every device" })).toBeInTheDocument();
-    expect(screen.queryByRole("navigation", { name: "Sidebar navigation" })).not.toBeInTheDocument();
-    expect(document.title).toBe("Download app · minibot");
+    expect(await screen.findByText(/Redirecting to the download page/i)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Continue to download/i })).toHaveAttribute(
+      "href",
+      "https://liuyidi.me/minibot/download/",
+    );
+    await waitFor(() =>
+      expect(replaceSpy).toHaveBeenCalledWith("https://liuyidi.me/minibot/download/"),
+    );
+    replaceSpy.mockRestore();
   });
 
   it("opens Automations from the main sidebar", async () => {

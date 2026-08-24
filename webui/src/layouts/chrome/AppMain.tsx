@@ -6,7 +6,6 @@ import { ThreadShell } from "@/components/thread/ThreadShell";
 import { DownloadPage } from "@/pages/download";
 import { UtilityPageFrame } from "@/layouts/chrome/UtilityPageFrame";
 import type { AppLayoutModel } from "@/layouts/hooks/useAppLayoutModel";
-import { defaultShellRoute } from "@/routes";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 
@@ -31,7 +30,6 @@ export function AppMain({
     headerTitle,
     theme,
     toggle,
-    navigate,
     workspace,
     hostSidebar,
     chatActions,
@@ -82,7 +80,7 @@ export function AppMain({
       </div>
       {view === "download" ? (
         <div className="absolute inset-0 flex flex-col">
-          <DownloadPage onOpenApp={() => navigate(defaultShellRoute(), { replace: true })} />
+          <DownloadPage />
         </div>
       ) : view === "automations" ? (
         <UtilityPageFrame

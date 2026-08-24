@@ -179,6 +179,6 @@ Workflow: [`.github/workflows/publish-desktop.yml`](../.github/workflows/publish
 | OSS | **Sync Desktop Release to OSS** runs after a successful publish |
 | Notify | On success → ServerlessShip → Feishu; OSS sync posts again |
 
-Public download page: `https://bot.liuyidi.me/#/download/` (manifest `https://downloads.liuyidi.me/minibot/releases.json`).
+Public download page: `https://liuyidi.me/minibot/download/` (manifest `https://downloads.liuyidi.me/minibot/releases.json`).
 
 Installed app identity: product name `minibot`, bundle id `me.liuyidi.minibot.desktop`, GitHub tags `desktop-v*`.

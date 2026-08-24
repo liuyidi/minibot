@@ -10,5 +10,5 @@ export const PORTAL = {
   langfuse: envOr("VITE_PORTAL_LANGFUSE", "https://mlf.liuyidi.me"),
   knowledge: envOr("VITE_PORTAL_KB", "https://kb.liuyidi.me"),
   devui: envOr("VITE_PORTAL_DEVUI", "https://bot.liuyidi.me/ui/"),
-  download: envOr("VITE_PORTAL_DOWNLOAD", "https://bot.liuyidi.me/#/download/"),
+  download: envOr("VITE_PORTAL_DOWNLOAD", "https://liuyidi.me/minibot/download/"),
 } as const;

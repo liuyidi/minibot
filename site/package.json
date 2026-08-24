@@ -8,6 +8,9 @@
     "docs:preview": "vitepress preview",
     "docs:check": "node scripts/check-dist.mjs"
   },
+  "dependencies": {
+    "qrcode": "^1.5.4"
+  },
   "devDependencies": {
     "vitepress": "^1.6.4"
   }

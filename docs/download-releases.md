@@ -100,5 +100,7 @@ scripts/sync-desktop-release-to-oss.sh --tag desktop-v1.0.15
   works on registered UDIDs. Leave `ios.url` null until then.
 - Use immutable versioned filenames; keep `releases.json` Cache-Control: no-cache.
 
-The QR code on the download page always encodes
-`https://bot.liuyidi.me/#/download/`, so it remains valid across releases.
+The QR code on the download page encodes the platform artifact URL from
+`releases.json`. The public page lives at
+`https://liuyidi.me/minibot/download/` (site module, no login). Legacy
+`https://bot.liuyidi.me/#/download/` redirects there.

@@ -45,7 +45,7 @@ for (const href of live) {
 if (!portal.includes("打开 Agent") && !portal.includes("Open Agent")) {
   throw new Error("portal is missing the primary Agent CTA");
 }
-if (!portal.includes("#/download/") && !portal.includes("#/download")) {
+if (!portal.includes("/minibot/download/")) {
   throw new Error("portal is missing the Desktop download CTA");
 }
 if (!portal.includes('class="pillars"') && !portal.includes("class='pillars'")) {
@@ -106,8 +106,38 @@ if (existsSync(join(dist, "v0.1/index.html"))) {
   throw new Error("v0.1 preview must be removed after promotion");
 }
 mustRead("minibot/macos-client-preview.png");
+mustRead("minibot/download/index.html");
+mustRead("download/macos-client-preview.png");
+mustRead("brand/minibot_mark.svg");
+
+const downloadPage = mustRead("minibot/download/index.html");
+if (!downloadPage.includes("选择适合你的设备") && !downloadPage.includes("Pick your device")) {
+  throw new Error("download page is missing platform section copy");
+}
+
+const assetsDir = join(dist, "assets");
+if (!existsSync(assetsDir)) {
+  throw new Error("dist assets directory is missing");
+}
+const { readdirSync } = await import("node:fs");
+function* walkJs(dir) {
+  for (const name of readdirSync(dir, { withFileTypes: true })) {
+    const path = join(dir, name.name);
+    if (name.isDirectory()) yield* walkJs(path);
+    else if (name.name.endsWith(".js")) yield path;
+  }
+}
+const assetHasManifest = [...walkJs(assetsDir)].some((path) =>
+  readFileSync(path, "utf8").includes("downloads.liuyidi.me/minibot/releases.json"),
+);
+if (!assetHasManifest) {
+  throw new Error("download page JS is missing the releases manifest URL");
+}
 
 const minibotPage = mustRead("minibot/index.html");
+if (!minibotPage.includes("/minibot/download/")) {
+  throw new Error("minibot overview is missing the download link");
+}
 for (const slug of ["minikb", "mini-langfuse", "mini-auth", "serverless-ship"]) {
   if (!minibotPage.includes(`/${slug}/changelog/`)) {
     throw new Error(`unified sidebar missing /${slug}/changelog/ on minibot page`);

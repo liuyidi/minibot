@@ -44,7 +44,7 @@ description: minibot 是本地优先的 AI Agent 运行时：模型、工具、�
 ## 四、建议阅读顺序
 
 1. [打开 Web](https://bot.liuyidi.me/) — 先走通一轮对话
-2. [下载 Desktop](https://bot.liuyidi.me/#/download/) — 需要本机文件和本机会话时
+2. [下载 Desktop](/minibot/download/) — 需要本机文件和本机会话时
 3. 本页简介 — 搞清系列能做什么
 4. [更新日志](/minibot/changelog/) — 当前版本用户能感知的变更
 5. 要自建再看 [GitHub README](https://github.com/liuyidi/minibot/blob/main/README.zh.md)

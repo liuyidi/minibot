@@ -1,11 +1,12 @@
 import { defineConfig } from "vitepress";
 
-function productSidebar(name, base, introLabel = "功能介绍") {
+function productSidebar(name, base, introLabel = "功能介绍", extraItems = []) {
   return {
     text: name,
     collapsed: true,
     items: [
       { text: introLabel, link: `${base}/` },
+      ...extraItems,
       { text: "更新日志", link: `${base}/changelog/` },
     ],
   };
@@ -38,7 +39,9 @@ export default defineConfig({
       { text: "GitHub", link: "https://github.com/liuyidi" },
     ],
     sidebar: [
-      productSidebar("minibot", "/minibot", "简介"),
+      productSidebar("minibot", "/minibot", "简介", [
+        { text: "下载", link: "/minibot/download/" },
+      ]),
       productSidebar("minikb", "/minikb", "简介"),
       productSidebar("mini-langfuse", "/mini-langfuse", "简介"),
       productSidebar("mini-auth", "/mini-auth"),

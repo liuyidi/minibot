@@ -9,6 +9,6 @@ outline: deep
 记录 **minibot** 面向用户的重要变更。版本采用产品叙事用的 SemVer。
 
 - [English changelog](https://github.com/liuyidi/minibot/blob/main/CHANGELOG.md)
-- [下载当前桌面端](https://bot.liuyidi.me/#/download/)
+- [下载当前桌面端](/minibot/download/)
 
 <!--@include: ../../.generated/changelog.inc.md-->

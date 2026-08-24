@@ -149,7 +149,7 @@ function onLocaleChange(event) {
         <p class="lede">{{ t("hero.lede") }}</p>
         <div class="cta">
           <a class="btn primary" href="https://bot.liuyidi.me/">{{ t("cta.agent") }}</a>
-          <a class="btn ghost" href="https://bot.liuyidi.me/#/download/">{{
+          <a class="btn ghost" href="/minibot/download/">{{
             t("cta.desktop")
           }}</a>
         </div>

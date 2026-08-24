@@ -179,6 +179,6 @@ open "/Applications/minibot.app"
 | OSS | 发布成功后自动跑 **Sync Desktop Release to OSS** |
 | 通知 | 成功后 → ServerlessShip → 飞书；OSS 同步再发一次 |
 
-公开下载页：`https://bot.liuyidi.me/#/download/`（清单 `https://downloads.liuyidi.me/minibot/releases.json`）。
+公开下载页：`https://liuyidi.me/minibot/download/`（清单 `https://downloads.liuyidi.me/minibot/releases.json`）。
 
 已安装包身份：应用名 `minibot`，bundle id `me.liuyidi.minibot.desktop`，GitHub tag `desktop-v*`。
