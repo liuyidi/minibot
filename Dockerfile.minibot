@@ -7,12 +7,14 @@ FROM docker.m.daocloud.io/library/node:20-alpine AS webui
 WORKDIR /webui
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories \
     && npm config set registry https://registry.npmmirror.com
-COPY webui/package.json ./
-RUN npm install --loglevel=error
+COPY webui/package.json webui/package-lock.json ./
+RUN npm ci --loglevel=error
 COPY webui/ ./
-# Bake OSS release manifest URL into the SPA (download page). Override at build time if needed.
+# Bake public URLs into the SPA at build time.
 ARG VITE_MINIBOT_RELEASES_URL=https://downloads.liuyidi.me/minibot/releases.json
-ENV VITE_MINIBOT_RELEASES_URL=$VITE_MINIBOT_RELEASES_URL
+ARG VITE_PORTAL_DOWNLOAD=https://liuyidi.me/minibot/download/
+ENV VITE_MINIBOT_RELEASES_URL=$VITE_MINIBOT_RELEASES_URL \
+    VITE_PORTAL_DOWNLOAD=$VITE_PORTAL_DOWNLOAD
 # vite outDir → /webui/dist
 RUN npm run build && test -f /webui/dist/index.html
 
