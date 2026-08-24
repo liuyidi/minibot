@@ -92,7 +92,12 @@ scripts/sync-desktop-release-to-oss.sh --tag desktop-v1.0.15
   (`url` + `intelUrl` in `releases.json`).
 - Windows: NSIS `.exe` installer; Authenticode sign before treating as production.
 - Linux: prefer `.deb` (AppImage / rpm also accepted by the sync script).
-- Android / iOS: still published separately; iOS should link App Store / TestFlight.
+- Android: upload a **release APK** (`production-apk` EAS profile) with
+  `scripts/publish-oss-releases.sh --android …`; the download page reads
+  `releases.json` and can QR-code the APK URL.
+- iOS: **cannot** sideload a production IPA from OSS the way Android does.
+  Put App Store / TestFlight links in `ios.url` when listed; Ad Hoc QR only
+  works on registered UDIDs. Leave `ios.url` null until then.
 - Use immutable versioned filenames; keep `releases.json` Cache-Control: no-cache.
 
 The QR code on the download page always encodes
