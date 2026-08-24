@@ -1,6 +1,6 @@
 [package]
 name = "minibot-desktop"
-version = "1.0.16"
+version = "1.0.17"
 description = "Tauri desktop — local minibot gateway shell"
 authors = ["minibot"]
 edition = "2021"

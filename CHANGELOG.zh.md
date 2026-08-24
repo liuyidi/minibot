@@ -12,6 +12,12 @@ English: [CHANGELOG.md](./CHANGELOG.md)
 <!-- #region site-changelog -->
 ## [Unreleased]
 
+## [1.0.17] - 2026-08-25
+
+### 新增
+
+- 公开下载页：`https://liuyidi.me/minibot/download/`（免登录）。旧地址 `bot.liuyidi.me/#/download/` 会跳转到新页。
+
 ### 修复
 
 - 还原 Langfuse demo 密钥跳过逻辑，恢复使用 demo 密钥时的对话 👍/👎 反馈。

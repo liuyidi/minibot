@@ -11,6 +11,12 @@ Versions follow SemVer for product narrative. Package metadata may lag until a f
 
 ## [Unreleased]
 
+## [1.0.17] - 2026-08-25
+
+### Added
+
+- Public download page at `https://liuyidi.me/minibot/download/` (no login). Legacy `bot.liuyidi.me/#/download/` redirects there.
+
 ### Fixed
 
 - Revert Langfuse demo-key skip so chat 👍/👎 feedback works again when demo keys are configured.
