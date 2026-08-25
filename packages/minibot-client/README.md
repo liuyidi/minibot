@@ -1,6 +1,6 @@
 # @liuyidi/minibot-client
 
-[![Publish @liuyidi/minibot-client](https://github.com/liuyidi/minibot/actions/workflows/publish-client.yml/badge.svg)](https://github.com/liuyidi/minibot/actions/workflows/publish-client.yml)
+[![Publish npm packages](https://github.com/liuyidi/minibot/actions/workflows/publish-npm-packages.yml/badge.svg)](https://github.com/liuyidi/minibot/actions/workflows/publish-npm-packages.yml)
 
 Shared **minibot Client API** for WebUI, React Native, Desktop, and scripts.
 
@@ -8,14 +8,28 @@ Contract: [`docs/client-api.md`](../../docs/client-api.md) (L0 bootstrap · L1 R
 
 | | |
 |--|--|
-| **Published name** | `@liuyidi/minibot-client`（GitHub Packages，scope=仓库主人） |
-| **Import alias** | `@minibot/client`（业务代码统一用这个） |
+| **Published name** | `@liuyidi/minibot-client`（public npm） |
+| **Import alias** | `@minibot/client`（业务代码可用 npm alias） |
 
 ## Install
 
-### Dev（sibling monorepo）
+### Public npm
 
-依赖左边写 alias，右边指本地目录（代码仍 `from "@minibot/client"`）：
+```bash
+npm i @liuyidi/minibot-client
+```
+
+Optional alias so app code keeps `from "@minibot/client"`:
+
+```json
+{
+  "dependencies": {
+    "@minibot/client": "npm:@liuyidi/minibot-client@1.0.17"
+  }
+}
+```
+
+### Dev（sibling monorepo）
 
 ```json
 {
@@ -27,38 +41,13 @@ Contract: [`docs/client-api.md`](../../docs/client-api.md) (L0 bootstrap · L1 R
 
 ```bash
 cd packages/minibot-client && npm install && npm run build
-cd /path/to/minibot-react-native && npm install
 ```
 
-### Production / EAS（GitHub Packages + alias）
-
-消费方根目录 `.npmrc`（scope 跟**发布名**走）：
-
-```ini
-@liuyidi:registry=https://npm.pkg.github.com
-//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}
-```
-
-依赖用 npm alias，保住 `@minibot/client` import：
-
-```json
-{
-  "dependencies": {
-    "@minibot/client": "npm:@liuyidi/minibot-client@0.1.0"
-  }
-}
-```
+Publish（维护者，`v*` tag 或 Actions → Publish npm packages；需 `NPM_TOKEN`）：
 
 ```bash
-export NODE_AUTH_TOKEN=ghp_xxx   # read:packages PAT（或登录过的 gh）
-npm install
-```
-
-发布（维护者，仓库 `liuyidi/minibot` 即可，`GITHUB_TOKEN`）：
-
-```bash
-git tag client-v0.1.0 && git push origin client-v0.1.0
-# 或 Actions → Publish @liuyidi/minibot-client → Run workflow
+# after Release creates v1.0.17
+# workflow publishes client then @liuyidi/minibot
 ```
 
 ## Usage (React Native)

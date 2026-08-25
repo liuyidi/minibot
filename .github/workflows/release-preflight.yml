@@ -8,6 +8,7 @@ on:
       - "desktop/**"
       - "minibot/**"
       - "packages/minibot-client/**"
+      - "packages/minibot-cli/**"
       - "CHANGELOG.md"
       - "CHANGELOG.zh.md"
       - ".github/workflows/release-preflight.yml"
@@ -21,6 +22,7 @@ on:
       - "desktop/**"
       - "minibot/**"
       - "packages/minibot-client/**"
+      - "packages/minibot-cli/**"
       - "CHANGELOG.md"
       - "CHANGELOG.zh.md"
       - ".github/workflows/release-preflight.yml"
@@ -70,7 +72,7 @@ jobs:
           changelog_files=()
           for file in "${changed_files[@]}"; do
             case "$file" in
-              webui/package.json|webui/package-lock.json|desktop/package.json|desktop/package-lock.json|desktop/src-tauri/Cargo.toml|desktop/src-tauri/Cargo.lock|desktop/src-tauri/tauri.conf.json|minibot/pyproject.toml|minibot/src/minibot/__init__.py|packages/minibot-client/package.json)
+              webui/package.json|webui/package-lock.json|desktop/package.json|desktop/package-lock.json|desktop/src-tauri/Cargo.toml|desktop/src-tauri/Cargo.lock|desktop/src-tauri/tauri.conf.json|minibot/pyproject.toml|minibot/src/minibot/__init__.py|packages/minibot-client/package.json|packages/minibot-cli/package.json)
                 version_files+=("$file")
                 ;;
               CHANGELOG.md|CHANGELOG.zh.md)
