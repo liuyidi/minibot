@@ -27,7 +27,7 @@ Default listen: `http://127.0.0.1:8766`
 
 ### Docker
 
-生产镜像用仓库根目录 `Dockerfile.minibot`（含 WebUI + langfuse SDK）。  
+生产镜像用仓库根目录 `Dockerfile.minibot`（Python 瘦镜像）。WebUI 由 `deploy/webui-dist` bind-mount，经 `Publish WebUI (ECS)` 发布。  
 部署见 [`../deploy/README.md`](../deploy/README.md)。
 
 ```bash

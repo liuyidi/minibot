@@ -43,7 +43,7 @@ minibot/              # Python package (agent, API, channels, tools)
 webui/                # Vite + React SPA (build → webui/dist)
 desktop/              # Desktop app (local gateway + sidecar)
 site/                 # VitePress public site (liuyidi.me / minibot overview)
-Dockerfile.minibot    # Runtime + WebUI image
+Dockerfile.minibot    # Python runtime image (WebUI mounted at deploy time)
 docs/                 # Design and phase docs
 packages/             # Optional shared client packages
 ```

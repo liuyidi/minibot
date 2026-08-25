@@ -43,7 +43,7 @@ minibot/              # Python 包（Agent、API、频道、工具）
 webui/                # Vite + React SPA（构建 → webui/dist）
 desktop/              # 桌面端（本机 gateway + sidecar）
 site/                 # VitePress 公开站（liuyidi.me / minibot 简介）
-Dockerfile.minibot    # 运行时 + WebUI 一体镜像
+Dockerfile.minibot    # Python 运行时镜像（WebUI 由 deploy/webui-dist 挂载）
 docs/                 # 设计与分阶段文档
 packages/             # 可选共享客户端包
 ```

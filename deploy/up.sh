@@ -32,6 +32,12 @@ if [[ ! -d "$LANGFUSE_SDK_DIR" ]]; then
 fi
 export LANGFUSE_SDK_DIR
 
+mkdir -p "${DIR}/webui-dist"
+if [[ ! -f "${DIR}/webui-dist/index.html" ]]; then
+  echo "WARN: ${DIR}/webui-dist/index.html missing — SPA will 404 until Publish WebUI runs" >&2
+  echo "  (or: cd ../webui && npm ci && npm run build && cp -a dist/. ${DIR}/webui-dist/)" >&2
+fi
+
 echo "LANGFUSE_SDK_DIR=$LANGFUSE_SDK_DIR"
 "${COMPOSE[@]}" up -d --build "$@"
 

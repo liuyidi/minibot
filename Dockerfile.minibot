@@ -1,24 +1,9 @@
-# Build context: monorepo root (contains webui/ + minibot/).
+# Build context: monorepo root (contains minibot/).
+# WebUI is NOT baked into this image — Publish WebUI (ECS) promotes
+# deploy/webui-dist on the host and docker-compose bind-mounts it.
 # additional_contexts:
 #   langfuse_sdk: path to mini-langfuse/sdk-python
 
-# --- WebUI ---
-FROM docker.m.daocloud.io/library/node:20-alpine AS webui
-WORKDIR /webui
-RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories \
-    && npm config set registry https://registry.npmmirror.com
-COPY webui/package.json webui/package-lock.json ./
-RUN npm ci --loglevel=error
-COPY webui/ ./
-# Bake public URLs into the SPA at build time.
-ARG VITE_MINIBOT_RELEASES_URL=https://downloads.liuyidi.me/minibot/releases.json
-ARG VITE_PORTAL_DOWNLOAD=https://liuyidi.me/minibot/download/
-ENV VITE_MINIBOT_RELEASES_URL=$VITE_MINIBOT_RELEASES_URL \
-    VITE_PORTAL_DOWNLOAD=$VITE_PORTAL_DOWNLOAD
-# vite outDir → /webui/dist
-RUN npm run build && test -f /webui/dist/index.html
-
-# --- minibot runtime ---
 FROM docker.m.daocloud.io/library/python:3.11-slim
 
 RUN set -eux; \
@@ -37,13 +22,15 @@ WORKDIR /app
 
 COPY minibot/pyproject.toml minibot/README.md ./
 COPY minibot/src ./src
-COPY --from=webui /webui/dist /app/webui-dist
 
 COPY --from=langfuse_sdk . /tmp/sdk-python
 
 RUN pip install --no-cache-dir -i https://mirrors.aliyun.com/pypi/simple/ --trusted-host mirrors.aliyun.com --upgrade pip \
     && pip install --no-cache-dir -i https://mirrors.aliyun.com/pypi/simple/ --trusted-host mirrors.aliyun.com '.[e2b,feishu]' /tmp/sdk-python \
     && rm -rf /tmp/sdk-python /root/.cache/pip
+
+# Placeholder so the path exists if the host volume is empty at first start.
+RUN mkdir -p /app/webui-dist
 
 ENV MINIBOT_SERVER_HOST=0.0.0.0 \
     MINIBOT_SERVER_PORT=8766 \

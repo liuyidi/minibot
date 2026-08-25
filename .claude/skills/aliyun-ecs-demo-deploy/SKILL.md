@@ -27,49 +27,43 @@ description: >-
 - **禁止**：本机 `ssh` / `rsync` / `scp` 直接改服务器；在 ECS 上手动 `git pull` + `docker compose` / `./up.sh` 当发布路径；绕过 workflow 的「热修」。
 - **例外**：仅当用户**明确**要求排障（看日志、查挂载）且**不是**发布代码时，才可只读 SSH。排障后若需上线代码，仍走 push → workflow。
 
-Workflows：
+## Workflows（三者分开）
 
-| 产物 | Workflow |
-|------|----------|
-| `liuyidi.me`（VitePress site） | `.github/workflows/publish-site.yml`（`Publish Site (ECS)`） |
-| `bot.liuyidi.me`（runtime + WebUI） | `.github/workflows/publish-web-server-ecs.yml`（`Publish Web & Server (ECS)`） |
+| 产物 | Workflow | 触发 path |
+|------|----------|-----------|
+| `liuyidi.me` site | `publish-site.yml`（`Publish Site (ECS)`） | `site/**` |
+| `bot` WebUI SPA | `publish-webui.yml`（`Publish WebUI (ECS)`） | `webui/**` |
+| `bot` Python server | `publish-server-ecs.yml`（`Publish Server (ECS)`） | `minibot/**`、`Dockerfile.minibot` |
 
-两者共用 concurrency group `aliyun-ecs-demo-<ref>`，避免同机 `git reset` / 构建互相踩。
+共用 concurrency group `aliyun-ecs-demo-<ref>`，避免同机 `git reset` 互踩。
+
+- **Site / WebUI**：GitHub Actions 构建 → scp → `promote-*.sh`（不重建 Docker 镜像）。
+- **Server**：ECS 上 `docker compose build minibot`（瘦 Python 镜像；WebUI 经 `deploy/webui-dist` bind-mount）。
 
 ### Site（liuyidi.me）
 
-触发：
-
-1. `git push origin main`（命中 `site/**`、`deploy/build-site.sh`、或该 workflow 自身）
-2. 或：`gh workflow run "Publish Site (ECS)" --ref main`
-
 ```bash
 git push -u origin HEAD
-# 若 path 未命中：
+# path 未命中时：
 gh workflow run "Publish Site (ECS)" --ref main
-gh run list --workflow "Publish Site (ECS)" --limit 3
 gh run watch
 ```
 
-验收：
+验收：`https://liuyidi.me/`、`/minibot/`、`/minibot/download/`
+
+### WebUI（bot.liuyidi.me SPA）
 
 ```bash
-curl -fsS -o /dev/null -w "landing %{http_code}\n" https://liuyidi.me/
-curl -fsS -o /dev/null -w "minibot %{http_code}\n" https://liuyidi.me/minibot/
-curl -fsS -o /dev/null -w "download %{http_code}\n" https://liuyidi.me/minibot/download/
+gh workflow run "Publish WebUI (ECS)" --ref main
+gh run watch
 ```
 
-### Bot（bot.liuyidi.me）
+验收：`https://bot.liuyidi.me/`（无需重启容器，bind-mount 即时生效）
 
-触发：
-
-1. `git push origin main`（命中 `minibot/**`、`webui/**`、`Dockerfile.minibot`、该 workflow 自身）
-2. 或：`gh workflow run "Publish Web & Server (ECS)" --ref main`
+### Server（Python runtime）
 
 ```bash
-git push -u origin HEAD
-gh workflow run "Publish Web & Server (ECS)" --ref main   # 仅当 path 未命中时
-gh run list --workflow "Publish Web & Server (ECS)" --limit 3
+gh workflow run "Publish Server (ECS)" --ref main
 gh run watch
 ```
 
@@ -83,17 +77,15 @@ curl -fsS -o /dev/null -w "bot %{http_code}\n" https://bot.liuyidi.me/
 ## Agent 发布步骤（通用）
 
 ```bash
-# 1) 确认改动已 commit 且已 push 到 main
 git status -sb
 git push -u origin HEAD
-
-# 2) 按改动选 workflow（见上表）；path 未自动触发时再 gh workflow run
-# 3) gh run watch
+# 按改动选 workflow（见上表）；path 未自动触发时再 gh workflow run
+gh run watch
 ```
 
 ## 约定
 
 1. 不要在阿里云 compose 里起 mlf / minikb / auth。
 2. 不要把 pem / 生产 `.env` 写入 commit。
-3. 改了 minikb / mlf / auth / serverless-ship → 换仓读对应 skill，不要在本仓 workflow 里混发。
-4. **只改 site** 时只跑 `Publish Site (ECS)`，不要顺手触发 bot 全量镜像重建。
+3. 改了 minikb / mlf / auth / serverless-ship → 换仓读对应 skill。
+4. **只改 site** → 只跑 Site；**只改 webui** → 只跑 WebUI；**只改 Python** → 只跑 Server。不要顺手触发无关全量重建。

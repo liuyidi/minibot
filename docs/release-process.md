@@ -79,11 +79,13 @@ This document describes the current release flow for `minibot`.
 - Updates the public release manifest.
 - Sends the follow-up Feishu notification.
 
-### `Publish Web & Server (ECS)`
+### `Publish Site / WebUI / Server (ECS)`
 
-- Separate manual workflow for the Web / server side.
-- Deploys the ECS host and sends the deployment notification to Feishu.
-- This is not the same as the release tag flow.
+- **Site** (`publish-site.yml`): VitePress → `liuyidi.me`（CI 构建 + scp）。
+- **WebUI** (`publish-webui.yml`): React SPA → `deploy/webui-dist` bind-mount（不重建镜像）。
+- **Server** (`publish-server-ecs.yml`): Python 瘦镜像 `docker compose build` → `bot.liuyidi.me`。
+- 各自 path 触发；部署通知走 Feishu / ServerlessShip。
+- 与 release tag 流程无关。
 
 ## Local guardrails
 

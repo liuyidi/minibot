@@ -1,7 +1,8 @@
-# minibot production stack (Aliyun ECS → bot.liuyidi.me + WebUI)
+# minibot production stack (Aliyun ECS → bot.liuyidi.me)
 #
 # Layout on host:
 #   /opt/demo/minibot/              this repo
+#   /opt/demo/minibot/deploy/webui-dist  WebUI SPA (Publish WebUI)
 #   /opt/demo/mini-langfuse/        only needed at image build time (sdk-python)
 #
 # From this directory:
@@ -17,8 +18,6 @@ services:
     build:
       context: ..
       dockerfile: Dockerfile.minibot
-      args:
-        VITE_MINIBOT_RELEASES_URL: ${VITE_MINIBOT_RELEASES_URL:-https://downloads.liuyidi.me/minibot/releases.json}
       additional_contexts:
         # Build-time only. Runtime talks to https://mlf.liuyidi.me (Tencent).
         langfuse_sdk: ${LANGFUSE_SDK_DIR:-../../mini-langfuse/sdk-python}
@@ -50,6 +49,8 @@ services:
       MINIBOT_SERVER_E2B_API_KEY: ${MINIBOT_SERVER_E2B_API_KEY:-${E2B_API_KEY:-}}
     volumes:
       - minibot-data:/data
+      # Promoted by Publish WebUI (ECS); not baked into the Python image.
+      - ./webui-dist:/app/webui-dist:ro
     ports:
       - "127.0.0.1:8766:8766"
     healthcheck:

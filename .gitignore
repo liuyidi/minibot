@@ -22,6 +22,10 @@ webui/coverage/
 webui/.vite/
 *.tsbuildinfo
 
+# ECS host WebUI promote target (Publish WebUI)
+deploy/webui-dist/
+deploy/webui-dist-staging/
+
 # public site (VitePress → https://liuyidi.me)
 site/node_modules/
 site/.vitepress/dist/

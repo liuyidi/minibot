@@ -1,29 +1,29 @@
-name: Publish Web & Server (ECS)
+name: Publish WebUI (ECS)
 
-# Rebuild minibot Python runtime + WebUI on the Aliyun ECS demo host
-# (bot.liuyidi.me), then notify Feishu via ServerlessShip.
-# Public site (liuyidi.me) is published by publish-site.yml.
+# Build the React WebUI on GitHub Actions, then promote dist on Aliyun ECS
+# (served by minibot at bot.liuyidi.me via bind-mount). Does not rebuild the
+# Python server image — use Publish Server (ECS) for that.
 #
-# Trigger: push to main touching server/WebUI/Docker paths, or Actions → Run workflow.
+# Trigger: push to main touching webui/** (or promote script / this workflow),
+# or Actions → Run workflow.
 
 on:
   workflow_dispatch:
   push:
     branches: [main]
     paths:
-      - "minibot/**"
       - "webui/**"
-      - "Dockerfile.minibot"
-      - ".github/workflows/publish-web-server-ecs.yml"
+      - "deploy/promote-webui.sh"
+      - ".github/workflows/publish-webui.yml"
 
 concurrency:
   group: aliyun-ecs-demo-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
-  publish-ecs:
+  publish-webui:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 25
     permissions:
       contents: read
     env:
@@ -39,6 +39,32 @@ jobs:
         id: meta
         run: |
           echo "short_sha=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: webui/package-lock.json
+
+      - name: Build WebUI
+        working-directory: webui
+        env:
+          VITE_MINIBOT_RELEASES_URL: https://downloads.liuyidi.me/minibot/releases.json
+          VITE_PORTAL_DOWNLOAD: https://liuyidi.me/minibot/download/
+        run: |
+          npm ci
+          npm run build
+          test -f dist/index.html
+
+      - name: Stage dist for upload
+        run: |
+          rm -rf deploy/webui-dist-staging
+          mkdir -p deploy/webui-dist-staging
+          cp -a webui/dist/. deploy/webui-dist-staging/
 
       - name: Pull minibot commit on ECS
         uses: appleboy/ssh-action@v1.2.2
@@ -56,37 +82,23 @@ jobs:
             git reset --hard "${{ github.sha }}"
             echo "HEAD=$(git rev-parse --short HEAD)"
             git log -1 --oneline
+            rm -rf deploy/webui-dist-staging
+            mkdir -p deploy/webui-dist-staging
 
-      - name: Build minibot image on ECS
-        uses: appleboy/ssh-action@v1.2.2
+      - name: Upload WebUI dist to ECS
+        uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ env.ECS_HOST }}
           username: ${{ env.ECS_USER }}
           key: ${{ secrets.ECS_SSH_PRIVATE_KEY }}
           port: ${{ env.ECS_SSH_PORT }}
-          command_timeout: 35m
-          script: |
-            set -euo pipefail
-            cd /opt/demo/minibot/deploy
-            export LANGFUSE_SDK_DIR=/opt/demo/mini-langfuse/sdk-python
-            docker compose -f docker-compose.yml --env-file .env build minibot
+          source: "deploy/webui-dist-staging"
+          target: "/opt/demo/minibot/deploy"
+          strip_components: 1
+          overwrite: true
+          rm: true
 
-      - name: Restart minibot container
-        uses: appleboy/ssh-action@v1.2.2
-        with:
-          host: ${{ env.ECS_HOST }}
-          username: ${{ env.ECS_USER }}
-          key: ${{ secrets.ECS_SSH_PRIVATE_KEY }}
-          port: ${{ env.ECS_SSH_PORT }}
-          command_timeout: 5m
-          script: |
-            set -euo pipefail
-            cd /opt/demo/minibot/deploy
-            export LANGFUSE_SDK_DIR=/opt/demo/mini-langfuse/sdk-python
-            docker compose -f docker-compose.yml --env-file .env up -d minibot
-            docker ps --filter name=minibot --format 'table {{.Names}}\t{{.Status}}\t{{.Image}}'
-
-      - name: Wait for minibot /health
+      - name: Promote WebUI dist on ECS
         uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ env.ECS_HOST }}
@@ -96,23 +108,13 @@ jobs:
           command_timeout: 5m
           script: |
             set -euo pipefail
-            ok=0
-            for i in $(seq 1 40); do
-              if curl -fsS --max-time 3 http://127.0.0.1:8766/health >/tmp/minibot-health.json; then
-                echo "health ok after ${i} attempt(s): $(cat /tmp/minibot-health.json)"
-                ok=1
-                break
-              fi
-              echo "waiting for minibot health (${i}/40)..."
-              sleep 3
-            done
-            if [[ "$ok" -ne 1 ]]; then
-              echo "minibot health check failed; recent logs:"
-              docker logs minibot --tail 120 || true
-              exit 1
-            fi
+            cd /opt/demo/minibot
+            bash deploy/promote-webui.sh
+            test -f deploy/webui-dist/index.html
+            # Bind-mount is live; no container rebuild needed.
+            curl -fsS -o /dev/null -w "local webui %{http_code}\n" http://127.0.0.1:8766/
 
-      - name: Verify WebUI and public URL
+      - name: Verify public bot URL
         uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ env.ECS_HOST }}
@@ -122,12 +124,11 @@ jobs:
           command_timeout: 2m
           script: |
             set -euo pipefail
-            curl -fsS -o /dev/null -w "local webui %{http_code}\n" http://127.0.0.1:8766/
-            curl -fsS -o /dev/null -w "public bot %{http_code}\n" https://bot.liuyidi.me/ || true
+            curl -fsS -o /dev/null -w "public bot %{http_code}\n" https://bot.liuyidi.me/
 
   notify-serverlessship:
-    needs: publish-ecs
-    if: ${{ needs.publish-ecs.result == 'success' }}
+    needs: publish-webui
+    if: ${{ needs.publish-webui.result == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -149,13 +150,13 @@ jobs:
           serverlessship_release_url="${SERVERLESSSHIP_RELEASE_URL:-https://serverless-ship.liuyidi.me/api/releases}"
 
           payload="$(node -e 'process.stdout.write(JSON.stringify({
-            project: "minibot",
+            project: "minibot-webui",
             version: process.env.RELEASE_VERSION,
             tag: process.env.RELEASE_SHA,
             repository: process.env.GITHUB_REPOSITORY,
             releaseUrl: process.env.RELEASE_URL,
             workflowUrl: process.env.WORKFLOW_URL,
-            channel: "ECS Demo",
+            channel: "WebUI",
           }));')"
 
           response="$(
@@ -169,7 +170,7 @@ jobs:
 
           echo "$response"
         env:
-          RELEASE_VERSION: ${{ needs.publish-ecs.outputs.short_sha }}
+          RELEASE_VERSION: ${{ needs.publish-webui.outputs.short_sha }}
           RELEASE_SHA: ${{ github.sha }}
           RELEASE_URL: https://bot.liuyidi.me/
           WORKFLOW_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}

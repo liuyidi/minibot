@@ -1,22 +1,21 @@
 # minibot 部署（阿里云 ECS）
 
-本目录是 **minibot + WebUI + `liuyidi.me` 公开站** 的唯一部署入口。  
+本目录是 **minibot server + WebUI 挂载 + `liuyidi.me` 公开站** 的部署入口。  
 mini-langfuse 在腾讯云（`https://mlf.liuyidi.me`）；minikb 在火山引擎直连 TLS（`https://kb.liuyidi.me`），本机 nginx **不要**再反代 kb。
 
-| 域名 | 本机角色 |
-|------|----------|
-| https://liuyidi.me | VitePress SSG（`site/` → `site/.vitepress/dist`） |
-| https://bot.liuyidi.me | minibot `:8766` |
-| https://kb.liuyidi.me | **不在本机**（火山引擎） |
-| https://mlf.liuyidi.me | **不在本机**（腾讯云） |
+| 域名 | 本机角色 | 发布 |
+|------|----------|------|
+| https://liuyidi.me | VitePress SSG（`site/` → `site/.vitepress/dist`） | `Publish Site (ECS)` |
+| https://bot.liuyidi.me | minibot `:8766` + 挂载 `deploy/webui-dist` | Server / WebUI 分开 |
 
 ECS：`root@116.62.35.76`，代码 `/opt/demo/minibot/`。  
 `/opt/demo/mini-langfuse/` 只在 **构建镜像** 时提供 `sdk-python`（`LANGFUSE_SDK_DIR`），不要在阿里云再起 mlf。
 
 ## 现有资产
 
-- `docker-compose.yml` / `up.sh` / `.env.example`
-- `build-site.sh` — ECS 上用 `node:22` 容器构建公开站（`../site/` → `../site/.vitepress/dist/`）
+- `docker-compose.yml` / `up.sh` / `.env.example` — Python 瘦镜像；WebUI bind-mount `./webui-dist`
+- `promote-site.sh` / `promote-webui.sh` — CI 上传后原子替换静态产物
+- `build-site.sh` — 可选：ECS 本机构建 site（生产优先 CI 构建）
 - `nginx.liuyidi.me.conf.example` — apex + bot（不含 kb / mlf）
 - `setup-swap.sh` / `setup-docker-mirror.sh` — 2C2G 宿主机一次性脚本
 
