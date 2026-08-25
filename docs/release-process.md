@@ -63,7 +63,13 @@ This document describes the current release flow for `minibot`.
 ### `Publish npm packages`
 
 - Publishes `@liuyidi/minibot-client` then `@liuyidi/minibot` to registry.npmjs.org from the same `v<version>` tag (client first so the CLI dependency resolves).
-- Requires repo secret `NPM_TOKEN` (npm automation token with publish rights for `@liuyidi/*`).
+- Uses npm **Trusted Publishing** (OIDC): workflow needs `permissions.id-token: write`; no long-lived `NPM_TOKEN` for publish.
+- On npmjs.com, each package → Settings → Trusted Publisher → GitHub Actions:
+  - Organization or user: `liuyidi`
+  - Repository: `minibot`
+  - Workflow filename: `publish-npm-packages.yml`
+  - Allowed actions: `npm publish`
+- First-time bootstrap: publish each package once from a trusted machine (interactive 2FA), then add the Trusted Publisher; after that CI owns releases.
 - Replaces the former GitHub Packages publish for the client; do not dual-write.
 
 ### `Sync Desktop Release to OSS`
