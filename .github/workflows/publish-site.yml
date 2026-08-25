@@ -1,9 +1,9 @@
 name: Publish Site (ECS)
 
-# Rebuild the public VitePress site on Aliyun ECS (liuyidi.me).
-# Does not rebuild minibot / WebUI — use Publish Web & Server (ECS) for that.
+# Build the public VitePress site on GitHub Actions, then promote dist on
+# Aliyun ECS (liuyidi.me). Does not rebuild minibot / WebUI.
 #
-# Trigger: push to main touching site/** (or deploy/build-site.sh / this workflow),
+# Trigger: push to main touching site/** (or deploy scripts / this workflow),
 # or Actions → Run workflow.
 
 on:
@@ -13,6 +13,7 @@ on:
     paths:
       - "site/**"
       - "deploy/build-site.sh"
+      - "deploy/promote-site.sh"
       - ".github/workflows/publish-site.yml"
 
 concurrency:
@@ -22,7 +23,7 @@ concurrency:
 jobs:
   publish-site:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 25
     permissions:
       contents: read
     env:
@@ -38,6 +39,23 @@ jobs:
         id: meta
         run: |
           echo "short_sha=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+
+      - name: Build site
+        working-directory: site
+        run: |
+          npm ci
+          npm run docs:build -- --outDir .vitepress/dist-staging
+          node scripts/check-dist.mjs .vitepress/dist-staging
 
       - name: Pull minibot commit on ECS
         uses: appleboy/ssh-action@v1.2.2
@@ -55,19 +73,34 @@ jobs:
             git reset --hard "${{ github.sha }}"
             echo "HEAD=$(git rev-parse --short HEAD)"
             git log -1 --oneline
+            rm -rf site/.vitepress/dist-staging
+            mkdir -p site/.vitepress/dist-staging
 
-      - name: Build public site (liuyidi.me)
+      - name: Upload site dist to ECS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ env.ECS_HOST }}
+          username: ${{ env.ECS_USER }}
+          key: ${{ secrets.ECS_SSH_PRIVATE_KEY }}
+          port: ${{ env.ECS_SSH_PORT }}
+          source: "site/.vitepress/dist-staging"
+          target: "/opt/demo/minibot/site/.vitepress"
+          strip_components: 2
+          overwrite: true
+          rm: true
+
+      - name: Promote site dist on ECS
         uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ env.ECS_HOST }}
           username: ${{ env.ECS_USER }}
           key: ${{ secrets.ECS_SSH_PRIVATE_KEY }}
           port: ${{ env.ECS_SSH_PORT }}
-          command_timeout: 30m
+          command_timeout: 5m
           script: |
             set -euo pipefail
             cd /opt/demo/minibot
-            bash deploy/build-site.sh
+            bash deploy/promote-site.sh
             test -f site/.vitepress/dist/index.html
             test -f site/.vitepress/dist/minibot/download/index.html
             test -f site/.vitepress/dist/minibot/web/index.html
@@ -86,6 +119,7 @@ jobs:
             curl -fsS -o /dev/null -w "public site %{http_code}\n" https://liuyidi.me/
             curl -fsS -o /dev/null -w "public minibot %{http_code}\n" https://liuyidi.me/minibot/
             curl -fsS -o /dev/null -w "public download %{http_code}\n" https://liuyidi.me/minibot/download/
+            curl -fsS -o /dev/null -w "public web %{http_code}\n" https://liuyidi.me/minibot/web/
 
   notify-serverlessship:
     needs: publish-site

@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Build https://liuyidi.me VitePress output into site/.vitepress/dist.
 # Uses a one-shot Node container so the Aliyun host does not need Node.
+# Prefer Publish Site (ECS) which builds on GitHub Actions and promotes
+# dist via promote-site.sh — this script remains for manual / fallback use.
 # On success, atomically replaces dist so a failed build keeps the previous site.
 set -euo pipefail
 
@@ -11,18 +13,15 @@ STAGING="$ROOT/site/${STAGING_REL}"
 CACHE_DIR="${ROOT}/site/.cache/npm"
 mkdir -p "${CACHE_DIR}"
 
+# Aliyun ECS often cannot reach registry.npmjs.org reliably; prefer npmmirror.
+NPM_REGISTRY="${NPM_REGISTRY:-https://registry.npmmirror.com}"
+
 docker run --rm \
+  -e "npm_config_registry=${NPM_REGISTRY}" \
   -v "${ROOT}:/repo" \
   -v "${CACHE_DIR}:/root/.npm" \
   -w /repo/site \
   node:22-alpine \
   sh -c "npm ci && npm run docs:build -- --outDir ${STAGING_REL} && node scripts/check-dist.mjs ${STAGING_REL}"
 
-if [[ ! -f "${STAGING}/index.html" ]]; then
-  echo "build-site: staging is missing index.html" >&2
-  exit 1
-fi
-
-rm -rf "${LIVE}"
-mv "${STAGING}" "${LIVE}"
-echo "build-site: wrote ${LIVE}"
+bash "${ROOT}/deploy/promote-site.sh" "${STAGING}"
