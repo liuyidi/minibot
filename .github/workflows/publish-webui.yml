@@ -110,14 +110,23 @@ jobs:
           script: |
             set -euo pipefail
             cd /opt/demo/minibot
-            # Re-sync tracked files (keeps untracked staging/.env). Earlier scp rm:true
-            # against deploy/ wiped scripts; never use rm on that directory again.
+            # Re-sync tracked files (keeps untracked staging/.env).
             git fetch origin "${{ github.sha }}"
             git reset --hard "${{ github.sha }}"
             test -f deploy/webui-dist-staging/index.html
             bash deploy/promote-webui.sh
             test -f deploy/webui-dist/index.html
-            # Bind-mount is live; no container rebuild needed.
+            # If a prior rm+mv left the container on a deleted mount inode, remount.
+            if ! curl -fsS -o /dev/null http://127.0.0.1:8766/; then
+              echo "SPA 500/unreachable — restarting minibot to remount webui-dist"
+              docker restart minibot
+              for i in $(seq 1 30); do
+                if curl -fsS http://127.0.0.1:8766/health >/dev/null; then
+                  break
+                fi
+                sleep 2
+              done
+            fi
             curl -fsS -o /dev/null -w "local webui %{http_code}\n" http://127.0.0.1:8766/
 
       - name: Verify public bot URL
