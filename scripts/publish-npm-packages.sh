@@ -3,6 +3,10 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 REGISTRY="https://registry.npmjs.org"
+OTP_ARGS=()
+if [[ -n "${NPM_OTP:-}" ]]; then
+  OTP_ARGS=(--otp "$NPM_OTP")
+fi
 
 publish_pkg() {
   local dir="$1"
@@ -11,7 +15,7 @@ publish_pkg() {
     cd "$dir"
     npm run build
     npm test
-    npm publish --access public --registry "$REGISTRY"
+    npm publish --access public --registry "$REGISTRY" "${OTP_ARGS[@]}"
   )
 }
 
