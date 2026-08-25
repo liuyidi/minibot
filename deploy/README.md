@@ -14,7 +14,7 @@ ECS：`root@116.62.35.76`，代码 `/opt/demo/minibot/`。
 ## 现有资产
 
 - `docker-compose.yml` / `up.sh` / `.env.example` — Python 瘦镜像；WebUI bind-mount `./webui-dist`
-- `promote-site.sh` / `promote-webui.sh` — CI 上传后原子替换静态产物
+- `promote-site.sh` / `promote-webui.sh` — CI 上传后切换静态产物（WebUI 必须原地写目录，不能换 mount inode）
 - `build-site.sh` — 可选：ECS 本机构建 site（生产优先 CI 构建）
 - `nginx.liuyidi.me.conf.example` — apex + bot（不含 kb / mlf）
 - `setup-swap.sh` / `setup-docker-mirror.sh` — 2C2G 宿主机一次性脚本

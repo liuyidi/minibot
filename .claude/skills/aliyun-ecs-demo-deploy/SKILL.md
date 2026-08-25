@@ -58,7 +58,7 @@ gh workflow run "Publish WebUI (ECS)" --ref main
 gh run watch
 ```
 
-验收：`https://bot.liuyidi.me/`（无需重启容器，bind-mount 即时生效）
+验收：`https://bot.liuyidi.me/`（原地更新 bind-mount；若曾换过目录 inode 会自动 `docker restart`）
 
 ### Server（Python runtime）
 
