@@ -2,34 +2,34 @@
   "schemaVersion": 1,
   "product": "minibot",
   "android": {
-    "version": "1.0.4",
-    "fileName": "minibot-android-1.0.4-release.apk",
-    "size": "80 MB",
-    "url": "https://downloads.liuyidi.me/minibot-android-1.0.4-release.apk"
+    "version": "1.0.7",
+    "fileName": "minibot-android-v1.0.7.apk",
+    "size": "81M",
+    "url": "https://downloads.liuyidi.me/minibot/android/minibot-android-v1.0.7.apk"
   },
   "ios": {
     "version": null,
     "url": null
   },
   "macos": {
-    "version": "1.0.13",
-    "fileName": "minibot-1.0.13-minibot.V2_1.0.13_aarch64.dmg",
-    "url": "https://downloads.liuyidi.me/minibot/macos/minibot-1.0.13-minibot.V2_1.0.13_aarch64.dmg",
-    "size": "47M",
+    "version": "1.0.15",
+    "fileName": "minibot-1.0.15-minibot_1.0.15_arm64.dmg",
+    "url": "https://downloads.liuyidi.me/minibot/macos/minibot-1.0.15-minibot_1.0.15_arm64.dmg",
+    "size": "71M",
     "intelFileName": "minibot-1.0.13-minibot.V2_1.0.13_x64.dmg",
     "intelUrl": "https://downloads.liuyidi.me/minibot/macos/minibot-1.0.13-minibot.V2_1.0.13_x64.dmg",
     "intelSize": "47M"
   },
   "windows": {
-    "version": "1.0.13",
-    "url": "https://downloads.liuyidi.me/minibot/windows/minibot-1.0.13-minibot.V2_1.0.13_x64-setup.exe",
-    "size": "35M",
-    "fileName": "minibot-1.0.13-minibot.V2_1.0.13_x64-setup.exe"
+    "version": "1.0.15",
+    "url": "https://downloads.liuyidi.me/minibot/windows/minibot-1.0.15-minibot_1.0.15_x64-setup.exe",
+    "size": "36M",
+    "fileName": "minibot-1.0.15-minibot_1.0.15_x64-setup.exe"
   },
   "linux": {
-    "version": "1.0.13",
-    "url": "https://downloads.liuyidi.me/minibot/linux/minibot-1.0.13-minibot.V2_1.0.13_amd64.deb",
+    "version": "1.0.15",
+    "url": "https://downloads.liuyidi.me/minibot/linux/minibot-1.0.15-minibot_1.0.15_amd64.deb",
     "size": "53M",
-    "fileName": "minibot-1.0.13-minibot.V2_1.0.13_amd64.deb"
+    "fileName": "minibot-1.0.15-minibot_1.0.15_amd64.deb"
   }
 }
