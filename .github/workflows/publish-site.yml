@@ -104,7 +104,8 @@ jobs:
             test -f site/.vitepress/dist/index.html
             test -f site/.vitepress/dist/minibot/download/index.html
             test -f site/.vitepress/dist/minibot/web/index.html
-            curl -fsS -o /dev/null -w "local site %{http_code}\n" http://127.0.0.1/
+            # Port 80 without Host may hit a different vhost; check with Host header.
+            curl -fsS -o /dev/null -w "local site %{http_code}\n" -H "Host: liuyidi.me" https://127.0.0.1/ -k
 
       - name: Verify public site URLs
         uses: appleboy/ssh-action@v1.2.2
