@@ -1,4 +1,4 @@
-import type { InboundEvent, MinibotWsClient } from "@minibot/client";
+import type { InboundEvent, MinibotWsClient } from "@liuyidi/minibot-client";
 import chalk from "chalk";
 
 export type StreamTurnOptions = {

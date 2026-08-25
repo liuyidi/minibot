@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import type { InboundEvent, MinibotWsClient } from "@minibot/client";
+import type { InboundEvent, MinibotWsClient } from "@liuyidi/minibot-client";
 import { streamTurn } from "./stream-turn.js";
 
 function fakeWs(events: InboundEvent[]): { ws: MinibotWsClient; send: ReturnType<typeof vi.fn> } {

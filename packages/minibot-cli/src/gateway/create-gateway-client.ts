@@ -1,4 +1,4 @@
-import { createClient, type MinibotClient } from "@minibot/client";
+import { createClient, type MinibotClient } from "@liuyidi/minibot-client";
 import type { ResolvedCredentials } from "./credentials.js";
 
 export type CreateGatewayClientOptions = {
@@ -7,7 +7,7 @@ export type CreateGatewayClientOptions = {
 };
 
 /**
- * Wire CLI credentials into ``@minibot/client``.
+ * Wire CLI credentials into ``@liuyidi/minibot-client``.
  * Secret wins; otherwise mini-auth access token is sent as Bearer (Phase B).
  */
 export function createGatewayClient(options: CreateGatewayClientOptions): MinibotClient {

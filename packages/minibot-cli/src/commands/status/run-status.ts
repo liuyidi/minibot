@@ -1,5 +1,5 @@
 import chalk from "chalk";
-import { ApiError } from "@minibot/client";
+import { ApiError } from "@liuyidi/minibot-client";
 import { loadEnv } from "../../config/env.js";
 import { getSessionStore } from "../../auth/session/store.js";
 import {

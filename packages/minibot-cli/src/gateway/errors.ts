@@ -1,4 +1,4 @@
-import { ApiError } from "@minibot/client";
+import { ApiError } from "@liuyidi/minibot-client";
 import chalk from "chalk";
 
 export function printGatewayHint(baseUrl?: string): void {
