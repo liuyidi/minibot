@@ -85,6 +85,7 @@ jobs:
             rm -rf deploy/webui-dist-staging
             mkdir -p deploy/webui-dist-staging
 
+      # Do NOT set rm:true against deploy/ — that wipes compose, .env, and scripts.
       - name: Upload WebUI dist to ECS
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -93,10 +94,10 @@ jobs:
           key: ${{ secrets.ECS_SSH_PRIVATE_KEY }}
           port: ${{ env.ECS_SSH_PORT }}
           source: "deploy/webui-dist-staging"
-          target: "/opt/demo/minibot/deploy"
-          strip_components: 1
+          target: "/opt/demo/minibot"
+          strip_components: 0
           overwrite: true
-          rm: true
+          rm: false
 
       - name: Promote WebUI dist on ECS
         uses: appleboy/ssh-action@v1.2.2
@@ -109,6 +110,11 @@ jobs:
           script: |
             set -euo pipefail
             cd /opt/demo/minibot
+            # Re-sync tracked files (keeps untracked staging/.env). Earlier scp rm:true
+            # against deploy/ wiped scripts; never use rm on that directory again.
+            git fetch origin "${{ github.sha }}"
+            git reset --hard "${{ github.sha }}"
+            test -f deploy/webui-dist-staging/index.html
             bash deploy/promote-webui.sh
             test -f deploy/webui-dist/index.html
             # Bind-mount is live; no container rebuild needed.
