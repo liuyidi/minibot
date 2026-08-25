@@ -8,9 +8,12 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 STAGING_REL=".vitepress/dist-staging"
 LIVE="$ROOT/site/.vitepress/dist"
 STAGING="$ROOT/site/${STAGING_REL}"
+CACHE_DIR="${ROOT}/site/.cache/npm"
+mkdir -p "${CACHE_DIR}"
 
 docker run --rm \
   -v "${ROOT}:/repo" \
+  -v "${CACHE_DIR}:/root/.npm" \
   -w /repo/site \
   node:22-alpine \
   sh -c "npm ci && npm run docs:build -- --outDir ${STAGING_REL} && node scripts/check-dist.mjs ${STAGING_REL}"

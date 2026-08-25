@@ -27,6 +27,7 @@ site/node_modules/
 site/.vitepress/dist/
 site/.vitepress/dist-staging/
 site/.vitepress/cache/
+site/.cache/
 site/.generated/
 
 # Python bytecode & caches

@@ -22,7 +22,7 @@ concurrency:
 jobs:
   publish-site:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 45
     permissions:
       contents: read
     env:
@@ -63,7 +63,7 @@ jobs:
           username: ${{ env.ECS_USER }}
           key: ${{ secrets.ECS_SSH_PRIVATE_KEY }}
           port: ${{ env.ECS_SSH_PORT }}
-          command_timeout: 15m
+          command_timeout: 30m
           script: |
             set -euo pipefail
             cd /opt/demo/minibot
