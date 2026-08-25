@@ -28,6 +28,7 @@ description: minibot 是本地优先的 AI Agent 运行时：模型、工具、�
 ## 二、适用场景
 
 - **浏览器**：打开 [bot.liuyidi.me](https://bot.liuyidi.me/)，登录后直接对话
+- **命令行**：`npm i -g @liuyidi/minibot`，然后 `minibot login && minibot chat`（详见 [CLI](/minibot/cli/)）
 - **本机桌面**：安装 Desktop，本机 gateway，会话留在这台电脑
 - **IM**：飞书 / 微信里把任务交给同一个 runtime
 - **自建**：本机或 Docker 跑 minibot，配置见 [GitHub README](https://github.com/liuyidi/minibot/blob/main/README.zh.md)
@@ -44,7 +45,8 @@ description: minibot 是本地优先的 AI Agent 运行时：模型、工具、�
 ## 四、建议阅读顺序
 
 1. [打开 Web](https://bot.liuyidi.me/) — 先走通一轮对话
-2. [Web](/minibot/web/) · [Desktop](/minibot/desktop/) · [App](/minibot/app/) · [CLI](/minibot/cli/) — 按入口了解能力
-3. [下载 Desktop / App](/minibot/download/) — 需要本机或手机端时
-4. [更新日志](/minibot/changelog/) — 当前版本用户能感知的变更
-5. 要自建再看 [GitHub README](https://github.com/liuyidi/minibot/blob/main/README.zh.md)
+2. [CLI](/minibot/cli/) — `npm i -g @liuyidi/minibot`，终端里登录与对话
+3. [Web](/minibot/web/) · [Desktop](/minibot/desktop/) · [App](/minibot/app/) — 按入口了解能力
+4. [下载 Desktop / App](/minibot/download/) — 需要本机或手机端时
+5. [更新日志](/minibot/changelog/) — 当前版本用户能感知的变更
+6. 要自建再看 [GitHub README](https://github.com/liuyidi/minibot/blob/main/README.zh.md)
