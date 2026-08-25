@@ -16,18 +16,22 @@ const messages = {
     "hero.eyebrow": "minibot",
     "hero.title": "本地优先的 AI Agent 运行时",
     "hero.lede":
-      "Web / Desktop / App 同一套协议；飞书、微信把任务交给同一个 runtime。能调工具、改文件、跑命令，不只是聊天。",
+      "Web / Desktop / App / CLI 同一套协议；飞书、微信把任务交给同一个 runtime。能调工具、改文件、跑命令，不只是聊天。",
     "cta.agent": "打开 Agent",
     "cta.desktop": "下载 Desktop",
+    "cta.app": "下载 App",
     "pillar.surfaces.title": "多端",
-    "pillar.surfaces.tags": "Web · Desktop · App",
-    "pillar.surfaces.body": "同一套 REST + WebSocket。会话协议不绑死在某一个客户端上。",
+    "pillar.surfaces.tags": "Web · Desktop · App · CLI",
+    "pillar.surfaces.body": "同一套 REST + WebSocket。浏览器、桌面、手机与命令行共用会话协议。",
     "pillar.channels.title": "多渠道",
     "pillar.channels.tags": "飞书 · 微信 iLink",
     "pillar.channels.body": "扫码接入与配对；IM 里的任务进同一个 Agent Loop。",
     "pillar.agent.title": "Agent",
     "pillar.agent.tags": "工具循环 · 文件 · exec / MCP / Skills · HITL · Cron",
     "pillar.agent.body": "不像聊天框。更接近 OpenClaw 这类能交付结果的 runtime。",
+    "pillar.models.title": "多模型",
+    "pillar.models.tags": "OpenAI 兼容 · Anthropic · BYOK · preset",
+    "pillar.models.body": "平台内置与自带密钥均可；按会话选模型，preset 失败时可切换。",
     "shot.caption": "本机 gateway，会话留在这台电脑。",
     "series.title": "系列",
     "entry.bot.kicker": "01 · Agent",
@@ -58,18 +62,22 @@ const messages = {
     "hero.eyebrow": "minibot",
     "hero.title": "A local-first AI agent runtime",
     "hero.lede":
-      "One protocol for Web / Desktop / App. Feishu and WeChat talk to the same runtime. Tools, files, and commands — not just chat.",
+      "One protocol for Web / Desktop / App / CLI. Feishu and WeChat talk to the same runtime. Tools, files, and commands — not just chat.",
     "cta.agent": "Open Agent",
     "cta.desktop": "Download Desktop",
+    "cta.app": "Download App",
     "pillar.surfaces.title": "Surfaces",
-    "pillar.surfaces.tags": "Web · Desktop · App",
-    "pillar.surfaces.body": "The same REST + WebSocket stack. Sessions are not tied to one client.",
+    "pillar.surfaces.tags": "Web · Desktop · App · CLI",
+    "pillar.surfaces.body": "The same REST + WebSocket stack across browser, desktop, mobile, and the terminal.",
     "pillar.channels.title": "Channels",
     "pillar.channels.tags": "Feishu · WeChat iLink",
     "pillar.channels.body": "Scan to pair. IM tasks enter the same agent loop.",
     "pillar.agent.title": "Agent",
     "pillar.agent.tags": "Tool loop · Files · exec / MCP / Skills · HITL · Cron",
     "pillar.agent.body": "Closer to OpenClaw-style runtimes that ship work, not a chat box.",
+    "pillar.models.title": "Models",
+    "pillar.models.tags": "OpenAI-compatible · Anthropic · BYOK · presets",
+    "pillar.models.body": "Built-in providers or bring your own keys. Pick a model per session; fail over across presets when needed.",
     "shot.caption": "Local gateway — sessions stay on this machine.",
     "series.title": "Series",
     "entry.bot.kicker": "01 · Agent",
@@ -118,7 +126,7 @@ function onLocaleChange(event) {
 <template>
   <div class="portal-root">
     <header class="top">
-      <a class="brand" href="/">liuyidi.me</a>
+      <a class="brand" href="/">Minibot</a>
       <nav>
         <a href="/minibot/">{{ t("nav.overview") }}</a>
         <a href="https://bot.liuyidi.me/">{{ t("nav.agent") }}</a>
@@ -149,9 +157,8 @@ function onLocaleChange(event) {
         <p class="lede">{{ t("hero.lede") }}</p>
         <div class="cta">
           <a class="btn primary" href="https://bot.liuyidi.me/">{{ t("cta.agent") }}</a>
-          <a class="btn ghost" href="/minibot/download/">{{
-            t("cta.desktop")
-          }}</a>
+          <a class="btn ghost" href="/minibot/download/">{{ t("cta.desktop") }}</a>
+          <a class="btn ghost" href="/minibot/download/">{{ t("cta.app") }}</a>
         </div>
       </section>
 
@@ -170,6 +177,11 @@ function onLocaleChange(event) {
           <h2>{{ t("pillar.agent.title") }}</h2>
           <p class="tags">{{ t("pillar.agent.tags") }}</p>
           <p>{{ t("pillar.agent.body") }}</p>
+        </article>
+        <article class="pillar">
+          <h2>{{ t("pillar.models.title") }}</h2>
+          <p class="tags">{{ t("pillar.models.tags") }}</p>
+          <p>{{ t("pillar.models.body") }}</p>
         </article>
       </section>
 

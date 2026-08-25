@@ -1,29 +1,28 @@
-name: Publish Web & Server (ECS)
+name: Publish Site (ECS)
 
-# Rebuild minibot Python runtime + WebUI on the Aliyun ECS demo host
-# (bot.liuyidi.me), then notify Feishu via ServerlessShip.
-# Public site (liuyidi.me) is published by publish-site.yml.
+# Rebuild the public VitePress site on Aliyun ECS (liuyidi.me).
+# Does not rebuild minibot / WebUI — use Publish Web & Server (ECS) for that.
 #
-# Trigger: push to main touching server/WebUI/Docker paths, or Actions → Run workflow.
+# Trigger: push to main touching site/** (or deploy/build-site.sh / this workflow),
+# or Actions → Run workflow.
 
 on:
   workflow_dispatch:
   push:
     branches: [main]
     paths:
-      - "minibot/**"
-      - "webui/**"
-      - "Dockerfile.minibot"
-      - ".github/workflows/publish-web-server-ecs.yml"
+      - "site/**"
+      - "deploy/build-site.sh"
+      - ".github/workflows/publish-site.yml"
 
 concurrency:
   group: aliyun-ecs-demo-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
-  publish-ecs:
+  publish-site:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 20
     permissions:
       contents: read
     env:
@@ -57,62 +56,24 @@ jobs:
             echo "HEAD=$(git rev-parse --short HEAD)"
             git log -1 --oneline
 
-      - name: Build minibot image on ECS
+      - name: Build public site (liuyidi.me)
         uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ env.ECS_HOST }}
           username: ${{ env.ECS_USER }}
           key: ${{ secrets.ECS_SSH_PRIVATE_KEY }}
           port: ${{ env.ECS_SSH_PORT }}
-          command_timeout: 35m
+          command_timeout: 15m
           script: |
             set -euo pipefail
-            cd /opt/demo/minibot/deploy
-            export LANGFUSE_SDK_DIR=/opt/demo/mini-langfuse/sdk-python
-            docker compose -f docker-compose.yml --env-file .env build minibot
+            cd /opt/demo/minibot
+            bash deploy/build-site.sh
+            test -f site/.vitepress/dist/index.html
+            test -f site/.vitepress/dist/minibot/download/index.html
+            test -f site/.vitepress/dist/minibot/web/index.html
+            curl -fsS -o /dev/null -w "local site %{http_code}\n" http://127.0.0.1/
 
-      - name: Restart minibot container
-        uses: appleboy/ssh-action@v1.2.2
-        with:
-          host: ${{ env.ECS_HOST }}
-          username: ${{ env.ECS_USER }}
-          key: ${{ secrets.ECS_SSH_PRIVATE_KEY }}
-          port: ${{ env.ECS_SSH_PORT }}
-          command_timeout: 5m
-          script: |
-            set -euo pipefail
-            cd /opt/demo/minibot/deploy
-            export LANGFUSE_SDK_DIR=/opt/demo/mini-langfuse/sdk-python
-            docker compose -f docker-compose.yml --env-file .env up -d minibot
-            docker ps --filter name=minibot --format 'table {{.Names}}\t{{.Status}}\t{{.Image}}'
-
-      - name: Wait for minibot /health
-        uses: appleboy/ssh-action@v1.2.2
-        with:
-          host: ${{ env.ECS_HOST }}
-          username: ${{ env.ECS_USER }}
-          key: ${{ secrets.ECS_SSH_PRIVATE_KEY }}
-          port: ${{ env.ECS_SSH_PORT }}
-          command_timeout: 5m
-          script: |
-            set -euo pipefail
-            ok=0
-            for i in $(seq 1 40); do
-              if curl -fsS --max-time 3 http://127.0.0.1:8766/health >/tmp/minibot-health.json; then
-                echo "health ok after ${i} attempt(s): $(cat /tmp/minibot-health.json)"
-                ok=1
-                break
-              fi
-              echo "waiting for minibot health (${i}/40)..."
-              sleep 3
-            done
-            if [[ "$ok" -ne 1 ]]; then
-              echo "minibot health check failed; recent logs:"
-              docker logs minibot --tail 120 || true
-              exit 1
-            fi
-
-      - name: Verify WebUI and public URL
+      - name: Verify public site URLs
         uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ env.ECS_HOST }}
@@ -122,12 +83,13 @@ jobs:
           command_timeout: 2m
           script: |
             set -euo pipefail
-            curl -fsS -o /dev/null -w "local webui %{http_code}\n" http://127.0.0.1:8766/
-            curl -fsS -o /dev/null -w "public bot %{http_code}\n" https://bot.liuyidi.me/ || true
+            curl -fsS -o /dev/null -w "public site %{http_code}\n" https://liuyidi.me/
+            curl -fsS -o /dev/null -w "public minibot %{http_code}\n" https://liuyidi.me/minibot/
+            curl -fsS -o /dev/null -w "public download %{http_code}\n" https://liuyidi.me/minibot/download/
 
   notify-serverlessship:
-    needs: publish-ecs
-    if: ${{ needs.publish-ecs.result == 'success' }}
+    needs: publish-site
+    if: ${{ needs.publish-site.result == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -149,13 +111,13 @@ jobs:
           serverlessship_release_url="${SERVERLESSSHIP_RELEASE_URL:-https://serverless-ship.liuyidi.me/api/releases}"
 
           payload="$(node -e 'process.stdout.write(JSON.stringify({
-            project: "minibot",
+            project: "minibot-site",
             version: process.env.RELEASE_VERSION,
             tag: process.env.RELEASE_SHA,
             repository: process.env.GITHUB_REPOSITORY,
             releaseUrl: process.env.RELEASE_URL,
             workflowUrl: process.env.WORKFLOW_URL,
-            channel: "ECS Demo",
+            channel: "Site",
           }));')"
 
           response="$(
@@ -169,7 +131,7 @@ jobs:
 
           echo "$response"
         env:
-          RELEASE_VERSION: ${{ needs.publish-ecs.outputs.short_sha }}
+          RELEASE_VERSION: ${{ needs.publish-site.outputs.short_sha }}
           RELEASE_SHA: ${{ github.sha }}
-          RELEASE_URL: https://bot.liuyidi.me/
+          RELEASE_URL: https://liuyidi.me/
           WORKFLOW_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}

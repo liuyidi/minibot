@@ -9,6 +9,8 @@ description: minikb 是面向 Agent 的知识库：文档摄入、切片、向�
 
 公网：[kb.liuyidi.me](https://kb.liuyidi.me/)（火山引擎直连 TLS）。
 
+![minikb：知识库侧栏与文档列表，状态 ready 的已摄入文档](/minikb/ui-preview.png)
+
 ## 一、核心能力
 
 - **知识库 CRUD**：创建 / 列表 / 更新 / 删除 KB，看统计

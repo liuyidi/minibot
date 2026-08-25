@@ -16,8 +16,8 @@ function mustRead(rel) {
 }
 
 const portal = mustRead("index.html");
-if (!portal.includes("liuyidi.me")) {
-  throw new Error("portal is missing the brand");
+if (!portal.includes("Minibot")) {
+  throw new Error("portal is missing the Minibot brand");
 }
 if (portal.includes("核心能力")) {
   throw new Error("portal HTML looks like the overview page");
@@ -47,6 +47,15 @@ if (!portal.includes("打开 Agent") && !portal.includes("Open Agent")) {
 }
 if (!portal.includes("/minibot/download/")) {
   throw new Error("portal is missing the Desktop download CTA");
+}
+if (!portal.includes("下载 App") && !portal.includes("Download App")) {
+  throw new Error("portal is missing the App download CTA");
+}
+if (!portal.includes("CLI") && !portal.includes("cli")) {
+  throw new Error("portal is missing CLI surface copy");
+}
+if (!portal.includes("多模型") && !portal.includes("Models")) {
+  throw new Error("portal is missing the multi-model pillar");
 }
 if (!portal.includes('class="pillars"') && !portal.includes("class='pillars'")) {
   throw new Error("portal is missing capability pillars");
@@ -89,7 +98,41 @@ for (const [slug, marker] of products) {
   if (slug === "minibot" && !overview.includes("macos-client-preview")) {
     throw new Error("minibot overview is missing the desktop screenshot");
   }
+  if (slug === "minikb" && !overview.includes("ui-preview")) {
+    throw new Error("minikb overview is missing the UI screenshot");
+  }
+  if (slug === "mini-langfuse" && !overview.includes("ui-preview")) {
+    throw new Error("mini-langfuse overview is missing the UI screenshot");
+  }
   mustRead(`${slug}/changelog/index.html`);
+}
+
+for (const surface of ["web", "desktop", "app", "cli"]) {
+  const page = mustRead(`minibot/${surface}/index.html`);
+  if (!page.includes("/minibot/download/")) {
+    throw new Error(`minibot/${surface} is missing download link`);
+  }
+}
+const webPage = mustRead("minibot/web/index.html");
+if (!webPage.includes("web-preview")) {
+  throw new Error("minibot/web is missing web-preview screenshot");
+}
+const desktopPage = mustRead("minibot/desktop/index.html");
+if (!desktopPage.includes("desktop-preview")) {
+  throw new Error("minibot/desktop is missing desktop-preview screenshot");
+}
+const appPage = mustRead("minibot/app/index.html");
+if (!appPage.includes("shot-strip")) {
+  throw new Error("minibot/app is missing drag-scroll screenshot strip");
+}
+for (const shot of ["app-login", "app-chat", "app-sessions", "app-profile"]) {
+  if (!appPage.includes(shot)) {
+    throw new Error(`minibot/app is missing ${shot} screenshot`);
+  }
+}
+const cliPage = mustRead("minibot/cli/index.html");
+if (!cliPage.includes("shot-placeholder")) {
+  throw new Error("minibot/cli is missing screenshot placeholder");
 }
 
 const changelog = mustRead("minibot/changelog/index.html");
@@ -106,8 +149,15 @@ if (existsSync(join(dist, "v0.1/index.html"))) {
   throw new Error("v0.1 preview must be removed after promotion");
 }
 mustRead("minibot/macos-client-preview.png");
+mustRead("minibot/web-preview.png");
+mustRead("minibot/desktop-preview.png");
+mustRead("minibot/app-login.png");
+mustRead("minibot/app-chat.png");
+mustRead("minibot/app-sessions.png");
+mustRead("minibot/app-profile.png");
+mustRead("minikb/ui-preview.png");
+mustRead("mini-langfuse/ui-preview.png");
 mustRead("minibot/download/index.html");
-mustRead("download/macos-client-preview.png");
 mustRead("brand/minibot_mark.svg");
 
 const downloadPage = mustRead("minibot/download/index.html");
@@ -127,11 +177,18 @@ function* walkJs(dir) {
     else if (name.name.endsWith(".js")) yield path;
   }
 }
-const assetHasManifest = [...walkJs(assetsDir)].some((path) =>
-  readFileSync(path, "utf8").includes("downloads.liuyidi.me/minibot/releases.json"),
+const downloadJs = [...walkJs(assetsDir)].map((path) => readFileSync(path, "utf8"));
+const assetHasManifest = downloadJs.some((src) =>
+  src.includes("downloads.liuyidi.me/minibot/releases.json"),
 );
 if (!assetHasManifest) {
   throw new Error("download page JS is missing the releases manifest URL");
+}
+if (!downloadJs.some((src) => src.includes("macos-client-preview") && src.includes("app-chat"))) {
+  throw new Error("download page JS is missing platform screenshots");
+}
+if (!downloadJs.some((src) => src.includes("uv sync --all-extras") && src.includes("uv run minibot"))) {
+  throw new Error("download page JS is missing CLI install commands");
 }
 
 const minibotPage = mustRead("minibot/index.html");

@@ -19,3 +19,90 @@
   --vp-button-brand-text: var(--mini-color-canvas);
   --vp-font-family-base: var(--mini-font-sans);
 }
+
+.VPNavBarTitle .title {
+  font-size: 1.5rem !important;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.shot-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 14rem;
+  margin: 1.25rem 0 2rem;
+  border: 1px dashed var(--mini-color-border-soft);
+  border-radius: var(--mini-radius-surface);
+  background:
+    linear-gradient(135deg, rgba(141, 245, 216, 0.12), transparent 42%),
+    var(--mini-color-surface);
+  color: var(--mini-color-muted);
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.shot-strip {
+  display: flex;
+  gap: 1rem;
+  margin: 1.25rem 0 2rem;
+  padding: 0.25rem 0.15rem 0.75rem;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  cursor: grab;
+  scrollbar-width: thin;
+}
+
+.shot-strip.is-dragging {
+  cursor: grabbing;
+  user-select: none;
+  scroll-snap-type: none;
+}
+
+.shot-strip::-webkit-scrollbar {
+  height: 6px;
+}
+
+.shot-strip::-webkit-scrollbar-thumb {
+  background: var(--mini-color-border-soft);
+  border-radius: 999px;
+}
+
+.shot-strip > * {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+}
+
+.shot-strip img,
+.shot-strip .shot-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: min(220px, 42vw);
+  height: auto;
+  margin: 0;
+  min-height: 0;
+  border-radius: 1.25rem;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
+  pointer-events: none;
+}
+
+.shot-strip img {
+  display: block;
+  aspect-ratio: auto;
+}
+
+.shot-strip .shot-card {
+  aspect-ratio: 9 / 19.5;
+  border: 1px dashed var(--mini-color-border-soft);
+  background:
+    linear-gradient(160deg, rgba(141, 245, 216, 0.14), transparent 48%),
+    var(--mini-color-surface);
+  color: var(--mini-color-muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}

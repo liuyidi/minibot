@@ -14,15 +14,15 @@ function productSidebar(name, base, introLabel = "功能介绍", extraItems = []
 
 export default defineConfig({
   lang: "zh-CN",
-  title: "liuyidi.me",
-  titleTemplate: ":title · liuyidi.me",
+  title: "Minibot",
+  titleTemplate: ":title · Minibot",
   description:
-    "刘一帝个人页与 Agent 工程栈简介：minibot、mini-langfuse、minikb、mini-auth、ServerlessShip。",
+    "Minibot：本地优先的 AI Agent 运行时；Web / Desktop / App / CLI，以及 mini-langfuse、minikb、mini-auth、ServerlessShip。",
   cleanUrls: true,
   lastUpdated: false,
   srcExclude: ["README.md", ".generated/**"],
   themeConfig: {
-    siteTitle: "liuyidi.me",
+    siteTitle: "Minibot",
     nav: [
       { text: "门户", link: "/" },
       {
@@ -40,6 +40,10 @@ export default defineConfig({
     ],
     sidebar: [
       productSidebar("minibot", "/minibot", "简介", [
+        { text: "Web", link: "/minibot/web/" },
+        { text: "Desktop", link: "/minibot/desktop/" },
+        { text: "App", link: "/minibot/app/" },
+        { text: "CLI", link: "/minibot/cli/" },
         { text: "下载", link: "/minibot/download/" },
       ]),
       productSidebar("minikb", "/minikb", "简介"),

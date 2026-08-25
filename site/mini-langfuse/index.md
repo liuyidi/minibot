@@ -9,6 +9,8 @@ description: mini-langfuse 是自研的 LLM 可观测：Traces、Sessions、Scor
 
 公网：[mlf.liuyidi.me](https://mlf.liuyidi.me/)（腾讯云）。[minibot](/minibot/) 每轮对话可上报到这里。
 
+![mini-langfuse：agent-turn 链路追踪，observation 树、瀑布图与 Input / Output](/mini-langfuse/ui-preview.png)
+
 ## 一、核心能力
 
 - **Traces / Observations**：摄入 API、树状查看、瀑布图（Tree | Waterfall | Detail 联动）

@@ -23,7 +23,7 @@ description: minibot 是本地优先的 AI Agent 运行时：模型、工具、�
 - **IM 频道**：飞书、微信（iLink）扫码接入与配对
 - **安全（HITL）**：高风险工具先暂停，等人批准 / 拒绝
 - **可观测**：可选对接 [mini-langfuse](https://mlf.liuyidi.me/) 看 Trace / Session / 评分
-- **多端入口**：CLI、[Web](https://bot.liuyidi.me/)、Desktop、App，同一套 REST + WebSocket 协议
+- **多端入口**：[CLI](/minibot/cli/)、[Web](/minibot/web/)、[Desktop](/minibot/desktop/)、[App](/minibot/app/)，同一套 REST + WebSocket 协议
 
 ## 二、适用场景
 
@@ -44,7 +44,7 @@ description: minibot 是本地优先的 AI Agent 运行时：模型、工具、�
 ## 四、建议阅读顺序
 
 1. [打开 Web](https://bot.liuyidi.me/) — 先走通一轮对话
-2. [下载 Desktop](/minibot/download/) — 需要本机文件和本机会话时
-3. 本页简介 — 搞清系列能做什么
+2. [Web](/minibot/web/) · [Desktop](/minibot/desktop/) · [App](/minibot/app/) · [CLI](/minibot/cli/) — 按入口了解能力
+3. [下载 Desktop / App](/minibot/download/) — 需要本机或手机端时
 4. [更新日志](/minibot/changelog/) — 当前版本用户能感知的变更
 5. 要自建再看 [GitHub README](https://github.com/liuyidi/minibot/blob/main/README.zh.md)
