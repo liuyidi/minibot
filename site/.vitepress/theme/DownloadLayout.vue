@@ -45,10 +45,10 @@ const messages = {
     "currentVersion": "当前版本",
     "scanToDownload": "扫码下载",
     "cli.title": "更想用 CLI？",
-    "cli.body": "适合服务器、远程开发机和无界面环境。与 Desktop 同一套 Gateway 协议，终端里安装与启动。",
+    "cli.body": "适合服务器、远程开发机和无界面环境。npm 安装后登录即可连接云端 Gateway（与 Desktop 同一套身份）。",
     "cli.installLabel": "安装",
-    "cli.startLabel": "启动 gateway",
-    "cli.note": "已有本机或云主机时，同样的命令可在 SSH 会话里执行。",
+    "cli.startLabel": "登录并聊天",
+    "cli.note": "已有本机或云主机时，同样的命令可在 SSH 会话里执行。自建 Gateway 见 CLI 说明。",
     "cli.more": "查看 CLI 说明 →",
     "cli.copy": "复制",
     "cli.copied": "已复制",
@@ -91,10 +91,10 @@ const messages = {
     "currentVersion": "Current version",
     "scanToDownload": "Scan to download",
     "cli.title": "Prefer the CLI?",
-    "cli.body": "For servers, remote dev boxes, and headless setups. Same Gateway protocol as Desktop — install and run from the terminal.",
+    "cli.body": "For servers, remote dev boxes, and headless setups. Install via npm, log in, and talk to the cloud Gateway — same identity as Desktop.",
     "cli.installLabel": "Install",
-    "cli.startLabel": "Start gateway",
-    "cli.note": "Already on a server? The same commands work over SSH.",
+    "cli.startLabel": "Login and chat",
+    "cli.note": "Already on a server? The same commands work over SSH. See CLI docs for a self-hosted Gateway.",
     "cli.more": "CLI docs →",
     "cli.copy": "Copy",
     "cli.copied": "Copied",
@@ -109,9 +109,8 @@ const activePlatform = ref("macos");
 const macArch = ref("arm");
 const qrDataUrl = ref(null);
 const copiedKey = ref("");
-const CLI_INSTALL =
-  "git clone https://github.com/liuyidi/minibot.git && cd minibot/minibot && uv sync --all-extras";
-const CLI_START = "uv run minibot";
+const CLI_INSTALL = "npm i -g @liuyidi/minibot";
+const CLI_START = "minibot login && minibot chat";
 const manifest = ref({
   android: { version: null, url: null },
   ios: { version: null, url: null },

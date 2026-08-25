@@ -1,6 +1,6 @@
-# minibot-cli
+# @liuyidi/minibot
 
-`minibot-cli` provides the `minibot` command for device-flow login and a remote Gateway client (`status`, `sessions`, `chat`).
+`minibot` CLI for device-flow login and a remote Gateway client (`status`, `sessions`, `chat`).
 
 By default:
 
@@ -9,9 +9,12 @@ By default:
 
 ## Install
 
+Requires Node.js ≥ 18.
+
 ```bash
-cd packages/minibot-cli && npm install && npm run build
-npm link   # optional: expose `minibot` on PATH
+npm i -g @liuyidi/minibot
+minibot login
+minibot chat
 ```
 
 ## Auth
@@ -31,7 +34,9 @@ minibot chat -m "hello"
 minibot chat                 # interactive REPL
 ```
 
-### Local gateway
+### Local gateway (advanced)
+
+Start the Python Gateway separately, then point the CLI at it:
 
 ```bash
 # terminal 1

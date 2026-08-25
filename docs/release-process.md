@@ -37,7 +37,7 @@ This document describes the current release flow for `minibot`.
 4. It creates and pushes a tag like `v1.0.1`.
 5. That tag triggers downstream release workflows:
    - `Publish Desktop`
-   - `Publish @liuyidi/minibot-client`
+   - `Publish npm packages` (`@liuyidi/minibot-client` then `@liuyidi/minibot`)
 6. Desktop release artifacts are mirrored to OSS by **Sync Desktop Release to OSS**.
 7. Feishu notifications are sent after OSS sync.
 
@@ -60,9 +60,11 @@ This document describes the current release flow for `minibot`.
 - Publishes GitHub Release `desktop-v<version>`.
 - Sends a release notification to ServerlessShip / Feishu.
 
-### `Publish @liuyidi/minibot-client`
+### `Publish npm packages`
 
-- Publishes the shared client package from the same `v<version>` tag.
+- Publishes `@liuyidi/minibot-client` then `@liuyidi/minibot` to registry.npmjs.org from the same `v<version>` tag (client first so the CLI dependency resolves).
+- Requires repo secret `NPM_TOKEN` (npm automation token with publish rights for `@liuyidi/*`).
+- Replaces the former GitHub Packages publish for the client; do not dual-write.
 
 ### `Sync Desktop Release to OSS`
 

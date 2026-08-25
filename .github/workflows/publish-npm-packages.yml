@@ -1,0 +1,59 @@
+name: Publish npm packages
+
+# Publishes @liuyidi/minibot-client then @liuyidi/minibot to registry.npmjs.org.
+# Requires repo secret NPM_TOKEN (npm automation token with publish rights).
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  publish-client:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/minibot-client
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "20"
+          registry-url: https://registry.npmjs.org
+          scope: "@liuyidi"
+      - name: Install & test
+        run: |
+          npm install
+          npm run build
+          npm test
+      - name: Publish @liuyidi/minibot-client
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  publish-cli:
+    needs: publish-client
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "20"
+          registry-url: https://registry.npmjs.org
+          scope: "@liuyidi"
+      - name: Install workspace deps
+        run: npm install
+      - name: Build & test CLI
+        working-directory: packages/minibot-cli
+        run: |
+          npm run build
+          npm test
+      - name: Publish @liuyidi/minibot
+        working-directory: packages/minibot-cli
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
