@@ -131,8 +131,8 @@ for (const shot of ["app-login", "app-chat", "app-sessions", "app-profile"]) {
   }
 }
 const cliPage = mustRead("minibot/cli/index.html");
-if (!cliPage.includes("shot-placeholder")) {
-  throw new Error("minibot/cli is missing screenshot placeholder");
+if (!cliPage.includes("@liuyidi/minibot") || !cliPage.includes("minibot login")) {
+  throw new Error("minibot/cli is missing npm install / login copy");
 }
 
 const changelog = mustRead("minibot/changelog/index.html");
@@ -187,7 +187,7 @@ if (!assetHasManifest) {
 if (!downloadJs.some((src) => src.includes("macos-client-preview") && src.includes("app-chat"))) {
   throw new Error("download page JS is missing platform screenshots");
 }
-if (!downloadJs.some((src) => src.includes("uv sync --all-extras") && src.includes("uv run minibot"))) {
+if (!downloadJs.some((src) => src.includes("npm i -g @liuyidi/minibot") && src.includes("minibot login"))) {
   throw new Error("download page JS is missing CLI install commands");
 }
 
