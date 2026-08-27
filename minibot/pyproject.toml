@@ -1,6 +1,6 @@
 [project]
 name = "minibot"
-version = "1.0.17"
+version = "1.0.18"
 description = "FastAPI agent runtime (minibot)"
 requires-python = ">=3.11"
 dependencies = [
@@ -34,3 +34,22 @@ packages = ["src/minibot"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src", "tests"]
+asyncio_mode = "auto"
+markers = [
+    "perf: performance smoke tests (coarse CI budgets)",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["F", "E9"]
+ignore = ["F811"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.25.0",
+    "ruff>=0.9.0",
+]

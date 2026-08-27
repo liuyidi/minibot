@@ -12,6 +12,16 @@ English: [CHANGELOG.md](./CHANGELOG.md)
 <!-- #region site-changelog -->
 ## [Unreleased]
 
+## [1.0.18] - 2026-08-27
+
+### 新增
+
+- 新增 `/open` 移动端唤端页，包含顶部引导 banner 与系统风格启动提示。
+
+### 变更
+
+- `/open` 现在在 iOS 和 Android 上通过 `minibot://` 唤起 App，并按平台保留不同的回退策略。
+
 ## [1.0.17] - 2026-08-25
 
 ### 新增

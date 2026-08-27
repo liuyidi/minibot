@@ -11,6 +11,16 @@ Versions follow SemVer for product narrative. Package metadata may lag until a f
 
 ## [Unreleased]
 
+## [1.0.18] - 2026-08-27
+
+### Added
+
+- Mobile handoff page at `/open` with app-opening banner and system-style launch prompt.
+
+### Changed
+
+- The `/open` page now opens the minibot app via `minibot://` on iOS and Android with platform-specific fallback behavior.
+
 ## [1.0.17] - 2026-08-25
 
 ### Added
