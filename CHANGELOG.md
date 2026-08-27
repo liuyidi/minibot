@@ -11,6 +11,12 @@ Versions follow SemVer for product narrative. Package metadata may lag until a f
 
 ## [Unreleased]
 
+## [1.0.20] - 2026-08-27
+
+### Changed
+
+- The mobile handoff `/#/open` page now stays in Chinese copy regardless of browser locale.
+
 ## [1.0.19] - 2026-08-27
 
 ### Changed

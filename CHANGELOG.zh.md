@@ -12,6 +12,12 @@ English: [CHANGELOG.md](./CHANGELOG.md)
 <!-- #region site-changelog -->
 ## [Unreleased]
 
+## [1.0.20] - 2026-08-27
+
+### 变更
+
+- 移动端唤端 `/#/open` 页固定显示中文文案，不再受浏览器语言影响。
+
 ## [1.0.19] - 2026-08-27
 
 ### 变更

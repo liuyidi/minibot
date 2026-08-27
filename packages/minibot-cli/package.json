@@ -1,6 +1,6 @@
 {
   "name": "@liuyidi/minibot",
-  "version": "1.0.19",
+  "version": "1.0.20",
   "description": "CLI for minibot auth, chat, status, and sessions",
   "type": "module",
   "bin": {
