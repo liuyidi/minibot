@@ -14,12 +14,30 @@
       "hint": "Nhập secret được cấu hình là tokenIssueSecret trong cấu hình gateway.",
       "placeholder": "Mật khẩu",
       "submit": "Kết nối",
-      "invalid": "Mật khẩu không hợp lệ. Hãy thử lại."
+      "invalid": "Mật khẩu không hợp lệ. Hãy thử lại.",
+      "welcomeTitle": "Welcome to Minibot",
+      "login": "Sign in",
+      "browserTitle": "Finish signing in",
+      "browserHint": "A browser window was opened for login. Complete it there, then return here.",
+      "browserWaiting": "Waiting for browser login…",
+      "browserRetry": "Open browser again",
+      "signingIn": "Signing in…",
+      "browserNotOpened": "Browser didn’t open?",
+      "browserCopyHint": "Copy the login link and open it in a browser to finish signing in",
+      "copyLoginLink": "Copy login link",
+      "loginLinkCopied": "Copied",
+      "retryLogin": "Try again",
+      "privacy": "Privacy Policy",
+      "terms": "Terms of Service"
     },
     "account": {
       "section": "Tài khoản",
       "logoutHint": "Ngắt kết nối trình duyệt này khỏi gateway.",
-      "logout": "Đăng xuất"
+      "logout": "Đăng xuất",
+      "logoutConfirmTitle": "Confirm sign out",
+      "logoutConfirmBody": "Signing out stops all running tasks (including background sessions). Sign out?",
+      "logoutConfirmCancel": "Cancel",
+      "logoutConfirmAction": "Confirm sign out"
     },
     "system": {
       "section": "Hệ thống",
@@ -38,6 +56,29 @@
     },
     "meta": {
       "description": "Giao diện web minibot — trò chuyện với workspace minibot của bạn."
+    },
+    "mobileEntry": {
+      "hint": {
+        "loading": "Đang tải cài đặt mở ứng dụng...",
+        "disabled": "Mục mở ứng dụng này đang bị tắt.",
+        "missingUrl": "Chưa có URL ứng dụng nào được cấu hình.",
+        "ready": "Nếu không có gì xảy ra, hãy bấm nút bên dưới.",
+        "loadFailed": "Không tải được cài đặt mở ứng dụng. Vui lòng thử lại sau.",
+        "androidRetry": "Nếu không có gì xảy ra, hãy bấm nút phía trên.",
+        "iosRetry": "Trên iPhone, Safari có thể yêu cầu cho phép mở ứng dụng."
+      },
+      "banner": {
+        "subtitle": "Chạm vào đây để mở app và có trải nghiệm đầy đủ hơn",
+        "disabled": "Mục đã tắt",
+        "cta": "Mở app"
+      },
+      "actions": {
+        "open": "Mở app",
+        "download": "Chưa cài đặt? Đi tới trang tải xuống"
+      },
+      "notice": {
+        "trying": "Trang web này đang cố mở một ứng dụng khác. Nếu có hộp thoại xuất hiện, hãy chọn Cho phép."
+      }
     }
   },
   "sidebar": {
@@ -827,7 +868,39 @@
       "connectorDisabled": "Disabled",
       "add": "Add",
       "loading": "Loading…",
-      "noDescription": "No description."
+      "noDescription": "No description.",
+      "builtin": {
+        "github": {
+          "title": "GitHub",
+          "description": "Interact with GitHub using the gh CLI for issues, PRs, and CI."
+        },
+        "weather": {
+          "title": "Weather",
+          "description": "Get current weather and forecasts (no API key required)."
+        },
+        "memory": {
+          "title": "Memory",
+          "description": "Long-term memory via MEMORY.md and read/write memory tools."
+        },
+        "summarize": {
+          "title": "Summarize",
+          "description": "Summarize URLs, podcasts, and local files."
+        },
+        "clawhub": {
+          "title": "ClawHub",
+          "description": "Search and install agent skills from the public registry."
+        },
+        "tmux": {
+          "title": "tmux",
+          "description": "Remote-control tmux sessions for interactive CLIs."
+        },
+        "skill-creator": {
+          "title": "Skill creator",
+          "description": "Create or update agent skills with scripts, references, and assets."
+        }
+      },
+      "installedSkillsCount": "Installed {{count}}",
+      "installedConnectorsCount": "Installed {{count}}"
     },
     "voice": {
       "selectProvider": "Chon nha cung cap",
@@ -1202,7 +1275,16 @@
         "noSession": "Open a chat to estimate context usage.",
         "loadFailed": "Could not load context usage.",
         "updating": "Updating…",
-        "estimateHint": "Estimate · {{method}}"
+        "estimateHint": "Estimate · {{method}}",
+        "categoryLabels": {
+          "freeSpace": "Free space",
+          "systemTools": "System tools",
+          "messages": "Messages",
+          "mcpTools": "MCP tools",
+          "systemPrompt": "System prompt",
+          "skills": "Skills",
+          "memoryFiles": "Memory files"
+        }
       }
     },
     "scrollToBottom": "Cuộn xuống cuối",

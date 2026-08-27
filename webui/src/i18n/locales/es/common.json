@@ -14,12 +14,30 @@
       "hint": "Introduce el secreto configurado como tokenIssueSecret en la configuración del gateway.",
       "placeholder": "Contraseña",
       "submit": "Conectar",
-      "invalid": "Contraseña no válida. Inténtalo de nuevo."
+      "invalid": "Contraseña no válida. Inténtalo de nuevo.",
+      "welcomeTitle": "Welcome to Minibot",
+      "login": "Sign in",
+      "browserTitle": "Finish signing in",
+      "browserHint": "A browser window was opened for login. Complete it there, then return here.",
+      "browserWaiting": "Waiting for browser login…",
+      "browserRetry": "Open browser again",
+      "signingIn": "Signing in…",
+      "browserNotOpened": "Browser didn’t open?",
+      "browserCopyHint": "Copy the login link and open it in a browser to finish signing in",
+      "copyLoginLink": "Copy login link",
+      "loginLinkCopied": "Copied",
+      "retryLogin": "Try again",
+      "privacy": "Privacy Policy",
+      "terms": "Terms of Service"
     },
     "account": {
       "section": "Cuenta",
       "logoutHint": "Desconecta este navegador del gateway.",
-      "logout": "Cerrar sesión"
+      "logout": "Cerrar sesión",
+      "logoutConfirmTitle": "Confirm sign out",
+      "logoutConfirmBody": "Signing out stops all running tasks (including background sessions). Sign out?",
+      "logoutConfirmCancel": "Cancel",
+      "logoutConfirmAction": "Confirm sign out"
     },
     "system": {
       "section": "Sistema",
@@ -38,6 +56,29 @@
     },
     "meta": {
       "description": "Interfaz web de minibot: conversa con tu espacio de trabajo de minibot."
+    },
+    "mobileEntry": {
+      "hint": {
+        "loading": "Cargando ajustes de apertura...",
+        "disabled": "Esta entrada de apertura está desactivada.",
+        "missingUrl": "Todavía no se ha configurado ninguna URL de la app.",
+        "ready": "Si no pasa nada, pulsa el botón de abajo.",
+        "loadFailed": "No se pudieron cargar los ajustes de apertura. Vuelve a intentarlo más tarde.",
+        "androidRetry": "Si no pasa nada, pulsa el botón de arriba.",
+        "iosRetry": "En iPhone, Safari puede pedir permiso para abrir la app."
+      },
+      "banner": {
+        "subtitle": "Toca aquí para abrir la app y tener la experiencia completa",
+        "disabled": "Entrada desactivada",
+        "cta": "Abrir app"
+      },
+      "actions": {
+        "open": "Abrir app",
+        "download": "¿No la has instalado? Ir a la página de descarga"
+      },
+      "notice": {
+        "trying": "Este sitio está intentando abrir otra aplicación. Si aparece una solicitud, elige Permitir."
+      }
     }
   },
   "sidebar": {
@@ -827,7 +868,39 @@
       "connectorDisabled": "Disabled",
       "add": "Add",
       "loading": "Loading…",
-      "noDescription": "No description."
+      "noDescription": "No description.",
+      "builtin": {
+        "github": {
+          "title": "GitHub",
+          "description": "Interact with GitHub using the gh CLI for issues, PRs, and CI."
+        },
+        "weather": {
+          "title": "Weather",
+          "description": "Get current weather and forecasts (no API key required)."
+        },
+        "memory": {
+          "title": "Memory",
+          "description": "Long-term memory via MEMORY.md and read/write memory tools."
+        },
+        "summarize": {
+          "title": "Summarize",
+          "description": "Summarize URLs, podcasts, and local files."
+        },
+        "clawhub": {
+          "title": "ClawHub",
+          "description": "Search and install agent skills from the public registry."
+        },
+        "tmux": {
+          "title": "tmux",
+          "description": "Remote-control tmux sessions for interactive CLIs."
+        },
+        "skill-creator": {
+          "title": "Skill creator",
+          "description": "Create or update agent skills with scripts, references, and assets."
+        }
+      },
+      "installedSkillsCount": "Installed {{count}}",
+      "installedConnectorsCount": "Installed {{count}}"
     },
     "voice": {
       "selectProvider": "Seleccionar proveedor",
@@ -1202,7 +1275,16 @@
         "noSession": "Open a chat to estimate context usage.",
         "loadFailed": "Could not load context usage.",
         "updating": "Updating…",
-        "estimateHint": "Estimate · {{method}}"
+        "estimateHint": "Estimate · {{method}}",
+        "categoryLabels": {
+          "freeSpace": "Free space",
+          "systemTools": "System tools",
+          "messages": "Messages",
+          "mcpTools": "MCP tools",
+          "systemPrompt": "System prompt",
+          "skills": "Skills",
+          "memoryFiles": "Memory files"
+        }
       }
     },
     "scrollToBottom": "Desplazarse al final",

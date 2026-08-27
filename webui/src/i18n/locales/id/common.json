@@ -14,12 +14,30 @@
       "hint": "Masukkan secret yang dikonfigurasi sebagai tokenIssueSecret di konfigurasi gateway.",
       "placeholder": "Kata sandi",
       "submit": "Hubungkan",
-      "invalid": "Kata sandi tidak valid. Coba lagi."
+      "invalid": "Kata sandi tidak valid. Coba lagi.",
+      "welcomeTitle": "Welcome to Minibot",
+      "login": "Sign in",
+      "browserTitle": "Finish signing in",
+      "browserHint": "A browser window was opened for login. Complete it there, then return here.",
+      "browserWaiting": "Waiting for browser login…",
+      "browserRetry": "Open browser again",
+      "signingIn": "Signing in…",
+      "browserNotOpened": "Browser didn’t open?",
+      "browserCopyHint": "Copy the login link and open it in a browser to finish signing in",
+      "copyLoginLink": "Copy login link",
+      "loginLinkCopied": "Copied",
+      "retryLogin": "Try again",
+      "privacy": "Privacy Policy",
+      "terms": "Terms of Service"
     },
     "account": {
       "section": "Akun",
       "logoutHint": "Putuskan browser ini dari gateway.",
-      "logout": "Keluar"
+      "logout": "Keluar",
+      "logoutConfirmTitle": "Confirm sign out",
+      "logoutConfirmBody": "Signing out stops all running tasks (including background sessions). Sign out?",
+      "logoutConfirmCancel": "Cancel",
+      "logoutConfirmAction": "Confirm sign out"
     },
     "system": {
       "section": "Sistem",
@@ -38,6 +56,29 @@
     },
     "meta": {
       "description": "UI web minibot — ngobrol dengan workspace minibot Anda."
+    },
+    "mobileEntry": {
+      "hint": {
+        "loading": "Memuat pengaturan handoff...",
+        "disabled": "Entri handoff ini sedang dinonaktifkan.",
+        "missingUrl": "Belum ada URL aplikasi yang dikonfigurasi.",
+        "ready": "Jika tidak terjadi apa-apa, ketuk tombol di bawah.",
+        "loadFailed": "Gagal memuat pengaturan handoff. Coba lagi nanti.",
+        "androidRetry": "Jika tidak terjadi apa-apa, ketuk tombol di atas.",
+        "iosRetry": "Di iPhone, Safari mungkin meminta izin untuk membuka app."
+      },
+      "banner": {
+        "subtitle": "Ketuk di sini untuk membuka app dan mendapatkan pengalaman penuh",
+        "disabled": "Entri dinonaktifkan",
+        "cta": "Buka app"
+      },
+      "actions": {
+        "open": "Buka app",
+        "download": "Belum terpasang? Buka halaman unduhan"
+      },
+      "notice": {
+        "trying": "Situs ini mencoba membuka aplikasi lain. Jika muncul permintaan, pilih Izinkan."
+      }
     }
   },
   "sidebar": {
@@ -827,7 +868,39 @@
       "connectorDisabled": "Disabled",
       "add": "Add",
       "loading": "Loading…",
-      "noDescription": "No description."
+      "noDescription": "No description.",
+      "builtin": {
+        "github": {
+          "title": "GitHub",
+          "description": "Interact with GitHub using the gh CLI for issues, PRs, and CI."
+        },
+        "weather": {
+          "title": "Weather",
+          "description": "Get current weather and forecasts (no API key required)."
+        },
+        "memory": {
+          "title": "Memory",
+          "description": "Long-term memory via MEMORY.md and read/write memory tools."
+        },
+        "summarize": {
+          "title": "Summarize",
+          "description": "Summarize URLs, podcasts, and local files."
+        },
+        "clawhub": {
+          "title": "ClawHub",
+          "description": "Search and install agent skills from the public registry."
+        },
+        "tmux": {
+          "title": "tmux",
+          "description": "Remote-control tmux sessions for interactive CLIs."
+        },
+        "skill-creator": {
+          "title": "Skill creator",
+          "description": "Create or update agent skills with scripts, references, and assets."
+        }
+      },
+      "installedSkillsCount": "Installed {{count}}",
+      "installedConnectorsCount": "Installed {{count}}"
     },
     "voice": {
       "selectProvider": "Pilih penyedia",
@@ -1202,7 +1275,16 @@
         "noSession": "Open a chat to estimate context usage.",
         "loadFailed": "Could not load context usage.",
         "updating": "Updating…",
-        "estimateHint": "Estimate · {{method}}"
+        "estimateHint": "Estimate · {{method}}",
+        "categoryLabels": {
+          "freeSpace": "Free space",
+          "systemTools": "System tools",
+          "messages": "Messages",
+          "mcpTools": "MCP tools",
+          "systemPrompt": "System prompt",
+          "skills": "Skills",
+          "memoryFiles": "Memory files"
+        }
       }
     },
     "scrollToBottom": "Gulir ke bawah",

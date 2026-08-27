@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#111827" />
+  <title>打开 App</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(circle at top, rgba(251, 191, 36, 0.18), transparent 38%),
+        linear-gradient(180deg, #fff7ed 0%, #ffffff 44%, #eef2ff 100%);
+      color: #111827;
+    }
+    main {
+      width: min(92vw, 420px);
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(148, 163, 184, 0.24);
+      border-radius: 28px;
+      padding: 28px 22px;
+      box-shadow: 0 24px 60px rgba(15, 23, 42, 0.12);
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 14px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: #fef3c7;
+      color: #92400e;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    h1 {
+      margin: 0 0 10px;
+      font-size: 28px;
+      line-height: 1.15;
+    }
+    p {
+      margin: 0 0 18px;
+      color: #4b5563;
+      line-height: 1.7;
+    }
+    .row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    a, button {
+      border: 0;
+      border-radius: 999px;
+      padding: 12px 18px;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .primary {
+      background: #111827;
+      color: white;
+    }
+    .ghost {
+      background: #e5e7eb;
+      color: #111827;
+    }
+    .hint {
+      margin-top: 14px;
+      font-size: 13px;
+      color: #6b7280;
+    }
+    .banner {
+      width: min(92vw, 460px);
+      margin: 0 auto 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.24);
+      border-radius: 999px;
+      padding: 12px 14px;
+      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+    }
+    .banner-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+    .banner-logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 14px;
+      background: #111827;
+      color: white;
+      display: grid;
+      place-items: center;
+      font-size: 14px;
+      font-weight: 700;
+      flex: 0 0 auto;
+    }
+    .banner-title {
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.4;
+    }
+    .banner-subtitle {
+      font-size: 12px;
+      color: #6b7280;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .banner-badge {
+      flex: 0 0 auto;
+      background: #2563eb;
+      color: white;
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.35);
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 12px 12px 16px;
+      backdrop-filter: blur(2px);
+    }
+    .download-link {
+      display: inline-flex;
+      margin-top: 12px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #2563eb;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <button id="banner" class="banner" type="button">
+    <div class="banner-left">
+      <div class="banner-logo">M</div>
+      <div style="min-width:0">
+        <div class="banner-title">minibot</div>
+        <div id="banner-subtitle" class="banner-subtitle">点击这里唤起 App，体验更完整</div>
+      </div>
+    </div>
+    <div class="banner-badge">打开 App</div>
+  </button>
+  <main>
+    <div class="pill">bot.liuyidi.me</div>
+    <h1 id="title">打开 App</h1>
+    <p id="desc">建议在 App 中继续使用 minibot。</p>
+    <div class="row">
+      <button id="open-btn" class="primary" type="button">打开 App</button>
+    </div>
+    <div id="hint" class="hint"></div>
+    <a id="download-link" class="download-link" href="https://liuyidi.me/minibot/download/">还没安装？去下载页</a>
+  </main>
+  <script>
+    const state = {
+      enabled: false,
+      iosUrl: "minibot://",
+      androidUrl: "minibot://",
+      fallbackUrl: "https://liuyidi.me/minibot/download/",
+      title: "打开 App",
+      description: "建议在 App 中继续使用 minibot。",
+      delayMs: 1200,
+    };
+
+    const title = document.getElementById("title");
+    const desc = document.getElementById("desc");
+    const openBtn = document.getElementById("open-btn");
+    const hint = document.getElementById("hint");
+    const banner = document.getElementById("banner");
+    const bannerSubtitle = document.getElementById("banner-subtitle");
+    const downloadLink = document.getElementById("download-link");
+
+    title.textContent = state.title;
+    desc.textContent = state.description;
+    downloadLink.href = state.fallbackUrl;
+
+    fetch("/mobile-entry", { credentials: "same-origin" })
+      .then((res) => res.ok ? res.json() : Promise.reject(new Error(`HTTP ${res.status}`)))
+      .then((cfg) => {
+        const ua = navigator.userAgent || "";
+        const isIOS = /iPhone|iPad|iPod/i.test(ua);
+        const isAndroid = /Android/i.test(ua);
+        const target = isIOS ? cfg.iosUrl : isAndroid ? cfg.androidUrl : "";
+        title.textContent = cfg.title || state.title;
+        desc.textContent = cfg.description || state.description;
+        downloadLink.href = cfg.fallbackUrl || state.fallbackUrl;
+        bannerSubtitle.textContent = cfg.enabled ? "点击这里唤起 App，体验更完整" : "当前入口未开启";
+
+        if (!cfg.enabled) {
+          hint.textContent = "当前唤端入口未开启。";
+          openBtn.textContent = "返回下载页";
+          openBtn.addEventListener("click", () => {
+            location.href = cfg.fallbackUrl || state.fallbackUrl;
+          });
+          return;
+        }
+        if (!target) {
+          hint.textContent = "当前还没有配置可拉起的 App 地址。";
+          openBtn.disabled = true;
+          openBtn.style.opacity = "0.55";
+          return;
+        }
+
+        const openApp = () => {
+          location.href = target;
+          if (isAndroid) {
+            setTimeout(() => {
+              if (document.visibilityState === "visible") {
+                location.href = cfg.fallbackUrl || state.fallbackUrl;
+              }
+            }, Math.max(0, Number(cfg.delayMs ?? state.delayMs) || state.delayMs));
+          }
+        };
+
+        banner.addEventListener("click", openApp);
+        openBtn.addEventListener("click", openApp);
+        setTimeout(openApp, 180);
+        hint.textContent = isIOS || isAndroid
+          ? "如果没有自动跳转，请点顶部 banner 或下方按钮。"
+          : "请在移动设备浏览器中打开。";
+      })
+      .catch(() => {
+        hint.textContent = "加载唤端配置失败，请稍后再试。";
+        openBtn.disabled = true;
+        openBtn.style.opacity = "0.55";
+      });
+  </script>
+</body>
+</html>

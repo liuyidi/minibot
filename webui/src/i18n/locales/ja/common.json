@@ -14,12 +14,30 @@
       "hint": "gateway 設定の tokenIssueSecret に指定されたシークレットを入力してください。",
       "placeholder": "パスワード",
       "submit": "接続",
-      "invalid": "パスワードが無効です。もう一度お試しください。"
+      "invalid": "パスワードが無効です。もう一度お試しください。",
+      "welcomeTitle": "Welcome to Minibot",
+      "login": "Sign in",
+      "browserTitle": "Finish signing in",
+      "browserHint": "A browser window was opened for login. Complete it there, then return here.",
+      "browserWaiting": "Waiting for browser login…",
+      "browserRetry": "Open browser again",
+      "signingIn": "Signing in…",
+      "browserNotOpened": "Browser didn’t open?",
+      "browserCopyHint": "Copy the login link and open it in a browser to finish signing in",
+      "copyLoginLink": "Copy login link",
+      "loginLinkCopied": "Copied",
+      "retryLogin": "Try again",
+      "privacy": "Privacy Policy",
+      "terms": "Terms of Service"
     },
     "account": {
       "section": "アカウント",
       "logoutHint": "このブラウザーを gateway から切断します。",
-      "logout": "サインアウト"
+      "logout": "サインアウト",
+      "logoutConfirmTitle": "Confirm sign out",
+      "logoutConfirmBody": "Signing out stops all running tasks (including background sessions). Sign out?",
+      "logoutConfirmCancel": "Cancel",
+      "logoutConfirmAction": "Confirm sign out"
     },
     "system": {
       "section": "システム",
@@ -38,6 +56,29 @@
     },
     "meta": {
       "description": "minibot Web UI — minibot ワークスペースと会話します。"
+    },
+    "mobileEntry": {
+      "hint": {
+        "loading": "起動設定を読み込み中...",
+        "disabled": "この起動エントリは無効です。",
+        "missingUrl": "アプリの URL がまだ設定されていません。",
+        "ready": "何も起きない場合は、下のボタンを押してください。",
+        "loadFailed": "起動設定の読み込みに失敗しました。後でもう一度お試しください。",
+        "androidRetry": "何も起きない場合は、上のボタンを押してください。",
+        "iosRetry": "iPhone では Safari がアプリを開く許可を求める場合があります。"
+      },
+      "banner": {
+        "subtitle": "ここをタップしてアプリを開き、完全な体験をお楽しみください",
+        "disabled": "エントリ無効",
+        "cta": "アプリを開く"
+      },
+      "actions": {
+        "open": "アプリを開く",
+        "download": "未インストールですか？ダウンロードページへ"
+      },
+      "notice": {
+        "trying": "このサイトは別のアプリを開こうとしています。プロンプトが出たら「許可」を選んでください。"
+      }
     }
   },
   "sidebar": {
@@ -827,7 +868,39 @@
       "connectorDisabled": "Disabled",
       "add": "Add",
       "loading": "Loading…",
-      "noDescription": "No description."
+      "noDescription": "No description.",
+      "builtin": {
+        "github": {
+          "title": "GitHub",
+          "description": "Interact with GitHub using the gh CLI for issues, PRs, and CI."
+        },
+        "weather": {
+          "title": "Weather",
+          "description": "Get current weather and forecasts (no API key required)."
+        },
+        "memory": {
+          "title": "Memory",
+          "description": "Long-term memory via MEMORY.md and read/write memory tools."
+        },
+        "summarize": {
+          "title": "Summarize",
+          "description": "Summarize URLs, podcasts, and local files."
+        },
+        "clawhub": {
+          "title": "ClawHub",
+          "description": "Search and install agent skills from the public registry."
+        },
+        "tmux": {
+          "title": "tmux",
+          "description": "Remote-control tmux sessions for interactive CLIs."
+        },
+        "skill-creator": {
+          "title": "Skill creator",
+          "description": "Create or update agent skills with scripts, references, and assets."
+        }
+      },
+      "installedSkillsCount": "Installed {{count}}",
+      "installedConnectorsCount": "Installed {{count}}"
     },
     "voice": {
       "selectProvider": "プロバイダーを選択",
@@ -1202,7 +1275,16 @@
         "noSession": "Open a chat to estimate context usage.",
         "loadFailed": "Could not load context usage.",
         "updating": "Updating…",
-        "estimateHint": "Estimate · {{method}}"
+        "estimateHint": "Estimate · {{method}}",
+        "categoryLabels": {
+          "freeSpace": "Free space",
+          "systemTools": "System tools",
+          "messages": "Messages",
+          "mcpTools": "MCP tools",
+          "systemPrompt": "System prompt",
+          "skills": "Skills",
+          "memoryFiles": "Memory files"
+        }
       }
     },
     "scrollToBottom": "一番下へスクロール",

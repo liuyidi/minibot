@@ -57,13 +57,13 @@ export default defineConfig(({ mode }) => {
       },
     },
     server: {
-      host: "127.0.0.1",
+      host: "0.0.0.0",
       port: 5173,
       strictPort: true,
       // Keep Vite's HMR socket on a dedicated path. The app WebSocket opens
       // directly to minibot (default :8766; legacy gateway was :8765).
       hmr: {
-        host: "127.0.0.1",
+        host: "192.168.112.159",
         path: hmrPath,
       },
         proxy: {

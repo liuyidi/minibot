@@ -56,6 +56,29 @@
     },
     "meta": {
       "description": "minibot Web UI —— 与你的 minibot 工作区对话。"
+    },
+    "mobileEntry": {
+      "hint": {
+        "loading": "正在加载唤端配置...",
+        "disabled": "当前唤端入口未开启。",
+        "missingUrl": "当前还没有配置可拉起的 App 地址。",
+        "ready": "如果没有自动跳转，请手动点击按钮。",
+        "loadFailed": "加载唤端配置失败，请稍后再试。",
+        "androidRetry": "如果没有自动跳转，请点击上方按钮。",
+        "iosRetry": "iPhone 浏览器可能需要你点一下顶部 banner 再允许打开。"
+      },
+      "banner": {
+        "subtitle": "点击这里唤起 App，体验更完整",
+        "disabled": "当前入口未开启",
+        "cta": "打开 App"
+      },
+      "actions": {
+        "open": "打开 App",
+        "download": "还没安装？去下载页"
+      },
+      "notice": {
+        "trying": "此网站正在尝试打开另一款应用。若浏览器弹出提示，请选择允许打开。"
+      }
     }
   },
   "sidebar": {

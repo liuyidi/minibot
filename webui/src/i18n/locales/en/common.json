@@ -56,6 +56,29 @@
     },
     "meta": {
       "description": "minibot web UI — chat with your minibot workspace."
+    },
+    "mobileEntry": {
+      "hint": {
+        "loading": "Loading handoff settings...",
+        "disabled": "This handoff entry is currently disabled.",
+        "missingUrl": "No app URL has been configured yet.",
+        "ready": "If nothing happens, tap the button below.",
+        "loadFailed": "Failed to load handoff settings. Please try again later.",
+        "androidRetry": "If nothing happens, tap the button above.",
+        "iosRetry": "On iPhone, Safari may ask you to allow opening the app."
+      },
+      "banner": {
+        "subtitle": "Tap here to open the app for the full experience",
+        "disabled": "Entry disabled",
+        "cta": "Open app"
+      },
+      "actions": {
+        "open": "Open app",
+        "download": "Not installed? Go to download page"
+      },
+      "notice": {
+        "trying": "This website is trying to open another app. If a prompt appears, choose Allow."
+      }
     }
   },
   "sidebar": {
