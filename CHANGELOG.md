@@ -11,6 +11,12 @@ Versions follow SemVer for product narrative. Package metadata may lag until a f
 
 ## [Unreleased]
 
+## [1.0.19] - 2026-08-27
+
+### Changed
+
+- The mobile handoff entry now uses the hash route `/#/open`, and the dedicated Python `/open` page dispatcher was removed.
+
 ## [1.0.18] - 2026-08-27
 
 ### Added

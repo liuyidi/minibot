@@ -12,6 +12,12 @@ English: [CHANGELOG.md](./CHANGELOG.md)
 <!-- #region site-changelog -->
 ## [Unreleased]
 
+## [1.0.19] - 2026-08-27
+
+### 变更
+
+- 移动端唤端入口改为 hash 路由 `/#/open`，并移除了 Python 里专门的 `/open` 页面分发逻辑。
+
 ## [1.0.18] - 2026-08-27
 
 ### 新增
