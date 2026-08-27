@@ -35,8 +35,11 @@ def test_bootstrap_and_session_flow(client: TestClient, auth_headers: dict[str, 
 
 def test_devui_served(client: TestClient) -> None:
     root = client.get("/", follow_redirects=False)
-    assert root.status_code in {307, 302}
-    assert root.headers["location"].endswith("/ui/")
+    if root.status_code in {307, 302}:
+        assert root.headers["location"].endswith("/ui/")
+    else:
+        # WebUI SPA mounted when ``webui/dist`` is present in the checkout.
+        assert root.status_code == 200
 
     page = client.get("/ui/")
     assert page.status_code == 200
@@ -92,6 +95,8 @@ def test_settings_includes_observability(client: TestClient, auth_headers: dict[
     body = res.json()
     assert "observability" in body
     assert "langfuse_enabled" in body["observability"]
+    assert "mobile_entry" in body
+    assert body["mobile_entry"]["enabled"] is True
 
 
 def test_status_page_served(client: TestClient) -> None:

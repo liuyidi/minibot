@@ -68,7 +68,6 @@ def mount_webui(app: FastAPI) -> Path | None:
         app.mount("/assets", StaticFiles(directory=str(assets)), name="webui-assets")
 
     index = dist / "index.html"
-
     @app.get("/")
     async def spa_index() -> FileResponse:
         return FileResponse(index, media_type="text/html")

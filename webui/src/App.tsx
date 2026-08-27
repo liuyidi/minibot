@@ -44,6 +44,7 @@ import {
 } from "@/lib/configs/runtime";
 import type { AuthConfigResponse, RuntimeSurface } from "@/lib/types";
 import { ClientProvider } from "@/providers/ClientProvider";
+import OpenPage from "@/pages/open/OpenPage";
 
 type BootState =
   | { status: "loading" }
@@ -72,6 +73,10 @@ function isLocalDevelopmentHost(): boolean {
 }
 
 export default function App() {
+  if (typeof window !== "undefined" && window.location.hash.replace(/^#\/+/, "") === "open") {
+    return <OpenPage />;
+  }
+
   const { t } = useTranslation();
   const [state, setState] = useState<BootState>({ status: "loading" });
   const bootstrapSecretRef = useRef("");
