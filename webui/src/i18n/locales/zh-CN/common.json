@@ -72,6 +72,7 @@
         "disabled": "当前入口未开启",
         "cta": "打开 App"
       },
+      "description": "建议在 App 中继续使用 minibot。",
       "actions": {
         "open": "打开 App",
         "download": "还没安装？去下载页"

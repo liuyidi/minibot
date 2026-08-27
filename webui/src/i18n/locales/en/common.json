@@ -72,6 +72,7 @@
         "disabled": "Entry disabled",
         "cta": "Open app"
       },
+      "description": "Continue in the minibot app for the best experience.",
       "actions": {
         "open": "Open app",
         "download": "Not installed? Go to download page"

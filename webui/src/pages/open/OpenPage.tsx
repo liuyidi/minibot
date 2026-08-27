@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useTranslation } from "react-i18next";
+import i18n from "i18next";
 
 type MobileEntryConfig = {
   enabled: boolean;
@@ -36,9 +36,9 @@ function getMobilePlatform() {
 }
 
 export default function OpenPage() {
-  const { t } = useTranslation();
   const [config, setConfig] = useState<MobileEntryConfig>(DEFAULT_CONFIG);
-  const [hint, setHint] = useState(t("mobileEntry.hint.loading"));
+  const t = i18n.getFixedT("zh-CN", "common");
+  const [hint, setHint] = useState(t("app.mobileEntry.hint.loading"));
   const [attemptedAutoOpen, setAttemptedAutoOpen] = useState(false);
 
   const target = useMemo(() => getMobileTarget(config), [config]);
@@ -59,17 +59,17 @@ export default function OpenPage() {
         };
         setConfig(nextConfig);
         if (!nextConfig.enabled) {
-          setHint(t("mobileEntry.hint.disabled"));
+          setHint(t("app.mobileEntry.hint.disabled"));
           return;
         }
         if (!getMobileTarget(nextConfig)) {
-          setHint(t("mobileEntry.hint.missingUrl"));
+          setHint(t("app.mobileEntry.hint.missingUrl"));
           return;
         }
-        setHint(t("mobileEntry.hint.ready"));
+        setHint(t("app.mobileEntry.hint.ready"));
       } catch {
         if (!cancelled) {
-          setHint(t("mobileEntry.hint.loadFailed"));
+          setHint(t("app.mobileEntry.hint.loadFailed"));
         }
       }
     })();
@@ -89,13 +89,13 @@ export default function OpenPage() {
         if (getMobilePlatform() === "android") {
           window.setTimeout(() => {
             if (document.visibilityState === "visible") {
-              setHint(t("mobileEntry.hint.androidRetry"));
+              setHint(t("app.mobileEntry.hint.androidRetry"));
             }
           }, delay);
         } else {
           window.setTimeout(() => {
             if (document.visibilityState === "visible") {
-              setHint(t("mobileEntry.hint.iosRetry"));
+              setHint(t("app.mobileEntry.hint.iosRetry"));
             }
           }, delay);
         }
@@ -122,12 +122,12 @@ export default function OpenPage() {
           <div>
             <div className="text-sm font-semibold leading-5">minibot</div>
             <div className="text-xs text-[#6b7280]">
-              {config.enabled ? t("mobileEntry.banner.subtitle") : t("mobileEntry.banner.disabled")}
+              {config.enabled ? t("app.mobileEntry.banner.subtitle") : t("app.mobileEntry.banner.disabled")}
             </div>
           </div>
         </div>
         <div className="rounded-full bg-[#2563eb] px-3 py-1.5 text-xs font-semibold text-white">
-          {t("mobileEntry.banner.cta")}
+          {t("app.mobileEntry.banner.cta")}
         </div>
       </button>
 
@@ -136,9 +136,9 @@ export default function OpenPage() {
           bot.liuyidi.me
         </div>
         <h1 className="mb-2 text-[28px] font-semibold leading-tight">
-          {config.title}
+          {t("app.mobileEntry.actions.open")}
         </h1>
-        <p className="mb-5 leading-7 text-[#4b5563]">{config.description}</p>
+        <p className="mb-5 leading-7 text-[#4b5563]">{t("app.mobileEntry.description")}</p>
         <div className="flex flex-wrap gap-3">
           <button
             type="button"
@@ -146,13 +146,13 @@ export default function OpenPage() {
             disabled={!config.enabled || !target}
             onClick={openApp}
           >
-            {t("mobileEntry.actions.open")}
+            {t("app.mobileEntry.actions.open")}
           </button>
         </div>
         <div className="mt-4 text-sm text-[#6b7280]">{hint}</div>
         {attemptedAutoOpen && (
           <div className="mt-3 rounded-2xl bg-[#eff6ff] px-4 py-3 text-sm leading-6 text-[#1d4ed8]">
-            {t("mobileEntry.notice.trying")}
+            {t("app.mobileEntry.notice.trying")}
           </div>
         )}
         {config.fallbackUrl && (
@@ -160,7 +160,7 @@ export default function OpenPage() {
             className="mt-3 inline-flex text-sm font-semibold text-[#2563eb]"
             href={config.fallbackUrl}
           >
-            {t("mobileEntry.actions.download")}
+            {t("app.mobileEntry.actions.download")}
           </a>
         )}
       </main>
