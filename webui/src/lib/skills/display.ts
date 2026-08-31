@@ -1,23 +1,67 @@
 import type { TFunction } from "i18next";
 
 import { slashCommandName } from "@/lib/chat/slashSkills";
+import {
+  resolveCatalogDescription,
+  resolveCatalogLabel,
+} from "@/lib/skills/market";
 import type { SkillSummary, SlashCommand } from "@/lib/types";
+
+export type SkillCatalogLookup = {
+  id: string;
+  label: string;
+  label_zh?: string;
+  description?: string;
+  description_zh?: string;
+};
+
+export type ResolveSkillDisplayOptions = {
+  preferZh?: boolean;
+  catalog?: SkillCatalogLookup | null;
+};
 
 export function skillBuiltinI18nKey(name: string, field: "title" | "description"): string {
   return `settings.skills.builtin.${name}.${field}`;
 }
 
-export function resolveSkillTitle(skill: Pick<SkillSummary, "name" | "description">, t: TFunction): string {
-  return t(skillBuiltinI18nKey(skill.name, "title"), { defaultValue: skill.name });
+function hasBuiltinTranslation(
+  skillName: string,
+  field: "title" | "description",
+  t: TFunction,
+): boolean {
+  const key = skillBuiltinI18nKey(skillName, field);
+  const marker = `__missing__:${key}`;
+  return t(key, { defaultValue: marker }) !== marker;
+}
+
+export function resolveSkillTitle(
+  skill: Pick<SkillSummary, "name" | "description" | "source">,
+  t: TFunction,
+  opts?: ResolveSkillDisplayOptions,
+): string {
+  if (skill.source === "builtin" || hasBuiltinTranslation(skill.name, "title", t)) {
+    return t(skillBuiltinI18nKey(skill.name, "title"), { defaultValue: skill.name });
+  }
+  if (opts?.catalog) {
+    return resolveCatalogLabel(opts.catalog, Boolean(opts.preferZh));
+  }
+  return skill.name;
 }
 
 export function resolveSkillDescription(
-  skill: Pick<SkillSummary, "name" | "description">,
+  skill: Pick<SkillSummary, "name" | "description" | "source">,
   t: TFunction,
+  opts?: ResolveSkillDisplayOptions,
 ): string {
-  return t(skillBuiltinI18nKey(skill.name, "description"), {
-    defaultValue: skill.description || skill.name,
-  });
+  if (skill.source === "builtin" || hasBuiltinTranslation(skill.name, "description", t)) {
+    return t(skillBuiltinI18nKey(skill.name, "description"), {
+      defaultValue: skill.description || skill.name,
+    });
+  }
+  if (opts?.catalog) {
+    return resolveCatalogDescription(opts.catalog, Boolean(opts.preferZh));
+  }
+  return skill.description || skill.name;
 }
 
 /** Localize backend unavailable markers like `CLI: tmux, ENV: FOO`. */

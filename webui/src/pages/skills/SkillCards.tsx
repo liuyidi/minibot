@@ -12,6 +12,7 @@ import {
   formatUnavailableReason,
   resolveSkillDescription,
   resolveSkillTitle,
+  type SkillCatalogLookup,
 } from "@/lib/skills/display";
 import type { SkillSummary } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -19,21 +20,27 @@ import { cn } from "@/lib/utils";
 export function SkillCard({
   skill,
   busy,
+  preferZh = false,
+  catalog,
   onSelect,
   onToggleEnabled,
   onUninstall,
 }: {
   skill: SkillSummary;
   busy?: boolean;
+  preferZh?: boolean;
+  catalog?: SkillCatalogLookup | null;
   onSelect: (skill: SkillSummary) => void;
   onToggleEnabled?: (skill: SkillSummary, enabled: boolean) => void;
   onUninstall?: (skill: SkillSummary) => void;
 }) {
   const { t } = useTranslation();
+  const displayOpts = { preferZh, catalog };
   const enabled = skill.enabled !== false;
   const canUninstall = skill.source === "workspace" && Boolean(onUninstall);
+  const title = resolveSkillTitle(skill, t, displayOpts);
   const uninstallLabel = t("settings.skills.uninstall", {
-    name: resolveSkillTitle(skill, t),
+    name: title,
     defaultValue: "Uninstall {{name}}",
   });
 
@@ -100,7 +107,7 @@ export function SkillCard({
       <button
         type="button"
         aria-label={t("settings.skills.openDetails", {
-          name: skill.name,
+          name: title,
           defaultValue: "Open details for {{name}}",
         })}
         onClick={() => onSelect(skill)}
@@ -112,10 +119,10 @@ export function SkillCard({
           </div>
           <div className="min-w-0 flex-1">
             <h3 className="truncate text-[15px] font-semibold text-foreground">
-              {resolveSkillTitle(skill, t)}
+              {title}
             </h3>
             <p className="mt-1 line-clamp-3 text-[12.5px] leading-5 text-muted-foreground">
-              {resolveSkillDescription(skill, t) ||
+              {resolveSkillDescription(skill, t, displayOpts) ||
                 t("settings.skills.noDescription", { defaultValue: "No description." })}
             </p>
             {!skill.available && skill.unavailable_reason ? (

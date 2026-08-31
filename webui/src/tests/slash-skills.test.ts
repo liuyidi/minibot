@@ -100,9 +100,12 @@ describe("slashSkills", () => {
       if (key === "settings.skills.builtin.weather.description") return "查询天气";
       return opts?.defaultValue ?? key;
     });
-    expect(resolveSkillTitle({ name: "github", description: "Interact with GitHub" }, t)).toBe(
-      "GitHub 技能",
-    );
+    expect(
+      resolveSkillTitle(
+        { name: "github", description: "Interact with GitHub", source: "builtin" },
+        t,
+      ),
+    ).toBe("GitHub 技能");
     const command: SlashCommand = {
       command: "/weather",
       title: "weather",
@@ -111,5 +114,27 @@ describe("slashSkills", () => {
       argHint: "",
     };
     expect(resolveSlashCommandLabel(command, t, "description")).toBe("查询天气");
+  });
+
+  it("prefers catalog zh labels for installed workspace skills", () => {
+    const t = vi.fn((key: string, opts?: { defaultValue?: string }) => opts?.defaultValue ?? key);
+    const catalog = {
+      id: "frontend-dev",
+      label: "Frontend Development",
+      label_zh: "前端开发",
+      description: "Build UI with React",
+      description_zh: "用 React 做前端",
+    };
+    expect(
+      resolveSkillTitle(
+        {
+          name: "frontend-dev",
+          description: "Build UI with React",
+          source: "workspace",
+        },
+        t,
+        { preferZh: true, catalog },
+      ),
+    ).toBe("前端开发");
   });
 });

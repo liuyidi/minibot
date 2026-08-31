@@ -14,6 +14,7 @@ import {
   formatUnavailableReason,
   resolveSkillDescription,
   resolveSkillTitle,
+  type SkillCatalogLookup,
 } from "@/lib/skills/display";
 import { cn } from "@/lib/utils";
 
@@ -60,10 +61,14 @@ export function TabButton({
 export function SkillDetailSheet({
   skill,
   open,
+  preferZh = false,
+  catalog,
   onOpenChange,
 }: {
   skill: SkillSummary | null;
   open: boolean;
+  preferZh?: boolean;
+  catalog?: SkillCatalogLookup | null;
   onOpenChange: (open: boolean) => void;
 }) {
   const { t } = useTranslation();
@@ -72,9 +77,10 @@ export function SkillDetailSheet({
   if (!skill) return null;
 
   const activeSkill = detail ?? skill;
-  const displayTitle = resolveSkillTitle(activeSkill, t);
+  const displayOpts = { preferZh, catalog };
+  const displayTitle = resolveSkillTitle(activeSkill, t, displayOpts);
   const displayDescription =
-    resolveSkillDescription(activeSkill, t) ||
+    resolveSkillDescription(activeSkill, t, displayOpts) ||
     t("settings.skills.noDescription", { defaultValue: "No description." });
   const sourceLabel = skillSourceLabel(activeSkill.source, t);
   const statusLabel = activeSkill.available

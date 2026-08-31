@@ -53,13 +53,38 @@ export function SkillsPage() {
   const match = (text: string) => !q || text.toLowerCase().includes(q);
   const preferZh = (i18n.language || "").toLowerCase().startsWith("zh");
 
+  const catalogById = useMemo(() => {
+    const map = new Map<string, SkillCatalogTemplate>();
+    for (const tpl of skillTemplates) {
+      map.set(tpl.id.toLowerCase(), tpl);
+    }
+    return map;
+  }, [skillTemplates]);
+
+  const catalogFor = (skillName: string) => catalogById.get(skillName.toLowerCase()) ?? null;
+
   const builtinSkills = useMemo(
     () => skills.filter((s) => s.source === "builtin" && match(`${s.name} ${s.description}`)),
     [skills, q],
   );
   const mineSkills = useMemo(
-    () => skills.filter((s) => s.source === "workspace" && match(`${s.name} ${s.description}`)),
-    [skills, q],
+    () =>
+      skills.filter((s) => {
+        if (s.source !== "workspace") return false;
+        const catalog = catalogById.get(s.name.toLowerCase());
+        const hay = [
+          s.name,
+          s.description,
+          catalog?.label,
+          catalog?.label_zh,
+          catalog?.description,
+          catalog?.description_zh,
+        ]
+          .filter(Boolean)
+          .join(" ");
+        return match(hay);
+      }),
+    [skills, q, catalogById],
   );
   const installedCount = useMemo(
     () => skills.filter((s) => s.source === "workspace").length,
@@ -167,6 +192,8 @@ export function SkillsPage() {
               <SkillCard
                 key={`b:${skill.name}`}
                 skill={skill}
+                preferZh={preferZh}
+                catalog={catalogFor(skill.name)}
                 busy={busyKey === `skill-enable:${skill.name}`}
                 onSelect={setSelectedSkill}
                 onToggleEnabled={(item, enabled) => void setSkillEnabled(item.name, enabled)}
@@ -191,6 +218,8 @@ export function SkillsPage() {
               <SkillCard
                 key={`w:${skill.name}`}
                 skill={skill}
+                preferZh={preferZh}
+                catalog={catalogFor(skill.name)}
                 busy={
                   busyKey === `skill-enable:${skill.name}` ||
                   busyKey === `skill-uninstall:${skill.name}`
@@ -215,6 +244,8 @@ export function SkillsPage() {
       <SkillDetailSheet
         skill={selectedSkill}
         open={selectedSkill !== null}
+        preferZh={preferZh}
+        catalog={selectedSkill ? catalogFor(selectedSkill.name) : null}
         onOpenChange={(open) => {
           if (!open) setSelectedSkill(null);
         }}
