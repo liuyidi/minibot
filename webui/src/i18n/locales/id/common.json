@@ -211,7 +211,7 @@
       "voiceLimits": "Batas"
     },
     "help": {
-      "theme": "Beralih antara tampilan terang dan gelap.",
+      "theme": "Pilih terang, gelap, atau ikuti sistem.",
       "language": "Pilih bahasa yang digunakan WebUI.",
       "provider": "Selecciona el proveedor para nuevas solicitudes de modelo.",
       "model": "Define el nombre de modelo predeterminado de minibot.",
@@ -276,7 +276,8 @@
       "configured": "Terkonfigurasi",
       "notConfigured": "Belum dikonfigurasi",
       "pending": "Tertunda",
-      "restartingEngine": "Memulai ulang"
+      "restartingEngine": "Memulai ulang",
+      "system": "Sistem"
     },
     "status": {
       "loading": "Memuat pengaturan...",

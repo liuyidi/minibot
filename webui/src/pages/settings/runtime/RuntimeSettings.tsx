@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { getHostApi } from "@/lib/configs/runtime";
+import { SETTINGS_SHOW_RUNTIME_IDENTITY } from "@/lib/configs/ui-entry";
 import type { SettingsPayload } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -96,6 +97,7 @@ export function RuntimeSettings({
   };
   return (
     <div className="space-y-7">
+      {SETTINGS_SHOW_RUNTIME_IDENTITY ? (
       <section>
         <SettingsSectionTitle>{tx("settings.sections.identity", "Identity")}</SettingsSectionTitle>
         <SettingsGroup>
@@ -139,6 +141,7 @@ export function RuntimeSettings({
           />
         </SettingsGroup>
       </section>
+      ) : null}
 
       {isNativeHost ? (
         <section>

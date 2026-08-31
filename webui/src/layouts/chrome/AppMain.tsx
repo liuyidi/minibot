@@ -29,7 +29,9 @@ export function AppMain({
     activeSession,
     headerTitle,
     theme,
+    themePreference,
     toggle,
+    setTheme,
     workspace,
     hostSidebar,
     chatActions,
@@ -111,10 +113,12 @@ export function AppMain({
         <div className="absolute inset-0 flex flex-col">
           <SettingsPage
             theme={theme}
+            themePreference={themePreference}
             initialSection={settingsInitialSection}
             initialSettings={workspace.settingsSnapshot}
             showSidebar
             onToggleTheme={toggle}
+            onThemeChange={setTheme}
             onBackToChat={utilityNav.onBackToChat}
             onModelNameChange={host.onModelNameChange}
             onSettingsChange={workspace.setSettingsSnapshot}

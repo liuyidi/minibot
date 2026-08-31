@@ -193,7 +193,9 @@ vi.mock("@/hooks/ui", async (importOriginal) => {
       React.createElement(React.Fragment, null, children),
     useTheme: () => ({
       theme: "light" as const,
+      preference: "light" as const,
       toggle: toggleThemeSpy,
+      setTheme: vi.fn(),
     }),
     useThemeValue: () => "light" as const,
   };

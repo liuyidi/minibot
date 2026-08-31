@@ -25,7 +25,7 @@ export function useAppLayoutModel({
   onModelNameChange: (modelName: string | null) => void;
 }) {
   const { t } = useTranslation();
-  const { theme, toggle } = useTheme();
+  const { theme, preference: themePreference, toggle, setTheme } = useTheme();
   const { route, navigate, location } = useShellNavigate();
   const {
     sessions,
@@ -155,7 +155,9 @@ export function useAppLayoutModel({
 
   return {
     theme,
+    themePreference,
     toggle,
+    setTheme,
     navigate,
     view,
     settingsInitialSection,

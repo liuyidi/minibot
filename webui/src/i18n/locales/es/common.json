@@ -211,7 +211,7 @@
       "voiceLimits": "Limites"
     },
     "help": {
-      "theme": "Cambia entre apariencia clara y oscura.",
+      "theme": "Elige claro, oscuro o seguir el sistema.",
       "language": "Elige el idioma usado por WebUI.",
       "provider": "Selecciona el proveedor para nuevas solicitudes de modelo.",
       "model": "Define el nombre de modelo predeterminado de minibot.",
@@ -276,7 +276,8 @@
       "configured": "Configurado",
       "notConfigured": "Sin configurar",
       "pending": "Pendiente",
-      "restartingEngine": "Reiniciando"
+      "restartingEngine": "Reiniciando",
+      "system": "Sistema"
     },
     "status": {
       "loading": "Cargando ajustes...",

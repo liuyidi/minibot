@@ -44,10 +44,12 @@ const SETTINGS_SECTION_PAGES: Record<SettingsSectionKey, ComponentType> = {
  */
 export function SettingsLayout({
   theme,
+  themePreference = theme,
   initialSection = "overview",
   initialSettings = null,
   showSidebar = true,
   onToggleTheme,
+  onThemeChange,
   onBackToChat,
   onModelNameChange,
   onSettingsChange,
@@ -82,7 +84,9 @@ export function SettingsLayout({
       value={{
         ...model,
         theme,
+        themePreference,
         onToggleTheme,
+        onThemeChange,
         onBackToChat,
         isRestarting,
         showSidebar,

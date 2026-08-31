@@ -7,7 +7,9 @@ export type SettingsShellValue = SettingsShellModel &
   Pick<
     SettingsPageProps,
     | "theme"
+    | "themePreference"
     | "onToggleTheme"
+    | "onThemeChange"
     | "onBackToChat"
     | "isRestarting"
     | "showSidebar"

@@ -211,7 +211,7 @@
       "voiceLimits": "制限"
     },
     "help": {
-      "theme": "ライト表示とダーク表示を切り替えます。",
+      "theme": "ライト、ダーク、またはシステム設定に合わせます。",
       "language": "WebUI で使用する言語を選択します。",
       "provider": "新しいモデルリクエストに使うプロバイダーを選択します。",
       "model": "minibot が既定で使用するモデル名を設定します。",
@@ -276,7 +276,8 @@
       "configured": "設定済み",
       "notConfigured": "未設定",
       "pending": "保留中",
-      "restartingEngine": "再起動中"
+      "restartingEngine": "再起動中",
+      "system": "システム"
     },
     "status": {
       "loading": "設定を読み込んでいます...",

@@ -211,7 +211,7 @@
       "voiceLimits": "限制"
     },
     "help": {
-      "theme": "在淺色與深色外觀之間切換。",
+      "theme": "在淺色、深色與跟隨系統之間切換。",
       "language": "選擇 WebUI 使用的語言。",
       "provider": "選擇處理新模型請求的供應商。",
       "model": "設定 minibot 預設使用的模型名稱。",
@@ -276,7 +276,8 @@
       "configured": "已配置",
       "notConfigured": "未配置",
       "pending": "等待中",
-      "restartingEngine": "正在重啟"
+      "restartingEngine": "正在重啟",
+      "system": "跟隨系統"
     },
     "status": {
       "loading": "正在載入設定...",

@@ -1531,11 +1531,12 @@ export function ThreadComposer({
       <div
         className={cn(
           "group/composer relative mx-auto flex w-full flex-col overflow-visible transition-all duration-200",
+          "rounded-[24px] border-[0.5px] border-black/10 bg-background/94 backdrop-blur-[20px] dark:border-white/10 dark:bg-card/94",
           isHero
-            ? "max-w-[58rem] rounded-[28px] border border-border/80 bg-[hsl(0_0%_98.5%)] shadow-[0_18px_48px_rgba(15,23,42,0.11),0_1px_0_rgba(15,23,42,0.04)] dark:border-white/[0.1] dark:bg-card dark:shadow-[0_24px_55px_rgba(0,0,0,0.38)]"
-            : "max-w-[49.5rem] rounded-[24px] border border-border/80 bg-[hsl(0_0%_98.5%)] shadow-[0_14px_36px_rgba(15,23,42,0.10),0_1px_0_rgba(15,23,42,0.04)] dark:border-white/[0.1] dark:bg-card dark:shadow-[0_18px_40px_rgba(0,0,0,0.34)]",
+            ? "max-w-[58rem] shadow-[0_18px_48px_rgba(15,23,42,0.11),0_1px_0_rgba(15,23,42,0.04)] dark:shadow-[0_24px_55px_rgba(0,0,0,0.38)]"
+            : "max-w-[49.5rem] shadow-[0_14px_36px_rgba(15,23,42,0.10),0_1px_0_rgba(15,23,42,0.04)] dark:shadow-[0_18px_40px_rgba(0,0,0,0.34)]",
           disabled && "opacity-60",
-          isDragging && "ring-2 ring-primary/40 motion-reduce:ring-0 motion-reduce:border-primary",
+          isDragging && "ring-2 ring-primary/40 motion-reduce:ring-0",
           goalState?.active &&
             "goal-shell-glow ring-1 ring-sky-400/35 motion-reduce:ring-sky-400/25 dark:ring-sky-400/45",
         )}
@@ -1650,12 +1651,11 @@ export function ThreadComposer({
         ) : null}
         <div
           className={cn(
-            "flex flex-wrap items-center justify-between gap-y-2 border-t border-border/55",
-            "bg-muted/45 dark:bg-white/[0.035]",
+            "flex flex-wrap items-center justify-between gap-y-2 bg-transparent",
             isHero
               ? cn(
                   "gap-x-2 px-3 py-2 sm:px-4",
-                  showProjectPicker ? "rounded-none" : "rounded-b-[28px]",
+                  showProjectPicker ? "rounded-none" : "rounded-b-[24px]",
                 )
               : "gap-x-2.5 rounded-b-[24px] px-2.5 py-2 sm:px-3",
           )}
@@ -1801,11 +1801,10 @@ export function ThreadComposer({
                 showStopButton
                   ? "border border-border/70 bg-background text-foreground/90 shadow-[0_2px_8px_rgba(15,23,42,0.08)] hover:bg-accent/70 hover:text-foreground disabled:text-muted-foreground/50"
                   : cn(
-                      "border border-foreground bg-foreground text-background",
+                      "border-0 bg-foreground text-background",
                       "shadow-[0_6px_16px_rgba(15,23,42,0.28)]",
                       "hover:bg-foreground/92 hover:shadow-[0_8px_20px_rgba(15,23,42,0.32)]",
-                      "disabled:border-border/70 disabled:bg-muted disabled:text-muted-foreground/55 disabled:shadow-none",
-                      "dark:disabled:border-white/10 dark:disabled:bg-white/[0.08] dark:disabled:text-white/35",
+                      "disabled:border-0 disabled:bg-[#c9cdd4] disabled:text-white disabled:opacity-100 disabled:shadow-none dark:disabled:bg-white/25 dark:disabled:text-white",
                     ),
                 (canSend || canOpenModelSettings || showStopButton) && "hover:scale-[1.04] active:scale-95",
               )}

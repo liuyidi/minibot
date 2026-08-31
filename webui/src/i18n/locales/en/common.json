@@ -249,7 +249,7 @@
       "voiceLimits": "Limits"
     },
     "help": {
-      "theme": "Switch between light and dark appearance.",
+      "theme": "Choose light, dark, or follow the system appearance.",
       "language": "Choose the language used by the WebUI.",
       "provider": "Select the provider that should serve new model requests.",
       "model": "Set the default model name used by minibot.",
@@ -410,7 +410,8 @@
       "configured": "Configured",
       "notConfigured": "Not configured",
       "pending": "Pending",
-      "restartingEngine": "Restarting"
+      "restartingEngine": "Restarting",
+      "system": "System"
     },
     "status": {
       "loading": "Loading settings...",

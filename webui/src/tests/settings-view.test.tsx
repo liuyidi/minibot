@@ -281,7 +281,7 @@ describe("SettingsView", () => {
     expect(within(settingsNav).getByRole("button", { name: "Overview" })).toBeInTheDocument();
     expect(within(settingsNav).getByRole("button", { name: "Appearance" })).toBeInTheDocument();
     expect(within(settingsNav).getByRole("button", { name: "Models" })).toBeInTheDocument();
-    expect(within(settingsNav).getByRole("button", { name: "Web" })).toBeInTheDocument();
+    expect(within(settingsNav).queryByRole("button", { name: "Web" })).not.toBeInTheDocument();
     expect(within(settingsNav).getByRole("button", { name: "System" })).toBeInTheDocument();
     expect(within(settingsNav).getByRole("button", { name: "Security" })).toBeInTheDocument();
     expect(within(settingsNav).queryByRole("button", { name: "Apps" })).not.toBeInTheDocument();

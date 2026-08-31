@@ -21,7 +21,7 @@ export const SETTINGS_SECTIONS = [
   "models",
   // "image",
   // "voice",
-  "browser",
+  // "browser",
   "runtime",
   "advanced",
 ] as const;
@@ -36,6 +36,9 @@ export const SETTINGS_SHOW_PROVIDERS_PANEL = false;
 
 /** BYOK / personal model configurations under Models. */
 export const SETTINGS_SHOW_USER_MODEL_CONFIGS = false;
+
+/** Bot name / icon / timezone block on System (runtime) settings. */
+export const SETTINGS_SHOW_RUNTIME_IDENTITY = false;
 
 export function isEnabledSettingsSection(
   section: string | null | undefined,

@@ -23,6 +23,7 @@ Versions follow SemVer for product narrative. Package metadata may lag until a f
 - WebUI sidebar, composer, and top chrome follow a Doubao-like hierarchy: shared row metrics, brand band spacing, and no green input focus rings.
 - Top utility nav (skills, automations, channels, …) and chat-list selection are mutually exclusive.
 - WebUI `thread/` is organized into shell / composer / messages / activity / preview / viewport, with `ThreadShell` thinned (file preview, feedback, message cache extracted).
+- Composer chrome is closer to Doubao (frosted card, flat toolbar, mid-gray idle send); appearance supports light / dark / system; settings hide Browser and System identity.
 
 ## [1.0.20] - 2026-08-27
 

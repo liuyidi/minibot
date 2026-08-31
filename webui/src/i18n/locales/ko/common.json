@@ -211,7 +211,7 @@
       "voiceLimits": "제한"
     },
     "help": {
-      "theme": "밝은 모드와 어두운 모드를 전환합니다.",
+      "theme": "라이트, 다크, 또는 시스템 설정을 따릅니다.",
       "language": "WebUI에서 사용할 언어를 선택합니다.",
       "provider": "새 모델 요청을 처리할 제공자를 선택합니다.",
       "model": "minibot이 기본으로 사용할 모델 이름을 설정합니다.",
@@ -276,7 +276,8 @@
       "configured": "구성됨",
       "notConfigured": "미구성",
       "pending": "대기 중",
-      "restartingEngine": "재시작 중"
+      "restartingEngine": "재시작 중",
+      "system": "시스템"
     },
     "status": {
       "loading": "설정을 불러오는 중...",

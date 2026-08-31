@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { LanguageSwitcher } from "@/components/settings/LanguageSwitcher";
 import { SegmentedControl, ToggleButton } from "@/components/settings/controls";
 import { SettingsGroup, SettingsRow, SettingsSectionTitle } from "@/components/settings/form";
-import { cn } from "@/lib/utils";
+import type { ThemePreference } from "@/hooks/ui";
 
 import type {
   LocalActivityMode,
@@ -13,13 +13,13 @@ import type {
 } from "@/pages/settings/shared/types";
 
 export function AppearanceSettings({
-  theme,
-  onToggleTheme,
+  themePreference,
+  onThemeChange,
   localPrefs,
   onChangeLocalPrefs,
 }: {
-  theme: "light" | "dark";
-  onToggleTheme: () => void;
+  themePreference: ThemePreference;
+  onThemeChange: (theme: ThemePreference) => void;
   localPrefs: LocalPreferences;
   onChangeLocalPrefs: Dispatch<SetStateAction<LocalPreferences>>;
 }) {
@@ -34,28 +34,18 @@ export function AppearanceSettings({
             title={t("settings.rows.theme")}
             description={t("settings.help.theme")}
           >
-            <button
-              type="button"
-              onClick={onToggleTheme}
-              className="inline-flex h-8 items-center rounded-full bg-muted p-0.5 text-[12px] font-medium text-muted-foreground"
-            >
-              <span
-                className={cn(
-                  "rounded-full px-3 py-1 transition-colors",
-                  theme === "light" && "bg-background text-foreground shadow-sm",
-                )}
-              >
-                {t("settings.values.light")}
-              </span>
-              <span
-                className={cn(
-                  "rounded-full px-3 py-1 transition-colors",
-                  theme === "dark" && "bg-background text-foreground shadow-sm",
-                )}
-              >
-                {t("settings.values.dark")}
-              </span>
-            </button>
+            <SegmentedControl
+              value={themePreference}
+              options={[
+                { value: "light", label: t("settings.values.light") },
+                { value: "dark", label: t("settings.values.dark") },
+                {
+                  value: "system",
+                  label: t("settings.values.system", { defaultValue: "System" }),
+                },
+              ]}
+              onChange={(next) => onThemeChange(next as ThemePreference)}
+            />
           </SettingsRow>
 
           <SettingsRow

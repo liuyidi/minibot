@@ -211,7 +211,7 @@
       "voiceLimits": "Gioi han"
     },
     "help": {
-      "theme": "Chuyển giữa giao diện sáng và tối.",
+      "theme": "Chọn sáng, tối hoặc theo hệ thống.",
       "language": "Chọn ngôn ngữ dùng trong WebUI.",
       "provider": "Selecciona el proveedor para nuevas solicitudes de modelo.",
       "model": "Define el nombre de modelo predeterminado de minibot.",
@@ -276,7 +276,8 @@
       "configured": "Đã cấu hình",
       "notConfigured": "Chưa cấu hình",
       "pending": "Đang chờ",
-      "restartingEngine": "Đang khởi động lại"
+      "restartingEngine": "Đang khởi động lại",
+      "system": "Hệ thống"
     },
     "status": {
       "loading": "Đang tải cài đặt...",

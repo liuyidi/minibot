@@ -4,6 +4,7 @@ import {
   SETTINGS_SECTIONS,
   SETTINGS_SHOW_PROFILE_USAGE,
   SETTINGS_SHOW_PROVIDERS_PANEL,
+  SETTINGS_SHOW_RUNTIME_IDENTITY,
   SETTINGS_SHOW_USER_MODEL_CONFIGS,
   UI_ENTRY,
   isEnabledSettingsSection,
@@ -26,20 +27,20 @@ describe("ui-entry gates", () => {
       "overview",
       "appearance",
       "models",
-      "browser",
       "runtime",
       "advanced",
     ]);
     expect(SETTINGS_SHOW_PROVIDERS_PANEL).toBe(false);
     expect(SETTINGS_SHOW_USER_MODEL_CONFIGS).toBe(false);
     expect(SETTINGS_SHOW_PROFILE_USAGE).toBe(false);
+    expect(SETTINGS_SHOW_RUNTIME_IDENTITY).toBe(false);
   });
 
   it("recognizes enabled settings sections", () => {
     expect(isEnabledSettingsSection("profile")).toBe(true);
     expect(isEnabledSettingsSection("overview")).toBe(true);
     expect(isEnabledSettingsSection("models")).toBe(true);
-    expect(isEnabledSettingsSection("browser")).toBe(true);
+    expect(isEnabledSettingsSection("browser")).toBe(false);
     expect(isEnabledSettingsSection("apps")).toBe(false);
     expect(isEnabledSettingsSection("image")).toBe(false);
     expect(isEnabledSettingsSection("voice")).toBe(false);

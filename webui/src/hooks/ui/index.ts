@@ -2,6 +2,9 @@ export {
   ThemeProvider,
   useTheme,
   useThemeValue,
+  resolveThemePreference,
+  type Theme,
+  type ThemePreference,
 } from "./useTheme";
 export {
   useSidebarState,

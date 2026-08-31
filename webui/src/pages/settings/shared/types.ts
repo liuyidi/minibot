@@ -34,10 +34,12 @@ export type ProviderForm = { apiKey: string; apiBase: string; apiType: ProviderA
 
 export type SettingsPageProps = {
   theme: "light" | "dark";
+  themePreference?: "light" | "dark" | "system";
   initialSection?: SettingsSectionKey;
   initialSettings?: SettingsPayload | null;
   showSidebar?: boolean;
   onToggleTheme: () => void;
+  onThemeChange?: (theme: "light" | "dark" | "system") => void;
   onBackToChat: () => void;
   onModelNameChange: (modelName: string | null) => void;
   onSettingsChange?: (payload: SettingsPayload) => void;
