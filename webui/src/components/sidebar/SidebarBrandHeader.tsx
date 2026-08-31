@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { Menu } from "lucide-react";
+import { PanelLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { getHostApi } from "@/lib/configs/runtime";
 import { cn } from "@/lib/utils";
+import { SIDEBAR_ICON } from "./sidebarChrome";
 
 const FALLBACK_APP_VERSION = "0.1.0";
 
@@ -64,8 +65,9 @@ export function SidebarBrandHeader({
   return (
     <div
       className={cn(
-        "flex items-center px-3 pb-2.5",
-        hostChromeInset ? "pt-[3.75rem]" : "pt-3",
+        // Logo band: 12px top, 32px content, 16px bottom
+        "flex h-8 shrink-0 items-center px-3 mt-3 mb-4",
+        hostChromeInset ? "mt-[3.75rem] mb-4" : null,
         collapsed ? "w-14 justify-start" : "justify-between",
       )}
     >
@@ -74,20 +76,28 @@ export function SidebarBrandHeader({
           <TooltipTrigger asChild>
             <button
               type="button"
+              data-testid="sidebar-brand-expand"
               aria-label={toggleLabel}
               onClick={onExpand}
               tabIndex={0}
               className={cn(
-                "flex h-9 shrink-0 items-center justify-center overflow-hidden rounded-xl transition-colors",
-                "-ml-0.5 w-9 hover:bg-sidebar-accent/75",
+                "group relative -ml-0.5 flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-[10px] transition-colors",
+                "hover:bg-[rgb(31_35_41_/0.05)] dark:hover:bg-white/[0.06]",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               )}
             >
-            <span
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
-              aria-hidden
-            >
-              <img src="/brand/minibot_mark.svg" alt="" className="h-8 w-8 rounded-lg" />
-            </span>
+              <span
+                className="flex h-8 w-8 items-center justify-center rounded-lg transition-opacity duration-150 group-hover:opacity-0 group-focus-visible:opacity-0"
+                aria-hidden
+              >
+                <img src="/brand/minibot_mark.svg" alt="" className="h-8 w-8 rounded-lg" />
+              </span>
+              <span
+                className="pointer-events-none absolute inset-0 grid place-items-center text-sidebar-foreground opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100"
+                aria-hidden
+              >
+                <PanelLeft className={SIDEBAR_ICON} strokeWidth={1.75} />
+              </span>
             </button>
           </TooltipTrigger>
           <TooltipContent side="right" align="center" sideOffset={10}>
@@ -102,7 +112,7 @@ export function SidebarBrandHeader({
           onClick={undefined}
           tabIndex={-1}
           className={cn(
-            "flex h-9 shrink-0 items-center justify-center overflow-hidden rounded-xl transition-colors",
+            "flex h-8 shrink-0 items-center justify-center overflow-hidden rounded-xl transition-colors",
             "pointer-events-none -ml-0.5 gap-2 px-1",
           )}
         >
@@ -112,14 +122,14 @@ export function SidebarBrandHeader({
             >
               <img src="/brand/minibot_mark.svg" alt="" className="h-8 w-8 rounded-lg" />
             </span>
-          <span className="flex min-w-0 items-baseline gap-1.5">
-            <span className="max-w-[7rem] truncate text-[13px] font-semibold tracking-tight text-sidebar-foreground">
+          <span className="flex min-w-0 items-center gap-1.5">
+            <span className="max-w-[8rem] truncate text-[18px] font-medium leading-8 text-sidebar-foreground antialiased">
               {t("app.brand")}
             </span>
             {appVersion ? (
               <span
                 data-testid="sidebar-app-version"
-                className="shrink-0 text-[11px] font-medium tracking-tight text-muted-foreground/80"
+                className="shrink-0 text-[12px] font-medium leading-8 tracking-tight text-muted-foreground/70"
               >
                 v{appVersion}
               </span>
@@ -133,9 +143,13 @@ export function SidebarBrandHeader({
           size="icon"
           aria-label={t("sidebar.collapse")}
           onClick={onCollapse}
-          className="h-7 w-7 rounded-lg text-muted-foreground/85 hover:bg-sidebar-accent/75 hover:text-sidebar-foreground"
+          className={cn(
+            "h-8 w-8 shrink-0 rounded-[10px] text-sidebar-foreground shadow-none",
+            "hover:bg-[rgb(31_35_41_/0.05)] hover:text-sidebar-foreground",
+            "dark:hover:bg-white/[0.06]",
+          )}
         >
-          <Menu className="h-3.5 w-3.5" />
+          <PanelLeft className={SIDEBAR_ICON} strokeWidth={1.75} />
         </Button>
       ) : null}
     </div>

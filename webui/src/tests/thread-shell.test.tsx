@@ -781,7 +781,7 @@ describe("ThreadShell", () => {
       expect(screen.getByPlaceholderText(COMPOSER_HERO_PLACEHOLDER)).toBeInTheDocument(),
     );
     const input = screen.getByPlaceholderText(COMPOSER_HERO_PLACEHOLDER);
-    expect(input.className).toContain("min-h-[78px]");
+    expect(input.className).toContain("min-h-[86px]");
     expect(screen.queryByText("old answer")).not.toBeInTheDocument();
   });
 

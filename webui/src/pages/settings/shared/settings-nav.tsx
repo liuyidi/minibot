@@ -72,13 +72,13 @@ export function SettingsSidebar({
       <button
         type="button"
         onClick={onBackToChat}
-        className="mb-2 inline-flex w-fit items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[12px] font-medium text-muted-foreground transition-colors hover:bg-muted/70 hover:text-foreground md:mb-3"
+        className="mb-2 inline-flex w-fit items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[14px] font-medium leading-[22px] text-muted-foreground transition-colors hover:bg-muted/70 hover:text-foreground md:mb-3"
       >
         <ChevronLeft className="h-3.5 w-3.5" aria-hidden />
         {t("settings.backToChat")}
       </button>
       <div className="mb-3 px-1 md:mb-4 md:px-2">
-        <h2 className="text-[18px] font-normal tracking-normal text-foreground">
+        <h2 className="text-[18px] font-medium leading-[26px] tracking-normal text-foreground">
           {t("settings.sidebar.title")}
         </h2>
       </div>
@@ -96,7 +96,7 @@ export function SettingsSidebar({
               aria-current={active ? "page" : undefined}
               onClick={() => onSelectSection(key)}
               className={cn(
-                "flex h-9 w-auto shrink-0 items-center gap-2 rounded-full px-3 text-left text-[13px] font-medium transition-colors md:w-full md:rounded-[10px] md:px-2.5",
+                "flex h-9 w-auto shrink-0 items-center gap-2 rounded-full px-3 text-left text-[14px] font-medium leading-[22px] transition-colors md:w-full md:rounded-[10px] md:px-2.5",
                 active
                   ? "bg-muted/90 text-foreground shadow-[inset_0_0_0_1px_rgba(0,0,0,0.025)]"
                   : "text-muted-foreground/78 hover:bg-muted/45 hover:text-foreground",
@@ -115,7 +115,7 @@ export function SettingsSidebar({
             type="button"
             variant="ghost"
             onClick={() => setLogoutOpen(true)}
-            className="h-9 w-full justify-start gap-2 rounded-[10px] px-2.5 text-[13px] font-medium text-muted-foreground hover:bg-destructive/8 hover:text-destructive"
+            className="h-9 w-full justify-start gap-2 rounded-[10px] px-2.5 text-[14px] font-medium leading-[22px] text-muted-foreground hover:bg-destructive/8 hover:text-destructive"
           >
             <LogOut className="h-4 w-4" aria-hidden />
             {t("app.account.logout")}

@@ -55,15 +55,8 @@ export function useAppSidebarMutations({
     [updateSidebarState],
   );
 
-  const onRequestRename = useCallback((key: string, label: string) => {
-    setPendingRename({ key, label });
-  }, [setPendingRename]);
-
-  const onConfirmRename = useCallback(
-    (title: string) => {
-      if (!pendingRename) return;
-      const key = pendingRename.key;
-      setPendingRename(null);
+  const applyTitleOverride = useCallback(
+    (key: string, title: string) => {
       void updateSidebarState((current) => {
         const titleOverrides = { ...current.title_overrides };
         const cleaned = title.trim();
@@ -78,7 +71,29 @@ export function useAppSidebarMutations({
         };
       });
     },
-    [pendingRename, setPendingRename, updateSidebarState],
+    [updateSidebarState],
+  );
+
+  const onRequestRename = useCallback((key: string, label: string) => {
+    setPendingRename({ key, label });
+  }, [setPendingRename]);
+
+  const onConfirmRename = useCallback(
+    (title: string) => {
+      if (!pendingRename) return;
+      const key = pendingRename.key;
+      setPendingRename(null);
+      applyTitleOverride(key, title);
+    },
+    [applyTitleOverride, pendingRename, setPendingRename],
+  );
+
+  /** Inline header rename (no dialog) — same persistence as chat.rename. */
+  const onRenameSessionTitle = useCallback(
+    (key: string, title: string) => {
+      applyTitleOverride(key, title);
+    },
+    [applyTitleOverride],
   );
 
   const onToggleGroup = useCallback(
@@ -223,6 +238,7 @@ export function useAppSidebarMutations({
     onTogglePin,
     onRequestRename,
     onConfirmRename,
+    onRenameSessionTitle,
     onToggleGroup,
     onRequestRenameProject,
     onConfirmProjectRename,

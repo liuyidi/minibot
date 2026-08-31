@@ -1,6 +1,6 @@
 {
   "app": {
-    "brand": "minibot",
+    "brand": "Minibot",
     "loading": {
       "connecting": "Menghubungkan ke minibot…",
       "boot": "Memuat minibot…"

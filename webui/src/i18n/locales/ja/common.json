@@ -1,6 +1,6 @@
 {
   "app": {
-    "brand": "minibot",
+    "brand": "Minibot",
     "loading": {
       "connecting": "minibot に接続中…",
       "boot": "minibot を読み込み中…"

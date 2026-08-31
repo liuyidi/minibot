@@ -330,7 +330,7 @@ export function AutomationsSettings({
     <div className="mx-auto flex w-full max-w-[56rem] flex-col gap-5">
       <section className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div
-          className="inline-flex w-fit rounded-full bg-muted/55 p-1 shadow-[inset_0_0_0_1px_rgba(15,23,42,0.04)]"
+          className="inline-flex w-fit rounded-[10px] bg-[rgb(31_35_41_/0.05)] p-0.5 dark:bg-white/[0.06]"
           role="tablist"
           aria-label={tx("settings.automations.tabs.label", "Automations views")}
         >
@@ -347,9 +347,9 @@ export function AutomationsSettings({
               aria-selected={tab === item.id}
               onClick={() => setTab(item.id)}
               className={cn(
-                "rounded-full px-4 py-1.5 text-[13px] font-medium transition-colors",
+                "rounded-[8px] px-3.5 py-1.5 text-[14px] leading-[22px] font-normal transition-colors",
                 tab === item.id
-                  ? "bg-background text-foreground shadow-[0_6px_16px_rgba(15,23,42,0.08)]"
+                  ? "bg-background font-medium text-[rgb(31,35,41)] shadow-[0_1px_2px_rgba(15,23,42,0.06)] dark:bg-sidebar-accent dark:text-foreground dark:shadow-none"
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
@@ -363,7 +363,7 @@ export function AutomationsSettings({
             <Button
               type="button"
               size="sm"
-              className="h-9 shrink-0 rounded-full px-3.5"
+              className="h-9 shrink-0 rounded-[10px] bg-[rgb(31,35,41)] px-3.5 text-white hover:bg-[rgb(31,35,41)]/90 dark:bg-foreground dark:text-background"
               onClick={() => onRequestCreate()}
             >
               <Plus className="mr-1.5 h-4 w-4" aria-hidden />

@@ -24,32 +24,21 @@ import {
   ArrowUp,
   ChevronDown,
   ChevronUp,
-  CircleHelp,
   CornerDownRight,
   GripVertical,
   ImageIcon,
   Loader2,
   Mic,
   Plus,
-  Sparkles,
   Square,
   SquarePen,
   Target,
   Trash2,
-  Check,
   X,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Tooltip,
   TooltipContent,
@@ -83,6 +72,10 @@ import { mergeSlashPaletteCommands } from "@/lib/chat/slashSkills";
 import { resolveSlashCommandLabel } from "@/lib/skills/display";
 import { handleComposerKeyDown } from "./composerKeyDown";
 import {
+  ComposerModelBadge,
+  type ComposerModelOption,
+} from "./ComposerModelBadge";
+import {
   commitComposerMentionPadChange,
   useEnsureComposerMentionPads,
 } from "./useEnsureComposerMentionPads";
@@ -96,12 +89,10 @@ import type {
   WorkspaceScopePayload,
   WorkspacesPayload,
 } from "@/lib/types";
-import {
-  inferProviderFromModelName,
-  providerBrand,
-} from "@/lib/constants/provider-brand";
 import { UI_ENTRY } from "@/lib/configs/ui-entry";
 import { cn } from "@/lib/utils";
+
+export type { ComposerModelOption, ComposerModelOptionKind } from "./ComposerModelBadge";
 
 /** ``<input accept>``: aligned with the server's MIME whitelist. SVG is
  * deliberately excluded to avoid an embedded-script XSS surface. */
@@ -196,18 +187,6 @@ interface ThreadComposerProps {
   workspaceError?: string | null;
   onWorkspaceScopeChange?: (scope: WorkspaceScopePayload) => void;
   pendingQueueKey?: string | null;
-}
-
-export type ComposerModelOptionKind = "auto" | "platform" | "preset";
-
-export interface ComposerModelOption {
-  id: string;
-  kind: ComposerModelOptionKind;
-  label: string;
-  detail?: string;
-  provider?: string | null;
-  active?: boolean;
-  disabled?: boolean;
 }
 
 const SLASH_PALETTE_GAP_PX = 8;
@@ -1504,10 +1483,16 @@ export function ThreadComposer({
     "w-full resize-none bg-transparent",
     isHero
       ? cn(
-          "min-h-[78px] px-4 text-[15px] leading-6 sm:px-5",
-          relaxedHeroInput ? "pb-2 pt-[27px]" : "pb-1.5 pt-4",
+          "min-h-[86px] px-4 text-[15.5px] leading-6 sm:px-5",
+          relaxedHeroInput ? "pb-2.5 pt-[28px]" : "pb-2 pt-4",
         )
-      : "min-h-[50px] px-3.5 pb-1.5 pt-3 text-[13.5px] leading-5 sm:px-4",
+      : "min-h-[58px] px-3.5 pb-2 pt-3.5 text-[14px] leading-[1.45] sm:px-4",
+  );
+  const toolCapsuleClass = cn(
+    "rounded-full border border-border/65 bg-background font-medium text-muted-foreground",
+    "shadow-[0_1px_2px_rgba(15,23,42,0.04)]",
+    "hover:bg-accent/70 hover:text-foreground",
+    "dark:border-white/10 dark:bg-white/[0.04] dark:shadow-none dark:hover:bg-white/[0.08]",
   );
 
   return (
@@ -1546,11 +1531,9 @@ export function ThreadComposer({
       <div
         className={cn(
           "group/composer relative mx-auto flex w-full flex-col overflow-visible transition-all duration-200",
-          "after:pointer-events-none after:absolute after:inset-[-1px] after:rounded-[inherit] after:border after:border-blue-300/75 after:opacity-0 after:transition-opacity after:duration-200 focus-within:after:opacity-100 dark:after:border-blue-400/55",
           isHero
-            ? "max-w-[58rem] rounded-[28px] border border-black/[0.035] bg-card shadow-[0_20px_55px_rgba(15,23,42,0.08)] dark:border-white/[0.06] dark:shadow-[0_24px_55px_rgba(0,0,0,0.34)]"
-            : "max-w-[49.5rem] rounded-[22px] border border-black/[0.035] bg-card shadow-[0_12px_30px_rgba(15,23,42,0.07)] dark:border-white/[0.06] dark:shadow-[0_16px_34px_rgba(0,0,0,0.28)]",
-          "focus-within:border-blue-300/75 dark:focus-within:border-blue-400/55",
+            ? "max-w-[58rem] rounded-[28px] border border-border/80 bg-[hsl(0_0%_98.5%)] shadow-[0_18px_48px_rgba(15,23,42,0.11),0_1px_0_rgba(15,23,42,0.04)] dark:border-white/[0.1] dark:bg-card dark:shadow-[0_24px_55px_rgba(0,0,0,0.38)]"
+            : "max-w-[49.5rem] rounded-[24px] border border-border/80 bg-[hsl(0_0%_98.5%)] shadow-[0_14px_36px_rgba(15,23,42,0.10),0_1px_0_rgba(15,23,42,0.04)] dark:border-white/[0.1] dark:bg-card dark:shadow-[0_18px_40px_rgba(0,0,0,0.34)]",
           disabled && "opacity-60",
           isDragging && "ring-2 ring-primary/40 motion-reduce:ring-0 motion-reduce:border-primary",
           goalState?.active &&
@@ -1647,7 +1630,7 @@ export function ThreadComposer({
             aria-label={t("thread.composer.inputAria")}
             className={cn(
               inputTextClasses,
-              "relative z-10 caret-foreground placeholder:text-muted-foreground/70",
+              "relative z-10 caret-foreground placeholder:text-muted-foreground/90",
               "focus:outline-none focus-visible:outline-none",
               "disabled:cursor-not-allowed",
               hasMentionDecorations && "text-transparent selection:bg-primary/20",
@@ -1667,13 +1650,23 @@ export function ThreadComposer({
         ) : null}
         <div
           className={cn(
-            "flex flex-wrap items-center justify-between gap-y-2",
+            "flex flex-wrap items-center justify-between gap-y-2 border-t border-border/55",
+            "bg-muted/45 dark:bg-white/[0.035]",
             isHero
-              ? cn("gap-x-1.5 px-3 sm:px-4", showProjectPicker ? "pb-1.5" : "pb-3.5")
-              : "gap-x-2 px-2.5 pb-2 sm:px-3",
+              ? cn(
+                  "gap-x-2 px-3 py-2 sm:px-4",
+                  showProjectPicker ? "rounded-none" : "rounded-b-[28px]",
+                )
+              : "gap-x-2.5 rounded-b-[24px] px-2.5 py-2 sm:px-3",
           )}
         >
-          <div className={cn("flex min-w-0 flex-1 basis-[8rem] items-center", isHero ? "gap-1.5" : "gap-2")}>
+          <div
+            className={cn(
+              "flex min-w-0 flex-1 basis-[8rem] items-center",
+              isHero ? "gap-1.5" : "gap-2",
+            )}
+            data-testid="composer-tools-left"
+          >
             <input
               ref={fileInputRef}
               type="file"
@@ -1690,10 +1683,8 @@ export function ThreadComposer({
               aria-label={t("thread.composer.attachImage")}
               onClick={() => fileInputRef.current?.click()}
               className={cn(
-                "rounded-full text-muted-foreground hover:text-foreground",
-                isHero
-                  ? "h-8 w-8 border border-border/55 bg-card shadow-[0_2px_8px_rgba(15,23,42,0.05)] hover:bg-card"
-                  : "h-9 w-9 border border-border/55 bg-card shadow-[0_2px_8px_rgba(15,23,42,0.05)] hover:bg-card",
+                toolCapsuleClass,
+                isHero ? "h-8 w-8" : "h-9 w-9",
               )}
             >
               <Plus className={cn(isHero ? "h-[18px] w-[18px]" : "h-4 w-4")} />
@@ -1716,7 +1707,13 @@ export function ThreadComposer({
               />
             ) : null}
           </div>
-          <div className={cn("ml-auto flex min-w-0 shrink-0 items-center", isHero ? "gap-1.5" : "gap-2")}>
+          <div
+            className={cn(
+              "ml-auto flex min-w-0 shrink-0 items-center",
+              isHero ? "gap-1.5" : "gap-2",
+            )}
+            data-testid="composer-tools-right"
+          >
             {modelLabel && !voiceRecorder.isRecording ? (
               <ComposerModelBadge
                 label={modelLabel}
@@ -1748,10 +1745,10 @@ export function ThreadComposer({
                       onPointerCancel={voiceRecorder.endPress}
                       onClick={voiceRecorder.handleClick}
                       className={cn(
-                        "rounded-full border border-transparent text-muted-foreground hover:bg-muted/65 hover:text-foreground",
+                        toolCapsuleClass,
                         isHero ? "h-8 w-8" : "h-9 w-9",
                         voiceRecorder.isRecording &&
-                          "bg-red-500 text-white shadow-[0_8px_20px_rgba(239,68,68,0.22)] hover:bg-red-500 hover:text-white",
+                          "border-red-500/30 bg-red-500 text-white shadow-[0_8px_20px_rgba(239,68,68,0.22)] hover:bg-red-500 hover:text-white",
                       )}
                     >
                       {voiceRecorder.state === "transcribing" ? (
@@ -1783,6 +1780,7 @@ export function ThreadComposer({
                 token={authToken}
                 draftText={value}
                 isHero={isHero}
+                className={toolCapsuleClass}
               />
             )}
             <Button
@@ -1798,22 +1796,26 @@ export function ThreadComposer({
               }
               onClick={showStopButton ? handleStop : modelNeedsSetup ? onModelBadgeClick : undefined}
               className={cn(
-                "rounded-full transition-transform",
+                "rounded-full transition-[transform,box-shadow,background-color,opacity]",
+                isHero ? "h-9 w-9" : "h-10 w-10",
                 showStopButton
-                  ? "border border-border/70 bg-card text-foreground/85 shadow-[0_3px_10px_rgba(15,23,42,0.08)] hover:bg-muted/65 hover:text-foreground disabled:text-muted-foreground/50"
-                  : isHero
-                    ? "border border-foreground bg-foreground text-background shadow-[0_4px_12px_rgba(15,23,42,0.20)] hover:bg-foreground/90 disabled:border-foreground disabled:bg-foreground disabled:text-background"
-                    : "border border-foreground bg-foreground text-background shadow-[0_3px_10px_rgba(15,23,42,0.18)] hover:bg-foreground/90 disabled:border-foreground disabled:bg-foreground disabled:text-background",
-                isHero ? "h-8 w-8" : "h-9 w-9",
-                (canSend || canOpenModelSettings || showStopButton) && "hover:scale-[1.03] active:scale-95",
+                  ? "border border-border/70 bg-background text-foreground/90 shadow-[0_2px_8px_rgba(15,23,42,0.08)] hover:bg-accent/70 hover:text-foreground disabled:text-muted-foreground/50"
+                  : cn(
+                      "border border-foreground bg-foreground text-background",
+                      "shadow-[0_6px_16px_rgba(15,23,42,0.28)]",
+                      "hover:bg-foreground/92 hover:shadow-[0_8px_20px_rgba(15,23,42,0.32)]",
+                      "disabled:border-border/70 disabled:bg-muted disabled:text-muted-foreground/55 disabled:shadow-none",
+                      "dark:disabled:border-white/10 dark:disabled:bg-white/[0.08] dark:disabled:text-white/35",
+                    ),
+                (canSend || canOpenModelSettings || showStopButton) && "hover:scale-[1.04] active:scale-95",
               )}
             >
               {showStopButton ? (
                 <Square className={cn("fill-current stroke-current", isHero ? "h-3 w-3" : "h-3.5 w-3.5")} />
               ) : isStreaming ? (
-                <Loader2 className={cn(isHero ? "h-4 w-4" : "h-4 w-4", "animate-spin")} />
+                <Loader2 className={cn(isHero ? "h-4 w-4" : "h-[18px] w-[18px]", "animate-spin")} />
               ) : (
-                <ArrowUp className={cn(isHero ? "h-4 w-4" : "h-4 w-4")} />
+                <ArrowUp className={cn(isHero ? "h-4 w-4" : "h-[18px] w-[18px]")} strokeWidth={2.25} />
               )}
             </Button>
           </div>
@@ -2014,204 +2016,6 @@ function QueuedPromptRow({
         <Trash2 className="h-3 w-3" aria-hidden />
       </Button>
     </div>
-  );
-}
-
-function ComposerModelBadge({
-  label,
-  provider,
-  providerLabel,
-  needsSetup,
-  isHero,
-  options = [],
-  disabled,
-  onSelectOption,
-  onClick,
-  onConfigure,
-}: {
-  label: string;
-  provider?: string | null;
-  providerLabel?: string | null;
-  needsSetup?: boolean;
-  isHero: boolean;
-  options?: ComposerModelOption[];
-  disabled?: boolean;
-  onSelectOption?: (option: ComposerModelOption) => void;
-  onClick?: () => void;
-  onConfigure?: () => void;
-}) {
-  const { t } = useTranslation();
-  const inferredProvider = needsSetup ? null : provider || inferProviderFromModelName(label);
-  const brand = providerBrand(inferredProvider);
-  const [logoIndex, setLogoIndex] = useState(0);
-  const logoUrl = brand?.logoUrls[logoIndex];
-  const showLogo = !!logoUrl;
-  const title = providerLabel ? `${label} · ${providerLabel}` : label;
-  const hasMenu = options.length > 0 && Boolean(onSelectOption) && !disabled;
-  const interactive = hasMenu || Boolean(onClick);
-
-  useEffect(() => setLogoIndex(0), [inferredProvider]);
-
-  const badgeClassName = cn(
-    "inline-flex min-w-0 items-center rounded-full border border-border/55 bg-card font-medium text-foreground/82",
-    "shadow-[0_2px_8px_rgba(15,23,42,0.045)]",
-    interactive && "cursor-pointer hover:bg-accent/55 hover:text-foreground",
-    needsSetup && "border-amber-500/35 bg-amber-50/70 text-amber-900 dark:bg-amber-500/10 dark:text-amber-200",
-    isHero
-      ? "h-8 max-w-[min(12.5rem,44vw)] gap-1.5 px-2 text-[11.5px]"
-      : "h-9 max-w-[min(12rem,44vw)] gap-2 px-2.5 text-[12px]",
-  );
-
-  const badgeBody = (
-    <>
-      <span
-        data-testid={needsSetup ? "composer-model-setup-icon" : inferredProvider ? `composer-model-logo-${inferredProvider}` : "composer-model-logo"}
-        className={cn(
-          "grid shrink-0 place-items-center overflow-hidden",
-          needsSetup
-            ? "text-amber-800 dark:text-amber-200"
-            : "rounded-full border bg-background",
-          isHero ? "h-[18px] w-[18px]" : "h-5 w-5",
-        )}
-        style={{
-          borderColor: !needsSetup && brand ? `${brand.color}28` : undefined,
-          boxShadow: !needsSetup && brand ? `inset 0 0 0 1px ${brand.color}18` : undefined,
-        }}
-        aria-hidden
-      >
-        {needsSetup ? (
-          <CircleHelp className={cn(isHero ? "h-3 w-3" : "h-3.5 w-3.5")} strokeWidth={1.8} />
-        ) : showLogo ? (
-          <img
-            src={logoUrl}
-            alt=""
-            className={cn("object-contain", isHero ? "h-3 w-3" : "h-3.5 w-3.5")}
-            onError={() => setLogoIndex((index) => index + 1)}
-          />
-        ) : brand ? (
-          <span
-            className={cn(
-              "grid h-full w-full place-items-center rounded-full text-white",
-              isHero ? "text-[7.5px]" : "text-[8px]",
-            )}
-            style={{ backgroundColor: brand.color }}
-          >
-            {brand.initials.slice(0, 2)}
-          </span>
-        ) : (
-          <Sparkles className={cn("text-muted-foreground/65", isHero ? "h-3 w-3" : "h-3 w-3")} />
-        )}
-      </span>
-      <span className="truncate">{label}</span>
-      {hasMenu ? <ChevronDown className={cn("shrink-0 opacity-55", isHero ? "h-3 w-3" : "h-3.5 w-3.5")} aria-hidden /> : null}
-    </>
-  );
-
-  if (!hasMenu) {
-    const Container = interactive ? "button" : "span";
-    return (
-      <Container
-        title={title}
-        type={interactive ? "button" : undefined}
-        onClick={onClick}
-        className={badgeClassName}
-      >
-        {badgeBody}
-      </Container>
-    );
-  }
-
-  const autoOptions = options.filter((item) => item.kind === "auto");
-  const platformOptions = options.filter((item) => item.kind === "platform");
-  const presetOptions = options.filter((item) => item.kind === "preset");
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button
-          type="button"
-          title={title}
-          aria-label={title}
-          className={badgeClassName}
-          data-testid="composer-model-picker"
-        >
-          {badgeBody}
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="min-w-[220px] max-w-[min(20rem,92vw)]">
-        {autoOptions.length > 0 ? (
-          <>
-            {autoOptions.map((option) => (
-              <DropdownMenuItem
-                key={`${option.kind}:${option.id}`}
-                disabled={option.disabled}
-                onClick={() => onSelectOption?.(option)}
-                className="gap-2"
-              >
-                <span className="min-w-0 flex-1 truncate">{option.label}</span>
-                {option.active ? <Check className="h-3.5 w-3.5 shrink-0" aria-hidden /> : null}
-              </DropdownMenuItem>
-            ))}
-            {platformOptions.length > 0 || presetOptions.length > 0 ? <DropdownMenuSeparator /> : null}
-          </>
-        ) : null}
-        {platformOptions.length > 0 ? (
-          <>
-            <DropdownMenuLabel className="text-[11px] font-medium text-muted-foreground">
-              {t("settings.models.platformModels", { defaultValue: "Platform models" })}
-            </DropdownMenuLabel>
-            {platformOptions.map((option) => (
-              <DropdownMenuItem
-                key={`${option.kind}:${option.id}`}
-                disabled={option.disabled}
-                onClick={() => onSelectOption?.(option)}
-                className="gap-2"
-              >
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate">{option.label}</span>
-                  {option.detail ? (
-                    <span className="block truncate text-[11px] text-muted-foreground">{option.detail}</span>
-                  ) : null}
-                </span>
-                {option.active ? <Check className="h-3.5 w-3.5 shrink-0" aria-hidden /> : null}
-              </DropdownMenuItem>
-            ))}
-            {presetOptions.length > 0 ? <DropdownMenuSeparator /> : null}
-          </>
-        ) : null}
-        {presetOptions.length > 0 ? (
-          <>
-            <DropdownMenuLabel className="text-[11px] font-medium text-muted-foreground">
-              {t("settings.models.yourConfigurations", { defaultValue: "Your configurations" })}
-            </DropdownMenuLabel>
-            {presetOptions.map((option) => (
-              <DropdownMenuItem
-                key={`${option.kind}:${option.id}`}
-                disabled={option.disabled}
-                onClick={() => onSelectOption?.(option)}
-                className="gap-2"
-              >
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate">{option.label}</span>
-                  {option.detail ? (
-                    <span className="block truncate text-[11px] text-muted-foreground">{option.detail}</span>
-                  ) : null}
-                </span>
-                {option.active ? <Check className="h-3.5 w-3.5 shrink-0" aria-hidden /> : null}
-              </DropdownMenuItem>
-            ))}
-          </>
-        ) : null}
-        {onConfigure ? (
-          <>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => onConfigure()}>
-              {t("thread.composer.configureModel", { defaultValue: "Configure model" })}
-            </DropdownMenuItem>
-          </>
-        ) : null}
-      </DropdownMenuContent>
-    </DropdownMenu>
   );
 }
 

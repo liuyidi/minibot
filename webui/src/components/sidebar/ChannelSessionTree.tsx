@@ -14,6 +14,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { SIDEBAR_ROW, SIDEBAR_ROW_ACTIVE, SIDEBAR_TYPE } from "./sidebarChrome";
 import { cn } from "@/lib/utils";
 import type { ChatSummary } from "@/lib/types";
 import {
@@ -86,7 +87,7 @@ export function ChannelSessionTree({
 
   if (platforms.length === 0) {
     return (
-      <div className="px-4 py-6 text-center text-xs text-muted-foreground">
+      <div className="px-4 py-6 text-center text-[12.5px] leading-[22px] text-muted-foreground/65">
         {t("imSessions.emptyAll")}
       </div>
     );
@@ -99,16 +100,16 @@ export function ChannelSessionTree({
         const rows = grouped[platform];
         return (
           <div key={platform} className="min-w-0">
-            <div className="flex items-center gap-2 px-1.5 py-1 text-sm font-medium text-sidebar-foreground">
+            <div className="flex items-center gap-2 px-2.5 py-1.5 text-[12px] font-normal leading-[22px] text-muted-foreground/45">
               <img
                 src={meta.logo}
                 alt=""
-                className="h-5 w-5 shrink-0 object-contain"
+                className="h-4 w-4 shrink-0 object-contain opacity-80"
                 draggable={false}
               />
               <span>{t(meta.titleKey)}</span>
             </div>
-            <div className="relative ml-[0.85rem] border-l border-sidebar-border/70 pl-3">
+            <div className="space-y-0.5 pl-1">
               {rows.map((session) => {
                 const active = session.key === activeKey;
                 const running = runningChatIds.includes(session.chatId);
@@ -120,16 +121,16 @@ export function ChannelSessionTree({
                   <div
                     key={session.key}
                     className={cn(
-                      "group mb-1 flex w-full min-w-0 items-center gap-1 rounded-md px-1 text-xs transition-colors",
-                      active
-                        ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                        : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-foreground",
+                      SIDEBAR_ROW,
+                      SIDEBAR_TYPE,
+                      "group mb-0 max-w-full pr-1",
+                      active && SIDEBAR_ROW_ACTIVE,
                     )}
                   >
                     <button
                       type="button"
                       onClick={() => onSelect(session.key)}
-                      className="flex min-w-0 flex-1 items-center gap-2 px-1 py-1.5 text-left"
+                      className="flex min-w-0 flex-1 items-center gap-2 text-left"
                     >
                       {platform === "feishu" ? (
                         <span

@@ -1,6 +1,6 @@
 {
   "app": {
-    "brand": "minibot",
+    "brand": "Minibot",
     "loading": {
       "connecting": "Connecting to minibot…",
       "boot": "Loading minibot…"

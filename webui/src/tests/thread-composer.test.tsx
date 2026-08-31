@@ -309,10 +309,10 @@ describe("ThreadComposer", () => {
     expect(screen.queryByRole("button", { name: "Voice input" })).not.toBeInTheDocument();
     const input = screen.getByPlaceholderText("Ask anything...");
     expect(input).toBeInTheDocument();
-    expect(input.className).toContain("min-h-[78px]");
-    expect(input.className).toContain("pt-[27px]");
+    expect(input.className).toContain("min-h-[86px]");
+    expect(input.className).toContain("pt-[28px]");
     fireEvent.change(input, { target: { value: "1" } });
-    expect(input.className).toContain("pt-[27px]");
+    expect(input.className).toContain("pt-[28px]");
     expect(input.parentElement?.parentElement?.className).toContain("max-w-[58rem]");
   });
 
@@ -330,11 +330,15 @@ describe("ThreadComposer", () => {
     expect(screen.getByText("gpt-4o")).toBeInTheDocument();
     expect(screen.getByTestId("composer-model-logo-openai")).toBeInTheDocument();
     const input = screen.getByPlaceholderText("Type your message...");
-    expect(input.className).toContain("min-h-[50px]");
+    expect(input.className).toContain("min-h-[58px]");
     expect(input.parentElement?.parentElement?.className).toContain("max-w-[49.5rem]");
-    expect(input.parentElement?.parentElement?.className).toContain("rounded-[22px]");
-    expect(input.parentElement?.parentElement?.className).toContain("shadow-[0_12px_30px_rgba(15,23,42,0.07)]");
-    expect(screen.getByRole("button", { name: "Attach image" }).className).toContain("bg-card");
+    expect(input.parentElement?.parentElement?.className).toContain("rounded-[24px]");
+    expect(input.parentElement?.parentElement?.className).toContain(
+      "shadow-[0_14px_36px_rgba(15,23,42,0.10),0_1px_0_rgba(15,23,42,0.04)]",
+    );
+    expect(screen.getByTestId("composer-tools-left")).toBeInTheDocument();
+    expect(screen.getByTestId("composer-tools-right")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Attach image" }).className).toContain("bg-background");
     expect(screen.getByRole("button", { name: "Send message" }).className).toContain("bg-foreground");
     expect(screen.queryByText(/Enter to send/)).not.toBeInTheDocument();
   });

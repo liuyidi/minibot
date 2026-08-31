@@ -12,6 +12,7 @@ import {
   type PromptAnchor,
   userPromptAnchors,
 } from "@/components/thread/promptNavigation";
+import { HEADER_ICON_BUTTON, SIDEBAR_ICON } from "@/components/sidebar/sidebarChrome";
 import { fmtDateTime } from "@/lib/utils/format";
 import type { UIMessage } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -51,14 +52,11 @@ export function PromptNavigator({
         type="button"
         variant="ghost"
         size="icon"
-        className={cn(
-          "host-no-drag h-8 w-8 rounded-full text-muted-foreground/80 dark:text-foreground/90",
-          "hover:bg-accent/40 hover:text-foreground",
-        )}
+        className={cn("host-no-drag", HEADER_ICON_BUTTON)}
         aria-label={t("thread.promptNavigator.open")}
         onClick={() => setOpen(true)}
       >
-        <ListTree className="h-4 w-4" />
+        <ListTree className={SIDEBAR_ICON} strokeWidth={1.75} />
       </Button>
 
       <Sheet open={open} onOpenChange={setOpen}>

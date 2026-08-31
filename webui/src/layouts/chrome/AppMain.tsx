@@ -62,12 +62,16 @@ export function AppMain({
           onTurnEnd={sessionRuntime.onTurnEnd}
           theme={theme}
           onToggleTheme={toggle}
-          // Host chrome uses native/titlebar controls; when the sidebar is open the
-          // brand-header collapse control is enough — hide this so two Menus do not
-          // sit on either side of the sidebar/main divider.
-          hideSidebarToggleForHostChrome={showHostChrome || hostSidebarOpen}
+          // Host chrome uses native/titlebar controls. Desktop web expands from the
+          // collapsed logo hover and collapses from the brand-header control.
+          hideSidebarToggleForHostChrome={showHostChrome}
           hostChromeTitleInset={showHostChrome && !hostSidebarOpen}
           hideHeader={false}
+          onRenameTitle={
+            activeSession
+              ? (nextTitle) => chatActions.onRenameSessionTitle(activeSession.key, nextTitle)
+              : undefined
+          }
           workspaceScope={workspace.activeWorkspaceScope}
           workspaceDefaultScope={workspace.workspaces?.default_scope ?? null}
           workspaceControls={workspace.workspaces?.controls ?? null}
@@ -85,7 +89,6 @@ export function AppMain({
       ) : view === "automations" ? (
         <UtilityPageFrame
           title={t("settings.nav.automations", { defaultValue: "Scheduled tasks" })}
-          onBackToChat={utilityNav.onBackToChat}
           hostChromeInset={showHostChrome}
         >
           <AutomationsPage />
@@ -93,7 +96,6 @@ export function AppMain({
       ) : view === "skills" ? (
         <UtilityPageFrame
           title={t("settings.nav.skills", { defaultValue: "Skills · Connectors" })}
-          onBackToChat={utilityNav.onBackToChat}
           hostChromeInset={showHostChrome}
         >
           <SkillsPage />
@@ -101,7 +103,6 @@ export function AppMain({
       ) : view === "channels" ? (
         <UtilityPageFrame
           title={t("settings.nav.channels", { defaultValue: "IM channels" })}
-          onBackToChat={utilityNav.onBackToChat}
           hostChromeInset={showHostChrome}
         >
           <ChannelsPage />

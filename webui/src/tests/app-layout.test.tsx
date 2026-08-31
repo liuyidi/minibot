@@ -390,7 +390,7 @@ describe("App layout", () => {
     expect(window.location.hash).toBe("#/skills");
     expect(document.title).toBe("Skills · Connectors · minibot");
 
-    fireEvent.click(screen.getByRole("button", { name: "Back to chat" }));
+    fireEvent.click(within(sidebar).getByRole("button", { name: "New chat" }));
     expect(await screen.findByText(HERO_GREETING_PATTERN)).toBeInTheDocument();
 
     window.history.replaceState(null, "", "/#/skills");

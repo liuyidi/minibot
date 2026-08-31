@@ -14,6 +14,7 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { HEADER_ICON_BUTTON, SIDEBAR_ICON } from "@/components/sidebar/sidebarChrome";
 import { useSessionAutomationJobs } from "@/hooks/sessions";
 import { currentLocale } from "@/i18n";
 import { fmtDateTime } from "@/lib/utils/format";
@@ -69,12 +70,9 @@ export function SessionInfoPopover({ sessionKey, token, title }: SessionInfoPopo
           variant="ghost"
           size="icon"
           aria-label={t("thread.header.sessionInfo")}
-          className={cn(
-            "host-no-drag h-8 w-8 rounded-full text-muted-foreground/85 dark:text-foreground/90",
-            "hover:bg-accent/40 hover:text-foreground",
-          )}
+          className={cn("host-no-drag", HEADER_ICON_BUTTON)}
         >
-          <ListTodo className="h-4 w-4 stroke-[1.75]" />
+          <ListTodo className={SIDEBAR_ICON} strokeWidth={1.75} />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent

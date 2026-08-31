@@ -23,6 +23,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { SIDEBAR_ROW, SIDEBAR_ROW_ACTIVE, SIDEBAR_TYPE } from "./sidebarChrome";
+import { SessionActivityIndicator } from "./SessionActivityIndicator";
 import { deriveTitle, relativeTime } from "@/lib/utils/format";
 import {
   COLLAPSED_CHATS_VISIBLE_COUNT,
@@ -42,6 +44,10 @@ const INITIAL_VISIBLE_SESSIONS = 160;
 const VISIBLE_SESSIONS_INCREMENT = 160;
 const ACTION_MENU_CONTENT_CLASS = "w-[8.5rem] min-w-[8.5rem]";
 const ACTION_MENU_ITEM_CLASS = "grid w-[7.75rem] grid-cols-[1rem_minmax(0,1fr)] items-center gap-2";
+
+function isRedundantChatsHeader(groupId: string): boolean {
+  return groupId === "workspace:chats" || groupId === "date:all";
+}
 
 interface ChatListProps {
   sessions: ChatSummary[];
@@ -158,7 +164,7 @@ export const ChatList = memo(function ChatList({
 
   if (loading && sessions.length === 0) {
     return (
-      <div className="px-3 py-6 text-[12px] text-muted-foreground">
+      <div className="px-3 py-6 text-[12.5px] leading-[22px] text-muted-foreground/70">
         {t("chat.loading")}
       </div>
     );
@@ -166,7 +172,7 @@ export const ChatList = memo(function ChatList({
 
   if (sessions.length === 0) {
     return (
-      <div className="px-3 py-6 text-[12px] leading-5 text-muted-foreground/80">
+      <div className="px-3 py-6 text-[12.5px] leading-[22px] text-muted-foreground/65">
         {emptyLabel ?? t("chat.noSessions")}
       </div>
     );
@@ -181,7 +187,7 @@ export const ChatList = memo(function ChatList({
 
   return (
     <div className="h-full min-h-0 min-w-0 overflow-x-hidden overflow-y-auto overscroll-contain scrollbar-thin scrollbar-track-transparent">
-      <div className="min-w-0 space-y-3 px-2 py-1.5">
+      <div className="min-w-0 space-y-3 px-2 py-1">
         {limitedGroups.map((group, index) => {
           const foldableChatsGroup = isFoldableChatsGroup(group);
           const foldedChatsGroup = isFoldedChatsGroup(group, collapsedGroups);
@@ -192,11 +198,12 @@ export const ChatList = memo(function ChatList({
           );
           const hiddenInGroup = Math.max(0, group.sessions.length - visibleSessions.length);
           const canToggleFold = group.sessions.length > COLLAPSED_CHATS_VISIBLE_COUNT;
+          const hideGroupHeader = isRedundantChatsHeader(group.id);
 
           return (
             <section key={group.id} aria-label={group.label}>
               {index === firstProjectGroupIndex ? (
-                <div className="px-2 pb-1 text-[12px] font-medium text-muted-foreground/65">
+                <div className="px-2.5 pb-1.5 text-[12px] font-normal leading-[22px] text-muted-foreground/45">
                   {labels.projects}
                 </div>
               ) : null}
@@ -219,7 +226,7 @@ export const ChatList = memo(function ChatList({
                   actionMenuPortalContainer={actionMenuPortalContainer}
                   updatedAt={showTimestamps ? group.updatedAt : null}
                 />
-              ) : (
+              ) : hideGroupHeader ? null : (
                 <ChatsGroupHeader label={group.label} />
               )}
               {group.kind === "project" && collapsedGroups[group.id] ? null : (
@@ -252,46 +259,43 @@ export const ChatList = memo(function ChatList({
                       <li key={s.key} className="min-w-0">
                         <div
                           className={cn(
-                            "group flex min-w-0 max-w-full items-center gap-2 rounded-xl px-2 text-[13px] transition-colors",
-                            compact ? "min-h-7" : "min-h-8",
-                            active
-                              ? "bg-sidebar-accent/70 text-sidebar-accent-foreground shadow-[inset_0_0_0_1px_hsl(var(--sidebar-border)/0.28)]"
-                              : "text-sidebar-foreground/82 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
+                            SIDEBAR_ROW,
+                            SIDEBAR_TYPE,
+                            "group max-w-full",
+                            compact && "h-8 py-1",
+                            active ? SIDEBAR_ROW_ACTIVE : null,
+                            projectMode && "pl-7",
                           )}
                         >
                           <button
                             type="button"
                             onClick={() => onSelect(s.key)}
                             title={tooltipTitle}
-                            className={cn(
-                              "min-w-0 flex-1 overflow-hidden text-left",
-                              compact ? "py-1" : "py-1.5",
-                              projectMode && "pl-7",
-                            )}
+                            className="min-w-0 flex-1 overflow-hidden text-left"
                           >
                             {projectMode ? (
                               <span className="flex w-full min-w-0 items-baseline gap-2">
-                                <span className="min-w-0 flex-1 truncate font-medium leading-5">
+                                <span className="min-w-0 flex-1 truncate leading-[22px]">
                                   {title}
                                 </span>
                                 {timestamp ? (
-                                  <span className="shrink-0 text-[11.5px] font-medium text-muted-foreground/58">
+                                  <span className="shrink-0 text-[12px] font-normal leading-[22px] text-muted-foreground/50">
                                     {timestamp}
                                   </span>
                                 ) : null}
                               </span>
                             ) : (
-                              <span className="block w-full truncate font-medium leading-5">
+                              <span className="block w-full truncate leading-[22px]">
                                 {title}
                               </span>
                             )}
                             {showPreview ? (
-                              <span className="block w-full truncate text-[11.5px] leading-4 text-muted-foreground/72">
+                              <span className="block w-full truncate text-[12px] leading-[18px] text-muted-foreground/55">
                                 {preview}
                               </span>
                             ) : null}
                             {timestamp && !projectMode ? (
-                              <span className="block w-full truncate text-[11px] leading-4 text-muted-foreground/58">
+                              <span className="block w-full truncate text-[12px] leading-[18px] text-muted-foreground/45">
                                 {timestamp}
                               </span>
                             ) : null}
@@ -300,10 +304,10 @@ export const ChatList = memo(function ChatList({
                           <DropdownMenu modal={false}>
                             <DropdownMenuTrigger
                               className={cn(
-                                "inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-muted-foreground/75 opacity-40 transition-opacity",
+                                "inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-muted-foreground/70 opacity-0 transition-opacity",
                                 "hover:bg-sidebar-accent hover:text-sidebar-foreground group-hover:opacity-100",
                                 "focus-visible:opacity-100",
-                                active && "opacity-100",
+                                active && "opacity-70",
                               )}
                               aria-label={t("chat.actions", { title })}
                             >
@@ -383,7 +387,7 @@ export const ChatList = memo(function ChatList({
                   Math.min(totalSessionCount, limit + VISIBLE_SESSIONS_INCREMENT),
                 )
               }
-              className="h-8 w-full rounded-full text-[12px] font-medium text-muted-foreground/65 transition-colors hover:bg-sidebar-accent/65 hover:text-muted-foreground"
+              className="h-8 w-full rounded-xl text-[12.5px] font-normal leading-[22px] text-muted-foreground/55 transition-colors hover:bg-sidebar-accent/65 hover:text-muted-foreground"
             >
               {t("chat.showMore", { count: hiddenSessionCount })}
             </button>
@@ -418,7 +422,7 @@ function ProjectGroupHeader({
   return (
     <div
       title={path}
-      className="group flex min-w-0 items-center gap-1 px-1 pb-1 pt-1 text-[12px] font-medium text-muted-foreground/78"
+      className="group flex min-w-0 items-center gap-1 px-1 pb-1 pt-1 text-[12px] font-normal leading-[22px] text-muted-foreground/50"
     >
       <button
         type="button"
@@ -430,7 +434,7 @@ function ProjectGroupHeader({
         <span className="min-w-0 flex-1 truncate">{label}</span>
       </button>
       {updatedAt ? (
-        <span className="shrink-0 text-[11px] text-muted-foreground/55">
+        <span className="shrink-0 text-[12px] text-muted-foreground/40">
           {relativeTime(updatedAt)}
         </span>
       ) : null}
@@ -482,7 +486,7 @@ function ProjectGroupHeader({
 
 function ChatsGroupHeader({ label }: { label: string }) {
   return (
-    <div className="px-2 pb-1 text-[12px] font-medium text-muted-foreground/65">
+    <div className="px-2.5 pb-1.5 text-[12px] font-normal leading-[22px] text-muted-foreground/45">
       {label}
     </div>
   );
@@ -504,7 +508,7 @@ function ChatsFoldFooter({
       <button
         type="button"
         onClick={onToggle}
-        className="h-7 w-full rounded-xl text-left text-[12px] font-medium text-muted-foreground/65 transition-colors hover:bg-sidebar-accent/50 hover:text-muted-foreground"
+        className="h-7 w-full rounded-xl text-left text-[12.5px] font-normal leading-[22px] text-muted-foreground/55 transition-colors hover:bg-sidebar-accent/50 hover:text-muted-foreground"
       >
         <span className="px-2">
           {folded ? t("chat.collapsed", { count: hiddenCount }) : t("chat.showLess")}
@@ -512,40 +516,4 @@ function ChatsFoldFooter({
       </button>
     </div>
   );
-}
-
-function SessionActivityIndicator({
-  state,
-}: {
-  state: "running" | "updated" | null;
-}) {
-  const { t } = useTranslation();
-
-  if (state === "running") {
-    const label = t("chat.activity.running");
-    return (
-      <span
-        aria-label={label}
-        title={label}
-        className="grid h-4 w-4 shrink-0 place-items-center"
-      >
-        <span className="h-3 w-3 animate-spin rounded-full border border-blue-500/25 border-t-blue-500 [animation-duration:1.4s] motion-reduce:animate-none dark:border-blue-400/25 dark:border-t-blue-400" />
-      </span>
-    );
-  }
-
-  if (state === "updated") {
-    const label = t("chat.activity.updated");
-    return (
-      <span
-        aria-label={label}
-        title={label}
-        className="grid h-4 w-4 shrink-0 place-items-center"
-      >
-        <span className="h-2 w-2 rounded-full bg-[#ff8a3d] shadow-[0_0_0_2px_rgba(255,138,61,0.16)]" />
-      </span>
-    );
-  }
-
-  return <span className="h-4 w-4 shrink-0" aria-hidden="true" />;
 }

@@ -16,7 +16,6 @@ import { ChatList } from "./ChatList";
 import { SidebarAccountFooter } from "./SidebarAccountFooter";
 import { SidebarBrandHeader } from "./SidebarBrandHeader";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import {
   Tooltip,
   TooltipContent,
@@ -33,6 +32,7 @@ import type {
 import type { SettingsSectionKey } from "@/pages/settings";
 import type { SidebarUtilityKey } from "@/routes";
 import { cn } from "@/lib/utils";
+import { SIDEBAR_ICON, SIDEBAR_ROW, SIDEBAR_ROW_ACTIVE, SIDEBAR_TYPE } from "./sidebarChrome";
 
 type SessionListTab = "chats" | "channels";
 
@@ -117,9 +117,10 @@ export function Sidebar(props: SidebarProps) {
       ref={props.containActionMenus ? setMenuPortalContainer : undefined}
       aria-label={t("sidebar.navigation")}
       className={cn(
-        "flex h-full w-full min-w-0 flex-col text-sidebar-foreground",
+        "flex h-full w-full min-w-0 flex-col",
+        SIDEBAR_TYPE,
         props.hostChromeInset ? "bg-transparent" : "bg-sidebar",
-        !props.hostChromeInset && "border-r border-sidebar-border/60",
+        !props.hostChromeInset && "border-r border-sidebar-border/50",
       )}
     >
       <TooltipProvider delayDuration={180} skipDelayDuration={80}>
@@ -132,7 +133,7 @@ export function Sidebar(props: SidebarProps) {
 
         <div
           className={cn(
-            "space-y-1.5 px-2 pb-2",
+            "space-y-1.5 px-2 pb-1",
             collapsed && "flex w-14 flex-col items-center px-0",
           )}
         >
@@ -140,7 +141,7 @@ export function Sidebar(props: SidebarProps) {
             collapsed={collapsed}
             label={t("sidebar.newChat")}
             onClick={props.onNewChat}
-            icon={<SquarePen className="h-4 w-4" />}
+            icon={<SquarePen className={SIDEBAR_ICON} />}
             shortcut={newChatShortcut}
             ariaKeyShortcuts="Meta+Shift+O Control+Shift+O"
             disabled={!collapsed && sessionTab === "channels"}
@@ -151,7 +152,7 @@ export function Sidebar(props: SidebarProps) {
               collapsed={collapsed}
               label={t("sidebar.searchAria")}
               onClick={props.onOpenSearch}
-              icon={<Search className="h-4 w-4" />}
+              icon={<Search className={SIDEBAR_ICON} />}
             />
           ) : null}
           {UI_ENTRY.channels ? (
@@ -160,7 +161,7 @@ export function Sidebar(props: SidebarProps) {
               label={t("sidebar.channels", { defaultValue: "IM channels" })}
               onClick={() => props.onOpenUtility("channels")}
               active={props.activeUtility === "channels"}
-              icon={<MessageSquare className="h-4 w-4" />}
+              icon={<MessageSquare className={SIDEBAR_ICON} />}
             />
           ) : null}
           {UI_ENTRY.automations ? (
@@ -169,7 +170,7 @@ export function Sidebar(props: SidebarProps) {
               label={t("sidebar.automations", { defaultValue: "Scheduled tasks" })}
               onClick={() => props.onOpenUtility("automations")}
               active={props.activeUtility === "automations"}
-              icon={<CalendarClock className="h-4 w-4" />}
+              icon={<CalendarClock className={SIDEBAR_ICON} />}
             />
           ) : null}
           {UI_ENTRY.skills ? (
@@ -178,7 +179,7 @@ export function Sidebar(props: SidebarProps) {
               label={t("sidebar.skills.title")}
               onClick={() => props.onOpenUtility("skills")}
               active={props.activeUtility === "skills"}
-              icon={<Brain className="h-4 w-4" />}
+              icon={<Brain className={SIDEBAR_ICON} />}
             />
           ) : null}
           {UI_ENTRY.knowledge ? (
@@ -186,7 +187,7 @@ export function Sidebar(props: SidebarProps) {
               collapsed={collapsed}
               label={t("sidebar.portalKnowledge")}
               href={PORTAL.knowledge}
-              icon={<Library className="h-4 w-4" />}
+              icon={<Library className={SIDEBAR_ICON} />}
             />
           ) : null}
           {props.archivedCount ? (
@@ -194,13 +195,14 @@ export function Sidebar(props: SidebarProps) {
               collapsed={collapsed}
               label={props.showArchived ? t("chat.hideArchived") : t("chat.showArchived")}
               onClick={props.onToggleArchived}
-              icon={<Archive className="h-4 w-4" />}
+              icon={<Archive className={SIDEBAR_ICON} />}
             />
           ) : null}
         </div>
+
         <div
           className={cn(
-            "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden transition-opacity duration-200",
+            "mt-4 flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden transition-opacity duration-200",
             collapsed && "pointer-events-none opacity-0",
           )}
         >
@@ -209,7 +211,7 @@ export function Sidebar(props: SidebarProps) {
               <div
                 role="tablist"
                 aria-label={t("sidebar.recent")}
-                className="mx-2 mb-1 flex shrink-0 items-end gap-4 border-b border-sidebar-border/50 px-3"
+                className="mx-2 mb-2 flex shrink-0 gap-0.5 rounded-xl bg-sidebar-accent/55 p-0.5"
               >
                 <button
                   type="button"
@@ -217,9 +219,9 @@ export function Sidebar(props: SidebarProps) {
                   aria-selected={sessionTab === "chats"}
                   onClick={() => setSessionTab("chats")}
                   className={cn(
-                    "relative -mb-px pb-2 text-[13px] transition-colors",
+                    "min-w-0 flex-1 rounded-[10px] px-2.5 py-1.5 text-[14px] leading-[22px] transition-colors",
                     sessionTab === "chats"
-                      ? "font-semibold text-sidebar-foreground after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:rounded-full after:bg-sidebar-foreground"
+                      ? "bg-background font-medium text-sidebar-foreground shadow-[0_1px_2px_rgba(15,23,42,0.06)] dark:bg-sidebar-accent dark:shadow-none"
                       : "font-normal text-muted-foreground hover:text-sidebar-foreground",
                   )}
                 >
@@ -231,9 +233,9 @@ export function Sidebar(props: SidebarProps) {
                   aria-selected={sessionTab === "channels"}
                   onClick={() => setSessionTab("channels")}
                   className={cn(
-                    "relative -mb-px pb-2 text-[13px] transition-colors",
+                    "min-w-0 flex-1 rounded-[10px] px-2.5 py-1.5 text-[14px] leading-[22px] transition-colors",
                     sessionTab === "channels"
-                      ? "font-semibold text-sidebar-foreground after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:rounded-full after:bg-sidebar-foreground"
+                      ? "bg-background font-medium text-sidebar-foreground shadow-[0_1px_2px_rgba(15,23,42,0.06)] dark:bg-sidebar-accent dark:shadow-none"
                       : "font-normal text-muted-foreground hover:text-sidebar-foreground",
                   )}
                 >
@@ -243,7 +245,7 @@ export function Sidebar(props: SidebarProps) {
               {sessionTab === "chats" ? (
                 <ChatList
                   sessions={webChatSessions}
-                  activeKey={props.activeKey}
+                  activeKey={props.activeUtility ? null : props.activeKey}
                   loading={props.loading}
                   emptyLabel={t("chat.noSessions")}
                   onSelect={props.onSelect}
@@ -274,7 +276,7 @@ export function Sidebar(props: SidebarProps) {
               ) : (
                 <ChannelSessionTree
                   sessions={channelSessions}
-                  activeKey={props.activeKey}
+                  activeKey={props.activeUtility ? null : props.activeKey}
                   onSelect={props.onSelect}
                   onTogglePin={props.onTogglePin}
                   onRequestRename={props.onRequestRename}
@@ -293,7 +295,7 @@ export function Sidebar(props: SidebarProps) {
             </>
           )}
         </div>
-        <Separator className="bg-sidebar-border/50" />
+
         <SidebarAccountFooter
           collapsed={collapsed}
           displayName={props.accountDisplayName}
@@ -324,11 +326,12 @@ function SidebarExternalLink({
       rel={newTab || !href.startsWith("/") ? "noopener noreferrer" : undefined}
       aria-label={label}
       className={cn(
-        "group flex h-8 min-w-0 items-center gap-2 overflow-hidden rounded-full font-medium text-sidebar-foreground/85 hover:bg-sidebar-accent/75 hover:text-sidebar-foreground",
-        "transition-[width,padding,border-radius,color,background-color] duration-300 ease-out",
+        SIDEBAR_ROW,
+        SIDEBAR_TYPE,
+        "group",
         collapsed
-          ? "w-9 justify-center gap-0 rounded-xl px-0"
-          : "w-full justify-start gap-2 px-3 text-[12.5px]",
+          ? "w-9 justify-center gap-0 px-0"
+          : "w-full justify-start",
       )}
     >
       <span className="flex shrink-0 items-center justify-center" aria-hidden>
@@ -343,7 +346,7 @@ function SidebarExternalLink({
         {label}
       </span>
       {!collapsed && (
-        <ExternalLink className="h-3 w-3 shrink-0 opacity-40" aria-hidden />
+        <ExternalLink className="h-3.5 w-3.5 shrink-0 opacity-35" aria-hidden />
       )}
     </a>
   );
@@ -404,31 +407,26 @@ function SidebarActionButton({
         onClick();
       }}
       className={cn(
-        "group h-8 min-w-0 gap-2 overflow-hidden rounded-full font-medium text-sidebar-foreground/85 hover:bg-sidebar-accent/75 hover:text-sidebar-foreground",
-        "transition-[width,padding,border-radius,color,background-color] duration-300 ease-out",
+        SIDEBAR_ROW,
+        SIDEBAR_TYPE,
+        "group shadow-none",
         collapsed
-          ? "w-9 justify-center gap-0 rounded-xl px-0"
-          : "w-full justify-start gap-2 px-3 text-[12.5px]",
-        active && "bg-sidebar-accent text-sidebar-foreground shadow-[inset_0_0_0_1px_hsl(var(--sidebar-border)/0.55)]",
-        disabled && "cursor-not-allowed opacity-40 hover:bg-transparent hover:text-sidebar-foreground/85",
+          ? "w-9 justify-center gap-0 px-0"
+          : "w-full justify-start",
+        active && SIDEBAR_ROW_ACTIVE,
+        disabled && "cursor-not-allowed opacity-40 hover:bg-transparent hover:text-sidebar-foreground/90",
         className,
       )}
     >
-      <span
-        className={cn(
-          "flex shrink-0 items-center justify-center transition-transform duration-300 ease-out",
-          collapsed ? "translate-x-0" : "translate-x-0",
-        )}
-        aria-hidden
-      >
+      <span className="flex shrink-0 items-center justify-center" aria-hidden>
         {icon}
       </span>
       <span
         className={cn(
-          "min-w-0 overflow-hidden truncate whitespace-nowrap transition-[max-width,opacity,transform] duration-200 ease-out",
+          "min-w-0 overflow-hidden truncate whitespace-nowrap transition-[max-width,opacity] duration-200",
           collapsed
-            ? "max-w-0 -translate-x-1 opacity-0"
-            : "max-w-[12rem] translate-x-0 opacity-100",
+            ? "max-w-0 opacity-0"
+            : "max-w-[12rem] opacity-100",
         )}
       >
         {label}
