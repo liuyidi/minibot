@@ -394,6 +394,7 @@ function SidebarActionButton({
       type="button"
       variant="ghost"
       aria-label={label}
+      title={tooltipLabel}
       aria-current={active ? "page" : undefined}
       aria-keyshortcuts={disabled ? undefined : ariaKeyShortcuts}
       aria-disabled={disabled || undefined}

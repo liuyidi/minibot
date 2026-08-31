@@ -6,7 +6,6 @@ import asyncio
 import logging
 import uuid
 from dataclasses import dataclass
-from typing import Any
 
 log = logging.getLogger(__name__)
 

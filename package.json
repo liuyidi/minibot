@@ -7,6 +7,23 @@
   "scripts": {
     "build:cli": "npm --workspace packages/minibot-cli run build",
     "test:cli": "npm --workspace packages/minibot-cli run test",
-    "lint": "npm run build:cli && npm run test:cli"
+    "lint": "npm run build:cli && npm run test:cli",
+    "quality-gates": "bash scripts/quality-gates.sh",
+    "quality:static": "bash scripts/quality-gates.sh --static-only",
+    "quality:contract": "bash scripts/quality-gates.sh --contract-only",
+    "quality:perf": "bash scripts/quality-gates.sh --perf-only",
+    "quality:migration": "bash scripts/quality-gates.sh --migration-only",
+    "quality:pytest": "bash scripts/quality-gates.sh --pytest-only",
+    "quality:webui": "bash scripts/quality-gates.sh --webui-only",
+    "quality:e2e": "bash scripts/quality-gates.sh --e2e-only",
+    "e2e": "playwright test",
+    "e2e:ui": "playwright test --ui",
+    "e2e:headed": "playwright test --headed"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2",
+    "@types/node": "^22.10.5",
+    "dotenv": "^16.4.7",
+    "typescript": "^5.7.2"
   }
 }

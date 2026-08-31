@@ -142,7 +142,7 @@ async def chat_completions(
 
     try:
         state.desktop_budget().check(claims.user_id)
-    except BudgetExceeded as exc:
+    except BudgetExceeded:
         return JSONResponse(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             content={"error": {"message": "Desktop quota used up for today", "type": "budget"}},

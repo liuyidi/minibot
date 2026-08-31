@@ -157,8 +157,13 @@ WebUI / IM 频道
 cd minibot && pytest -q
 cd minibot && ruff check src/minibot
 cd webui && npm test
+
+# WebUI E2E（Playwright；隔离 gateway :18766 + Vite :15173）
+bash scripts/e2e.sh
+# npm run e2e -- e2e/smoke.spec.ts   # 服务已起时
 ```
 
+计划：[`docs/plans/2026-08-26-webui-e2e-playwright.md`](./docs/plans/2026-08-26-webui-e2e-playwright.md)。  
 面向 Agent 的仓库说明见 [`AGENTS.md`](./AGENTS.md)。
 
 ## 更新日志

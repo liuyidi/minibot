@@ -25,7 +25,13 @@ uv run minibot         # http://127.0.0.1:8766
 
 # Tests / lint
 cd minibot && uv run pytest tests/ -q
+cd minibot && uv run pytest tests/test_api_contract.py -q   # API backward-compat
+cd minibot && uv run pytest tests/perf -m perf -q            # perf smoke
+cd webui && npm test                                         # WebUI Vitest
+bash scripts/e2e.sh                                          # Playwright E2E
+bash scripts/quality-gates.sh                                # all gates (add --with-e2e for E2E)
 cd minibot && uv run ruff check src/minibot
+bash scripts/e2e.sh   # Playwright WebUI E2E (isolated :18766 / :15173)
 
 # WebUI (proxies /api /webui /auth to :8766)
 cd webui && npm install && npm run dev    # MINIBOT_API_URL=http://127.0.0.1:8766

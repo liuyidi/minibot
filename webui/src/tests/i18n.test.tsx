@@ -152,7 +152,9 @@ describe("webui i18n", () => {
     );
 
     expect(
-      screen.getByPlaceholderText("Type your message…"),
+      screen.getByPlaceholderText(
+        "Type a message… @ mention apps, / skills & commands",
+      ),
     ).toBeInTheDocument();
     expect(document.documentElement.lang).toBe("en");
 
@@ -163,7 +165,7 @@ describe("webui i18n", () => {
       expect(document.documentElement.lang).toBe("zh-CN");
     });
     expect(localStorage.getItem("minibot.locale")).toBe("zh-CN");
-    expect(screen.getByPlaceholderText("输入消息…")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("输入消息… @ 引用能力，/ 调用技能与指令")).toBeInTheDocument();
   });
 
   it("updates the composer aria label when the language changes", async () => {

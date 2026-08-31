@@ -9,6 +9,8 @@ import type { CliAppsPayload, SettingsPayload, UIMessage } from "@/lib/types";
 
 const HERO_GREETING_PATTERN =
   /What should we work on\?|Where should we start\?|What are we building today\?|What should we tackle together\?/;
+const COMPOSER_HERO_PLACEHOLDER =
+  /How can I help\? @ mention apps, \/ skills & commands/;
 
 function makeClient() {
   const errorHandlers = new Set<(err: { kind: string }) => void>();
@@ -173,6 +175,15 @@ function modelSettings(model: string, provider: string): SettingsPayload {
       user_agent: null,
       search: { max_results: 5, timeout: 30 },
       fetch: { use_jina_reader: true },
+    },
+    mobile_entry: {
+      enabled: false,
+      ios_url: "",
+      android_url: "",
+      fallback_url: "https://liuyidi.me/minibot/download/",
+      delay_ms: 1200,
+      title: "打开 App",
+      description: "建议在 App 中继续使用 minibot。",
     },
     image_generation: {
       enabled: false,
@@ -527,7 +538,7 @@ describe("ThreadShell", () => {
     await waitFor(() => {
       expect(screen.queryByText("delete me cleanly")).not.toBeInTheDocument();
     });
-    expect(screen.getByPlaceholderText("Ask anything...")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(COMPOSER_HERO_PLACEHOLDER)).toBeInTheDocument();
   });
 
   it("creates a chat only when the blank landing sends a first message", async () => {
@@ -707,7 +718,7 @@ describe("ThreadShell", () => {
     await act(async () => {});
 
     expect(screen.getByText(HERO_GREETING_PATTERN)).toBeInTheDocument();
-    expect(screen.getByPlaceholderText("Ask anything...")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(COMPOSER_HERO_PLACEHOLDER)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Write code" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Create a project plan" })).not.toBeInTheDocument();
   });
@@ -767,9 +778,9 @@ describe("ThreadShell", () => {
 
     expect(screen.queryByText("old answer")).not.toBeInTheDocument();
     await waitFor(() =>
-      expect(screen.getByPlaceholderText("Ask anything...")).toBeInTheDocument(),
+      expect(screen.getByPlaceholderText(COMPOSER_HERO_PLACEHOLDER)).toBeInTheDocument(),
     );
-    const input = screen.getByPlaceholderText("Ask anything...");
+    const input = screen.getByPlaceholderText(COMPOSER_HERO_PLACEHOLDER);
     expect(input.className).toContain("min-h-[78px]");
     expect(screen.queryByText("old answer")).not.toBeInTheDocument();
   });

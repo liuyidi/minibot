@@ -27,6 +27,7 @@ from minibot.api.routes import (
 )
 from minibot.api.ws import router as ws_router
 from minibot.app_state import build_app_state
+from minibot.observability.prometheus_metrics import mount_metrics
 from minibot.webui_static import mount_webui, root_redirect_to_devui
 
 _DEVUI_DIR = Path(__file__).resolve().parent / "static" / "devui"
@@ -98,6 +99,7 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+    mount_metrics(app)
 
     @app.get("/health")
     async def health() -> dict[str, Any]:

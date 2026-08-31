@@ -1,0 +1,196 @@
+name: Quality Gates
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  static-analysis:
+    name: Static analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Ruff (minibot)
+        working-directory: minibot
+        run: |
+          uv sync --all-extras --group dev
+          uv run ruff check src/minibot
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: |
+            webui/package-lock.json
+            package-lock.json
+
+      - name: WebUI lint + typecheck
+        working-directory: webui
+        run: |
+          npm ci
+          npm run lint
+          npm run build
+
+      - name: NPM package tests
+        run: |
+          npm ci
+          npm run test:cli
+          npm --workspace packages/minibot-client run test
+
+  test-minibot:
+    name: minibot pytest
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: minibot
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: astral-sh/setup-uv@v4
+
+      - name: Full test suite
+        run: |
+          uv sync --all-extras --group dev
+          uv run pytest tests/ -q --ignore=tests/perf
+
+  test-webui:
+    name: WebUI Vitest
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: webui
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: webui/package-lock.json
+
+      - name: Unit + component tests
+        run: |
+          npm ci
+          npm test
+
+  api-contract:
+    name: API contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: minibot
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: astral-sh/setup-uv@v4
+
+      - name: Backward-compat contract tests
+        run: |
+          uv sync --all-extras --group dev
+          uv run pytest tests/test_api_contract.py -q
+
+  perf-smoke:
+    name: Performance smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: minibot
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: astral-sh/setup-uv@v4
+
+      - name: Coarse perf budgets
+        run: |
+          uv sync --all-extras --group dev
+          uv run pytest tests/perf -m perf -q
+
+  migrations:
+    name: Filesystem migrations
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: minibot
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: astral-sh/setup-uv@v4
+
+      - name: Legacy data migration tests
+        run: |
+          uv sync --all-extras --group dev
+          uv run pytest tests/test_legacy_migration.py -q
+
+  e2e:
+    name: Playwright E2E
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: astral-sh/setup-uv@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: |
+            webui/package-lock.json
+            package-lock.json
+
+      - name: Install dependencies
+        run: |
+          cd minibot && uv sync --all-extras --group dev
+          cd webui && npm ci
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Run E2E
+        run: bash scripts/e2e.sh

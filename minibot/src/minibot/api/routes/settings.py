@@ -40,6 +40,13 @@ class SettingsUpdateBody(BaseModel):
     bot_name: str | None = None
     timezone: str | None = None
     active_preset: str | None = None
+    mobile_entry_enabled: bool | None = None
+    mobile_entry_ios_url: str | None = None
+    mobile_entry_android_url: str | None = None
+    mobile_entry_fallback_url: str | None = None
+    mobile_entry_delay_ms: int | None = None
+    mobile_entry_title: str | None = None
+    mobile_entry_description: str | None = None
 
     model_config = {"populate_by_name": True}
 
@@ -128,6 +135,13 @@ async def update_settings(
             max_iterations=body.max_iterations,
             bot_name=body.bot_name,
             timezone=body.timezone,
+            mobile_entry_enabled=body.mobile_entry_enabled,
+            mobile_entry_ios_url=body.mobile_entry_ios_url,
+            mobile_entry_android_url=body.mobile_entry_android_url,
+            mobile_entry_fallback_url=body.mobile_entry_fallback_url,
+            mobile_entry_delay_ms=body.mobile_entry_delay_ms,
+            mobile_entry_title=body.mobile_entry_title,
+            mobile_entry_description=body.mobile_entry_description,
         )
         if any(v is not None for v in update.model_dump().values()):
             state.config = apply_settings_update(state.config, update)
@@ -141,6 +155,13 @@ async def update_settings(
             max_iterations=body.max_iterations,
             bot_name=body.bot_name,
             timezone=body.timezone,
+            mobile_entry_enabled=body.mobile_entry_enabled,
+            mobile_entry_ios_url=body.mobile_entry_ios_url,
+            mobile_entry_android_url=body.mobile_entry_android_url,
+            mobile_entry_fallback_url=body.mobile_entry_fallback_url,
+            mobile_entry_delay_ms=body.mobile_entry_delay_ms,
+            mobile_entry_title=body.mobile_entry_title,
+            mobile_entry_description=body.mobile_entry_description,
         )
         state.config = apply_settings_update(state.config, update)
     state.save_config()

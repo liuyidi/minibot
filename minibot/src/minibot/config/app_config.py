@@ -72,6 +72,16 @@ class DreamConfig(BaseModel):
     interval_h: int = Field(default=48, ge=1)  # default every 2 days when enabled
 
 
+class MobileEntryConfig(BaseModel):
+    enabled: bool = True
+    ios_url: str = ""
+    android_url: str = ""
+    fallback_url: str = "https://liuyidi.me/minibot/download/"
+    delay_ms: int = Field(default=1200, ge=0, le=10_000)
+    title: str = "打开 App"
+    description: str = "建议在 App 中继续使用 minibot。"
+
+
 class AppConfig(BaseModel):
     model: str = "gpt-4o-mini"
     provider: str = "openai"
@@ -98,6 +108,7 @@ class AppConfig(BaseModel):
     weixin: WeixinPersistedConfig = Field(default_factory=WeixinPersistedConfig)
     heartbeat: HeartbeatConfig = Field(default_factory=HeartbeatConfig)
     dream: DreamConfig = Field(default_factory=DreamConfig)
+    mobile_entry: MobileEntryConfig = Field(default_factory=MobileEntryConfig)
 
 
 def default_config_from_settings(settings: Settings | None = None) -> AppConfig:
@@ -109,6 +120,15 @@ def default_config_from_settings(settings: Settings | None = None) -> AppConfig:
         openai_base_url=settings.openai_base_url,
         temperature=settings.temperature,
         max_iterations=settings.max_iterations,
+        mobile_entry={
+            "enabled": settings.mobile_entry_enabled,
+            "ios_url": settings.mobile_entry_ios_url,
+            "android_url": settings.mobile_entry_android_url,
+            "fallback_url": settings.mobile_entry_fallback_url,
+            "delay_ms": settings.normalized_mobile_entry_delay_ms(),
+            "title": settings.mobile_entry_title,
+            "description": settings.mobile_entry_description,
+        },
     )
     config = ensure_presets(config)
     from minibot.config.mcp_presets import ensure_default_mcp_presets
@@ -153,6 +173,13 @@ class SettingsUpdate(BaseModel):
     bot_name: str | None = None
     timezone: str | None = None
     active_preset: str | None = None
+    mobile_entry_enabled: bool | None = None
+    mobile_entry_ios_url: str | None = None
+    mobile_entry_android_url: str | None = None
+    mobile_entry_fallback_url: str | None = None
+    mobile_entry_delay_ms: int | None = None
+    mobile_entry_title: str | None = None
+    mobile_entry_description: str | None = None
 
 
 def apply_settings_update(config: AppConfig, update: SettingsUpdate) -> AppConfig:
@@ -357,6 +384,7 @@ def settings_public_payload(config: AppConfig) -> dict[str, Any]:
             "exec_path_prepend_set": False,
             "exec_path_append_set": False,
         },
+        "mobile_entry": config.mobile_entry.model_dump(),
         "provider_detail": {
             "name": config.provider,
             "api_base": config.openai_base_url,

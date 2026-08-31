@@ -669,6 +669,13 @@ export async function updateSettings(
   if (update.provider !== undefined) body.provider = update.provider;
   if (update.timezone !== undefined) body.timezone = update.timezone;
   if (update.botName !== undefined) body.bot_name = update.botName;
+  if (update.mobileEntryEnabled !== undefined) body.mobile_entry_enabled = update.mobileEntryEnabled ? "true" : "false";
+  if (update.mobileEntryIosUrl !== undefined) body.mobile_entry_ios_url = update.mobileEntryIosUrl;
+  if (update.mobileEntryAndroidUrl !== undefined) body.mobile_entry_android_url = update.mobileEntryAndroidUrl;
+  if (update.mobileEntryFallbackUrl !== undefined) body.mobile_entry_fallback_url = update.mobileEntryFallbackUrl;
+  if (update.mobileEntryDelayMs !== undefined) body.mobile_entry_delay_ms = update.mobileEntryDelayMs;
+  if (update.mobileEntryTitle !== undefined) body.mobile_entry_title = update.mobileEntryTitle;
+  if (update.mobileEntryDescription !== undefined) body.mobile_entry_description = update.mobileEntryDescription;
   return request<SettingsPayload>(`${base}/api/settings/update`, token, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

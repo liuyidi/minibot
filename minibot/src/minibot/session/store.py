@@ -295,6 +295,7 @@ class SessionStore:
             return None
 
     def _save(self, session: Session) -> None:
+        self.sessions_dir.mkdir(parents=True, exist_ok=True)
         path = self._path_for(session.id)
         tmp_path = path.with_suffix(".jsonl.tmp")
         meta = {

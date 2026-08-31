@@ -38,6 +38,15 @@ export interface SettingsPayload {
     tool_hint_max_length: number;
     exec_sandbox?: string;
   };
+  mobile_entry: {
+    enabled: boolean;
+    ios_url: string;
+    android_url: string;
+    fallback_url: string;
+    delay_ms: number;
+    title: string;
+    description: string;
+  };
   active_platform_model?: string;
   platform_models?: Array<{
     id: string;
@@ -227,6 +236,13 @@ export interface SettingsUpdate {
   botName?: string;
   botIcon?: string;
   toolHintMaxLength?: number;
+  mobileEntryEnabled?: boolean;
+  mobileEntryIosUrl?: string;
+  mobileEntryAndroidUrl?: string;
+  mobileEntryFallbackUrl?: string;
+  mobileEntryDelayMs?: number;
+  mobileEntryTitle?: string;
+  mobileEntryDescription?: string;
 }
 
 export interface ModelConfigurationCreate {

@@ -120,7 +120,7 @@ describe("ThreadViewport", () => {
     );
 
     const messageRegion = screen.getByTestId("thread-message-region");
-    expect(messageRegion).toHaveClass("justify-end");
+    expect(messageRegion).toHaveClass("justify-start");
     expect(messageRegion).toHaveClass("pb-4");
     expect(messageRegion.className).not.toContain("5rem");
   });

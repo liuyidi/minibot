@@ -13,6 +13,7 @@
 | [`migration.md`](./migration.md) | **主路线图**（Phase / MSV / checklist） |
 | [`client-api.md`](./client-api.md) | **统一客户端合同** + 渐进迁移 + OpenAPI；实现包 [`packages/minibot-client`](../packages/minibot-client) |
 | [`human-in-the-loop.md`](./human-in-the-loop.md) | **HITL 审批**：策略、持久化、REST / WS 合同与 UI 渲染 |
+| [`observability-web-boot.md`](./observability-web-boot.md) | **Web 启动观测（OTel）**：boot spans → Collector → Tempo / Grafana |
 
 ## 架构补充
 

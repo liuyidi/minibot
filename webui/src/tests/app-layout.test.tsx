@@ -104,6 +104,15 @@ function baseSettingsPayload() {
       search: { max_results: 5, timeout: 30 },
       fetch: { use_jina_reader: true },
     },
+    mobile_entry: {
+      enabled: false,
+      ios_url: "",
+      android_url: "",
+      fallback_url: "https://liuyidi.me/minibot/download/",
+      delay_ms: 1200,
+      title: "打开 App",
+      description: "建议在 App 中继续使用 minibot。",
+    },
     image_generation: {
       enabled: false,
       provider: "openrouter",
@@ -374,7 +383,7 @@ describe("App layout", () => {
 
     expect(await screen.findByRole("heading", { name: "Skills · Connectors" })).toBeInTheDocument();
     expect(screen.getByText("cron")).toBeInTheDocument();
-    expect(screen.getByText("github")).toBeInTheDocument();
+    expect(screen.getByText("GitHub")).toBeInTheDocument();
     expect(screen.getByText("Missing: CLI: gh")).toBeInTheDocument();
     expect(screen.getByRole("navigation", { name: "Sidebar navigation" })).toBeInTheDocument();
     expect(screen.queryByRole("navigation", { name: "Settings sections" })).not.toBeInTheDocument();

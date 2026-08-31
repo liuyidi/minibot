@@ -120,5 +120,8 @@ temp/
 *.tmp
 exp/
 .playwright-mcp/
+test-results/
+playwright-report/
+blob-report/
 bridge/node_modules/
 node_modules/

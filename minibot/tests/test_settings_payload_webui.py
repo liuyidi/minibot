@@ -22,3 +22,5 @@ def test_settings_public_payload_has_overview_runtime_keys() -> None:
     assert payload["image_generation"]["providers"] == []
     assert payload["transcription"]["provider_configured"] is False
     assert payload["transcription"]["providers"] == []
+    assert payload["mobile_entry"]["enabled"] is True
+    assert payload["mobile_entry"]["fallback_url"].endswith("/minibot/download/")

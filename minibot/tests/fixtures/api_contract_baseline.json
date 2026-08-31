@@ -1,0 +1,222 @@
+{
+  "openapi_operations": [
+    "DELETE /api/sessions/{session_id}",
+    "DELETE /api/settings/mcp-presets/{preset_id}",
+    "DELETE /api/settings/model-configurations/{preset_id}",
+    "DELETE /api/webui/automations/{job_id}",
+    "GET /",
+    "GET /api/approvals",
+    "GET /api/channels/feishu",
+    "GET /api/channels/feishu/pairing",
+    "GET /api/channels/feishu/setup/{setup_id}",
+    "GET /api/channels/weixin",
+    "GET /api/channels/weixin/pairing",
+    "GET /api/channels/weixin/setup/{setup_id}",
+    "GET /api/commands",
+    "GET /api/dev/context",
+    "GET /api/dev/cron",
+    "GET /api/dev/knowledge/kbs",
+    "GET /api/dev/knowledge/status",
+    "GET /api/dev/knowledge/{kb_id}",
+    "GET /api/dev/mcp",
+    "GET /api/dev/memory",
+    "GET /api/dev/providers",
+    "GET /api/dev/runtime",
+    "GET /api/dev/session-files",
+    "GET /api/dev/skills",
+    "GET /api/dev/tools",
+    "GET /api/media/{sig}/{payload}",
+    "GET /api/sessions",
+    "GET /api/sessions/{session_id}/automations",
+    "GET /api/sessions/{session_id}/context-usage",
+    "GET /api/sessions/{session_id}/delete",
+    "GET /api/sessions/{session_id}/file-preview",
+    "GET /api/sessions/{session_id}/messages",
+    "GET /api/sessions/{session_id}/webui-thread",
+    "GET /api/settings",
+    "GET /api/settings/commands",
+    "GET /api/settings/mcp-presets",
+    "GET /api/settings/mcp-presets/templates",
+    "GET /api/settings/model-configurations/create",
+    "GET /api/settings/network-safety/update",
+    "GET /api/settings/provider-models",
+    "GET /api/settings/provider/update",
+    "GET /api/settings/usage",
+    "GET /api/webui/automations",
+    "GET /api/webui/sidebar-state",
+    "GET /api/webui/sidebar-state/update",
+    "GET /api/webui/skills",
+    "GET /api/webui/skills/{name}",
+    "GET /api/workspaces",
+    "GET /auth/bootstrap",
+    "GET /auth/config",
+    "GET /auth/desktop/authorize",
+    "GET /auth/desktop/done",
+    "GET /auth/desktop/focus",
+    "GET /auth/desktop/handoff",
+    "GET /auth/desktop/session",
+    "GET /auth/login",
+    "GET /auth/logout",
+    "GET /auth/mini-auth/callback",
+    "GET /health",
+    "GET /platform/v1/budget",
+    "GET /platform/v1/models",
+    "GET /webui/bootstrap",
+    "GET /{full_path}",
+    "PATCH /api/settings",
+    "POST /api/approvals/{approval_id}/resolve",
+    "POST /api/channels/feishu/disable",
+    "POST /api/channels/feishu/enable",
+    "POST /api/channels/feishu/pairing/{pairing_id}/allow",
+    "POST /api/channels/feishu/pairing/{pairing_id}/ignore",
+    "POST /api/channels/feishu/remove",
+    "POST /api/channels/feishu/setup/save",
+    "POST /api/channels/feishu/setup/start",
+    "POST /api/channels/feishu/setup/{setup_id}/cancel",
+    "POST /api/channels/feishu/setup/{setup_id}/refresh",
+    "POST /api/channels/weixin/disable",
+    "POST /api/channels/weixin/enable",
+    "POST /api/channels/weixin/pairing/{pairing_id}/allow",
+    "POST /api/channels/weixin/pairing/{pairing_id}/ignore",
+    "POST /api/channels/weixin/remove",
+    "POST /api/channels/weixin/setup/save",
+    "POST /api/channels/weixin/setup/start",
+    "POST /api/channels/weixin/setup/{setup_id}/cancel",
+    "POST /api/channels/weixin/setup/{setup_id}/refresh",
+    "POST /api/dev/bus/inject",
+    "POST /api/dev/bus/pause",
+    "POST /api/dev/bus/resume",
+    "POST /api/dev/fallback/arm",
+    "POST /api/dev/fallback/disarm",
+    "POST /api/dev/fallback/probe-live",
+    "POST /api/dev/fallback/simulate",
+    "POST /api/dev/knowledge/{kb_id}/qa",
+    "POST /api/dev/knowledge/{kb_id}/search",
+    "POST /api/dev/memory",
+    "POST /api/dev/race",
+    "POST /api/dev/runtime/demo-turn",
+    "POST /api/dev/session-files/delete",
+    "POST /api/dev/tools/deny-demo",
+    "POST /api/sessions",
+    "POST /api/sessions/{session_id}/score",
+    "POST /api/sessions/{session_id}/turns",
+    "POST /api/sessions/{session_id}/workspace",
+    "POST /api/settings/mcp-presets",
+    "POST /api/settings/mcp-presets/from-template",
+    "POST /api/settings/mcp-presets/test",
+    "POST /api/settings/mcp-presets/{preset_id}/disable",
+    "POST /api/settings/mcp-presets/{preset_id}/enable",
+    "POST /api/settings/mcp-presets/{preset_id}/invoke",
+    "POST /api/settings/model-configurations",
+    "POST /api/settings/model-configurations/create",
+    "POST /api/settings/model-configurations/{preset_id}/activate",
+    "POST /api/settings/network-safety/update",
+    "POST /api/settings/platform-models/{model_id}/activate",
+    "POST /api/settings/provider/update",
+    "POST /api/settings/update",
+    "POST /api/webui/automations",
+    "POST /api/webui/automations/{job_id}",
+    "POST /api/webui/automations/{job_id}/disable",
+    "POST /api/webui/automations/{job_id}/enable",
+    "POST /api/webui/automations/{job_id}/run",
+    "POST /api/webui/sidebar-state/update",
+    "POST /api/webui/skills",
+    "POST /auth/desktop/complete",
+    "POST /auth/desktop/focus",
+    "POST /platform/v1/chat/completions",
+    "POST /platform/v1/token"
+  ],
+  "responses": {
+    "GET /health": {
+      "required_keys": [
+        "runtime",
+        "status"
+      ]
+    },
+    "GET /auth/bootstrap": {
+      "required_keys": [
+        "expires_in",
+        "model_name",
+        "runtime_surface",
+        "token",
+        "ws_path"
+      ]
+    },
+    "GET /api/sessions": {
+      "required_keys": [
+        "sessions"
+      ],
+      "nested": {
+        "sessions": {
+          "item_required_keys": [
+            "created_at",
+            "id",
+            "key",
+            "preview",
+            "title",
+            "updated_at",
+            "workspace_path",
+            "workspace_scope"
+          ],
+          "nested": {
+            "workspace_scope": {
+              "required_keys": [
+                "access_mode",
+                "project_name",
+                "project_path",
+                "restrict_to_workspace"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "GET /api/settings": {
+      "required_keys": [
+        "active_platform_model",
+        "active_preset",
+        "advanced",
+        "agent",
+        "channels",
+        "image_generation",
+        "mcp_presets",
+        "model_presets",
+        "network_safety",
+        "observability",
+        "platform_models",
+        "provider_detail",
+        "providers",
+        "requires_restart",
+        "runtime",
+        "runtime_capabilities",
+        "runtime_surface",
+        "surface",
+        "transcription",
+        "usage",
+        "version",
+        "web",
+        "web_search"
+      ]
+    },
+    "GET /status.json": {
+      "required_keys": [
+        "components",
+        "generated_at",
+        "incidents",
+        "links",
+        "optional_disabled",
+        "overall",
+        "runtime"
+      ]
+    },
+    "GET /auth/config": {
+      "required_keys": [
+        "account",
+        "auth_provider",
+        "authenticated",
+        "login_url",
+        "logout_url"
+      ]
+    }
+  }
+}

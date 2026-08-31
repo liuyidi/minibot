@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Any, AsyncIterator
 
 from minibot.agent.approval import ApprovalStore
-from minibot.agent.runner import AgentRunResult, AgentRunner, RunnerEvent
+from minibot.agent.runner import AgentRunResult, AgentRunner
 from minibot.agent.stream_coalesce import StreamCoalescer
 from minibot.agent.tools.registry import ToolRegistry
 from minibot.bus.events import OutboundMessage

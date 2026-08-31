@@ -25,7 +25,7 @@ def test_system_prompt_identity_anchor() -> None:
 
 def test_seed_workspace_bootstrap_writes_soul_once(tmp_path: Path) -> None:
     written = seed_workspace_bootstrap(tmp_path)
-    assert written == ["SOUL.md"]
+    assert written == ["SOUL.md", "HEARTBEAT.md"]
     soul = (tmp_path / "SOUL.md").read_text(encoding="utf-8")
     assert "Identity anchor" in soul
     assert "minibot" in soul

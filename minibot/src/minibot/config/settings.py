@@ -32,6 +32,16 @@ class Settings(BaseSettings):
     mini_auth_desktop_redirect_uri: str = "minibot://auth/callback"
     mini_auth_timeout_s: float = 20.0
 
+    # Public mobile entry / app-handoff landing page.
+    mobile_entry_enabled: bool = True
+    mobile_entry_ios_url: str = ""
+    mobile_entry_android_url: str = ""
+    mobile_entry_fallback_url: str = "https://liuyidi.me/minibot/download/"
+    mobile_entry_delay_ms: int = 1200
+    mobile_entry_title: str = "打开 App"
+    mobile_entry_description: str = "建议在 App 中继续使用 minibot。"
+    mobile_entry_open_path: str = "/open"
+
     openai_api_key: str = ""
     openai_base_url: str = "https://api.openai.com/v1"
     model: str = "gpt-4o-mini"
@@ -121,6 +131,9 @@ class Settings(BaseSettings):
 
     def normalized_legacy_owner_user_id(self) -> str:
         return self.legacy_owner_user_id.strip()
+
+    def normalized_mobile_entry_delay_ms(self) -> int:
+        return max(0, int(self.mobile_entry_delay_ms))
 
 
 @lru_cache

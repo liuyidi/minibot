@@ -85,6 +85,24 @@ def _focus_desktop_app() -> dict[str, object]:
     return {"ok": False, "reason": "; ".join(errors) or "focus failed"}
 
 
+@router.get("/mobile-entry")
+async def mobile_entry_config(state: StateDep) -> dict[str, Any]:
+    fallback_url = (getattr(state.settings, "mobile_entry_fallback_url", "") or "").strip()
+    if not fallback_url:
+        fallback_url = "https://liuyidi.me/minibot/download/"
+    return {
+        "enabled": bool(getattr(state.settings, "mobile_entry_enabled", False)),
+        "iosUrl": (getattr(state.settings, "mobile_entry_ios_url", "") or "").strip(),
+        "androidUrl": (getattr(state.settings, "mobile_entry_android_url", "") or "").strip(),
+        "fallbackUrl": fallback_url,
+        "title": (getattr(state.settings, "mobile_entry_title", "") or "打开 App").strip(),
+        "description": (
+            getattr(state.settings, "mobile_entry_description", "") or "建议在 App 中继续使用 minibot。"
+        ).strip(),
+        "delayMs": max(0, int(getattr(state.settings, "mobile_entry_delay_ms", 1200) or 1200)),
+    }
+
+
 class DesktopHandoffResponse(BaseModel):
     token: str
     expires_in: int

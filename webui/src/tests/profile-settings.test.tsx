@@ -61,6 +61,15 @@ function settingsPayload(): SettingsPayload {
       search: { max_results: 5, timeout: 30 },
       fetch: { use_jina_reader: true },
     },
+    mobile_entry: {
+      enabled: false,
+      ios_url: "",
+      android_url: "",
+      fallback_url: "https://liuyidi.me/minibot/download/",
+      delay_ms: 1200,
+      title: "打开 App",
+      description: "建议在 App 中继续使用 minibot。",
+    },
     image_generation: {
       enabled: false,
       provider: "openrouter",

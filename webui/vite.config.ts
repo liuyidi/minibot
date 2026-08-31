@@ -71,6 +71,12 @@ export default defineConfig(({ mode }) => {
         "/api": { target, changeOrigin: true },
         "/auth": { target, changeOrigin: true },
         "/ui": { target, changeOrigin: true },
+        // OpenTelemetry OTLP/HTTP → local collector (infra-observability :4318)
+        "/otlp": {
+          target: env.OTEL_EXPORTER_OTLP_ENDPOINT ?? "http://127.0.0.1:4318",
+          changeOrigin: true,
+          rewrite: (p: string) => p.replace(/^\/otlp/, ""),
+        },
       },
     },
     test: {

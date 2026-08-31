@@ -157,8 +157,13 @@ WebUI / IM channels
 cd minibot && pytest -q
 cd minibot && ruff check src/minibot
 cd webui && npm test
+
+# WebUI E2E (Playwright; starts isolated gateway :18766 + Vite :15173)
+bash scripts/e2e.sh
+# npm run e2e -- e2e/smoke.spec.ts   # when servers already up
 ```
 
+Plan: [`docs/plans/2026-08-26-webui-e2e-playwright.md`](./docs/plans/2026-08-26-webui-e2e-playwright.md).  
 See [`AGENTS.md`](./AGENTS.md) for agent-oriented repo guidance.
 
 ## Changelog

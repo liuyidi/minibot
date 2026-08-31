@@ -28,16 +28,23 @@ export function AppLayout({
   onModelNameChange,
   onLogout,
   onNativeEngineRestart,
+  onInteractive,
 }: {
   runtimeSurface: RuntimeSurface;
   accountDisplayName?: string | null;
   onModelNameChange: (modelName: string | null) => void;
   onLogout: () => void;
   onNativeEngineRestart: () => Promise<string>;
+  /** Phase 1 web-boot TTI: layout mounted and interactive. */
+  onInteractive?: () => void;
 }) {
   const { t } = useTranslation();
   const model = useAppLayoutModel({ runtimeSurface, accountDisplayName, onModelNameChange });
   const host = { onLogout, onModelNameChange, onNativeEngineRestart };
+
+  useEffect(() => {
+    onInteractive?.();
+  }, [onInteractive]);
 
   useEffect(() => {
     if (!model.workspace.showHostChrome) return;
