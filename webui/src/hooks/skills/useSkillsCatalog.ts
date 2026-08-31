@@ -106,35 +106,9 @@ export function useSkillsCatalog(): {
   }, [token]);
 
   useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      setMcpLoading(true);
-      setSkillCatalogLoading(true);
-      try {
-        const [mcpPayload, skillPayload] = await Promise.all([
-          fetchMinibotMcpList(token),
-          fetchSkillCatalog(token),
-        ]);
-        if (cancelled) return;
-        setPresets(mcpPayload.presets ?? []);
-        setTemplates(mcpPayload.templates ?? []);
-        setSkillTemplates(skillPayload.templates ?? []);
-      } catch {
-        if (cancelled) return;
-        setPresets([]);
-        setTemplates([]);
-        setSkillTemplates([]);
-      } finally {
-        if (!cancelled) {
-          setMcpLoading(false);
-          setSkillCatalogLoading(false);
-        }
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [token]);
+    void refreshMcp();
+    void refreshSkillCatalog();
+  }, [refreshMcp, refreshSkillCatalog]);
 
   const applyTemplate = useCallback(
     async (templateId: string) => {

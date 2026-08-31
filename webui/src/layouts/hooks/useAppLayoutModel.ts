@@ -12,8 +12,15 @@ import { useSettings } from "@/hooks/settings";
 import { useSidebarState } from "@/hooks/ui";
 import { useTheme } from "@/hooks/ui";
 import type { RuntimeSurface } from "@/lib/types";
+import type { ShellView, SidebarUtilityKey } from "@/routes";
 import { useShellNavigate } from "@/routes";
 import { useUiStore } from "@/stores";
+
+function sidebarActiveUtility(view: ShellView): SidebarUtilityKey | null {
+  if (view === "automations" || view === "channels") return view;
+  if (view === "skills" || view === "experts" || view === "connectors") return "skills";
+  return null;
+}
 
 export function useAppLayoutModel({
   runtimeSurface,
@@ -129,12 +136,7 @@ export function useAppLayoutModel({
     onOpenSettings: utilityNav.onOpenSettings,
     onOpenUtility: utilityNav.onOpenUtility,
     onOpenSearch: chatActions.onOpenSessionSearch,
-    activeUtility:
-      view === "automations" || view === "channels"
-        ? view
-        : view === "skills" || view === "experts" || view === "connectors"
-          ? "skills"
-          : null,
+    activeUtility: sidebarActiveUtility(view),
     onToggleArchived: chatActions.onToggleArchived,
     pinnedKeys: sidebarState.pinned_keys,
     archivedKeys: sidebarState.archived_keys,

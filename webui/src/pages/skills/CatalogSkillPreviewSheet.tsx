@@ -39,7 +39,7 @@ export function CatalogSkillPreviewSheet({
   const description =
     resolveCatalogDescription(template, preferZh) ||
     t("settings.skills.noDescription", { defaultValue: "No description." });
-  const tags = resolveMarketTags(template.id, preferZh);
+  const tags = resolveMarketTags(template.id);
   const popularity = getMarketMeta(template.id).popularity;
   const source =
     template.source === "clawhub"

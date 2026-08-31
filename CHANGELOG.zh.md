@@ -21,9 +21,9 @@ English: [CHANGELOG.md](./CHANGELOG.md)
 - 对话标题支持悬停编辑：点击铅笔图标后可内联重命名，失焦自动保存。
 - 后端实现 CLI Apps 设置接口（`/api/settings/cli-apps` 及 install/update/uninstall/test），供 composer `@` 提及已安装本机 CLI 应用。
 
-### 变更
+### 修复
 
-- 技能与连接器的搜索 / 添加控件与顶部「专家 / 技能 / 连接器」切换同一行。
+- WebUI 类型检查：能力中心 active utility 类型与技能目录刷新接线，确保 ECS WebUI 发布可构建。
 - WebUI 侧边栏 / 输入区 / 顶栏对齐豆包式层级：统一行高与间距、品牌区几何、输入框去绿色 focus ring。
 - 顶部工具导航（技能、定时任务、频道等）与下方对话列表选中态互斥。
 - WebUI `thread/` 按 shell / composer / messages / activity / preview / viewport 分目录，并拆薄 `ThreadShell`（文件预览、反馈、消息缓存等抽离）。
