@@ -18,6 +18,7 @@ English: [CHANGELOG.md](./CHANGELOG.md)
 - Gateway 暴露 Prometheus `/metrics`，便于延迟与请求量监测。
 - 移动端唤端页（`/#/open`）可由 gateway 配置：商店链接、回退下载地址、标题与说明（设置项 / `GET /auth/mobile-entry`）。
 - 对话标题支持悬停编辑：点击铅笔图标后可内联重命名，失焦自动保存。
+- 后端实现 CLI Apps 设置接口（`/api/settings/cli-apps` 及 install/update/uninstall/test），供 composer `@` 提及已安装本机 CLI 应用。
 
 ### 变更
 

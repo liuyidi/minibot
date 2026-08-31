@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import asyncio
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, Field
 
 from minibot.api.deps import AuthDep, StateDep
+from minibot.apps.cli import CliAppError, CliAppManager
 from minibot.config.app_config import SettingsUpdate, apply_settings_update, settings_public_payload
 from minibot.config.presets import (
     PresetError,
@@ -26,6 +28,7 @@ from minibot.config.mcp_presets import (
     set_mcp_enabled,
     upsert_mcp_preset,
 )
+from minibot.workspace import default_workspace
 
 router = APIRouter(prefix="/api/settings", tags=["settings"])
 
@@ -537,3 +540,57 @@ async def test_mcp_preset(
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     result = await state.mcp.test(preset)
     return result
+
+
+# --- CLI Apps (CLI-Anything catalog + local install state) -----------------
+
+
+def _cli_app_manager() -> CliAppManager:
+    return CliAppManager(workspace=default_workspace())
+
+
+def _cli_apps_http_error(exc: Exception) -> HTTPException:
+    if isinstance(exc, CliAppError):
+        return HTTPException(status_code=exc.status, detail=exc.message)
+    return HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc))
+
+
+@router.get("/cli-apps")
+async def list_cli_apps(
+    _auth: AuthDep,
+    installed_only: str = "",
+) -> dict[str, Any]:
+    """Return CLI-Anything catalog rows (or installed-only for composer @mentions)."""
+    only_installed = installed_only.strip().lower() in {"1", "true", "yes"}
+    manager = _cli_app_manager()
+    try:
+        if only_installed:
+            return await asyncio.to_thread(manager.installed_payload)
+        return await asyncio.to_thread(manager.payload)
+    except Exception as exc:  # noqa: BLE001 — surface catalog/network failures
+        raise _cli_apps_http_error(exc) from exc
+
+
+@router.get("/cli-apps/{action}")
+async def cli_apps_action_route(
+    _auth: AuthDep,
+    action: str,
+    name: str = "",
+) -> dict[str, Any]:
+    """Install / update / uninstall / test a catalog CLI app (WebUI uses GET + query)."""
+    app_name = name.strip()
+    if not app_name:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="missing CLI app name")
+    manager = _cli_app_manager()
+    try:
+        if action == "install":
+            return await asyncio.to_thread(manager.install, app_name)
+        if action == "update":
+            return await asyncio.to_thread(manager.update, app_name)
+        if action == "uninstall":
+            return await asyncio.to_thread(manager.uninstall, app_name)
+        if action == "test":
+            return await asyncio.to_thread(manager.test, app_name)
+        raise CliAppError(f"unknown CLI app action '{action}'", status=404)
+    except Exception as exc:  # noqa: BLE001
+        raise _cli_apps_http_error(exc) from exc

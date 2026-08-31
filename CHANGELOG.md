@@ -17,6 +17,7 @@ Versions follow SemVer for product narrative. Package metadata may lag until a f
 - Gateway exposes a Prometheus `/metrics` endpoint for latency and request monitoring.
 - Mobile handoff (`/#/open`) is configurable from the gateway: store URLs, fallback download URL, title, and description via settings / `GET /auth/mobile-entry`.
 - Thread titles can be renamed inline: hover shows a pencil control, edit in place, and save on blur.
+- Server implements CLI Apps settings APIs (`/api/settings/cli-apps` plus install/update/uninstall/test) so the composer can `@`-mention installed local CLI apps.
 
 ### Changed
 
