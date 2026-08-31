@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from pathlib import Path
 from typing import Any
 
@@ -101,6 +102,43 @@ async def skills(_auth: AuthDep, state: StateDep) -> dict[str, Any]:
     return SkillsRegistry(_webui_skills_workspace(state)).webui_list_payload()
 
 
+@router.get("/api/webui/skills/catalog")
+async def skills_catalog(_auth: AuthDep) -> dict[str, Any]:
+    """Optional skill packs that can be installed into the workspace."""
+    from minibot.agent.skill_catalog import list_skill_catalog
+
+    return {"templates": list_skill_catalog()}
+
+
+@router.post("/api/webui/skills/from-catalog")
+async def install_skill_from_catalog(
+    _auth: AuthDep, state: StateDep, body: dict[str, Any]
+) -> dict[str, Any]:
+    """Install an optional catalog skill (downloads from the upstream pack)."""
+    from minibot.agent.skill_catalog import install_catalog_skill
+    from minibot.agent.skills import SkillsRegistry
+
+    template_id = str(body.get("template_id") or body.get("id") or "").strip()
+    if not template_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="template_id is required")
+    workspace = _webui_skills_workspace(state)
+    try:
+        skill = await asyncio.to_thread(install_catalog_skill, workspace, template_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    except OSError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="failed to install catalog skill",
+        ) from exc
+    reg = SkillsRegistry(workspace)
+    return {
+        "ok": True,
+        "skill": reg.webui_detail(skill),
+        **reg.webui_list_payload(),
+    }
+
+
 @router.get("/api/webui/skills/{name}")
 async def skill_detail(name: str, _auth: AuthDep, state: StateDep) -> dict[str, Any]:
     """Single skill detail for WebUI (requirements + raw SKILL.md)."""
@@ -132,6 +170,58 @@ async def install_skill(_auth: AuthDep, state: StateDep, body: dict[str, Any]) -
             detail="failed to write skill",
         ) from exc
     return reg.webui_detail(skill)
+
+
+@router.post("/api/webui/skills/{name}/enable")
+async def enable_skill(name: str, _auth: AuthDep, state: StateDep) -> dict[str, Any]:
+    from minibot.agent.skills import SkillsRegistry
+
+    reg = SkillsRegistry(_webui_skills_workspace(state))
+    try:
+        skill = reg.set_enabled(name, True)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    except OSError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="failed to update skill",
+        ) from exc
+    return reg.webui_detail(skill)
+
+
+@router.post("/api/webui/skills/{name}/disable")
+async def disable_skill(name: str, _auth: AuthDep, state: StateDep) -> dict[str, Any]:
+    from minibot.agent.skills import SkillsRegistry
+
+    reg = SkillsRegistry(_webui_skills_workspace(state))
+    try:
+        skill = reg.set_enabled(name, False)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    except OSError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="failed to update skill",
+        ) from exc
+    return reg.webui_detail(skill)
+
+
+@router.delete("/api/webui/skills/{name}")
+async def uninstall_skill(name: str, _auth: AuthDep, state: StateDep) -> dict[str, Any]:
+    """Uninstall a workspace skill (builtin skills cannot be removed)."""
+    from minibot.agent.skills import SkillsRegistry
+
+    reg = SkillsRegistry(_webui_skills_workspace(state))
+    try:
+        reg.uninstall_skill(name)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    except OSError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="failed to uninstall skill",
+        ) from exc
+    return reg.webui_list_payload()
 
 
 @router.get("/api/dev/providers")

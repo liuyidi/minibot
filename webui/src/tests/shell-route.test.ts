@@ -54,15 +54,63 @@ describe("shell-route settings paths", () => {
     expect(
       shellRouteToLocation({
         view: "skills",
-        activeKey: null,
+        activeKey: "websocket:abc",
         settingsSection: "overview",
       }),
     ).toEqual({ pathname: "/skills", search: "" });
 
     expect(
+      shellRouteToLocation({
+        view: "experts",
+        activeKey: null,
+        settingsSection: "overview",
+      }),
+    ).toEqual({ pathname: "/experts", search: "" });
+
+    expect(
+      shellRouteToLocation({
+        view: "connectors",
+        activeKey: "websocket:abc",
+        settingsSection: "overview",
+      }),
+    ).toEqual({ pathname: "/connectors", search: "" });
+
+    expect(
+      shellRouteToLocation({
+        view: "channels",
+        activeKey: "websocket:abc",
+        settingsSection: "overview",
+      }),
+    ).toEqual({ pathname: "/channels", search: "" });
+
+    expect(
+      shellRouteToLocation({
+        view: "automations",
+        activeKey: "websocket:abc",
+        settingsSection: "overview",
+      }),
+    ).toEqual({ pathname: "/automations", search: "" });
+
+    expect(
       shellRouteFromLocation({ pathname: "/settings/skills", search: "" }),
     ).toEqual({
       view: "skills",
+      activeKey: null,
+      settingsSection: "overview",
+    });
+
+    expect(
+      shellRouteFromLocation({ pathname: "/experts", search: "" }),
+    ).toEqual({
+      view: "experts",
+      activeKey: null,
+      settingsSection: "overview",
+    });
+
+    expect(
+      shellRouteFromLocation({ pathname: "/connectors", search: "" }),
+    ).toEqual({
+      view: "connectors",
       activeKey: null,
       settingsSection: "overview",
     });

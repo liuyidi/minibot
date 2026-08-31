@@ -1,147 +1,133 @@
 import { useMemo, useState } from "react";
-import { Plug, Plus, Search, Sparkles } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
+import { CapabilityHubNav } from "@/components/capabilities";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useSkillsCatalog } from "@/hooks/skills";
+import type {
+  SkillCatalogTemplate,
+} from "@/lib/apis/skills-api";
 import type { SkillSummary } from "@/lib/types";
 
+import { CatalogSkillPreviewSheet } from "./CatalogSkillPreviewSheet";
 import {
-  AddConnectorDialog,
   AddSkillDialog,
-  CatalogSection,
-  ConnectorCard,
   EmptyHint,
-  LoadingHint,
   SkillCard,
   SkillDetailSheet,
-  TabButton,
-} from "./skills-ui";
+} from "./SkillsUi";
+import { SkillMarketPanel, UnderlineTab } from "./SkillMarket";
 
-type HubTab = "skills" | "connectors";
+type SkillTab = "market" | "builtin" | "mine";
 
 export function SkillsPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const {
     skills,
-    presets,
-    templates,
-    mcpLoading,
     busyKey,
     error,
     clearError,
-    applyTemplate,
+    applySkillTemplate,
+    applySkillTemplates,
     installSkill,
-    upsertMcp,
-    importMcpConfig,
+    setSkillEnabled,
+    uninstallSkill,
+    skillTemplates,
+    skillCatalogLoading,
   } = useSkillsCatalog();
 
-  const [tab, setTab] = useState<HubTab>("skills");
+  const [tab, setTab] = useState<SkillTab>("market");
   const [query, setQuery] = useState("");
   const [selectedSkill, setSelectedSkill] = useState<SkillSummary | null>(null);
-  const [addOpen, setAddOpen] = useState(false);
+  const [selectedCatalog, setSelectedCatalog] = useState<SkillCatalogTemplate | null>(null);
+  const [addSkillOpen, setAddSkillOpen] = useState(false);
 
-  const openAdd = () => {
+  const openAddSkill = () => {
     clearError();
-    setAddOpen(true);
+    setAddSkillOpen(true);
   };
 
   const q = query.trim().toLowerCase();
   const match = (text: string) => !q || text.toLowerCase().includes(q);
+  const preferZh = (i18n.language || "").toLowerCase().startsWith("zh");
 
   const builtinSkills = useMemo(
     () => skills.filter((s) => s.source === "builtin" && match(`${s.name} ${s.description}`)),
     [skills, q],
   );
-  const addedSkills = useMemo(
+  const mineSkills = useMemo(
     () => skills.filter((s) => s.source === "workspace" && match(`${s.name} ${s.description}`)),
     [skills, q],
   );
-
-  const installedIds = useMemo(() => new Set(presets.map((p) => p.id)), [presets]);
-  const filteredPresets = useMemo(
-    () => presets.filter((p) => match(`${p.id} ${p.label} ${p.command ?? ""} ${p.url ?? ""}`)),
-    [presets, q],
+  const installedCount = useMemo(
+    () => skills.filter((s) => s.source === "workspace").length,
+    [skills],
   );
-  const optionalTemplates = useMemo(
-    () =>
-      templates.filter((tpl) => {
-        const presetId = String(tpl.preset?.id || tpl.id);
-        if (installedIds.has(presetId) || installedIds.has(tpl.id)) return false;
-        return match(`${tpl.id} ${tpl.label} ${tpl.hint ?? ""}`);
-      }),
-    [templates, installedIds, q],
+  const installedSkillNames = useMemo(
+    () => new Set(skills.map((s) => s.name.toLowerCase())),
+    [skills],
   );
-
-  const installedCount =
-    tab === "skills"
-      ? skills.filter((s) => s.source === "workspace").length
-      : presets.length;
+  const skillsByName = useMemo(
+    () => new Map(skills.map((s) => [s.name.toLowerCase(), s])),
+    [skills],
+  );
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div
-          role="tablist"
-          aria-label={t("settings.skills.hubTabs", { defaultValue: "Skills and connectors" })}
-          className="inline-flex w-fit items-center gap-1 rounded-full bg-muted/70 p-1"
-        >
-          <TabButton
-            active={tab === "skills"}
-            icon={<Sparkles className="h-3.5 w-3.5" aria-hidden />}
-            label={t("settings.skills.tabSkills", { defaultValue: "Skills" })}
-            onClick={() => setTab("skills")}
-          />
-          <TabButton
-            active={tab === "connectors"}
-            icon={<Plug className="h-3.5 w-3.5" aria-hidden />}
-            label={t("settings.skills.tabConnectors", { defaultValue: "Connectors" })}
-            onClick={() => setTab("connectors")}
-          />
-        </div>
-
-        <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-center lg:max-w-xl lg:justify-end">
-          <div className="relative min-w-0 flex-1">
-            <Search
-              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-              aria-hidden
-            />
-            <Input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder={
-                tab === "skills"
-                  ? t("settings.skills.searchSkills", { defaultValue: "Search skills" })
-                  : t("settings.skills.searchConnectors", { defaultValue: "Search connectors" })
-              }
-              className="h-10 rounded-full border-border/50 bg-background/80 pl-9"
-            />
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="hidden whitespace-nowrap rounded-full bg-muted px-3 py-2 text-[12px] font-medium text-muted-foreground sm:inline-flex">
-              {tab === "skills"
-                ? t("settings.skills.installedSkillsCount", {
-                    count: installedCount,
-                    defaultValue: "Installed {{count}}",
-                  })
-                : t("settings.skills.installedConnectorsCount", {
-                    count: installedCount,
-                    defaultValue: "Installed {{count}}",
-                  })}
-            </span>
+      <CapabilityHubNav
+        active="skills"
+        trailing={
+          <>
+            <div className="relative min-w-0 flex-1 sm:max-w-xs md:max-w-sm">
+              <Search
+                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                aria-hidden
+              />
+              <Input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={t("settings.skills.searchSkills", { defaultValue: "Search skills" })}
+                className="h-9 rounded-full border-border/50 bg-background/80 pl-9"
+              />
+            </div>
             <Button
               type="button"
-              className="h-10 rounded-full px-4"
-              onClick={openAdd}
+              className="h-9 shrink-0 rounded-full px-4"
+              onClick={() => {
+                setTab("mine");
+                openAddSkill();
+              }}
             >
               <Plus className="h-4 w-4" aria-hidden />
-              {tab === "skills"
-                ? t("settings.skills.addSkill", { defaultValue: "Add skill" })
-                : t("settings.skills.addConnector", { defaultValue: "Add connector" })}
+              {t("settings.skills.addSkill", { defaultValue: "Add skill" })}
             </Button>
-          </div>
-        </div>
+          </>
+        }
+      />
+
+      <div
+        role="tablist"
+        aria-label={t("settings.skills.skillTabs", { defaultValue: "Skill sections" })}
+        className="flex items-center gap-5 border-b border-border/45"
+      >
+        <UnderlineTab
+          active={tab === "market"}
+          label={t("settings.skills.tabMarket", { defaultValue: "Skill Market" })}
+          onClick={() => setTab("market")}
+        />
+        <UnderlineTab
+          active={tab === "builtin"}
+          label={t("settings.skills.tabBuiltin", { defaultValue: "Built-in" })}
+          onClick={() => setTab("builtin")}
+        />
+        <UnderlineTab
+          active={tab === "mine"}
+          label={t("settings.skills.tabMine", { defaultValue: "Installed" })}
+          count={installedCount}
+          onClick={() => setTab("mine")}
+        />
       </div>
 
       {error ? (
@@ -150,110 +136,81 @@ export function SkillsPage() {
         </div>
       ) : null}
 
-      {tab === "skills" ? (
-        <div className="space-y-8">
-          <CatalogSection
-            title={t("settings.skills.sectionBuiltin", { defaultValue: "Built-in" })}
-            count={builtinSkills.length}
-          >
-            {builtinSkills.length ? (
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                {builtinSkills.map((skill) => (
-                  <SkillCard key={`b:${skill.name}`} skill={skill} onSelect={setSelectedSkill} />
-                ))}
-              </div>
-            ) : (
-              <EmptyHint
-                text={t("settings.skills.emptyBuiltin", { defaultValue: "No built-in skills match." })}
-              />
-            )}
-          </CatalogSection>
+      {tab === "market" ? (
+        <SkillMarketPanel
+          templates={skillTemplates}
+          installedNames={installedSkillNames}
+          preferZh={preferZh}
+          query={query}
+          loading={skillCatalogLoading}
+          busyKey={busyKey}
+          onAdd={(id) => void applySkillTemplate(id)}
+          onAddMany={(ids, packId) => void applySkillTemplates(ids, `pack:${packId}`)}
+          onPreview={(tpl) => {
+            setSelectedSkill(null);
+            setSelectedCatalog(tpl);
+          }}
+          onUse={(id) => {
+            const skill = skillsByName.get(id.toLowerCase());
+            if (skill) {
+              setSelectedCatalog(null);
+              setSelectedSkill(skill);
+            }
+          }}
+        />
+      ) : null}
 
-          <CatalogSection
-            title={t("settings.skills.sectionAdded", { defaultValue: "Added" })}
-            count={addedSkills.length}
-          >
-            {addedSkills.length ? (
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                {addedSkills.map((skill) => (
-                  <SkillCard key={`w:${skill.name}`} skill={skill} onSelect={setSelectedSkill} />
-                ))}
-              </div>
-            ) : (
+      {tab === "builtin" ? (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {builtinSkills.length ? (
+            builtinSkills.map((skill) => (
+              <SkillCard
+                key={`b:${skill.name}`}
+                skill={skill}
+                busy={busyKey === `skill-enable:${skill.name}`}
+                onSelect={setSelectedSkill}
+                onToggleEnabled={(item, enabled) => void setSkillEnabled(item.name, enabled)}
+              />
+            ))
+          ) : (
+            <div className="sm:col-span-2 lg:col-span-4">
+              <EmptyHint
+                text={t("settings.skills.emptyBuiltin", {
+                  defaultValue: "No built-in skills match.",
+                })}
+              />
+            </div>
+          )}
+        </div>
+      ) : null}
+
+      {tab === "mine" ? (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {mineSkills.length ? (
+            mineSkills.map((skill) => (
+              <SkillCard
+                key={`w:${skill.name}`}
+                skill={skill}
+                busy={
+                  busyKey === `skill-enable:${skill.name}` ||
+                  busyKey === `skill-uninstall:${skill.name}`
+                }
+                onSelect={setSelectedSkill}
+                onToggleEnabled={(item, enabled) => void setSkillEnabled(item.name, enabled)}
+                onUninstall={(item) => void uninstallSkill(item.name)}
+              />
+            ))
+          ) : (
+            <div className="sm:col-span-2 lg:col-span-4">
               <EmptyHint
                 text={t("settings.skills.emptyAdded", {
                   defaultValue: "No workspace skills yet. Use Add skill to install one.",
                 })}
               />
-            )}
-          </CatalogSection>
+            </div>
+          )}
         </div>
-      ) : (
-        <div className="space-y-8">
-          <CatalogSection
-            title={t("settings.skills.sectionInstalledConnectors", { defaultValue: "Installed" })}
-            count={filteredPresets.length}
-          >
-            {mcpLoading ? (
-              <LoadingHint />
-            ) : filteredPresets.length ? (
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                {filteredPresets.map((preset) => (
-                  <ConnectorCard
-                    key={preset.id}
-                    title={preset.label || preset.id}
-                    description={
-                      preset.inferred_type ||
-                      preset.type ||
-                      (preset.command ? `stdio · ${preset.command}` : preset.url || "MCP")
-                    }
-                    badge={
-                      preset.enabled
-                        ? t("settings.skills.connectorEnabled", { defaultValue: "Enabled" })
-                        : t("settings.skills.connectorDisabled", { defaultValue: "Disabled" })
-                    }
-                    badgeTone={preset.enabled ? "success" : "muted"}
-                  />
-                ))}
-              </div>
-            ) : (
-              <EmptyHint
-                text={t("settings.skills.emptyInstalledConnectors", {
-                  defaultValue: "No connectors installed yet.",
-                })}
-              />
-            )}
-          </CatalogSection>
-
-          <CatalogSection
-            title={t("settings.skills.sectionOptionalConnectors", { defaultValue: "Optional" })}
-            count={optionalTemplates.length}
-          >
-            {mcpLoading ? (
-              <LoadingHint />
-            ) : optionalTemplates.length ? (
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                {optionalTemplates.map((tpl) => (
-                  <ConnectorCard
-                    key={tpl.id}
-                    title={tpl.label}
-                    description={tpl.hint || tpl.id}
-                    actionLabel={t("settings.skills.add", { defaultValue: "Add" })}
-                    actionBusy={busyKey === `tpl:${tpl.id}`}
-                    onAction={() => void applyTemplate(tpl.id)}
-                  />
-                ))}
-              </div>
-            ) : (
-              <EmptyHint
-                text={t("settings.skills.emptyOptionalConnectors", {
-                  defaultValue: "No optional templates available.",
-                })}
-              />
-            )}
-          </CatalogSection>
-        </div>
-      )}
+      ) : null}
 
       <SkillDetailSheet
         skill={selectedSkill}
@@ -263,19 +220,33 @@ export function SkillsPage() {
         }}
       />
 
-      <AddSkillDialog
-        open={addOpen && tab === "skills"}
-        onOpenChange={setAddOpen}
-        busy={busyKey === "install-skill"}
-        onInstall={installSkill}
+      <CatalogSkillPreviewSheet
+        template={selectedCatalog}
+        open={selectedCatalog !== null}
+        preferZh={preferZh}
+        installed={
+          selectedCatalog
+            ? installedSkillNames.has(selectedCatalog.id.toLowerCase())
+            : false
+        }
+        busy={
+          selectedCatalog ? busyKey === `skill-tpl:${selectedCatalog.id}` : false
+        }
+        onOpenChange={(open) => {
+          if (!open) setSelectedCatalog(null);
+        }}
+        onAdd={(id) => {
+          void applySkillTemplate(id).then((ok) => {
+            if (ok) setSelectedCatalog(null);
+          });
+        }}
       />
 
-      <AddConnectorDialog
-        open={addOpen && tab === "connectors"}
-        onOpenChange={setAddOpen}
-        busy={busyKey === "upsert-mcp" || busyKey === "import-mcp"}
-        onSave={upsertMcp}
-        onImport={importMcpConfig}
+      <AddSkillDialog
+        open={addSkillOpen}
+        onOpenChange={setAddSkillOpen}
+        busy={busyKey === "install-skill"}
+        onInstall={installSkill}
       />
     </div>
   );

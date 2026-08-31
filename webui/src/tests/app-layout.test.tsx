@@ -317,7 +317,7 @@ describe("App layout", () => {
     const sidebar = screen.getByRole("navigation", { name: "Sidebar navigation" });
     expect(within(sidebar).getByRole("button", { name: "IM channels" })).toBeInTheDocument();
     expect(within(sidebar).getByRole("button", { name: "Scheduled tasks" })).toBeInTheDocument();
-    expect(within(sidebar).getByRole("button", { name: "Skills · Connectors" })).toBeInTheDocument();
+    expect(within(sidebar).getByRole("button", { name: "Experts · Skills · Connectors" })).toBeInTheDocument();
     expect(within(sidebar).getByRole("link", { name: "Knowledge" })).toBeInTheDocument();
     expect(within(sidebar).getByRole("button", { name: "Account menu" })).toBeInTheDocument();
     expect(within(sidebar).queryByRole("button", { name: "Apps" })).not.toBeInTheDocument();
@@ -381,27 +381,31 @@ describe("App layout", () => {
 
     await waitFor(() => expect(connectSpy).toHaveBeenCalled());
     const sidebar = screen.getByRole("navigation", { name: "Sidebar navigation" });
-    fireEvent.click(within(sidebar).getByRole("button", { name: "Skills · Connectors" }));
+    fireEvent.click(within(sidebar).getByRole("button", { name: "Experts · Skills · Connectors" }));
 
-    expect(await screen.findByRole("heading", { name: "Skills · Connectors" })).toBeInTheDocument();
-    expect(screen.getByText("cron")).toBeInTheDocument();
+    expect(await screen.findByRole("tab", { name: "Skills", selected: true })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Experts" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Connectors" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("tab", { name: "Built-in" }));
+    expect(await screen.findByText("cron")).toBeInTheDocument();
     expect(screen.getByText("GitHub")).toBeInTheDocument();
     expect(screen.getByText("Missing: CLI: gh")).toBeInTheDocument();
     expect(screen.getByRole("navigation", { name: "Sidebar navigation" })).toBeInTheDocument();
     expect(screen.queryByRole("navigation", { name: "Settings sections" })).not.toBeInTheDocument();
     expect(window.location.hash).toBe("#/skills");
-    expect(document.title).toBe("Skills · Connectors · minibot");
+    expect(document.title).toBe("Skills · minibot");
 
     fireEvent.click(within(sidebar).getByRole("button", { name: "New chat" }));
     expect(await screen.findByText(HERO_GREETING_PATTERN)).toBeInTheDocument();
 
     window.history.replaceState(null, "", "/#/skills");
     window.dispatchEvent(new HashChangeEvent("hashchange"));
-    expect(await screen.findByRole("heading", { name: "Skills · Connectors" })).toBeInTheDocument();
+    expect(await screen.findByRole("tab", { name: "Skills", selected: true })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Open details for github" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Built-in" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Open details for github" }));
 
-    expect(await screen.findByRole("heading", { name: "github" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "GitHub" })).toBeInTheDocument();
     expect(screen.getByText("Unavailable reason")).toBeInTheDocument();
     expect(screen.getAllByText("CLI: gh").length).toBeGreaterThan(0);
     expect(screen.getByText("Missing CLI")).toBeInTheDocument();
@@ -424,11 +428,6 @@ describe("App layout", () => {
     window.history.replaceState(null, "", "/#/download");
     window.dispatchEvent(new HashChangeEvent("hashchange"));
 
-    expect(await screen.findByText(/Redirecting to the download page/i)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /Continue to download/i })).toHaveAttribute(
-      "href",
-      "https://liuyidi.me/minibot/download/",
-    );
     await waitFor(() =>
       expect(replaceSpy).toHaveBeenCalledWith("https://liuyidi.me/minibot/download/"),
     );
@@ -1578,7 +1577,7 @@ describe("App layout", () => {
     await waitFor(() => expect(connectSpy).toHaveBeenCalled());
     const sidebar = screen.getByRole("navigation", { name: "Sidebar navigation" });
     expect(within(sidebar).getByRole("button", { name: "Search" })).toBeInTheDocument();
-    expect(within(sidebar).getByRole("button", { name: "Skills · Connectors" })).toBeInTheDocument();
+    expect(within(sidebar).getByRole("button", { name: "Experts · Skills · Connectors" })).toBeInTheDocument();
     expect(within(sidebar).getByRole("button", { name: "Scheduled tasks" })).toBeInTheDocument();
     expect(within(sidebar).queryByRole("button", { name: "Apps" })).not.toBeInTheDocument();
     await openSettingsFromSidebarAccount(sidebar);

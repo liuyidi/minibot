@@ -192,6 +192,51 @@ def test_webui_summary_payload_shape(tmp_path: Path) -> None:
     assert payload["skills"][0]["name"] == "plain"
     assert payload["skills"][0]["description"] == "Hello."
     assert payload["skills"][0]["available"] is True
+    assert payload["skills"][0]["enabled"] is True
+
+
+def test_disable_skill_hides_from_catalog(tmp_path: Path) -> None:
+    _write_skill(
+        tmp_path,
+        "plain",
+        frontmatter="name: plain\ndescription: Hello.\nalways: true\n",
+        body="# Plain body\n",
+    )
+    reg = SkillsRegistry(tmp_path, builtin_dir=tmp_path / "no-builtin")
+    skill = reg.set_enabled("plain", False)
+    assert skill.name == "plain"
+    assert reg.is_enabled("plain") is False
+    assert reg.webui_summary(skill)["enabled"] is False
+    assert reg.always_skills() == []
+    assert "plain" not in reg.build_skills_summary()
+    assert "Plain body" not in reg.load_always_bodies()
+    reg.set_enabled("plain", True)
+    assert reg.is_enabled("plain") is True
+    assert any(s.name == "plain" for s in reg.always_skills())
+
+
+def test_uninstall_workspace_skill(tmp_path: Path) -> None:
+    reg = SkillsRegistry(tmp_path, builtin_dir=tmp_path / "no-builtin")
+    reg.install_skill("---\nname: temp-skill\ndescription: Temp.\n---\n\n# Temp\n")
+    assert (tmp_path / "skills" / "temp-skill" / "SKILL.md").is_file()
+    reg.uninstall_skill("temp-skill")
+    assert not (tmp_path / "skills" / "temp-skill").exists()
+    assert reg.get("temp-skill") is None
+
+
+def test_uninstall_skill_idempotent_and_skips_installing_dir(tmp_path: Path) -> None:
+    reg = SkillsRegistry(tmp_path, builtin_dir=tmp_path / "no-builtin")
+    installing = tmp_path / "skills" / ".ghost.installing"
+    installing.mkdir(parents=True)
+    (installing / "SKILL.md").write_text(
+        "---\nname: ghost\ndescription: In progress.\n---\n\n# Ghost\n",
+        encoding="utf-8",
+    )
+    assert reg.get("ghost") is None
+    reg.uninstall_skill("ghost")
+    assert not installing.exists()
+    # Already gone — should not raise.
+    reg.uninstall_skill("ghost")
 
 
 def test_install_skill_writes_workspace_skill(tmp_path: Path) -> None:

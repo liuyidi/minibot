@@ -1,9 +1,10 @@
 import { SettingsPage } from "@/pages/settings";
 import { AutomationsPage } from "@/pages/automations";
 import { ChannelsPage } from "@/pages/channels";
+import { ConnectorsPage } from "@/pages/connectors";
+import { ExpertsPage } from "@/pages/experts";
 import { SkillsPage } from "@/pages/skills";
 import { ThreadShell } from "@/components/thread/ThreadShell";
-import { DownloadPage } from "@/pages/download";
 import { UtilityPageFrame } from "@/layouts/chrome/UtilityPageFrame";
 import type { AppLayoutModel } from "@/layouts/hooks/useAppLayoutModel";
 import { cn } from "@/lib/utils";
@@ -84,28 +85,31 @@ export function AppMain({
           onOpenModelSettings={utilityNav.onOpenModelSettings}
         />
       </div>
-      {view === "download" ? (
-        <div className="absolute inset-0 flex flex-col">
-          <DownloadPage />
-        </div>
-      ) : view === "automations" ? (
+      {view === "automations" ? (
         <UtilityPageFrame
           title={t("settings.nav.automations", { defaultValue: "Scheduled tasks" })}
           hostChromeInset={showHostChrome}
+          wide
         >
           <AutomationsPage />
         </UtilityPageFrame>
+      ) : view === "experts" ? (
+        <UtilityPageFrame hostChromeInset={showHostChrome} wide>
+          <ExpertsPage />
+        </UtilityPageFrame>
       ) : view === "skills" ? (
-        <UtilityPageFrame
-          title={t("settings.nav.skills", { defaultValue: "Skills · Connectors" })}
-          hostChromeInset={showHostChrome}
-        >
+        <UtilityPageFrame hostChromeInset={showHostChrome} wide>
           <SkillsPage />
+        </UtilityPageFrame>
+      ) : view === "connectors" ? (
+        <UtilityPageFrame hostChromeInset={showHostChrome} wide>
+          <ConnectorsPage />
         </UtilityPageFrame>
       ) : view === "channels" ? (
         <UtilityPageFrame
           title={t("settings.nav.channels", { defaultValue: "IM channels" })}
           hostChromeInset={showHostChrome}
+          wide
         >
           <ChannelsPage />
         </UtilityPageFrame>

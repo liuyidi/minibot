@@ -28,9 +28,10 @@ function documentTitleForView({
   const utilityTitles: Partial<Record<ShellView, string>> = {
     settings: t("settings.sidebar.title"),
     automations: t("settings.nav.automations", { defaultValue: "Automations" }),
-    skills: t("settings.nav.skills", { defaultValue: "Skills · Connectors" }),
+    skills: t("settings.skills.hubSkills", { defaultValue: "Skills" }),
+    experts: t("settings.skills.hubExperts", { defaultValue: "Experts" }),
+    connectors: t("settings.skills.hubConnectors", { defaultValue: "Connectors" }),
     channels: t("settings.nav.channels", { defaultValue: "IM channels" }),
-    download: t("sidebar.downloadApp", { defaultValue: "Download app" }),
   };
   const utilityTitle = utilityTitles[view as ShellView];
   if (utilityTitle != null) {

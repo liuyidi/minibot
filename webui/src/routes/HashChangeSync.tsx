@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 
+import { redirectLegacyDownloadHash } from "@/lib/configs/legacy-download-redirect";
 import {
   readShellRoute,
   shellRouteFromLocation,
@@ -16,6 +17,7 @@ export function HashChangeSync() {
 
   useEffect(() => {
     const onHashChange = () => {
+      if (redirectLegacyDownloadHash()) return;
       const fromWindow = readShellRoute();
       const fromRouter = shellRouteFromLocation(location);
       if (

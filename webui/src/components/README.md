@@ -4,11 +4,12 @@ Business UI used by the app shell or ≥2 pages. Prefer domain folders:
 
 ```text
 components/
-├── ui/          # shadcn / Radix primitives only
-├── sidebar/     # sidebar, session lists, chrome dialogs
-├── thread/      # chat surface (shell / composer / messages / activity / …)
-├── markdown/    # MarkdownText / CodeBlock renderer pipeline
-└── settings/    # settings-domain shared chrome (+ LanguageSwitcher)
+├── ui/            # shadcn / Radix primitives only
+├── sidebar/       # sidebar, session lists, chrome dialogs
+├── thread/        # chat surface (shell / composer / messages / activity / …)
+├── markdown/      # MarkdownText / CodeBlock renderer pipeline
+├── settings/      # settings-domain shared chrome (+ LanguageSwitcher)
+└── capabilities/  # experts / skills / connectors hub (tabs + shared catalog chrome)
 ```
 
 `thread/` layout:

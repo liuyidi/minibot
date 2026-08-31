@@ -4,7 +4,22 @@ import { X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-const Dialog = DialogPrimitive.Root;
+const Dialog = ({
+  open,
+  onOpenChange,
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Root>) => {
+  // Nested DropdownMenu → Dialog can leave `body { pointer-events: none }` after close.
+  React.useEffect(() => {
+    if (open !== false) return;
+    const id = window.setTimeout(() => {
+      document.body.style.removeProperty("pointer-events");
+    }, 0);
+    return () => window.clearTimeout(id);
+  }, [open]);
+
+  return <DialogPrimitive.Root open={open} onOpenChange={onOpenChange} {...props} />;
+};
 const DialogPortal = DialogPrimitive.Portal;
 
 const DialogOverlay = React.forwardRef<
@@ -33,11 +48,11 @@ const DialogContent = React.forwardRef<
 >(({ className, children, showCloseButton = true, ...props }, ref) => (
   <DialogPortal>
     <DialogOverlay />
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center p-4">
       <DialogPrimitive.Content
         ref={ref}
         className={cn(
-          "relative grid w-full max-w-lg origin-center gap-4 border border-border/60 bg-background p-6 shadow-[0_16px_48px_rgba(15,23,42,0.16)] duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-2xl",
+          "pointer-events-auto relative grid w-full max-w-lg origin-center gap-4 border border-border/60 bg-background p-6 shadow-[0_16px_48px_rgba(15,23,42,0.16)] duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-2xl",
           className,
         )}
         {...props}

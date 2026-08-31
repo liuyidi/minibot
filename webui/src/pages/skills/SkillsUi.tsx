@@ -2,26 +2,30 @@ import { type ReactNode } from "react";
 import type { TFunction } from "i18next";
 import {
   Brain,
-  Check,
-  CircleAlert,
   KeyRound,
   Loader2,
-  Plug,
-  Plus,
   Terminal,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import type { SkillDetail, SkillSummary } from "@/lib/types";
-import { resolveSkillDescription, resolveSkillTitle } from "@/lib/skills/display";
+import {
+  formatUnavailableReason,
+  resolveSkillDescription,
+  resolveSkillTitle,
+} from "@/lib/skills/display";
 import { cn } from "@/lib/utils";
 
 import { useSkillDetail } from "./useSkillDetail";
 
-export { AddConnectorDialog } from "./AddConnectorDialog";
 export { AddSkillDialog } from "./AddSkillDialog";
+export { SkillCard } from "./SkillCards";
+export {
+  CatalogSection,
+  EmptyHint,
+  LoadingHint,
+} from "@/components/capabilities/CatalogUi";
 
 export function TabButton({
   active,
@@ -53,160 +57,6 @@ export function TabButton({
   );
 }
 
-export function CatalogSection({
-  title,
-  count,
-  children,
-}: {
-  title: string;
-  count: number;
-  children: ReactNode;
-}) {
-  return (
-    <section>
-      <div className="mb-3 flex items-center justify-between border-b border-border/45 pb-2">
-        <h2 className="px-1 text-[13px] font-semibold tracking-[-0.01em] text-foreground/85">
-          {title}
-        </h2>
-        <span className="rounded-full bg-muted px-2.5 py-1 text-[12px] font-medium text-muted-foreground">
-          {count}
-        </span>
-      </div>
-      {children}
-    </section>
-  );
-}
-
-export function EmptyHint({ text }: { text: string }) {
-  return <div className="px-1 py-8 text-center text-sm text-muted-foreground">{text}</div>;
-}
-
-export function LoadingHint() {
-  const { t } = useTranslation();
-  return (
-    <div className="flex items-center gap-2 px-1 py-8 text-sm text-muted-foreground">
-      <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-      {t("settings.skills.loading", { defaultValue: "Loading…" })}
-    </div>
-  );
-}
-
-export function SkillCard({
-  skill,
-  onSelect,
-}: {
-  skill: SkillSummary;
-  onSelect: (skill: SkillSummary) => void;
-}) {
-  const { t } = useTranslation();
-  const StatusIcon = skill.available ? Check : CircleAlert;
-
-  return (
-    <button
-      type="button"
-      aria-label={t("settings.skills.openDetails", {
-        name: skill.name,
-        defaultValue: "Open details for {{name}}",
-      })}
-      onClick={() => onSelect(skill)}
-      className={cn(
-        "group relative flex min-h-[7.5rem] flex-col gap-2 rounded-[18px] border border-border/45 bg-card/70 p-4 text-left transition-colors",
-        "hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-        !skill.available && "opacity-70",
-      )}
-    >
-      <div className="flex items-start gap-3">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] bg-muted/80 text-muted-foreground">
-          <Brain className="h-5 w-5" strokeWidth={1.8} aria-hidden />
-        </div>
-        <div className="min-w-0 flex-1">
-          <h3 className="truncate text-[15px] font-semibold text-foreground">{resolveSkillTitle(skill, t)}</h3>
-          <p className="mt-1 line-clamp-3 text-[12.5px] leading-5 text-muted-foreground">
-            {resolveSkillDescription(skill, t) || t("settings.skills.noDescription", { defaultValue: "No description." })}
-          </p>
-          {!skill.available && skill.unavailable_reason ? (
-            <p className="mt-1 truncate text-[12px] leading-4 text-muted-foreground/80">
-              {t("settings.skills.unavailableReason", {
-                reason: skill.unavailable_reason,
-                defaultValue: "Missing: {{reason}}",
-              })}
-            </p>
-          ) : null}
-        </div>
-      </div>
-      <div className="mt-auto flex items-center gap-1.5 text-[11px] text-muted-foreground">
-        <StatusIcon className="h-3.5 w-3.5" aria-hidden />
-        {skill.available
-          ? t("settings.skills.statusAvailable", { defaultValue: "Available" })
-          : t("settings.skills.statusUnavailable", { defaultValue: "Unavailable" })}
-      </div>
-    </button>
-  );
-}
-
-export function ConnectorCard({
-  title,
-  description,
-  badge,
-  badgeTone = "muted",
-  actionLabel,
-  actionBusy,
-  onAction,
-}: {
-  title: string;
-  description: string;
-  badge?: string;
-  badgeTone?: "muted" | "success";
-  actionLabel?: string;
-  actionBusy?: boolean;
-  onAction?: () => void;
-}) {
-  return (
-    <div className="relative flex min-h-[7.5rem] flex-col gap-2 rounded-[18px] border border-border/45 bg-card/70 p-4">
-      {onAction ? (
-        <Button
-          type="button"
-          size="icon"
-          variant="secondary"
-          className="absolute right-3 top-3 h-8 w-8 rounded-full"
-          disabled={actionBusy}
-          onClick={onAction}
-          aria-label={actionLabel}
-        >
-          {actionBusy ? (
-            <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-          ) : (
-            <Plus className="h-4 w-4" aria-hidden />
-          )}
-        </Button>
-      ) : null}
-      <div className="flex items-start gap-3 pr-8">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] bg-muted/80 text-muted-foreground">
-          <Plug className="h-5 w-5" strokeWidth={1.8} aria-hidden />
-        </div>
-        <div className="min-w-0 flex-1">
-          <h3 className="truncate text-[15px] font-semibold text-foreground">{title}</h3>
-          <p className="mt-1 line-clamp-3 text-[12.5px] leading-5 text-muted-foreground">
-            {description}
-          </p>
-        </div>
-      </div>
-      {badge ? (
-        <span
-          className={cn(
-            "mt-auto w-fit rounded-full px-2 py-0.5 text-[11px] font-medium",
-            badgeTone === "success"
-              ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
-              : "bg-muted text-muted-foreground",
-          )}
-        >
-          {badge}
-        </span>
-      ) : null}
-    </div>
-  );
-}
-
 export function SkillDetailSheet({
   skill,
   open,
@@ -222,10 +72,18 @@ export function SkillDetailSheet({
   if (!skill) return null;
 
   const activeSkill = detail ?? skill;
+  const displayTitle = resolveSkillTitle(activeSkill, t);
+  const displayDescription =
+    resolveSkillDescription(activeSkill, t) ||
+    t("settings.skills.noDescription", { defaultValue: "No description." });
   const sourceLabel = skillSourceLabel(activeSkill.source, t);
   const statusLabel = activeSkill.available
     ? t("settings.skills.statusAvailable", { defaultValue: "Available" })
     : t("settings.skills.statusUnavailable", { defaultValue: "Unavailable" });
+  const enabledLabel =
+    activeSkill.enabled === false
+      ? t("settings.skills.statusDisabled", { defaultValue: "Disabled" })
+      : t("settings.skills.statusEnabled", { defaultValue: "Enabled" });
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -240,17 +98,18 @@ export function SkillDetailSheet({
             </div>
             <div className="min-w-0">
               <SheetTitle className="truncate text-[20px] font-semibold">
-                {activeSkill.name}
+                {displayTitle}
               </SheetTitle>
               <SheetDescription className="sr-only">
                 {t("settings.skills.detailDescription", {
-                  name: activeSkill.name,
+                  name: displayTitle,
                   defaultValue: "Details for {{name}}.",
                 })}
               </SheetDescription>
               <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[12px] text-muted-foreground">
                 <Pill>{sourceLabel}</Pill>
                 <Pill tone={activeSkill.available ? "success" : "muted"}>{statusLabel}</Pill>
+                <Pill tone={activeSkill.enabled === false ? "muted" : "success"}>{enabledLabel}</Pill>
               </div>
             </div>
           </div>
@@ -269,7 +128,7 @@ export function SkillDetailSheet({
               <DetailSection
                 title={t("settings.skills.descriptionTitle", { defaultValue: "Description" })}
               >
-                <p className="text-[14px] leading-6 text-muted-foreground">{activeSkill.description}</p>
+                <p className="text-[14px] leading-6 text-muted-foreground">{displayDescription}</p>
               </DetailSection>
 
               <div className="grid grid-cols-2 gap-2">
@@ -290,7 +149,7 @@ export function SkillDetailSheet({
                   })}
                 >
                   <p className="text-[13px] leading-5 text-destructive/85">
-                    {activeSkill.unavailable_reason}
+                    {formatUnavailableReason(activeSkill.unavailable_reason, t)}
                   </p>
                 </DetailSection>
               ) : null}

@@ -18,8 +18,6 @@ import type {
   SettingsPayload,
   SettingsUpdate,
   SidebarStatePayload,
-  SkillDetail,
-  SkillsPayload,
   SlashCommand,
   TranscriptionSettingsUpdate,
   WebSearchSettingsUpdate,
@@ -337,41 +335,32 @@ export async function createAutomation(
   );
 }
 
-export async function fetchSkills(
+export async function setMcpPresetEnabled(
   token: string,
+  presetId: string,
+  enabled: boolean,
   base: string = "",
-): Promise<SkillsPayload> {
-  return request<SkillsPayload>(
-    `${base}/api/webui/skills`,
+): Promise<MinibotMcpListPayload> {
+  const action = enabled ? "enable" : "disable";
+  await request(
+    `${base}/api/settings/mcp-presets/${encodeURIComponent(presetId)}/${action}`,
     token,
-    undefined,
-    API_READ_TIMEOUT_MS,
+    { method: "POST" },
   );
+  return fetchMinibotMcpList(token, base);
 }
 
-export async function fetchSkillDetail(
+export async function deleteMcpPreset(
   token: string,
-  name: string,
+  presetId: string,
   base: string = "",
-): Promise<SkillDetail> {
-  return request<SkillDetail>(
-    `${base}/api/webui/skills/${encodeURIComponent(name)}`,
+): Promise<MinibotMcpListPayload> {
+  await request(
+    `${base}/api/settings/mcp-presets/${encodeURIComponent(presetId)}`,
     token,
-    undefined,
-    API_READ_TIMEOUT_MS,
+    { method: "DELETE" },
   );
-}
-
-export async function installSkill(
-  token: string,
-  body: { markdown: string; name?: string },
-  base: string = "",
-): Promise<SkillDetail> {
-  return request<SkillDetail>(`${base}/api/webui/skills`, token, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
+  return fetchMinibotMcpList(token, base);
 }
 
 export type MinibotMcpPreset = {

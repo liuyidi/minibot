@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Check,
   ChevronDown,
@@ -19,11 +19,15 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { JsonConfigEditor } from "@/components/ui/json-config-editor";
 import { Textarea } from "@/components/ui/textarea";
 import type { UpsertMcpBody } from "@/hooks/skills";
+import type { MinibotMcpPreset } from "@/lib/apis/api";
 import {
   customMcpFormToUpsertBody,
   DEFAULT_CUSTOM_MCP_FORM,
+  emptyMcpConfigJson,
+  serializeMcpPresetsToConfigJson,
   type CustomMcpForm,
   type McpTransport,
 } from "@/lib/skills/mcp-config-import";
@@ -35,12 +39,17 @@ export function AddConnectorDialog({
   open,
   onOpenChange,
   busy,
+  presets = [],
+  configPath,
   onSave,
   onImport,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   busy: boolean;
+  presets?: MinibotMcpPreset[];
+  /** App config path shown in the Workbuddy-style path bar. */
+  configPath?: string | null;
   onSave: (body: UpsertMcpBody) => Promise<string | null>;
   onImport: (raw: string) => Promise<string | null>;
 }) {
@@ -48,7 +57,7 @@ export function AddConnectorDialog({
   const tx = (key: string, fallback: string) => t(key, { defaultValue: fallback });
   const [mode, setMode] = useState<ConnectorMode>("custom");
   const [form, setForm] = useState<CustomMcpForm>(DEFAULT_CUSTOM_MCP_FORM);
-  const [configImport, setConfigImport] = useState("");
+  const [configImport, setConfigImport] = useState(emptyMcpConfigJson);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -56,13 +65,18 @@ export function AddConnectorDialog({
   const canSave =
     Boolean(form.name.trim()) && (remote ? Boolean(form.url.trim()) : Boolean(form.command.trim()));
 
+  useEffect(() => {
+    if (!open) return;
+    setConfigImport(serializeMcpPresetsToConfigJson(presets));
+  }, [open, presets]);
+
   const update = <K extends keyof CustomMcpForm>(key: K, value: CustomMcpForm[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
   const resetAndClose = () => {
     setForm(DEFAULT_CUSTOM_MCP_FORM);
-    setConfigImport("");
+    setConfigImport(emptyMcpConfigJson());
     setAdvancedOpen(false);
     setError(null);
     setMode("custom");
@@ -102,6 +116,10 @@ export function AddConnectorDialog({
     { value: "sse", label: "SSE" },
   ];
 
+  const pathLabel = configPath?.trim()
+    ? configPath
+    : tx("settings.mcp.configPathFallback", "app config · mcp_presets");
+
   return (
     <Dialog
       open={open}
@@ -110,7 +128,7 @@ export function AddConnectorDialog({
         else onOpenChange(next);
       }}
     >
-      <DialogContent className="max-w-xl">
+      <DialogContent className={cn("gap-5 rounded-2xl p-6", mode === "import" ? "max-w-2xl" : "max-w-xl")}>
         <DialogHeader>
           <DialogTitle>
             {tx("settings.skills.addConnector", "Add connector")}
@@ -132,7 +150,7 @@ export function AddConnectorDialog({
               setMode("custom");
               setError(null);
             }}
-            className="h-8 rounded-full px-3 text-[12px] font-semibold"
+            className="h-9 rounded-xl px-3 text-[12px] font-semibold"
           >
             <Server className="mr-1.5 h-3.5 w-3.5" aria-hidden />
             {tx("settings.mcp.customAction", "Custom")}
@@ -144,8 +162,9 @@ export function AddConnectorDialog({
             onClick={() => {
               setMode("import");
               setError(null);
+              setConfigImport(serializeMcpPresetsToConfigJson(presets));
             }}
-            className="h-8 rounded-full px-3 text-[12px] font-semibold"
+            className="h-9 rounded-xl px-3 text-[12px] font-semibold"
           >
             <Database className="mr-1.5 h-3.5 w-3.5" aria-hidden />
             {tx("settings.mcp.importAction", "Import")}
@@ -278,17 +297,21 @@ export function AddConnectorDialog({
             ) : null}
           </div>
         ) : (
-          <label className="block min-w-0">
-            <span className="mb-1.5 block text-[11.5px] font-medium text-muted-foreground">
-              {tx("settings.mcp.configImport", "Import mcp.json")}
-            </span>
-            <Textarea
+          <div className="overflow-hidden rounded-[14px] border border-border/55">
+            <div className="border-b border-border/55 bg-muted/40 px-3.5 py-2.5 text-[12px] text-muted-foreground">
+              <span className="font-medium text-foreground/80">
+                {tx("settings.mcp.configPathLabel", "Config path")}:
+              </span>{" "}
+              <span className="break-all font-mono text-[11.5px]">{pathLabel}</span>
+            </div>
+            <JsonConfigEditor
               value={configImport}
-              onChange={(event) => setConfigImport(event.target.value)}
-              placeholder={'{"mcpServers":{"docs":{"command":"npx","args":["-y","docs-mcp"]}}}'}
-              className="min-h-[120px] resize-y rounded-[12px] bg-background/80 font-mono text-[12px]"
+              onChange={setConfigImport}
+              disabled={busy}
+              className="rounded-none border-0"
+              minHeightClassName="min-h-[320px]"
             />
-          </label>
+          </div>
         )}
 
         {error ? <p className="text-[13px] text-destructive">{error}</p> : null}
@@ -321,7 +344,7 @@ export function AddConnectorDialog({
               ) : (
                 <Database className="mr-1.5 h-4 w-4" aria-hidden />
               )}
-              {tx("settings.mcp.importConfig", "Import")}
+              {tx("settings.mcp.saveConfig", "Save")}
             </Button>
           )}
         </DialogFooter>

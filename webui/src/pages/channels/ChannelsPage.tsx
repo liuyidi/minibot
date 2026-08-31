@@ -142,6 +142,28 @@ export function ChannelsPage() {
         onRemove={(ch) => void removeChannel(ch)}
         onSetEnabled={(ch, enabled) => void setEnabled(ch, enabled)}
       />
+      <ChannelCard
+        channel="wecom"
+        status={null}
+        configured={false}
+        busy={busy}
+        comingSoon
+        onOpenPairing={() => undefined}
+        onStartSetup={() => undefined}
+        onRemove={() => undefined}
+        onSetEnabled={() => undefined}
+      />
+      <ChannelCard
+        channel="dingtalk"
+        status={null}
+        configured={false}
+        busy={busy}
+        comingSoon
+        onOpenPairing={() => undefined}
+        onStartSetup={() => undefined}
+        onRemove={() => undefined}
+        onSetEnabled={() => undefined}
+      />
 
       {setupOpen ? (
         <ChannelSetupModal

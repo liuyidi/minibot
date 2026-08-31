@@ -47,10 +47,6 @@
     "max": 439,
     "reason": "legacy debt; do not grow — split toward ≤350"
   },
-  "pages/skills/skills-ui.tsx": {
-    "max": 462,
-    "reason": "legacy debt; do not grow — split toward ≤350"
-  },
   "components/thread/activity/AgentActivityCluster.tsx": {
     "max": 1878,
     "reason": "legacy debt; do not grow — split toward ≤350"

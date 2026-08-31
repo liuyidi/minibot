@@ -1,0 +1,184 @@
+{
+  "minimax": {
+    "repo": "MiniMax-AI/skills",
+    "ref": "main",
+    "skills": [
+      {
+        "id": "frontend-dev",
+        "label": "Frontend Dev",
+        "label_zh": "前端开发",
+        "description": "Full-stack frontend with premium UI, motion, MiniMax media, copy, and generative art.",
+        "description_zh": "全栈前端开发，融合高级 UI 设计、电影级动画、MiniMax 媒体生成、说服力文案与生成艺术。"
+      },
+      {
+        "id": "fullstack-dev",
+        "label": "Fullstack Dev",
+        "label_zh": "全栈开发",
+        "description": "Backend architecture and FE/BE integration: REST, auth, realtime, databases, production checklist.",
+        "description_zh": "全栈后端架构与前后端集成：REST、认证、实时、数据库与生产发布清单。"
+      },
+      {
+        "id": "android-native-dev",
+        "label": "Android Native",
+        "label_zh": "Android 原生",
+        "description": "Android native apps with Material Design 3 (Kotlin / Jetpack Compose).",
+        "description_zh": "基于 Material Design 3 的 Android 原生开发（Kotlin / Jetpack Compose）。"
+      },
+      {
+        "id": "ios-application-dev",
+        "label": "iOS Application",
+        "label_zh": "iOS 应用",
+        "description": "iOS apps with UIKit, SnapKit, and SwiftUI following Apple HIG.",
+        "description_zh": "iOS 应用开发指南（UIKit、SnapKit、SwiftUI），符合 Apple HIG。"
+      },
+      {
+        "id": "flutter-dev",
+        "label": "Flutter Dev",
+        "label_zh": "Flutter 开发",
+        "description": "Flutter cross-platform: widgets, Riverpod/Bloc, GoRouter, performance, and testing.",
+        "description_zh": "Flutter 跨平台开发：Widget、Riverpod/Bloc、GoRouter、性能与测试。"
+      },
+      {
+        "id": "react-native-dev",
+        "label": "React Native",
+        "label_zh": "React Native",
+        "description": "React Native and Expo: components, navigation, state, native, and engineering.",
+        "description_zh": "React Native 与 Expo 开发：组件、导航、状态、性能、原生与工程化。"
+      },
+      {
+        "id": "shader-dev",
+        "label": "Shader Dev",
+        "label_zh": "着色器开发",
+        "description": "GLSL shaders: ray marching, SDF, fluids, particles, post-processing (ShaderToy-compatible).",
+        "description_zh": "GLSL 着色器技术：光线行进、SDF、流体、粒子、后处理（兼容 ShaderToy）。"
+      },
+      {
+        "id": "gif-sticker-maker",
+        "label": "GIF Sticker Maker",
+        "label_zh": "GIF 贴纸制作",
+        "description": "Turn photos into Funko Pop / blind-box style animated GIF stickers via MiniMax.",
+        "description_zh": "将照片转换为 Funko Pop / 盲盒风格动画 GIF 贴纸（MiniMax 图生/视频）。"
+      },
+      {
+        "id": "minimax-pdf",
+        "label": "MiniMax PDF",
+        "label_zh": "MiniMax PDF",
+        "description": "Generate, fill, and reformat PDFs with a tokenized design system.",
+        "description_zh": "基于设计系统生成、填写和重排 PDF（CREATE / FILL / REFORMAT）。"
+      },
+      {
+        "id": "pptx-generator",
+        "label": "PPTX Generator",
+        "label_zh": "PPTX 生成",
+        "description": "Create, edit, and read PowerPoint decks (PptxGenJS / XML / markitdown).",
+        "description_zh": "生成、编辑和读取 PowerPoint（PptxGenJS / XML / markitdown）。"
+      },
+      {
+        "id": "minimax-xlsx",
+        "label": "MiniMax XLSX",
+        "label_zh": "MiniMax 表格",
+        "description": "Create, read, analyze, edit, or validate Excel/spreadsheets with formula support.",
+        "description_zh": "创建、读取、分析、编辑或验证 Excel/电子表格（含公式与财务格式）。"
+      },
+      {
+        "id": "minimax-docx",
+        "label": "MiniMax DOCX",
+        "label_zh": "MiniMax 文档",
+        "description": "Professional DOCX create/edit/layout via OpenXML SDK pipelines.",
+        "description_zh": "基于 OpenXML 的专业 DOCX 创建、编辑与排版。"
+      },
+      {
+        "id": "vision-analysis",
+        "label": "Vision Analysis",
+        "label_zh": "视觉分析",
+        "description": "Vision AI for describe, OCR, UI review, chart extraction, and object detection.",
+        "description_zh": "视觉 AI 分析图像：描述、OCR、UI 审查、图表与物体检测。"
+      },
+      {
+        "id": "minimax-multimodal-toolkit",
+        "label": "MiniMax Multimodal",
+        "label_zh": "MiniMax 多模态工具箱",
+        "description": "Unified MiniMax multimodal entry: TTS, music, video, image, and FFmpeg tooling.",
+        "description_zh": "MiniMax 多模态统一入口：TTS、音乐、视频、图片与 FFmpeg 处理。"
+      },
+      {
+        "id": "minimax-music-gen",
+        "label": "MiniMax Music Gen",
+        "label_zh": "MiniMax 音乐生成",
+        "description": "Generate vocal songs, instrumentals, and covers with MiniMax Music API.",
+        "description_zh": "使用 MiniMax Music API 生成人声歌曲、纯音乐与翻唱。"
+      },
+      {
+        "id": "buddy-sings",
+        "label": "Buddy Sings",
+        "label_zh": "Buddy 唱歌",
+        "description": "Make a Claude Code buddy sing a custom song (uses minimax-music-gen).",
+        "description_zh": "让 Claude Code 宠物唱专属歌曲（依赖 minimax-music-gen）。"
+      },
+      {
+        "id": "minimax-music-playlist",
+        "label": "MiniMax Playlist",
+        "label_zh": "MiniMax 歌单",
+        "description": "Build personalized playlists from taste profiles with covers and iteration.",
+        "description_zh": "分析音乐品味生成个性化歌单与专辑封面。"
+      }
+    ]
+  },
+  "clawhub": {
+    "skills": [
+      {
+        "id": "landing-page-generator",
+        "slug": "landing-page-generator-openclaw",
+        "label": "Landing Page Generator",
+        "label_zh": "落地页生成器",
+        "description": "Generate high-converting, mobile-responsive landing pages from a brief. Use when building landing pages, sales pages, or marketing pages for clients.",
+        "description_zh": "根据产品/服务简介生成高转化、移动端适配的落地页。适用于落地页、销售页或营销页搭建。",
+        "homepage": "https://clawhub.ai/seanwyngaard/skills/landing-page-generator-openclaw"
+      },
+      {
+        "id": "ui-ux-pro-max",
+        "slug": "ui-ux-pro-max",
+        "label": "UI/UX Pro Max",
+        "label_zh": "网页设计",
+        "description": "UI/UX design intelligence and implementation guidance for polished interfaces — layouts, UX flows, design systems/tokens, accessibility, and frontend code.",
+        "description_zh": "网页与界面设计智能助手：布局、交互流程、设计系统/Token、无障碍与前端实现指导。",
+        "homepage": "https://clawhub.ai/xobi667/ui-ux-pro-max"
+      },
+      {
+        "id": "stock",
+        "slug": "stock",
+        "label": "Stock Quotes",
+        "label_zh": "股票行情查询",
+        "description": "Look up real-time quotes for A-shares, Hong Kong, and US stocks — price, change, open, volume, and more.",
+        "description_zh": "查询 A 股、港股、美股实时行情，包括价格、涨跌幅、开盘价、成交量等。",
+        "homepage": "https://clawhub.ai/mrblackerx/skills/stock"
+      }
+    ]
+  },
+  "github": {
+    "skills": [
+      {
+        "id": "stakeholder-update",
+        "label": "Stakeholder Update",
+        "label_zh": "多角色项目进展汇报",
+        "description": "Generate stakeholder updates tailored to audience and cadence — weekly/monthly status, launch notes, or exec / engineering / customer versions.",
+        "description_zh": "按受众与节奏生成项目进展汇报：周报/月报、发布公告，以及面向高管、工程或客户的多角色版本。",
+        "repo": "anthropics/knowledge-work-plugins",
+        "path": "product-management/skills/stakeholder-update",
+        "ref": "main",
+        "homepage": "https://github.com/anthropics/knowledge-work-plugins/tree/main/product-management/skills/stakeholder-update"
+      },
+      {
+        "id": "financial-statements",
+        "label": "Financial Statements",
+        "label_zh": "财务报表生成",
+        "description": "Generate financial statements (income statement, balance sheet, cash flow) with period-over-period comparison and variance analysis.",
+        "description_zh": "生成利润表、资产负债表与现金流量表，并做同期对比与差异分析。",
+        "repo": "anthropics/knowledge-work-plugins",
+        "path": "finance/skills/financial-statements",
+        "ref": "main",
+        "homepage": "https://github.com/anthropics/knowledge-work-plugins/tree/main/finance/skills/financial-statements"
+      }
+    ]
+  }
+}

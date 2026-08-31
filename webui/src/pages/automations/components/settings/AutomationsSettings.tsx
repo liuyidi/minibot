@@ -176,7 +176,7 @@ export function AutomationsSettings({
   }, [jobs, systemSheetJobId]);
 
   return (
-    <div className="mx-auto flex w-full max-w-[56rem] flex-col gap-5">
+    <div className="flex w-full flex-col gap-5">
       <section className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div
           className="inline-flex w-fit rounded-[10px] bg-[rgb(31_35_41_/0.05)] p-0.5 dark:bg-white/[0.06]"

@@ -12,7 +12,7 @@ layouts/
 ├── chrome/                  # Presentational layout UI
 │   ├── HostChrome.tsx       # Native host title-bar / window chrome
 │   ├── AppSidebarChrome.tsx # Desktop sidebar, preview overlay, mobile sheet, session search
-│   ├── AppMain.tsx          # Main pane: ThreadShell + settings/download overlays
+│   ├── AppMain.tsx          # Main pane: ThreadShell + settings/utility overlays
 │   └── AppDialogs.tsx       # Delete/rename dialogs and restart toast
 └── hooks/                   # Layout state and side effects
     ├── useAppLayoutModel.ts     # Composes layout hooks and builds sidebar props

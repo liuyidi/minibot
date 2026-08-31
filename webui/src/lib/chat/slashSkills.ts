@@ -26,7 +26,7 @@ export function skillsToSlashCommands(
   reserved: Set<string> = RESERVED_SLASH_COMMAND_NAMES,
 ): SlashCommand[] {
   return skills
-    .filter((skill) => skill.available !== false)
+    .filter((skill) => skill.available !== false && skill.enabled !== false)
     .filter((skill) => !reserved.has(skill.name.toLowerCase()))
     .map((skill) => ({
       command: `/${skill.name}`,

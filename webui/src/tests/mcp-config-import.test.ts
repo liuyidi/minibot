@@ -4,6 +4,7 @@ import {
   customMcpFormToUpsertBody,
   DEFAULT_CUSTOM_MCP_FORM,
   parseMcpConfigImport,
+  serializeMcpPresetsToConfigJson,
 } from "@/lib/skills/mcp-config-import";
 
 describe("mcp-config-import", () => {
@@ -79,5 +80,23 @@ describe("mcp-config-import", () => {
         args: "{}",
       }),
     ).toThrow(/Args/);
+  });
+
+  it("serializes presets back to mcp.json", () => {
+    const raw = serializeMcpPresetsToConfigJson([
+      {
+        id: "docs",
+        command: "npx",
+        args: ["-y", "docs-mcp"],
+        type: "stdio",
+        enabled: true,
+      },
+    ]);
+    expect(JSON.parse(raw)).toEqual({
+      mcpServers: {
+        docs: { command: "npx", args: ["-y", "docs-mcp"] },
+      },
+    });
+    expect(serializeMcpPresetsToConfigJson([])).toContain('"mcpServers"');
   });
 });

@@ -6,8 +6,9 @@ export type ShellView =
   | "settings"
   | "automations"
   | "skills"
-  | "channels"
-  | "download";
+  | "experts"
+  | "connectors"
+  | "channels";
 
 /** Sidebar utility hubs (standalone top-level routes; not settings sections). */
 export type SidebarUtilityKey = Extract<
@@ -56,7 +57,13 @@ function normalizePathname(pathname: string): string {
   return pathname.startsWith("/") ? pathname : `/${pathname}`;
 }
 
-const STANDALONE_UTILITY_PATHS = new Set(["automations", "skills", "channels"]);
+const STANDALONE_UTILITY_PATHS = new Set([
+  "automations",
+  "skills",
+  "experts",
+  "connectors",
+  "channels",
+]);
 
 export function shellRouteFromLocation(location: ShellLocation): ShellRoute {
   const pathname = normalizePathname(location.pathname).replace(/\/+$/, "") || "/new";
@@ -73,7 +80,12 @@ export function shellRouteFromLocation(location: ShellLocation): ShellRoute {
     // Legacy bookmarks: /settings/skills → /skills (no longer settings sections).
     if (rawSection && STANDALONE_UTILITY_PATHS.has(rawSection)) {
       return {
-        view: rawSection as "automations" | "skills" | "channels",
+        view: rawSection as
+          | "automations"
+          | "skills"
+          | "experts"
+          | "connectors"
+          | "channels",
         activeKey,
         settingsSection: "overview",
       };
@@ -94,11 +106,14 @@ export function shellRouteFromLocation(location: ShellLocation): ShellRoute {
   if (pathname === "/skills") {
     return { view: "skills", activeKey, settingsSection: "overview" };
   }
+  if (pathname === "/experts") {
+    return { view: "experts", activeKey, settingsSection: "overview" };
+  }
+  if (pathname === "/connectors") {
+    return { view: "connectors", activeKey, settingsSection: "overview" };
+  }
   if (pathname === "/channels") {
     return { view: "channels", activeKey, settingsSection: "overview" };
-  }
-  if (pathname === "/download") {
-    return { view: "download", activeKey: null, settingsSection: "overview" };
   }
   if (pathname.startsWith("/chat/")) {
     const encoded = pathname.slice("/chat/".length);
@@ -119,9 +134,6 @@ export function shellRouteFromLocation(location: ShellLocation): ShellRoute {
 
 /** Path + search for HashRouter `navigate` (no leading `#`). */
 export function shellRouteToLocation(route: ShellRoute): ShellLocation {
-  if (route.view === "download") {
-    return { pathname: "/download/", search: "" };
-  }
   if (route.view === "chat") {
     return {
       pathname: route.activeKey
@@ -131,19 +143,21 @@ export function shellRouteToLocation(route: ShellRoute): ShellLocation {
     };
   }
 
+  // Utility hubs keep top-level paths without carrying ?chat= from the session.
+  if (
+    route.view === "automations" ||
+    route.view === "skills" ||
+    route.view === "experts" ||
+    route.view === "connectors" ||
+    route.view === "channels"
+  ) {
+    return { pathname: `/${route.view}`, search: "" };
+  }
+
   const params = new URLSearchParams();
   if (route.activeKey) params.set("chat", route.activeKey);
   const query = params.toString();
   const search = query ? `?${query}` : "";
-
-  // Utility hubs keep top-level paths; settings sections are nested pages.
-  if (
-    route.view === "automations" ||
-    route.view === "skills" ||
-    route.view === "channels"
-  ) {
-    return { pathname: `/${route.view}`, search };
-  }
 
   return {
     pathname: `/settings/${route.settingsSection}`,

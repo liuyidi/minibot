@@ -13,11 +13,8 @@ import {
   fetchSessionAutomations,
   fetchSettingsUsage,
   fetchSidebarState,
-  fetchSkillDetail,
-  fetchSkills,
   fetchWebuiThread,
   fetchWorkspaces,
-  installSkill,
   listSessions,
   listSlashCommands,
   loginProviderOAuth,
@@ -33,6 +30,11 @@ import {
   updateSettings,
   updateWebSearchSettings,
 } from "@/lib/apis/api";
+import {
+  fetchSkillDetail,
+  fetchSkills,
+  installSkill,
+} from "@/lib/apis/skills-api";
 
 describe("webui API helpers", () => {
   beforeEach(() => {

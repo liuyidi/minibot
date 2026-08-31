@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 
-import { fetchSkills } from "@/lib/apis/api";
+import {
+  fetchSkills,
+} from "@/lib/apis/skills-api";
 import type { SkillSummary } from "@/lib/types";
 import { useClient } from "@/providers/ClientProvider";
 

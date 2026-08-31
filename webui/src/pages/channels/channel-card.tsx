@@ -11,6 +11,9 @@ import {
 import type { ChannelKind, FeishuStatus, WeixinStatus } from "@/lib/apis/channels";
 import { cn } from "@/lib/utils";
 
+/** Channels shown on the IM page (live + upcoming). */
+export type ChannelCardKind = ChannelKind | "wecom" | "dingtalk";
+
 export function FeishuLogo({ className }: { className?: string }) {
   return (
     <img
@@ -31,6 +34,41 @@ export function WeChatLogo({ className }: { className?: string }) {
       draggable={false}
     />
   );
+}
+
+export function WeComLogo({ className }: { className?: string }) {
+  return (
+    <img
+      src="/brand/wecom.svg"
+      alt=""
+      className={cn("object-contain", className)}
+      draggable={false}
+    />
+  );
+}
+
+export function DingTalkLogo({ className }: { className?: string }) {
+  return (
+    <img
+      src="/brand/dingtalk.svg"
+      alt=""
+      className={cn("object-contain", className)}
+      draggable={false}
+    />
+  );
+}
+
+function ChannelLogo({
+  channel,
+  className,
+}: {
+  channel: ChannelCardKind;
+  className?: string;
+}) {
+  if (channel === "feishu") return <FeishuLogo className={className} />;
+  if (channel === "weixin") return <WeChatLogo className={className} />;
+  if (channel === "wecom") return <WeComLogo className={className} />;
+  return <DingTalkLogo className={className} />;
 }
 
 function ChannelSwitch({
@@ -74,47 +112,55 @@ function ChannelSwitch({
   );
 }
 
+function channelDescKey(channel: ChannelCardKind): string {
+  if (channel === "feishu") return "settings.imChannels.feishuDesc";
+  if (channel === "weixin") return "settings.imChannels.weixinDesc";
+  if (channel === "wecom") return "settings.imChannels.wecomDesc";
+  return "settings.imChannels.dingtalkDesc";
+}
+
 export function ChannelCard({
   channel,
   status,
   configured,
   busy,
+  comingSoon = false,
   onOpenPairing,
   onStartSetup,
   onRemove,
   onSetEnabled,
 }: {
-  channel: ChannelKind;
+  channel: ChannelCardKind;
   status: FeishuStatus | WeixinStatus | null;
   configured: boolean;
   busy: boolean;
+  comingSoon?: boolean;
   onOpenPairing: (channel: ChannelKind) => void;
   onStartSetup: (channel: ChannelKind, options?: { isEdit?: boolean }) => void;
   onRemove: (channel: ChannelKind) => void;
   onSetEnabled: (channel: ChannelKind, enabled: boolean) => void;
 }) {
   const { t } = useTranslation();
-  const channelKey = channel === "feishu" ? "feishu" : "weixin";
-  const title = t(`settings.automations.channels.${channelKey}`);
-  const desc = t(
-    channel === "feishu" ? "settings.imChannels.feishuDesc" : "settings.imChannels.weixinDesc",
-  );
+  const title = t(`settings.automations.channels.${channel}`);
+  const desc = t(channelDescKey(channel));
   const enabled = Boolean(status?.enabled);
   const pendingCount = status?.pending_pairing ?? 0;
+  const liveChannel = channel === "feishu" || channel === "weixin";
 
   return (
     <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-card px-4 py-3">
       <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted/40">
-        {channel === "feishu" ? (
-          <FeishuLogo className="h-8 w-8" />
-        ) : (
-          <WeChatLogo className="h-8 w-8" />
-        )}
+        <ChannelLogo channel={channel} className="h-8 w-8" />
       </div>
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <span className="font-medium">{title}</span>
-          {configured && enabled ? (
+          {comingSoon ? (
+            <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+              {t("settings.imChannels.comingSoon", { defaultValue: "Coming soon" })}
+            </span>
+          ) : null}
+          {!comingSoon && configured && enabled ? (
             <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs text-emerald-600">
               {t("settings.imChannels.connected")}
             </span>
@@ -122,7 +168,18 @@ export function ChannelCard({
         </div>
         <p className="truncate text-xs text-muted-foreground">{desc}</p>
       </div>
-      {configured ? (
+      {comingSoon ? (
+        <button
+          type="button"
+          className="cursor-not-allowed rounded-md bg-muted px-3 py-1.5 text-sm text-muted-foreground"
+          disabled
+          title={t("settings.imChannels.comingSoonHint", {
+            defaultValue: "This channel is not available yet.",
+          })}
+        >
+          {t("settings.imChannels.comingSoon", { defaultValue: "Coming soon" })}
+        </button>
+      ) : configured && liveChannel ? (
         <div className="flex shrink-0 items-center gap-3">
           {channel === "feishu" ? (
             <button
@@ -172,16 +229,16 @@ export function ChannelCard({
             onChange={(next) => onSetEnabled(channel, next)}
           />
         </div>
-      ) : (
+      ) : liveChannel ? (
         <button
           type="button"
-          className="rounded-md bg-foreground px-3 py-1.5 text-sm text-background"
+          className="cursor-pointer rounded-md bg-foreground px-3 py-1.5 text-sm text-background"
           disabled={busy}
           onClick={() => onStartSetup(channel)}
         >
           {t("settings.imChannels.configure")}
         </button>
-      )}
+      ) : null}
     </div>
   );
 }

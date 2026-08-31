@@ -34,12 +34,15 @@ export function ToggleButton({
   ariaLabel,
   label,
   disabled = false,
+  tone = "default",
 }: {
   checked: boolean;
   onChange: (checked: boolean) => void;
   ariaLabel?: string;
   label: string;
   disabled?: boolean;
+  /** `accent` = teal/emerald track (Doubao-style enable switch). */
+  tone?: "default" | "accent";
 }) {
   return (
     <button
@@ -57,7 +60,9 @@ export function ToggleButton({
         "transition-colors duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
         disabled && "cursor-not-allowed opacity-50",
         checked
-          ? "bg-foreground shadow-[inset_0_0_0_1px_rgba(0,0,0,0.035)]"
+          ? tone === "accent"
+            ? "bg-emerald-500 shadow-[inset_0_0_0_1px_rgba(0,0,0,0.035)]"
+            : "bg-foreground shadow-[inset_0_0_0_1px_rgba(0,0,0,0.035)]"
           : "bg-muted shadow-[inset_0_0_0_1px_rgba(0,0,0,0.035)] hover:bg-muted/80",
       )}
     >

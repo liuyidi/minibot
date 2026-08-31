@@ -32,6 +32,35 @@ RESERVED_SLASH_COMMAND_NAMES = frozenset({
 })
 
 
+def _skills_state_path(workspace: Path) -> Path:
+    return workspace / ".minibot" / "skills-state.json"
+
+
+def _load_disabled_skills(workspace: Path | None) -> set[str]:
+    if workspace is None:
+        return set()
+    path = _skills_state_path(workspace)
+    if not path.is_file():
+        return set()
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError, TypeError):
+        return set()
+    if not isinstance(raw, dict):
+        return set()
+    disabled = raw.get("disabled")
+    if not isinstance(disabled, list):
+        return set()
+    return {str(name).strip() for name in disabled if str(name).strip()}
+
+
+def _save_disabled_skills(workspace: Path, disabled: set[str]) -> None:
+    path = _skills_state_path(workspace)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {"disabled": sorted(disabled)}
+    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
 @dataclass(frozen=True)
 class SkillInfo:
     name: str
@@ -143,6 +172,8 @@ class SkillsRegistry:
         by_name: dict[str, SkillInfo] = {}
         if self.builtin_dir.is_dir():
             for skill_dir in sorted(self.builtin_dir.iterdir()):
+                if skill_dir.name.startswith("."):
+                    continue
                 path = skill_dir / "SKILL.md"
                 if skill_dir.is_dir() and path.is_file():
                     info = _load_skill_file(path, source="builtin", name=skill_dir.name)
@@ -152,6 +183,9 @@ class SkillsRegistry:
             ws_skills = self.workspace / "skills"
             if ws_skills.is_dir():
                 for skill_dir in sorted(ws_skills.iterdir()):
+                    # Skip hidden / in-progress install dirs (e.g. `.foo.installing`).
+                    if skill_dir.name.startswith("."):
+                        continue
                     path = skill_dir / "SKILL.md"
                     if skill_dir.is_dir() and path.is_file():
                         info = _load_skill_file(path, source="workspace", name=skill_dir.name)
@@ -176,6 +210,10 @@ class SkillsRegistry:
         req = self.requirements(skill)
         return not req["missing_bins"] and not req["missing_env"]
 
+    def is_enabled(self, skill: SkillInfo | str) -> bool:
+        name = skill.name if isinstance(skill, SkillInfo) else skill
+        return name not in _load_disabled_skills(self.workspace)
+
     def unavailable_reason(self, skill: SkillInfo) -> str:
         req = self.requirements(skill)
         parts = [f"CLI: {name}" for name in req["missing_bins"]] + [
@@ -184,13 +222,17 @@ class SkillsRegistry:
         return ", ".join(parts)
 
     def always_skills(self) -> list[SkillInfo]:
-        return [s for s in self.list_skills() if s.always and self.is_available(s)]
+        return [
+            s
+            for s in self.list_skills()
+            if s.always and self.is_available(s) and self.is_enabled(s)
+        ]
 
     def build_skills_summary(self, *, exclude: set[str] | None = None) -> str:
         skip = exclude or set()
         lines: list[str] = []
         for skill in self.list_skills():
-            if skill.name in skip or not self.is_available(skill):
+            if skill.name in skip or not self.is_available(skill) or not self.is_enabled(skill):
                 continue
             desc = skill.description or "(no description)"
             lines.append(f"- **{skill.name}** ({skill.source}): {desc}")
@@ -203,7 +245,7 @@ class SkillsRegistry:
         available = {
             skill.name
             for skill in self.list_skills()
-            if self.is_available(skill)
+            if self.is_available(skill) and self.is_enabled(skill)
         }
         invoked: list[str] = []
         for match in _SLASH_SKILL_RE.finditer(text):
@@ -224,7 +266,12 @@ class SkillsRegistry:
         parts: list[str] = []
         for name in skill_names:
             skill = by_name.get(name)
-            if skill is None or not skill.body or not self.is_available(skill):
+            if (
+                skill is None
+                or not skill.body
+                or not self.is_available(skill)
+                or not self.is_enabled(skill)
+            ):
                 continue
             parts.append(f"### Skill: {skill.name}\n\n{skill.body}")
         return "\n\n---\n\n".join(parts)
@@ -239,6 +286,7 @@ class SkillsRegistry:
             "description": skill.description,
             "source": skill.source,
             "available": available,
+            "enabled": self.is_enabled(skill),
         }
         if not available:
             item["unavailable_reason"] = self.unavailable_reason(skill)
@@ -277,7 +325,71 @@ class SkillsRegistry:
         loaded = _load_skill_file(target, source="workspace", name=skill_name)
         if loaded is None:
             raise ValueError("failed to load installed skill")
+        # Newly installed skills start enabled.
+        disabled = _load_disabled_skills(self.workspace)
+        if skill_name in disabled:
+            disabled.discard(skill_name)
+            _save_disabled_skills(self.workspace, disabled)
         return loaded
+
+    def set_enabled(self, name: str, enabled: bool) -> SkillInfo:
+        skill = self.get(name)
+        if skill is None:
+            raise ValueError(f"skill not found: {name}")
+        if self.workspace is None:
+            raise ValueError("workspace is required to toggle skills")
+        disabled = _load_disabled_skills(self.workspace)
+        if enabled:
+            disabled.discard(skill.name)
+        else:
+            disabled.add(skill.name)
+        _save_disabled_skills(self.workspace, disabled)
+        return skill
+
+    def uninstall_skill(self, name: str) -> None:
+        """Remove a workspace skill directory. Builtin skills cannot be uninstalled.
+
+        Idempotent for missing skills: also cleans leftover ``skills/<name>`` and
+        ``skills/.<name>.installing`` so a stale WebUI card can still be dismissed.
+        """
+        if self.workspace is None:
+            raise ValueError("workspace is required to uninstall skills")
+        skill = self.get(name)
+        if skill is not None and skill.source != "workspace":
+            raise ValueError("only workspace skills can be uninstalled")
+
+        removed_name = skill.name if skill is not None else name
+        targets: list[Path] = []
+        if skill is not None:
+            target_dir = self.workspace / "skills" / skill.name
+            if not target_dir.is_dir():
+                # Fall back to path parent when directory name differs from skill name.
+                path = Path(skill.path)
+                target_dir = path.parent if path.name == "SKILL.md" else path
+            targets.append(target_dir)
+        skills_root = self.workspace / "skills"
+        targets.extend(
+            [
+                skills_root / name,
+                skills_root / f".{name}.installing",
+            ]
+        )
+        seen: set[Path] = set()
+        for target_dir in targets:
+            try:
+                resolved = target_dir.resolve()
+            except OSError:
+                resolved = target_dir
+            if resolved in seen:
+                continue
+            seen.add(resolved)
+            if target_dir.is_dir():
+                shutil.rmtree(target_dir)
+
+        disabled = _load_disabled_skills(self.workspace)
+        if removed_name in disabled:
+            disabled.discard(removed_name)
+            _save_disabled_skills(self.workspace, disabled)
 
     def api_payload(self, *, include_body: bool = False, body_limit: int = 12_000) -> dict[str, Any]:
         """Dev-oriented payload (paths, always flags). Prefer webui_* for product UI."""
@@ -292,6 +404,7 @@ class SkillsRegistry:
                 "path": s.path,
                 "body_chars": len(s.body),
                 "available": self.is_available(s),
+                "enabled": self.is_enabled(s),
             }
             reason = self.unavailable_reason(s)
             if reason:

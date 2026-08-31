@@ -20,6 +20,32 @@ export function resolveSkillDescription(
   });
 }
 
+/** Localize backend unavailable markers like `CLI: tmux, ENV: FOO`. */
+export function formatUnavailableReason(reason: string, t: TFunction): string {
+  const parts = reason
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .map((part) => {
+      const cli = /^CLI:\s*(.+)$/i.exec(part);
+      if (cli) {
+        return t("settings.skills.missingBin", {
+          name: cli[1],
+          defaultValue: "CLI: {{name}}",
+        });
+      }
+      const env = /^ENV:\s*(.+)$/i.exec(part);
+      if (env) {
+        return t("settings.skills.missingEnvVar", {
+          name: env[1],
+          defaultValue: "ENV: {{name}}",
+        });
+      }
+      return part;
+    });
+  return parts.join(t("settings.skills.unavailableJoin", { defaultValue: ", " }));
+}
+
 export function isSkillSlashCommand(command: SlashCommand): boolean {
   return command.icon === "hammer";
 }

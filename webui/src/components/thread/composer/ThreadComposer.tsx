@@ -60,7 +60,7 @@ import {
 import { useClipboardAndDrop } from "@/hooks/ui";
 import type { SendImage, SendOptions } from "@/hooks/sessions";
 import { useVoiceRecorder, type VoiceRecorderErrorKey } from "@/hooks/ui";
-import { fetchSkills } from "@/lib/apis/api";
+import { fetchSkills } from "@/lib/apis/skills-api";
 import {
   attachmentsFromCapabilitySegments,
   buildMentionCandidates,

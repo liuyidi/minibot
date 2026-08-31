@@ -87,7 +87,7 @@ export function useAppWorkspace({
     ? "native"
     : (settingsSnapshot?.surface ?? settingsSnapshot?.runtime_surface ?? runtimeSurface);
   const showHostChrome = effectiveRuntimeSurface === "native";
-  const showMainSidebar = view !== "settings" && view !== "download";
+  const showMainSidebar = view !== "settings";
 
   useEffect(() => {
     setWorkspaceError(null);

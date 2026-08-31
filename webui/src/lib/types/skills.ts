@@ -5,6 +5,7 @@ export interface SkillSummary {
   description: string;
   source: "workspace" | "builtin" | string;
   available: boolean;
+  enabled?: boolean;
   unavailable_reason?: string;
 }
 

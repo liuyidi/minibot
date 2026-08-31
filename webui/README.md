@@ -135,7 +135,7 @@ Import from the category path, e.g. `@/lib/apis/api`, `@/lib/utils/format`. Fold
 
 **Page imports:** `import { ChannelsPage } from "@/pages/channels"`. Do not add full pages under `components/settings/`.
 
-Migrated / in-progress page folders: `pages/automations`, `channels`, `skills`, `download`, `models`, `settings` (section subfolders).
+Migrated / in-progress page folders: `pages/automations`, `channels`, `skills`, `models`, `settings` (section subfolders).
 
 ## Develop the WebUI (Vite HMR)
 

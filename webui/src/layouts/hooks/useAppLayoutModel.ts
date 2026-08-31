@@ -130,7 +130,11 @@ export function useAppLayoutModel({
     onOpenUtility: utilityNav.onOpenUtility,
     onOpenSearch: chatActions.onOpenSessionSearch,
     activeUtility:
-      view === "automations" || view === "skills" || view === "channels" ? view : null,
+      view === "automations" || view === "channels"
+        ? view
+        : view === "skills" || view === "experts" || view === "connectors"
+          ? "skills"
+          : null,
     onToggleArchived: chatActions.onToggleArchived,
     pinnedKeys: sidebarState.pinned_keys,
     archivedKeys: sidebarState.archived_keys,

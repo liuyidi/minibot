@@ -28,12 +28,38 @@ import {
   showDesktopWelcomeOrBrowserLogin,
 } from "@/lib/desktop-auth-actions";
 import { getHostApi } from "@/lib/configs/runtime";
+import { PORTAL } from "@/lib/configs/portal";
+import { redirectLegacyDownloadHash } from "@/lib/configs/legacy-download-redirect";
 import { ClientProvider } from "@/providers/ClientProvider";
 import OpenPage from "@/pages/open/OpenPage";
 
+function LegacyDownloadRedirect() {
+  useEffect(() => {
+    redirectLegacyDownloadHash();
+  }, []);
+
+  return (
+    <main className="flex min-h-full flex-col items-center justify-center gap-3 bg-background px-6 text-center text-sm text-muted-foreground">
+      <p>Redirecting to the download page…</p>
+      <a className="font-medium text-foreground underline underline-offset-4" href={PORTAL.download}>
+        Continue to download
+      </a>
+    </main>
+  );
+}
+
 export default function App() {
-  if (typeof window !== "undefined" && window.location.hash.replace(/^#\/+/, "") === "open") {
-    return <OpenPage />;
+  if (typeof window !== "undefined") {
+    const hashPath = window.location.hash
+      .replace(/^#\/+/, "")
+      .replace(/\/+$/, "")
+      .split("?")[0];
+    if (hashPath === "open") {
+      return <OpenPage />;
+    }
+    if (hashPath === "download") {
+      return <LegacyDownloadRedirect />;
+    }
   }
 
   const { t } = useTranslation();

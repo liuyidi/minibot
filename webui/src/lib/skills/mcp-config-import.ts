@@ -171,3 +171,54 @@ export function parseMcpConfigImport(raw: string): UpsertMcpBody[] {
   }
   return bodies;
 }
+
+const EMPTY_MCP_CONFIG = `{
+  "mcpServers": {}
+}
+`;
+
+/** Serialize installed presets into Cursor/Claude-compatible mcp.json text. */
+export function serializeMcpPresetsToConfigJson(
+  presets: Array<{
+    id: string;
+    label?: string;
+    enabled?: boolean;
+    type?: string | null;
+    command?: string;
+    args?: string[];
+    url?: string;
+    env?: Record<string, string>;
+    headers?: Record<string, string>;
+    tool_timeout?: number;
+    inferred_type?: string | null;
+  }>,
+): string {
+  const mcpServers: Record<string, Record<string, unknown>> = {};
+  for (const preset of presets) {
+    const id = preset.id.trim();
+    if (!id) continue;
+    const transport = preset.type || preset.inferred_type || (preset.url ? "streamableHttp" : "stdio");
+    const entry: Record<string, unknown> = {};
+    if (preset.label && preset.label !== id) entry.label = preset.label;
+    if (preset.enabled === false) entry.enabled = false;
+    if (transport === "stdio") {
+      entry.command = preset.command || "";
+      if (preset.args?.length) entry.args = preset.args;
+    } else {
+      entry.type = transport;
+      entry.url = preset.url || "";
+      if (preset.headers && Object.keys(preset.headers).length) {
+        entry.headers = preset.headers;
+      }
+    }
+    if (preset.env && Object.keys(preset.env).length) entry.env = preset.env;
+    if (typeof preset.tool_timeout === "number") entry.tool_timeout = preset.tool_timeout;
+    mcpServers[id] = entry;
+  }
+  if (Object.keys(mcpServers).length === 0) return EMPTY_MCP_CONFIG;
+  return `${JSON.stringify({ mcpServers }, null, 2)}\n`;
+}
+
+export function emptyMcpConfigJson(): string {
+  return EMPTY_MCP_CONFIG;
+}
