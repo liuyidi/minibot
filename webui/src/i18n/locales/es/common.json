@@ -1375,7 +1375,8 @@
     "copied": "Copiado"
   },
   "common": {
-    "dismiss": "Cerrar"
+    "dismiss": "Cerrar",
+    "cancel": "Cancelar"
   },
   "errors": {
     "messageTooBig": {

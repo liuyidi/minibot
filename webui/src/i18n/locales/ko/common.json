@@ -1375,7 +1375,8 @@
     "copied": "복사됨"
   },
   "common": {
-    "dismiss": "닫기"
+    "dismiss": "닫기",
+    "cancel": "취소"
   },
   "errors": {
     "messageTooBig": {

@@ -600,11 +600,13 @@
       "filter": "Filter",
       "systemSection": "System tasks",
       "add": "Add automation",
+      "create": "Create",
       "createUntitled": "New automation",
       "createTipLabel": "Tip",
       "createTip": "Keep the minibot client running while automations are scheduled. If the machine sleeps or the app exits, tasks will not fire on time.",
       "dismissTip": "Dismiss tip",
       "closeDetail": "Close",
+      "triggerSection": "Trigger",
       "createHint": "Ask minibot in chat to create a cron job so it keeps the right session context. You can also create one in Dev UI /automations.",
       "goChat": "Create in chat",
       "templatesTitle": "Automation templates",
@@ -900,6 +902,10 @@
       "addConnectorHint": "Add a custom MCP server (stdio or HTTP).",
       "nameOptional": "Name (optional; defaults to frontmatter)",
       "uploadFile": "Or upload a file",
+      "uploadDropHint": "Drag a file here, or click to choose",
+      "uploadSelected": "Selected: {{name}}",
+      "uploadRuleMarkdown": "Upload a .md / SKILL.md file, or paste its contents above.",
+      "uploadRuleFrontmatter": "SKILL.md should include YAML frontmatter with name and description.",
       "install": "Install",
       "saveConnector": "Save",
       "connectorLabel": "Label",
@@ -1439,7 +1445,8 @@
     "icp": "浙ICP备2026062548号-1"
   },
   "common": {
-    "dismiss": "Dismiss"
+    "dismiss": "Dismiss",
+    "cancel": "Cancel"
   },
   "errors": {
     "messageTooBig": {

@@ -1375,7 +1375,8 @@
     "copied": "已複製"
   },
   "common": {
-    "dismiss": "關閉"
+    "dismiss": "關閉",
+    "cancel": "取消"
   },
   "errors": {
     "messageTooBig": {

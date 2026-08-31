@@ -1,14 +1,16 @@
 import { useState } from "react";
 
+import { AutomationsSettings } from "./components/settings/AutomationsSettings";
+import { AutomationCreateDialog } from "./components/dialogs/AutomationCreateDialog";
 import {
-  AutomationsSettings,
-  type AutomationAction,
-  type AutomationFilter,
-  type AutomationSort,
-  AutomationCreateDialog,
   AutomationDeleteDialog,
   AutomationEditDialog,
-} from "@/pages/automations/automations-ui";
+} from "./components/dialogs/AutomationEditDialogs";
+import type {
+  AutomationAction,
+  AutomationFilter,
+  AutomationSort,
+} from "./lib/automationTypes";
 import { useAutomations } from "@/hooks/automations";
 import type { AutomationUpdatePayload, SessionAutomationJob } from "@/lib/types";
 

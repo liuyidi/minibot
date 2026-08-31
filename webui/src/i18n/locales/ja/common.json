@@ -1375,7 +1375,8 @@
     "copied": "コピーしました"
   },
   "common": {
-    "dismiss": "閉じる"
+    "dismiss": "閉じる",
+    "cancel": "キャンセル"
   },
   "errors": {
     "messageTooBig": {

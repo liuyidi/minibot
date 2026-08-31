@@ -600,11 +600,13 @@
       "filter": "筛选",
       "systemSection": "系统任务",
       "add": "添加自动化",
+      "create": "创建",
       "createUntitled": "新建自动化",
       "createTipLabel": "提示",
       "createTip": "自动化任务执行时，请勿关闭电脑或退出客户端，否则任务将无法正常执行。",
       "dismissTip": "关闭提示",
       "closeDetail": "关闭",
+      "triggerSection": "触发器配置",
       "createHint": "在对话里让 minibot 用 cron 工具创建定时任务，会自动绑定当前会话上下文。也可在 Dev UI /automations 页创建。",
       "goChat": "去对话创建",
       "templatesTitle": "自动化任务模版",
@@ -900,6 +902,10 @@
       "addConnectorHint": "添加自定义 MCP（stdio 或 HTTP）。",
       "nameOptional": "名称（可选；默认取 frontmatter）",
       "uploadFile": "或上传文件",
+      "uploadDropHint": "拖拽文件至此，或点击选择文件",
+      "uploadSelected": "已选择：{{name}}",
+      "uploadRuleMarkdown": "上传 .md / SKILL.md 文件，或在上方粘贴内容。",
+      "uploadRuleFrontmatter": "SKILL.md 应包含 YAML frontmatter（名称与描述）。",
       "install": "安装",
       "saveConnector": "保存",
       "connectorLabel": "名称",
@@ -1439,7 +1445,8 @@
     "icp": "浙ICP备2026062548号-1"
   },
   "common": {
-    "dismiss": "关闭"
+    "dismiss": "关闭",
+    "cancel": "取消"
   },
   "errors": {
     "messageTooBig": {

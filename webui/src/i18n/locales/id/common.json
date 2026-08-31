@@ -1375,7 +1375,8 @@
     "copied": "Tersalin"
   },
   "common": {
-    "dismiss": "Tutup"
+    "dismiss": "Tutup",
+    "cancel": "Batal"
   },
   "errors": {
     "messageTooBig": {

@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { type ReactNode } from "react";
 import type { TFunction } from "i18next";
 import {
   Brain,
@@ -13,15 +13,6 @@ import {
 import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import type { SkillDetail, SkillSummary } from "@/lib/types";
 import { resolveSkillDescription, resolveSkillTitle } from "@/lib/skills/display";
@@ -30,6 +21,7 @@ import { cn } from "@/lib/utils";
 import { useSkillDetail } from "./useSkillDetail";
 
 export { AddConnectorDialog } from "./AddConnectorDialog";
+export { AddSkillDialog } from "./AddSkillDialog";
 
 export function TabButton({
   active,
@@ -212,95 +204,6 @@ export function ConnectorCard({
         </span>
       ) : null}
     </div>
-  );
-}
-
-export function AddSkillDialog({
-  open,
-  onOpenChange,
-  busy,
-  onInstall,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  busy: boolean;
-  onInstall: (body: { markdown: string; name?: string }) => Promise<string | null>;
-}) {
-  const { t } = useTranslation();
-  const [name, setName] = useState("");
-  const [markdown, setMarkdown] = useState(
-    "---\nname: my-skill\ndescription: What this skill does.\n---\n\n# My skill\n\nInstructions…\n",
-  );
-  const [error, setError] = useState<string | null>(null);
-
-  const submit = async () => {
-    setError(null);
-    const message = await onInstall({
-      markdown,
-      name: name.trim() || undefined,
-    });
-    if (!message) {
-      setName("");
-      onOpenChange(false);
-      return;
-    }
-    setError(message);
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl">
-        <DialogHeader>
-          <DialogTitle>{t("settings.skills.addSkill", { defaultValue: "Add skill" })}</DialogTitle>
-          <DialogDescription>
-            {t("settings.skills.addSkillHint", {
-              defaultValue: "Paste a SKILL.md. It is saved under the current workspace skills/ folder.",
-            })}
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-3">
-          <Input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder={t("settings.skills.nameOptional", {
-              defaultValue: "Name (optional; defaults to frontmatter)",
-            })}
-          />
-          <textarea
-            value={markdown}
-            onChange={(e) => setMarkdown(e.target.value)}
-            rows={12}
-            className="w-full rounded-md border border-input bg-background px-3 py-2 font-mono text-[12px] leading-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          />
-          <label className="inline-flex cursor-pointer items-center gap-2 text-[12px] text-muted-foreground">
-            <input
-              type="file"
-              accept=".md,text/markdown,text/plain"
-              className="text-[12px]"
-              onChange={async (e) => {
-                const file = e.target.files?.[0];
-                if (!file) return;
-                setMarkdown(await file.text());
-                if (!name.trim()) {
-                  setName(file.name.replace(/\.md$/i, "").replace(/[^A-Za-z0-9_-]+/g, "-"));
-                }
-              }}
-            />
-            {t("settings.skills.uploadFile", { defaultValue: "Or upload a file" })}
-          </label>
-          {error ? <p className="text-[13px] text-destructive">{error}</p> : null}
-        </div>
-        <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-            {t("common.cancel", { defaultValue: "Cancel" })}
-          </Button>
-          <Button type="button" disabled={busy || !markdown.trim()} onClick={() => void submit()}>
-            {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
-            {t("settings.skills.install", { defaultValue: "Install" })}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
   );
 }
 

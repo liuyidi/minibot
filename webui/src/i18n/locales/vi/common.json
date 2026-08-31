@@ -1375,7 +1375,8 @@
     "copied": "Đã sao chép"
   },
   "common": {
-    "dismiss": "Đóng"
+    "dismiss": "Đóng",
+    "cancel": "Hủy"
   },
   "errors": {
     "messageTooBig": {
