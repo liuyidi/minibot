@@ -25,6 +25,7 @@ English: [CHANGELOG.md](./CHANGELOG.md)
 - 顶部工具导航（技能、定时任务、频道等）与下方对话列表选中态互斥。
 - WebUI `thread/` 按 shell / composer / messages / activity / preview / viewport 分目录，并拆薄 `ThreadShell`（文件预览、反馈、消息缓存等抽离）。
 - 输入区进一步贴近豆包：半透明毛玻璃卡片、底栏无灰条、空态发送钮为中灰圆盘；外观设置支持浅色 / 深色 / 跟随系统；设置中隐藏「网页」与 System「身份」块。
+- WebUI 启动 OTEL 仅在本地 / 开发环境导出；生产 SPA 不再请求本机 collector 地址。
 
 ## [1.0.20] - 2026-08-27
 
