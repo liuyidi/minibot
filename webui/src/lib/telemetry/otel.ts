@@ -1,6 +1,7 @@
 /**
  * Browser OpenTelemetry bootstrap for minibot WebUI.
  * Exports traces via OTLP/HTTP to the local collector (infra-observability).
+ * Enabled only in local / Vite-dev environments — production SPA stays dark.
  */
 
 import { SpanStatusCode, trace, type Tracer } from "@opentelemetry/api";
@@ -26,20 +27,42 @@ function detectMode(): string {
   }
 }
 
+function isLocalBrowserHost(): boolean {
+  if (typeof window === "undefined") return false;
+  const { hostname, port } = window.location;
+  return (
+    hostname === "localhost"
+    || hostname === "127.0.0.1"
+    || port === "5173"
+    || port === "5174"
+  );
+}
+
+/**
+ * OTEL export is for local collector loops only.
+ * Production builds (bot.liuyidi.me) never open an exporter — even if a URL is set.
+ * Local `vite preview` of a production build is still allowed via host check.
+ */
+export function isWebTelemetryEnabled(): boolean {
+  const mode = detectMode();
+  if (mode === "test") return false;
+  if (mode === "production") return isLocalBrowserHost();
+  return true;
+}
+
 /** OTLP HTTP traces endpoint. Override with VITE_OTEL_EXPORTER_OTLP_ENDPOINT. */
 export function resolveOtlpTracesUrl(): string {
+  if (!isWebTelemetryEnabled()) return "";
   try {
     const env = (import.meta as ImportMeta & {
-      env?: { VITE_OTEL_EXPORTER_OTLP_ENDPOINT?: string; MODE?: string };
+      env?: { VITE_OTEL_EXPORTER_OTLP_ENDPOINT?: string };
     }).env;
     if (env?.VITE_OTEL_EXPORTER_OTLP_ENDPOINT) {
       return env.VITE_OTEL_EXPORTER_OTLP_ENDPOINT.replace(/\/$/, "");
     }
-    if (env?.MODE === "test") return "";
   } catch {
     // ignore
   }
-  // Vite can proxy /otlp → collector:4318; packaged SPA talks to collector directly.
   if (typeof window !== "undefined") {
     const { port, hostname } = window.location;
     if (port === "5173" || port === "5174") {
@@ -49,6 +72,7 @@ export function resolveOtlpTracesUrl(): string {
       return "http://127.0.0.1:4318/v1/traces";
     }
   }
+  // Vite-dev without a window (SSR/tooling) — local collector default.
   return "http://127.0.0.1:4318/v1/traces";
 }
 
@@ -60,7 +84,7 @@ export function initWebTelemetry(options?: {
   if (initAttempted) return provider;
   initAttempted = true;
 
-  if (detectMode() === "test") {
+  if (!isWebTelemetryEnabled()) {
     return null;
   }
 

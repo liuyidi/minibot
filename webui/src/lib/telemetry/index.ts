@@ -14,6 +14,7 @@ export {
   forceFlushWebTelemetry,
   getWebTracer,
   initWebTelemetry,
+  isWebTelemetryEnabled,
   resolveOtlpTracesUrl,
 } from "./otel";
 

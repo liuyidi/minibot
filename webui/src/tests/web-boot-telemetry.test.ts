@@ -123,3 +123,13 @@ describe("client context", () => {
     expect(ctx["browser.name"]).toBe("Safari");
   });
 });
+
+describe("otel gate", () => {
+  it("disables OTLP URL resolution under vitest (MODE=test)", async () => {
+    const { isWebTelemetryEnabled, resolveOtlpTracesUrl, resetWebTelemetryForTests } =
+      await import("@/lib/telemetry/otel");
+    resetWebTelemetryForTests();
+    expect(isWebTelemetryEnabled()).toBe(false);
+    expect(resolveOtlpTracesUrl()).toBe("");
+  });
+});
