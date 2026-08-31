@@ -11,6 +11,12 @@ Versions follow SemVer for product narrative. Package metadata may lag until a f
 
 ## [Unreleased]
 
+### Added
+
+- WebUI startup is instrumented with OpenTelemetry boot spans (`js_boot` → `first_interactive`), exported via OTLP for Tempo / Grafana; see [`docs/observability-web-boot.md`](./docs/observability-web-boot.md).
+- Gateway exposes a Prometheus `/metrics` endpoint for latency and request monitoring.
+- Mobile handoff (`/#/open`) is configurable from the gateway: store URLs, fallback download URL, title, and description via settings / `GET /auth/mobile-entry`.
+
 ## [1.0.20] - 2026-08-27
 
 ### Changed
