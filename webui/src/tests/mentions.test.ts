@@ -8,7 +8,7 @@ import {
   wireLegacyMentionsFromAttachments,
 } from "@/lib/chat/mentions";
 import type { CliAppInfo, McpPresetInfo } from "@/lib/types";
-import { splitCapabilityMentionSegments } from "@/components/thread/CliAppMentionText";
+import { splitCapabilityMentionSegments } from "@/components/thread/composer/CliAppMentionText";
 
 const CLI_APPS: CliAppInfo[] = [
   {

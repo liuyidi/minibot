@@ -11,7 +11,7 @@ import {
 import {
   type PromptAnchor,
   userPromptAnchors,
-} from "@/components/thread/promptNavigation";
+} from "./promptNavigation";
 import { HEADER_ICON_BUTTON, SIDEBAR_ICON } from "@/components/sidebar/sidebarChrome";
 import { fmtDateTime } from "@/lib/utils/format";
 import type { UIMessage } from "@/lib/types";

@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import { LanguageSwitcher } from "@/components/settings/LanguageSwitcher";
-import { ThreadComposer } from "@/components/thread/ThreadComposer";
+import { ThreadComposer } from "@/components/thread/composer/ThreadComposer";
 import { resources } from "@/i18n";
 import { LOCALE_STORAGE_KEY, resolveInitialLocale } from "@/i18n/config";
 

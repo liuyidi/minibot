@@ -7,4 +7,5 @@ export * from "./slashSkills";
 export * from "./remark-tex-math";
 export * from "./subagent-channel-display";
 export * from "./thread-display-compat";
+export * from "./threadMessageProjection";
 export * from "./tool-traces";

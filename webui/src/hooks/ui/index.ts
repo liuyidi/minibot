@@ -23,3 +23,4 @@ export {
   type VoiceRecorderErrorKey,
 } from "./useVoiceRecorder";
 export { useDeferredTitleRefresh } from "./useDeferredTitleRefresh";
+export { useInstalledSettingItems } from "./useInstalledSettingItems";

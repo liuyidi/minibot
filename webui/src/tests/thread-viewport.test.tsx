@@ -2,14 +2,14 @@ import { useRef } from "react";
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import { PromptNavigator } from "@/components/thread/PromptNavigator";
+import { PromptNavigator } from "@/components/thread/shell/PromptNavigator";
 import {
   HISTORY_WINDOW_INCREMENT,
   INITIAL_HISTORY_WINDOW,
   ThreadViewport,
   type ThreadViewportHandle,
   windowMessages,
-} from "@/components/thread/ThreadViewport";
+} from "@/components/thread/viewport/ThreadViewport";
 import type { UIMessage } from "@/lib/types";
 
 const messages: UIMessage[] = [

@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { ThreadComposer } from "@/components/thread/ThreadComposer";
+import { ThreadComposer } from "@/components/thread/composer/ThreadComposer";
 import { MENTION_SLASH_CHIP_CARET_PAD, withMentionChipSuffix } from "@/lib/chat/mentionAtoms";
 import type { CliAppInfo, McpPresetInfo, SlashCommand } from "@/lib/types";
 

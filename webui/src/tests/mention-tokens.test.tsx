@@ -5,7 +5,7 @@ import {
   CliAppMentionToken,
   McpPresetMentionToken,
   SkillMentionToken,
-} from "@/components/thread/MentionTokens";
+} from "@/components/thread/composer/MentionTokens";
 import type { CliAppInfo, McpPresetInfo, SkillSummary } from "@/lib/types";
 
 const SKILL: SkillSummary = {

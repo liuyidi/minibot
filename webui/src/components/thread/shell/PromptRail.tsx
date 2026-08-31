@@ -15,7 +15,7 @@ import {
   type PromptAnchor,
   promptTop,
   userPromptAnchors,
-} from "@/components/thread/promptNavigation";
+} from "./promptNavigation";
 
 interface PromptRailProps {
   bottomOffset: number;

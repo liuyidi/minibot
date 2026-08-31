@@ -5,7 +5,7 @@ import {
   assistantCopyFlags,
   buildDisplayUnits,
   ThreadMessages,
-} from "@/components/thread/ThreadMessages";
+} from "@/components/thread/messages/ThreadMessages";
 import type { UIMessage } from "@/lib/types";
 
 describe("ThreadMessages", () => {

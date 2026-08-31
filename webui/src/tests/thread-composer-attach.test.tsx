@@ -7,7 +7,7 @@ import {
 } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ThreadComposer } from "@/components/thread/ThreadComposer";
+import { ThreadComposer } from "@/components/thread/composer/ThreadComposer";
 import type { EncodeResponse } from "@/lib/utils/imageEncode";
 
 const encodeImage = vi.fn<(file: File) => Promise<EncodeResponse>>();

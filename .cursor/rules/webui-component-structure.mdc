@@ -43,7 +43,14 @@ webui/src/
 ├── components/              # shared business UI (2+ consumers)
 │   ├── ui/                  # atomic primitives (shadcn / Radix)
 │   ├── sidebar/               # sidebar, session lists, chrome dialogs
-│   ├── thread/              # chat / session domain (+ activity/)
+│   ├── thread/              # chat / session domain
+│   │   ├── ThreadShell.tsx  # orchestrator entry
+│   │   ├── shell/           # header, prompt nav, workspace
+│   │   ├── composer/        # input, mentions, model badge
+│   │   ├── messages/        # bubbles, attachments, approvals
+│   │   ├── activity/        # tool/activity timeline
+│   │   ├── preview/         # file preview panel
+│   │   └── viewport/        # scroll viewport
 │   ├── markdown/            # MarkdownText / CodeBlock pipeline
 │   └── settings/            # settings-domain shared chrome
 │
@@ -106,7 +113,7 @@ View vs logic decoupling (reuse hooks/apis for App / Desktop): see `webui-view-l
 | `stores/` | Zustand chrome / session-badge state | server session lists / WS client |
 | `components/ui/` | Button, Dialog, Input, Sheet, … | business copy / API logic |
 | `components/sidebar/` | sidebar, chat list, chrome dialogs, | chat bubbles / markdown |
-| `components/thread/` | chat surface, messages, activity, file preview | settings forms; sidebar |
+| `components/thread/` | chat surface (`shell/`, `composer/`, `messages/`, `activity/`, `preview/`, `viewport/`) | settings forms; sidebar |
 | `components/markdown/` | MarkdownText, CodeBlock renderer | page-private widgets |
 | `components/settings/` | settings-domain shared chrome | one-off page widgets |
 | `hooks/` | domain-grouped reusable `useXxx` (`@/hooks/sessions`, …) | JSX / Tailwind presentation; page-private helpers (`pages/<page>/useXxx.ts`) |

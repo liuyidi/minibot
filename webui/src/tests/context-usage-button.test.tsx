@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import i18n from "@/i18n";
-import { ContextUsageButton } from "@/components/thread/ContextUsageButton";
+import { ContextUsageButton } from "@/components/thread/composer/ContextUsageButton";
 import type { ContextUsagePayload } from "@/lib/types";
 
 const fetchContextUsage = vi.fn();

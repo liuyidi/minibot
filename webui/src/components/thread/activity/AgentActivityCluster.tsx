@@ -13,15 +13,15 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-import { cliAppInitials, mcpPresetInitials } from "./CliAppMentionText";
-import { FileReferenceChip } from "./FileReferenceChip";
-import { StreamingLabelSheen } from "./MessageBubble";
-import { ActivityEvidencePreview } from "@/components/thread/activity/ActivityEvidencePreview";
-import { ActivityGroup } from "@/components/thread/activity/ActivityGroup";
-import { ActivityStep } from "@/components/thread/activity/ActivityStep";
-import { DiffPair } from "@/components/thread/activity/DiffPair";
-import { FileEditGroup, hasVisibleDiffStats, type FileEditSummary } from "@/components/thread/activity/FileEditRow";
-import { ReasoningRow } from "@/components/thread/activity/ReasoningRow";
+import { cliAppInitials, mcpPresetInitials } from "@/components/thread/composer/CliAppMentionText";
+import { FileReferenceChip } from "@/components/thread/messages/FileReferenceChip";
+import { StreamingLabelSheen } from "@/components/thread/messages/MessageBubble";
+import { ActivityEvidencePreview } from "./ActivityEvidencePreview";
+import { ActivityGroup } from "./ActivityGroup";
+import { ActivityStep } from "./ActivityStep";
+import { DiffPair } from "./DiffPair";
+import { FileEditGroup, hasVisibleDiffStats, type FileEditSummary } from "./FileEditRow";
+import { ReasoningRow } from "./ReasoningRow";
 import {
   activityEvidenceFromMessageMedia,
   activityEvidenceFromToolEvent,

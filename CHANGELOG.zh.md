@@ -23,6 +23,7 @@ English: [CHANGELOG.md](./CHANGELOG.md)
 
 - WebUI 侧边栏 / 输入区 / 顶栏对齐豆包式层级：统一行高与间距、品牌区几何、输入框去绿色 focus ring。
 - 顶部工具导航（技能、定时任务、频道等）与下方对话列表选中态互斥。
+- WebUI `thread/` 按 shell / composer / messages / activity / preview / viewport 分目录，并拆薄 `ThreadShell`（文件预览、反馈、消息缓存等抽离）。
 
 ## [1.0.20] - 2026-08-27
 

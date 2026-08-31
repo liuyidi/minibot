@@ -6,7 +6,7 @@ import {
   skillsToSlashCommands,
 } from "@/lib/chat/slashSkills";
 import { resolveSlashCommandLabel, resolveSkillTitle } from "@/lib/skills/display";
-import { splitCapabilityMentionSegments } from "@/components/thread/CliAppMentionText";
+import { splitCapabilityMentionSegments } from "@/components/thread/composer/CliAppMentionText";
 import type { SkillSummary, SlashCommand } from "@/lib/types";
 import { vi } from "vitest";
 

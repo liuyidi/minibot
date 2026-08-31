@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import { AgentActivityCluster } from "@/components/thread/AgentActivityCluster";
+import { AgentActivityCluster } from "@/components/thread/activity/AgentActivityCluster";
 import type { CliAppInfo, McpPresetInfo, UIMessage } from "@/lib/types";
 
 const BLENDER_CLI_APP: CliAppInfo = {

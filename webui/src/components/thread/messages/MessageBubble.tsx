@@ -20,7 +20,7 @@ import {
 import { useTranslation } from "react-i18next";
 
 import { AttachmentTile } from "./AttachmentTile";
-import { CliAppMentionText } from "./CliAppMentionText";
+import { CliAppMentionText } from "@/components/thread/composer/CliAppMentionText";
 import { ImageLightbox } from "./ImageLightbox";
 import { MarkdownText, preloadMarkdownText } from "@/components/markdown/MarkdownText";
 import {

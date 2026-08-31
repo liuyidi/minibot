@@ -1,7 +1,7 @@
 import { AlertCircle, CheckCircle2, CircleDashed } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-import { FileReferenceChip } from "../FileReferenceChip";
+import { FileReferenceChip } from "@/components/thread/messages/FileReferenceChip";
 import type { UIFileEdit } from "@/lib/types";
 import { cn } from "@/lib/utils";
 

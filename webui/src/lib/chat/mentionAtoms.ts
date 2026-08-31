@@ -3,7 +3,7 @@
 import {
   splitCapabilityMentionSegments,
   type CapabilityMentionSegment,
-} from "@/components/thread/CliAppMentionText";
+} from "@/components/thread/composer/CliAppMentionText";
 import type { CliAppInfo, McpPresetInfo, SkillSummary } from "@/lib/types";
 
 /**

@@ -3,7 +3,7 @@
  * Wire protocol still sends legacy cli_apps / mcp_presets for compatibility.
  */
 
-import type { CapabilityMentionSegment } from "@/components/thread/CliAppMentionText";
+import type { CapabilityMentionSegment } from "@/components/thread/composer/CliAppMentionText";
 import type {
   CliAppInfo,
   McpPresetInfo,

@@ -12,14 +12,14 @@ import {
 import { ArrowDown } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-import { PromptRail } from "@/components/thread/PromptRail";
-import { ThreadMessages } from "@/components/thread/ThreadMessages";
-import { isAgentActivityMember } from "@/components/thread/AgentActivityCluster";
+import { PromptRail } from "@/components/thread/shell/PromptRail";
+import { ThreadMessages } from "@/components/thread/messages/ThreadMessages";
+import { isAgentActivityMember } from "@/components/thread/activity/AgentActivityCluster";
 import { Button } from "@/components/ui/button";
 import {
   findPromptElement,
   jumpToPrompt,
-} from "@/components/thread/promptNavigation";
+} from "@/components/thread/shell/promptNavigation";
 import { cn } from "@/lib/utils";
 import type { CliAppInfo, McpPresetInfo, UIMessage } from "@/lib/types";
 

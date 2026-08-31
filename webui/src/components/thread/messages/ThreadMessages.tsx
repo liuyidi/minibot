@@ -1,7 +1,7 @@
 import { Fragment, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { MessageBubble } from "./MessageBubble";
-import { AgentActivityCluster } from "@/components/thread/AgentActivityCluster";
+import { AgentActivityCluster } from "@/components/thread/activity/AgentActivityCluster";
 import { normalizeActivityTimeline, type TurnUnit } from "@/lib/chat/activity-timeline";
 import type { CliAppInfo, McpPresetInfo, UIMessage } from "@/lib/types";
 

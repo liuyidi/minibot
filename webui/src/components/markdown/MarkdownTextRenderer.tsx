@@ -15,13 +15,13 @@ import remarkBreaks from "remark-breaks";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 
-import { AttachmentTile } from "@/components/thread/AttachmentTile";
+import { AttachmentTile } from "@/components/thread/messages/AttachmentTile";
 import { CodeBlock } from "./CodeBlock";
 import {
   FileReferenceChip,
   isFilePatternReference,
   isLikelyFilePath,
-} from "@/components/thread/FileReferenceChip";
+} from "@/components/thread/messages/FileReferenceChip";
 import { inferMediaKind } from "@/lib/utils/media";
 import { faviconUrls } from "@/lib/constants/provider-brand";
 import { remarkTexMath } from "@/lib/chat/remark-tex-math";

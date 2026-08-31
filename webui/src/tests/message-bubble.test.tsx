@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import { MessageBubble } from "@/components/thread/MessageBubble";
+import { MessageBubble } from "@/components/thread/messages/MessageBubble";
 import type { CliAppInfo, McpPresetInfo, UIMessage } from "@/lib/types";
 
 const CLI_APPS: CliAppInfo[] = [

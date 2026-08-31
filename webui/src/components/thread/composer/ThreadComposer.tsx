@@ -10,7 +10,7 @@ import {
 } from "react";
 
 import { MarkdownText, preloadMarkdownText } from "@/components/markdown/MarkdownText";
-import { ContextUsageButton } from "@/components/thread/ContextUsageButton";
+import { ContextUsageButton } from "@/components/thread/composer/ContextUsageButton";
 import { splitCapabilityMentionSegments } from "./CliAppMentionText";
 import {
   CliAppMentionPalette,
@@ -48,7 +48,7 @@ import {
 import {
   WorkspaceAccessMenu,
   WorkspaceProjectPicker,
-} from "@/components/thread/WorkspaceControls";
+} from "@/components/thread/shell/WorkspaceControls";
 import { getHostApi } from "@/lib/configs/runtime";
 import {
   useAttachedImages,

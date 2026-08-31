@@ -1,7 +1,7 @@
 import type { CSSProperties, ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 
-import { StreamingLabelSheen } from "../MessageBubble";
+import { StreamingLabelSheen } from "@/components/thread/messages/MessageBubble";
 import { cn } from "@/lib/utils";
 
 export type ActivityStepTone = "neutral" | "active" | "success" | "error";
