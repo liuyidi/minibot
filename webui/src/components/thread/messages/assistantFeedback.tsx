@@ -54,15 +54,15 @@ export function useAssistantFeedback({
   const handleAssistantFeedback = useCallback(
     async (message: UIMessage, helpful: boolean) => {
       if (!chatId || !enabled) return;
-      // Empty ID resolves to the latest trace for this session (post-reload history
-      // rows may not carry a runtime-only Langfuse trace ID).
-      await submitSessionScore(token, chatId, message.langfuseTraceId ?? "", helpful);
+
+      // Optimistic UI first: thumbs-down must open the detail dialog even if
+      // the score POST is slow or fails (otherwise the click feels dead).
       setFeedbackByMessageId((current) => {
         const next = { ...current, [message.id]: helpful };
         try {
           window.localStorage.setItem(`${FEEDBACK_STORAGE_PREFIX}${chatId}`, JSON.stringify(next));
         } catch {
-          // Score accepted server-side even if browser storage is unavailable.
+          // Keep in-memory selection even if browser storage is unavailable.
         }
         return next;
       });
@@ -71,6 +71,12 @@ export function useAssistantFeedback({
         setFeedbackComment("");
         setFeedbackDetailMessage(message);
       }
+
+      // Fire-and-forget score so the click path stays snappy; empty ID resolves to
+      // the latest session trace when history rows lack a runtime Langfuse ID.
+      void submitSessionScore(token, chatId, message.langfuseTraceId ?? "", helpful).catch(() => {
+        // Local feedback + detail dialog already applied.
+      });
     },
     [chatId, enabled, token],
   );

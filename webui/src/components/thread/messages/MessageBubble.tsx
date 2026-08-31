@@ -196,8 +196,7 @@ export function MessageBubble({
   const copyReplyLabel = copied ? t("message.copiedReply") : t("message.copyReply");
   const forkLabel = t("message.forkFromHere");
   const latencyMs = message.latencyMs;
-  const showLatencyFooter =
-    message.role === "assistant"
+  const showLatencyFooter = message.role === "assistant"
     && latencyMs != null
     && !message.isStreaming
     && (!empty || hasReasoning || media.length > 0);
@@ -205,8 +204,9 @@ export function MessageBubble({
   const onFeedback = (helpful: boolean) => {
     if (!onAssistantFeedback || feedbackPending) return;
     setFeedbackPending(true);
+    setFeedback(helpful);
     void onAssistantFeedback(message, helpful)
-      .then(() => setFeedback(helpful))
+      .catch(() => setFeedback(initialFeedback))
       .finally(() => setFeedbackPending(false));
   };
   return (

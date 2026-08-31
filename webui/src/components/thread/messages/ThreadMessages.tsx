@@ -156,7 +156,7 @@ export function ThreadMessages({
                     feedbackEnabled && unit.message.id === latestAssistantMessageId
                   }
                   initialFeedback={feedbackByMessageId[unit.message.id] ?? null}
-                  onAssistantFeedback={onAssistantFeedback}
+                  onAssistantFeedback={feedbackEnabled ? onAssistantFeedback : undefined}
                 />
               )}
             </div>

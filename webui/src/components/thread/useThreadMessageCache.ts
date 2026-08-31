@@ -3,6 +3,7 @@ import type { Dispatch, MutableRefObject, SetStateAction } from "react";
 
 import {
   isStaleThreadSnapshot,
+  mergeLiveMessageRuntimeFields,
   projectWebuiThreadMessages,
 } from "@/lib/chat/threadMessageProjection";
 import type { MinibotClient } from "@/lib/apis/minibot-client";
@@ -101,7 +102,10 @@ export function useThreadMessageCacheSync({
     // canonical replay arrives (e.g. after ``session_updated`` refresh), prefer it
     // so rendering converges to the same shape as a manual refresh.
     setMessages((prev) => {
-      const normalizedHistory = projectWebuiThreadMessages(historical);
+      const normalizedHistory = mergeLiveMessageRuntimeFields(
+        prev,
+        projectWebuiThreadMessages(historical),
+      );
       const keepLiveMessages = (messagesToKeep: UIMessage[]) => {
         const projected = projectWebuiThreadMessages(messagesToKeep);
         messageCacheRef.current.set(chatId, projected);
