@@ -27,6 +27,7 @@ English: [CHANGELOG.md](./CHANGELOG.md)
 - WebUI `thread/` 按 shell / composer / messages / activity / preview / viewport 分目录，并拆薄 `ThreadShell`（文件预览、反馈、消息缓存等抽离）。
 - 输入区进一步贴近豆包：半透明毛玻璃卡片、底栏无灰条、空态发送钮为中灰圆盘；外观设置支持浅色 / 深色 / 跟随系统；设置中隐藏「网页」与 System「身份」块。
 - WebUI 启动 OTEL 仅在本地 / 开发环境导出；生产 SPA 不再请求本机 collector 地址。
+- ECS Server 发布在缺少 `deploy/.env` 时，会从运行中的 minibot 容器恢复环境文件后再构建。
 
 ## [1.0.20] - 2026-08-27
 

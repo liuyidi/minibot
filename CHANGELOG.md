@@ -26,6 +26,7 @@ Versions follow SemVer for product narrative. Package metadata may lag until a f
 - WebUI `thread/` is organized into shell / composer / messages / activity / preview / viewport, with `ThreadShell` thinned (file preview, feedback, message cache extracted).
 - Composer chrome is closer to Doubao (frosted card, flat toolbar, mid-gray idle send); appearance supports light / dark / system; settings hide Browser and System identity.
 - WebUI boot OTEL export is local/dev-only; production SPA no longer targets the local collector URL.
+- ECS Server publish restores a missing `deploy/.env` from the running minibot container before rebuild.
 
 ## [1.0.20] - 2026-08-27
 

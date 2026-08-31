@@ -15,6 +15,7 @@ on:
       - "Dockerfile.minibot"
       - "deploy/docker-compose.yml"
       - "deploy/up.sh"
+      - "deploy/ensure-env.sh"
       - ".github/workflows/publish-server-ecs.yml"
 
 concurrency:
@@ -95,6 +96,7 @@ jobs:
             set -euo pipefail
             cd /opt/demo/minibot/deploy
             mkdir -p webui-dist
+            bash ./ensure-env.sh
             export LANGFUSE_SDK_DIR=/opt/demo/mini-langfuse/sdk-python
             docker compose -f docker-compose.yml --env-file .env build minibot
 
@@ -110,6 +112,7 @@ jobs:
             set -euo pipefail
             cd /opt/demo/minibot/deploy
             mkdir -p webui-dist
+            bash ./ensure-env.sh
             export LANGFUSE_SDK_DIR=/opt/demo/mini-langfuse/sdk-python
             docker compose -f docker-compose.yml --env-file .env up -d minibot
             docker ps --filter name=minibot --format 'table {{.Names}}\t{{.Status}}\t{{.Image}}'
