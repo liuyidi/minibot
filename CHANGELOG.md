@@ -13,6 +13,7 @@ Versions follow SemVer for product narrative. Package metadata may lag until a f
 
 ### Added
 
+- Skills capability hub: Experts / Skills / Connectors routes, Skill Market with curated packs, and optional catalog installs (MiniMax, ClawHub, GitHub Anthropic plugins).
 - WebUI startup is instrumented with OpenTelemetry boot spans (`js_boot` → `first_interactive`), exported via OTLP for Tempo / Grafana; see [`docs/observability-web-boot.md`](./docs/observability-web-boot.md).
 - Gateway exposes a Prometheus `/metrics` endpoint for latency and request monitoring.
 - Mobile handoff (`/#/open`) is configurable from the gateway: store URLs, fallback download URL, title, and description via settings / `GET /auth/mobile-entry`.
@@ -21,6 +22,7 @@ Versions follow SemVer for product narrative. Package metadata may lag until a f
 
 ### Changed
 
+- Skills and Connectors search/add controls sit on the same top row as the hub tabs (Experts / Skills / Connectors).
 - WebUI sidebar, composer, and top chrome follow a Doubao-like hierarchy: shared row metrics, brand band spacing, and no green input focus rings.
 - Top utility nav (skills, automations, channels, …) and chat-list selection are mutually exclusive.
 - WebUI `thread/` is organized into shell / composer / messages / activity / preview / viewport, with `ThreadShell` thinned (file preview, feedback, message cache extracted).

@@ -14,6 +14,7 @@ English: [CHANGELOG.md](./CHANGELOG.md)
 
 ### 新增
 
+- 技能能力中心：专家 / 技能 / 连接器路由、技能市场与精选技能包，以及可选目录安装（MiniMax、ClawHub、GitHub Anthropic plugins）。
 - WebUI 启动链路接入 OpenTelemetry boot spans（`js_boot` → `first_interactive`），经 OTLP 导出到 Tempo / Grafana；说明见 [`docs/observability-web-boot.md`](./docs/observability-web-boot.md)。
 - Gateway 暴露 Prometheus `/metrics`，便于延迟与请求量监测。
 - 移动端唤端页（`/#/open`）可由 gateway 配置：商店链接、回退下载地址、标题与说明（设置项 / `GET /auth/mobile-entry`）。
@@ -22,6 +23,7 @@ English: [CHANGELOG.md](./CHANGELOG.md)
 
 ### 变更
 
+- 技能与连接器的搜索 / 添加控件与顶部「专家 / 技能 / 连接器」切换同一行。
 - WebUI 侧边栏 / 输入区 / 顶栏对齐豆包式层级：统一行高与间距、品牌区几何、输入框去绿色 focus ring。
 - 顶部工具导航（技能、定时任务、频道等）与下方对话列表选中态互斥。
 - WebUI `thread/` 按 shell / composer / messages / activity / preview / viewport 分目录，并拆薄 `ThreadShell`（文件预览、反馈、消息缓存等抽离）。
