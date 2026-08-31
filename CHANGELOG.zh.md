@@ -17,6 +17,12 @@ English: [CHANGELOG.md](./CHANGELOG.md)
 - WebUI 启动链路接入 OpenTelemetry boot spans（`js_boot` → `first_interactive`），经 OTLP 导出到 Tempo / Grafana；说明见 [`docs/observability-web-boot.md`](./docs/observability-web-boot.md)。
 - Gateway 暴露 Prometheus `/metrics`，便于延迟与请求量监测。
 - 移动端唤端页（`/#/open`）可由 gateway 配置：商店链接、回退下载地址、标题与说明（设置项 / `GET /auth/mobile-entry`）。
+- 对话标题支持悬停编辑：点击铅笔图标后可内联重命名，失焦自动保存。
+
+### 变更
+
+- WebUI 侧边栏 / 输入区 / 顶栏对齐豆包式层级：统一行高与间距、品牌区几何、输入框去绿色 focus ring。
+- 顶部工具导航（技能、定时任务、频道等）与下方对话列表选中态互斥。
 
 ## [1.0.20] - 2026-08-27
 
