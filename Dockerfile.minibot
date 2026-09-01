@@ -15,7 +15,7 @@ RUN set -eux; \
       sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list; \
       sed -i 's/security.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list; \
     fi; \
-    apt-get update && apt-get install -y --no-install-recommends curl git \
+    apt-get update && apt-get install -y --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -25,8 +25,12 @@ COPY minibot/src ./src
 
 COPY --from=langfuse_sdk . /tmp/sdk-python
 
+# Install the vendored sdk first, then strip the git+https pin so pip never
+# clones GitHub from inside the ECS builder (often blocked / flaky).
 RUN pip install --no-cache-dir -i https://mirrors.aliyun.com/pypi/simple/ --trusted-host mirrors.aliyun.com --upgrade pip \
-    && pip install --no-cache-dir -i https://mirrors.aliyun.com/pypi/simple/ --trusted-host mirrors.aliyun.com '.[e2b,feishu]' /tmp/sdk-python \
+    && pip install --no-cache-dir -i https://mirrors.aliyun.com/pypi/simple/ --trusted-host mirrors.aliyun.com /tmp/sdk-python \
+    && python -c "from pathlib import Path; p=Path('pyproject.toml'); t=p.read_text(); n='    \"mini-langfuse-sdk @ git+https://github.com/liuyidi/mini-langfuse.git@main#subdirectory=sdk-python\",\\n'; assert n in t, 'mini-langfuse-sdk git pin not found'; p.write_text(t.replace(n, ''))" \
+    && pip install --no-cache-dir -i https://mirrors.aliyun.com/pypi/simple/ --trusted-host mirrors.aliyun.com '.[e2b,feishu]' \
     && rm -rf /tmp/sdk-python /root/.cache/pip
 
 # Placeholder so the path exists if the host volume is empty at first start.
