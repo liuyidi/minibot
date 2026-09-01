@@ -8,28 +8,28 @@
     "url": "https://downloads.liuyidi.me/minibot/android/minibot-android-v1.0.7.apk"
   },
   "ios": {
-    "version": null,
-    "url": null
+    "version": "1.0.7",
+    "url": "https://testflight.apple.com/join/N2EhwSK6"
   },
   "macos": {
-    "version": "1.0.15",
-    "fileName": "minibot-1.0.15-minibot_1.0.15_arm64.dmg",
-    "url": "https://downloads.liuyidi.me/minibot/macos/minibot-1.0.15-minibot_1.0.15_arm64.dmg",
-    "size": "71M",
-    "intelFileName": "minibot-1.0.13-minibot.V2_1.0.13_x64.dmg",
-    "intelUrl": "https://downloads.liuyidi.me/minibot/macos/minibot-1.0.13-minibot.V2_1.0.13_x64.dmg",
-    "intelSize": "47M"
+    "version": "1.0.20",
+    "fileName": "minibot-1.0.20-minibot_1.0.20_aarch64.dmg",
+    "url": "https://downloads.liuyidi.me/minibot/macos/minibot-1.0.20-minibot_1.0.20_aarch64.dmg",
+    "size": "51M",
+    "intelFileName": "minibot-1.0.20-minibot_1.0.20_x64.dmg",
+    "intelUrl": "https://downloads.liuyidi.me/minibot/macos/minibot-1.0.20-minibot_1.0.20_x64.dmg",
+    "intelSize": "51M"
   },
   "windows": {
-    "version": "1.0.15",
-    "url": "https://downloads.liuyidi.me/minibot/windows/minibot-1.0.15-minibot_1.0.15_x64-setup.exe",
-    "size": "36M",
-    "fileName": "minibot-1.0.15-minibot_1.0.15_x64-setup.exe"
+    "version": "1.0.20",
+    "url": "https://downloads.liuyidi.me/minibot/windows/minibot-1.0.20-minibot_1.0.20_x64-setup.exe",
+    "size": "43M",
+    "fileName": "minibot-1.0.20-minibot_1.0.20_x64-setup.exe"
   },
   "linux": {
-    "version": "1.0.15",
-    "url": "https://downloads.liuyidi.me/minibot/linux/minibot-1.0.15-minibot_1.0.15_amd64.deb",
-    "size": "53M",
-    "fileName": "minibot-1.0.15-minibot_1.0.15_amd64.deb"
+    "version": "1.0.20",
+    "url": "https://downloads.liuyidi.me/minibot/linux/minibot-1.0.20-minibot_1.0.20_amd64.deb",
+    "size": "65M",
+    "fileName": "minibot-1.0.20-minibot_1.0.20_amd64.deb"
   }
 }
