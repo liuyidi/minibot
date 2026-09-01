@@ -14,6 +14,8 @@ English: [CHANGELOG.md](./CHANGELOG.md)
 
 ### 新增
 
+- 非破坏性对话分叉：可保留某一用户回合之前的历史（`fork_chat` / session store 边界）。
+- 技能市场单技能 / 技能包安装成功与失败 Toast 提示。
 - 技能能力中心：专家 / 技能 / 连接器路由、技能市场与精选技能包，以及可选目录安装（MiniMax、ClawHub、GitHub Anthropic plugins）。
 - WebUI 启动链路接入 OpenTelemetry boot spans（`js_boot` → `first_interactive`），经 OTLP 导出到 Tempo / Grafana；说明见 [`docs/observability-web-boot.md`](./docs/observability-web-boot.md)。
 - Gateway 暴露 Prometheus `/metrics`，便于延迟与请求量监测。
@@ -23,6 +25,8 @@ English: [CHANGELOG.md](./CHANGELOG.md)
 
 ### 修复
 
+- 已安装的目录技能与输入框 `/` 斜杠面板：界面为中文时优先展示市场 `label_zh` / `description_zh`。
+- LLM / `web_search` / `web_fetch` 共用 httpx `trust_env`：在配置了 SOCKS 代理但未安装 `socksio` 时自动绕过（常见 Clash 场景），可用 `MINIBOT_HTTP_IGNORE_PROXY` 覆盖。
 - WebUI 类型检查：能力中心 active utility 类型与技能目录刷新接线，确保 ECS WebUI 发布可构建。
 - WebUI 侧边栏 / 输入区 / 顶栏对齐豆包式层级：统一行高与间距、品牌区几何、输入框去绿色 focus ring。
 - 顶部工具导航（技能、定时任务、频道等）与下方对话列表选中态互斥。

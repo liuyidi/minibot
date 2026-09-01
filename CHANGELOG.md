@@ -13,6 +13,8 @@ Versions follow SemVer for product narrative. Package metadata may lag until a f
 
 ### Added
 
+- Non-destructive chat fork: keep history before a chosen user turn (`fork_chat` / session store boundary).
+- Skill Market install success/failure toasts for single skills and packs.
 - Skills capability hub: Experts / Skills / Connectors routes, Skill Market with curated packs, and optional catalog installs (MiniMax, ClawHub, GitHub Anthropic plugins).
 - WebUI startup is instrumented with OpenTelemetry boot spans (`js_boot` → `first_interactive`), exported via OTLP for Tempo / Grafana; see [`docs/observability-web-boot.md`](./docs/observability-web-boot.md).
 - Gateway exposes a Prometheus `/metrics` endpoint for latency and request monitoring.
@@ -22,6 +24,8 @@ Versions follow SemVer for product narrative. Package metadata may lag until a f
 
 ### Fixed
 
+- Installed catalog skills and the composer `/` slash palette show Chinese titles/descriptions from market `label_zh` / `description_zh` when the UI language is Chinese.
+- Shared httpx `trust_env` helper for LLM providers and web tools: auto-bypass broken SOCKS proxies when `socksio` is missing (Clash), overridable via `MINIBOT_HTTP_IGNORE_PROXY`.
 - WebUI typecheck: capability-hub active utility typing and skill catalog refresh wiring so ECS WebUI publish can build.
 - WebUI sidebar, composer, and top chrome follow a Doubao-like hierarchy: shared row metrics, brand band spacing, and no green input focus rings.
 - Top utility nav (skills, automations, channels, …) and chat-list selection are mutually exclusive.
