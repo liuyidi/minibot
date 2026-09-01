@@ -11,6 +11,10 @@ use url::Url;
 
 /// Local gateway default (desktop). Override with `MINIBOT_API_BASE`.
 pub const LOCAL_GATEWAY_API_BASE: &str = "http://127.0.0.1:8766";
+const PRODUCTION_LANGFUSE_ENABLED: &str = "true";
+const PRODUCTION_LANGFUSE_HOST: &str = "https://mlf.liuyidi.me";
+const PRODUCTION_LANGFUSE_PUBLIC_KEY: &str = "pk-lf-demo";
+const PRODUCTION_LANGFUSE_SECRET_KEY: &str = "sk-lf-demo";
 
 /// Default api_base for desktop: always the local gateway.
 pub const DEFAULT_API_BASE: &str = LOCAL_GATEWAY_API_BASE;
@@ -325,6 +329,20 @@ impl RemoteServer {
                 &logs_dir,
                 "no platform .env.models under ~/.minibot (demo models need keys)",
             );
+        }
+
+        // Desktop production uses the hosted mini-langfuse service by default.
+        // Keep explicit process env overrides, but do not let a developer's
+        // ~/.minibot/.env with LANGFUSE_ENABLED=false disable the shipped app.
+        for (key, value) in [
+            ("MINIBOT_SERVER_LANGFUSE_ENABLED", PRODUCTION_LANGFUSE_ENABLED),
+            ("MINIBOT_SERVER_LANGFUSE_HOST", PRODUCTION_LANGFUSE_HOST),
+            ("MINIBOT_SERVER_LANGFUSE_PUBLIC_KEY", PRODUCTION_LANGFUSE_PUBLIC_KEY),
+            ("MINIBOT_SERVER_LANGFUSE_SECRET_KEY", PRODUCTION_LANGFUSE_SECRET_KEY),
+        ] {
+            if std::env::var_os(key).is_none() {
+                cmd.env(key, value);
+            }
         }
 
         let child = cmd.spawn().map_err(|e| {

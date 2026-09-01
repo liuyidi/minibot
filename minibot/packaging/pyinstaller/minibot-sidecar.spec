@@ -52,6 +52,7 @@ for pkg in (
     "anyio",
     "pydantic",
     "pydantic_settings",
+    "mini_langfuse",
     "croniter",
     "yaml",
     "multipart",

@@ -8,6 +8,7 @@ dependencies = [
     "uvicorn[standard]>=0.32.0",
     "httpx>=0.28.0",
     "mcp>=1.26.0,<2.0.0",
+    "mini-langfuse-sdk @ git+https://github.com/liuyidi/mini-langfuse.git@main#subdirectory=sdk-python",
     "croniter>=2.0.0,<7.0.0",
     "pydantic>=2.12.0",
     "pydantic-settings>=2.12.0",
@@ -26,6 +27,9 @@ minibot = "minibot.__main__:main"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.hatch.metadata]
+allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/minibot"]
