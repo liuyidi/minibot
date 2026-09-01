@@ -30,8 +30,10 @@ jobs:
           - platform: macos-15-intel
             args: --target x86_64-apple-darwin
             triple: x86_64-apple-darwin
+          # AppImage/linuxdeploy is flaky on GH runners even with NO_STRIP
+          # (tauri-apps/tauri#14796). Ship deb+rpm; OSS sync prefers .deb.
           - platform: ubuntu-22.04
-            args: ""
+            args: --bundles deb,rpm
             triple: x86_64-unknown-linux-gnu
           - platform: windows-latest
             args: ""
@@ -172,11 +174,6 @@ jobs:
         uses: tauri-apps/tauri-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # linuxdeploy's bundled strip cannot parse modern .relr.dyn ELF sections
-          # (glibc/toolchain on Ubuntu runners) → opaque "failed to run linuxdeploy".
-          # See https://github.com/tauri-apps/tauri/issues/14796
-          NO_STRIP: true
-          APPIMAGE_EXTRACT_AND_RUN: "1"
         with:
           projectPath: desktop
           tagName: desktop-v__VERSION__
