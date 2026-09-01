@@ -30,6 +30,7 @@ English: [CHANGELOG.md](./CHANGELOG.md)
 
 ### 修复
 
+- 唤端页 `/#/open`：iOS/Android 深链配置为空时不再导致「打开 App」无响应，回退到 `minibot://`。
 - WebUI 发送消息后立即显示助手输入占位（三点），避免首个流式 token 到达前对话区空白。
 - 已安装的目录技能与输入框 `/` 斜杠面板：界面为中文时优先展示市场 `label_zh` / `description_zh`。
 - LLM / `web_search` / `web_fetch` 共用 httpx `trust_env`：在配置了 SOCKS 代理但未安装 `socksio` 时自动绕过（常见 Clash 场景），可用 `MINIBOT_HTTP_IGNORE_PROXY` 覆盖。

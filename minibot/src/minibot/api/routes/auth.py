@@ -90,10 +90,13 @@ async def mobile_entry_config(state: StateDep) -> dict[str, Any]:
     fallback_url = (getattr(state.settings, "mobile_entry_fallback_url", "") or "").strip()
     if not fallback_url:
         fallback_url = "https://liuyidi.me/minibot/download/"
+    # Empty store/scheme URLs must still deep-link into the installed app.
+    ios_url = (getattr(state.settings, "mobile_entry_ios_url", "") or "").strip() or "minibot://"
+    android_url = (getattr(state.settings, "mobile_entry_android_url", "") or "").strip() or "minibot://"
     return {
         "enabled": bool(getattr(state.settings, "mobile_entry_enabled", False)),
-        "iosUrl": (getattr(state.settings, "mobile_entry_ios_url", "") or "").strip(),
-        "androidUrl": (getattr(state.settings, "mobile_entry_android_url", "") or "").strip(),
+        "iosUrl": ios_url,
+        "androidUrl": android_url,
         "fallbackUrl": fallback_url,
         "title": (getattr(state.settings, "mobile_entry_title", "") or "打开 App").strip(),
         "description": (

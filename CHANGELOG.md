@@ -29,6 +29,7 @@ Versions follow SemVer for product narrative. Package metadata may lag until a f
 
 ### Fixed
 
+- Mobile handoff `/#/open`: empty iOS/Android deep-link settings no longer disable “Open app”; fall back to `minibot://`.
 - WebUI shows an assistant typing placeholder as soon as a message is sent, so the thread no longer sits blank before the first stream token.
 - Installed catalog skills and the composer `/` slash palette show Chinese titles/descriptions from market `label_zh` / `description_zh` when the UI language is Chinese.
 - Shared httpx `trust_env` helper for LLM providers and web tools: auto-bypass broken SOCKS proxies when `socksio` is missing (Clash), overridable via `MINIBOT_HTTP_IGNORE_PROXY`.

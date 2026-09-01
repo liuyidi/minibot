@@ -116,6 +116,20 @@ def test_settings_includes_observability(client: TestClient, auth_headers: dict[
     assert body["mobile_entry"]["enabled"] is True
 
 
+def test_mobile_entry_defaults_deep_links(client: TestClient, app) -> None:
+    app.state.app_state.settings.mobile_entry_enabled = True
+    app.state.app_state.settings.mobile_entry_ios_url = ""
+    app.state.app_state.settings.mobile_entry_android_url = ""
+
+    res = client.get("/mobile-entry")
+    assert res.status_code == 200
+    body = res.json()
+    assert body["enabled"] is True
+    assert body["iosUrl"] == "minibot://"
+    assert body["androidUrl"] == "minibot://"
+    assert body["fallbackUrl"].endswith("/minibot/download/")
+
+
 def test_status_page_served(client: TestClient) -> None:
     res = client.get("/status")
     assert res.status_code == 200

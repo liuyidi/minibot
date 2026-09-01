@@ -51,10 +51,14 @@ export default function OpenPage() {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const cfg = (await res.json()) as Partial<MobileEntryConfig>;
         if (cancelled) return;
+        // Blank ios/android URLs from settings must not wipe the minibot:// default.
         const nextConfig: MobileEntryConfig = {
           ...DEFAULT_CONFIG,
           ...cfg,
           enabled: !!cfg.enabled,
+          iosUrl: (cfg.iosUrl || "").trim() || DEFAULT_CONFIG.iosUrl,
+          androidUrl: (cfg.androidUrl || "").trim() || DEFAULT_CONFIG.androidUrl,
+          fallbackUrl: (cfg.fallbackUrl || "").trim() || DEFAULT_CONFIG.fallbackUrl,
           delayMs: Number(cfg.delayMs ?? DEFAULT_CONFIG.delayMs) || DEFAULT_CONFIG.delayMs,
         };
         setConfig(nextConfig);

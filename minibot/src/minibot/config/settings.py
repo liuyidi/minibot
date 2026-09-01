@@ -36,8 +36,8 @@ class Settings(BaseSettings):
 
     # Public mobile entry / app-handoff landing page.
     mobile_entry_enabled: bool = True
-    mobile_entry_ios_url: str = ""
-    mobile_entry_android_url: str = ""
+    mobile_entry_ios_url: str = "minibot://"
+    mobile_entry_android_url: str = "minibot://"
     mobile_entry_fallback_url: str = "https://liuyidi.me/minibot/download/"
     mobile_entry_delay_ms: int = 1200
     mobile_entry_title: str = "打开 App"

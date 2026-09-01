@@ -75,8 +75,8 @@ class DreamConfig(BaseModel):
 
 class MobileEntryConfig(BaseModel):
     enabled: bool = True
-    ios_url: str = ""
-    android_url: str = ""
+    ios_url: str = "minibot://"
+    android_url: str = "minibot://"
     fallback_url: str = "https://liuyidi.me/minibot/download/"
     delay_ms: int = Field(default=1200, ge=0, le=10_000)
     title: str = "打开 App"
