@@ -22,12 +22,6 @@ if ! codesign -dv "$APP" >/dev/null 2>&1; then
 fi
 
 APP_NAME="$(basename "$APP")"
-BACKGROUND="$TAURI_DIR/dmg/background.png"
-if [[ ! -f "$BACKGROUND" ]]; then
-  echo "create-styled-dmg: missing background: $BACKGROUND" >&2
-  exit 1
-fi
-
 # Matches bundle.macOS.dmg in tauri.conf.json
 WINDOW_W=660
 WINDOW_H=400
@@ -45,16 +39,17 @@ resolve_create_dmg() {
     CREATE_DMG="$(command -v create-dmg)"
     return 0
   fi
-  local cache="$CARGO_TARGET_DIR/create-dmg/create-dmg"
-  if [[ -x "$cache" ]]; then
-    CREATE_DMG="$cache"
+  local cache_root="$CARGO_TARGET_DIR/create-dmg"
+  local cache_repo="$cache_root/repo"
+  if [[ -x "$cache_repo/create-dmg" && -d "$cache_repo/support" ]]; then
+    CREATE_DMG="$cache_repo/create-dmg"
     return 0
   fi
-  mkdir -p "$(dirname "$cache")"
-  echo "create-styled-dmg: fetching create-dmg → $cache"
-  curl -fsSL "https://raw.githubusercontent.com/create-dmg/create-dmg/master/create-dmg" -o "$cache"
-  chmod +x "$cache"
-  CREATE_DMG="$cache"
+  mkdir -p "$cache_root"
+  rm -rf "$cache_repo"
+  echo "create-styled-dmg: fetching create-dmg → $cache_repo"
+  git clone --depth 1 https://github.com/create-dmg/create-dmg.git "$cache_repo" >/dev/null
+  CREATE_DMG="$cache_repo/create-dmg"
 }
 
 resolve_create_dmg
@@ -83,7 +78,6 @@ rm -f "$CANON"
 echo "==> Styled DMG via create-dmg (no Tauri re-sign / re-notarize)"
 "$CREATE_DMG" \
   --volname "$VOLNAME" \
-  --background "$BACKGROUND" \
   --window-size "$WINDOW_W" "$WINDOW_H" \
   --icon-size "$ICON_SIZE" \
   --icon "$APP_NAME" "$APP_X" "$APP_Y" \

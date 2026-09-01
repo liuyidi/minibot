@@ -277,6 +277,21 @@ fn format_report(
             if row.key == "Connection log (tail)" {
                 continue;
             }
+            if row.key == "Top processes" {
+                out.push_str("- Top processes:\n");
+                for line in row.value.lines() {
+                    let line = line.trim();
+                    if line.is_empty() {
+                        continue;
+                    }
+                    if let Some((name, pct)) = line.split_once('\t') {
+                        out.push_str(&format!("  - {name}: {pct}\n"));
+                    } else {
+                        out.push_str(&format!("  - {line}\n"));
+                    }
+                }
+                continue;
+            }
             out.push_str(&format!("- {}: {}\n", row.key, row.value));
         }
     }
@@ -432,13 +447,20 @@ fn macos_root_disk_usage() -> Option<String> {
 
 #[cfg(target_os = "macos")]
 fn macos_top_processes() -> Option<String> {
-    command_output(
+    // One process per line: "Name\t42.9%" — UI renders name left / percent right.
+    let raw = command_output(
         "bash",
         &[
             "-lc",
-            "ps -Arco %cpu=,comm= | head -n 10 | awk 'NF>=2 {printf \"%s %.1f%%, \", $2, $1} END {print \"\"}' | sed 's/, $//'",
+            "ps -Arco %cpu=,comm= | head -n 10 | awk 'NF>=2 {cpu=$1; $1=\"\"; sub(/^ +/, \"\"); printf \"%s\\t%.1f%%\\n\", $0, cpu}'",
         ],
-    )
+    )?;
+    let trimmed = raw.trim().to_string();
+    if trimmed.is_empty() {
+        None
+    } else {
+        Some(trimmed)
+    }
 }
 
 #[cfg(target_os = "macos")]

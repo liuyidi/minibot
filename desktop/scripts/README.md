@@ -10,7 +10,7 @@ scripts/
 ├── sidecar/        # PyInstaller sidecar 准备（本地 + CI 共用）
 ├── signing/        # macOS Developer ID 签名与公证
 ├── deeplink/       # 开发态 minibot:// 协议注册
-├── dmg/            # macOS DMG 安装窗口背景图
+├── dmg/            # macOS DMG 安装包脚本
 └── README.md       # 本文件
 ```
 
@@ -95,17 +95,13 @@ cd desktop
 
 | 文件 | 作用 |
 |------|------|
-| `generate-dmg-background.py` | 生成 macOS DMG 安装窗口背景（浅灰底 + 虚线箭头，布局对齐 Multica/Pen 风格）。输出 `src-tauri/dmg/background.png`。 |
-| `create-styled-dmg.sh` | 对已签名/已公证的 `.app` 直接调 **create-dmg**（不重签、不二次公证），布局与 `tauri.conf.json` 的 `bundle.macOS.dmg` 一致。 |
-| `../src-tauri/dmg/background.png` | Tauri `bundle.macOS.dmg.background` 引用的 PNG（660×400，与 `appPosition` / `applicationFolderPosition` 配套）。 |
+| `create-styled-dmg.sh` | 对已签名/已公证的 `.app` 直接调开源 **create-dmg**（不重签、不二次公证），由 Finder 和 create-dmg 放置真实的 `.app` 与 `Applications` 图标。 |
 
 用法：
 
 ```bash
 cd minibot
-uv run --with pillow python ../desktop/scripts/dmg/generate-dmg-background.py
-
-# 本地 ad-hoc（通常 CI 未设，背景会生效）：
+# 本地 ad-hoc：
 cd desktop && npm run build
 
 # 已签名 .app 后（与 notarize-macos-app.sh --dmg 相同）：
@@ -114,7 +110,7 @@ cd desktop && npm run build
 
 **CI 注意：** GitHub Actions 默认 `CI=true`，Tauri 会给 create-dmg 传 `--skip-jenkins`，DMG 会缺少背景与 Applications 拖放布局（[create-dmg#72](https://github.com/create-dmg/create-dmg/issues/72)、[tauri#9920](https://github.com/tauri-apps/tauri/issues/9920)）。`publish-desktop.yml` 在 macOS 签名步骤设 `CI: false`；若 DMG 打包 flaky，可改回 `true` 并改用 plain `hdiutil` DMG。
 
-修改箭头或窗口尺寸后重新生成背景图，并同步更新 `src-tauri/tauri.conf.json` 里的 `dmg` 坐标。
+如需调整 DMG 窗口或图标位置，只修改 `create-styled-dmg.sh` 与 `src-tauri/tauri.conf.json` 中的坐标；不要把真实应用图标画进背景图。
 
 ## 典型流程
 

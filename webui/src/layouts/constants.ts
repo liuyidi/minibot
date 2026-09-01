@@ -12,16 +12,16 @@ export const MOBILE_SIDEBAR_WIDTH = `min(${SIDEBAR_WIDTH}px, calc(100vw - 0.75re
  * host sidebar is collapsed (traffic lights ≈ 84 + 3×28 icons + gaps ≈ 180).
  */
 export const HOST_CHROME_TITLE_INSET_CLASS = "pl-[180px]";
-/** Desktop titlebar band — sync with Rust `TRAFFIC_LIGHT_BTN_H + TRAFFIC_LIGHT_Y`. */
+/** Desktop titlebar band used by the WebUI header alignment. */
 export const NATIVE_TITLEBAR_BAND_PX = 32;
-/** Traffic-light vertical center with CHROME_DOWN=10 — sync with Rust geometry. */
-export const NATIVE_TITLEBAR_CENTER_PX = 26;
+/** Native titlebar control top aligned with the default macOS traffic lights. */
+export const NATIVE_TITLEBAR_CENTER_PX = 16;
 /** Top offset for h-8 controls aligned to `NATIVE_TITLEBAR_CENTER_PX`. */
 export const NATIVE_HOST_CHROME_TOP_PX = NATIVE_TITLEBAR_CENTER_PX - 16;
 /** Logo band below native titlebar — titlebar (32px) + 24px breathing room. */
 export const NATIVE_HOST_TOP_INSET_CLASS = "mt-14";
 export const NATIVE_HOST_TOP_PADDING_CLASS = "pt-14";
-export const NATIVE_HOST_TOP_CHROME_ROW = "flex mt-[10px] h-8 shrink-0 items-center";
+export const NATIVE_HOST_TOP_CHROME_ROW = "flex mt-0 h-8 shrink-0 items-center";
 
 export function normalizeWorkspaceScope(scope: WorkspaceScopePayload): WorkspaceScopePayload {
   const accessMode = scope.access_mode === "restricted" ? "restricted" : "full";

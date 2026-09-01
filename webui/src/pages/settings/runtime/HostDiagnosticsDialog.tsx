@@ -171,7 +171,13 @@ export function HostDiagnosticsDialog({
                       className="grid grid-cols-[minmax(0,34%)_minmax(0,1fr)] gap-x-3 gap-y-1 text-[12.5px] leading-5"
                     >
                       <dt className="text-muted-foreground">{row.key}</dt>
-                      <dd className="break-words font-medium text-foreground/90">{row.value}</dd>
+                      <dd className="min-w-0 font-medium text-foreground/90">
+                        {row.key === "Top processes" ? (
+                          <TopProcessesValue value={row.value} />
+                        ) : (
+                          <span className="break-words">{row.value}</span>
+                        )}
+                      </dd>
                     </div>
                   ))}
                 </dl>
@@ -231,4 +237,54 @@ function sectionTitle(
   if (id === "system") return tx("settings.diagnostics.sections.system", "System");
   if (id === "runtime") return tx("settings.diagnostics.sections.runtime", "Runtime");
   return fallback;
+}
+
+function parseTopProcesses(value: string): Array<{ name: string; pct: string }> {
+  const parseLine = (line: string): { name: string; pct: string } | null => {
+    const trimmed = line.trim();
+    if (!trimmed) return null;
+    if (trimmed.includes("\t")) {
+      const [name, pct] = trimmed.split("\t");
+      if (name?.trim() && pct?.trim()) {
+        return { name: name.trim(), pct: pct.trim() };
+      }
+      return null;
+    }
+    const match = trimmed.match(/^(.*?)(?:\s+)(\d+(?:\.\d+)?%)$/);
+    return match ? { name: match[1].trim(), pct: match[2] } : null;
+  };
+
+  // Native host: one "Name\t42.9%" per line.
+  if (value.includes("\n") || value.includes("\t")) {
+    return value
+      .split("\n")
+      .map(parseLine)
+      .filter((item): item is { name: string; pct: string } => item != null);
+  }
+
+  // Legacy comma-separated fallback: "WindowServer 42.9%, Codex 8.8%"
+  return value
+    .split(",")
+    .map(parseLine)
+    .filter((item): item is { name: string; pct: string } => item != null);
+}
+
+function TopProcessesValue({ value }: { value: string }) {
+  const items = parseTopProcesses(value);
+  if (!items.length) {
+    return <span className="break-words">{value}</span>;
+  }
+  return (
+    <ul className="space-y-1">
+      {items.map((item, index) => (
+        <li
+          key={`${item.name}-${item.pct}-${index}`}
+          className="flex items-baseline justify-between gap-3"
+        >
+          <span className="min-w-0 truncate">{item.name}</span>
+          <span className="shrink-0 tabular-nums text-muted-foreground">{item.pct}</span>
+        </li>
+      ))}
+    </ul>
+  );
 }

@@ -20,7 +20,6 @@ mod macos_chrome {
         Ok(())
     }
 
-    pub fn reassert_traffic_lights(_window: &WebviewWindow) {}
 }
 
 use std::path::PathBuf;
@@ -35,7 +34,7 @@ use tauri_plugin_opener::OpenerExt;
 use url::Url;
 
 #[cfg(target_os = "macos")]
-use tauri::{LogicalPosition, TitleBarStyle};
+use tauri::TitleBarStyle;
 
 struct AppState {
     server: Arc<RemoteServer>,
@@ -58,22 +57,8 @@ fn is_desktop_auth_done_link(deep_link: &str) -> bool {
         || (host.is_empty() && path == "auth/done")
         || path.ends_with("auth/done")
 }
-/// Overlay traffic-light inset (logical px). Single source for
-/// `WindowBuilder::traffic_light_position` and post-chrome AppKit layout.
-///
-/// - **x**: close-button `origin.x`（越大越靠右）
-/// - **y**: titlebar 容器高度增量（`按钮高 + y`），主要影响可点/可拖区域厚度，
-///   **不是**整组上下位置的旋钮
-/// - **CHROME_DOWN**: 红绿灯 + 三个图标整体下移（越大越靠下）
-pub(crate) const TRAFFIC_LIGHT_X: f64 = 18.0;
-pub(crate) const TRAFFIC_LIGHT_Y: f64 = 20.0;
-/// macOS standard traffic-light button height (logical px) — fixed so sidebar toggles
-/// don't re-read unstable AppKit frames and shift the cluster vertically.
-pub(crate) const TRAFFIC_LIGHT_BTN_H: f64 = 12.0;
-/// Horizontal origin spacing between adjacent traffic-light buttons.
-pub(crate) const TRAFFIC_LIGHT_SPACE: f64 = 20.0;
 /// Positive = move traffic lights and titlebar icons down together (logical px).
-pub(crate) const CHROME_DOWN: f64 = 10.0;
+pub(crate) const CHROME_DOWN: f64 = 6.0;
 
 fn install_native_chrome_on_main(app: &tauri::AppHandle, window: &tauri::WebviewWindow) {
     let app2 = app.clone();
@@ -232,7 +217,6 @@ fn with_platform_chrome<R: Runtime, M: Manager<R>>(
     {
         builder
             .title_bar_style(TitleBarStyle::Overlay)
-            .traffic_light_position(LogicalPosition::new(TRAFFIC_LIGHT_X, TRAFFIC_LIGHT_Y))
     }
     #[cfg(not(target_os = "macos"))]
     {
