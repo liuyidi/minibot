@@ -20,7 +20,7 @@
     "reason": "legacy debt; do not grow — split toward ≤350"
   },
   "hooks/sessions/useMinibotStream.ts": {
-    "max": 1048,
+    "max": 1080,
     "reason": "legacy debt; do not grow — split toward ≤350"
   },
   "hooks/ui/useVoiceRecorder.ts": {

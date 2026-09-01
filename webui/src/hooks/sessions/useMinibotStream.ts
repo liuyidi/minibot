@@ -198,14 +198,33 @@ function closeReasoningStream(prev: UIMessage[]): UIMessage[] {
   return prev;
 }
 
-function isReasoningOnlyPlaceholder(message: UIMessage): boolean {
+function isEmptyAssistantShell(message: UIMessage): boolean {
   return (
     message.role === "assistant"
     && message.kind !== "trace"
     && message.content.trim().length === 0
+    && !message.media?.length
+  );
+}
+
+/** Pre-token typing row inserted on send (no reasoning yet). */
+function isEmptyTypingPlaceholder(message: UIMessage): boolean {
+  return isEmptyAssistantShell(message) && !message.reasoning && !message.reasoningStreaming;
+}
+
+function isReasoningOnlyPlaceholder(message: UIMessage): boolean {
+  return (
+    isEmptyAssistantShell(message)
     && !!message.reasoning
     && !message.reasoningStreaming
-    && !message.media?.length
+  );
+}
+
+/** Empty assistant row that a complete ``message`` event may adopt. */
+function isAbsorbableAssistantPlaceholder(message: UIMessage): boolean {
+  return (
+    isEmptyAssistantShell(message)
+    && (!!message.isStreaming || !!message.reasoning || !!message.reasoningStreaming)
   );
 }
 
@@ -215,6 +234,7 @@ function isToolTrace(message: UIMessage | undefined): boolean {
 
 function pruneReasoningOnlyPlaceholders(prev: UIMessage[]): UIMessage[] {
   return prev.filter((message, index) => {
+    if (isEmptyTypingPlaceholder(message)) return false;
     if (!isReasoningOnlyPlaceholder(message)) return true;
     // A reasoning-only assistant row immediately followed by tool traces is
     // the live equivalent of a persisted assistant tool-call message with
@@ -262,7 +282,7 @@ function absorbCompleteAssistantMessage(
   message: Omit<UIMessage, "id" | "role" | "createdAt">,
 ): UIMessage[] {
   const last = prev[prev.length - 1];
-  if (!last || !isReasoningOnlyPlaceholder(last) || !matchesTurn(last, message)) {
+  if (!last || !isAbsorbableAssistantPlaceholder(last) || !matchesTurn(last, message)) {
     return [
       ...prev,
       {
@@ -697,7 +717,9 @@ export function useMinibotStream(
             streamEndTimerRef.current = null;
           }
           setIsStreaming(false);
-          setMessages((prev) => prev.map((m) => (m.isStreaming ? { ...m, isStreaming: false } : m)));
+          setMessages((prev) => pruneReasoningOnlyPlaceholders(
+            prev.map((m) => (m.isStreaming ? { ...m, isStreaming: false } : m)),
+          ));
           suppressStreamUntilTurnEndRef.current = false;
         }
         return;
@@ -710,7 +732,9 @@ export function useMinibotStream(
         }
         setIsStreaming(false);
         setRunStartedAt(null);
-        setMessages((prev) => prev.map((m) => (m.isStreaming ? { ...m, isStreaming: false } : m)));
+        setMessages((prev) => pruneReasoningOnlyPlaceholders(
+          prev.map((m) => (m.isStreaming ? { ...m, isStreaming: false } : m)),
+        ));
         suppressStreamUntilTurnEndRef.current = false;
         return;
       }
@@ -994,6 +1018,16 @@ export function useMinibotStream(
             ...(options?.cliApps?.length ? { cliApps: options.cliApps } : {}),
             ...(options?.mcpPresets?.length ? { mcpPresets: options.mcpPresets } : {}),
           },
+          // Immediate typing placeholder so the thread never sits blank
+          // between the optimistic user bubble and the first server token.
+          {
+            id: crypto.randomUUID(),
+            role: "assistant",
+            content: "",
+            isStreaming: true,
+            turnId,
+            createdAt: Date.now(),
+          },
         ];
       });
       // Mark streaming immediately so the UI shows the loading indicator
@@ -1014,7 +1048,9 @@ export function useMinibotStream(
       activeAssistantRef.current = null;
       closedAssistantStreamIdsRef.current.clear();
       clearActivitySegment();
-      return prev.map((m) => (m.isStreaming ? { ...m, isStreaming: false } : m));
+      return pruneReasoningOnlyPlaceholders(
+        prev.map((m) => (m.isStreaming ? { ...m, isStreaming: false } : m)),
+      );
     });
     suppressStreamUntilTurnEndRef.current = false;
     client.sendMessage(chatId, "/stop");

@@ -1392,11 +1392,58 @@ describe("useMinibotStream", () => {
       result.current.send("fine");
     });
 
-    expect(result.current.messages).toHaveLength(1);
+    expect(result.current.messages).toHaveLength(2);
     expect(result.current.messages[0].role).toBe("user");
     expect(result.current.messages[0].content).toBe("fine");
     expect(result.current.messages[0].turnId).toEqual(expect.any(String));
     expect(result.current.messages[0].turnPhase).toBe("user");
+    expect(result.current.messages[1]).toMatchObject({
+      role: "assistant",
+      content: "",
+      isStreaming: true,
+      turnId: result.current.messages[0].turnId,
+    });
+  });
+
+  it("inserts a typing placeholder on send and absorbs the first answer delta", async () => {
+    const fake = fakeClient();
+    const { result } = renderHook(() => useMinibotStream("chat-typing", EMPTY_MESSAGES), {
+      wrapper: wrap(fake.client),
+    });
+
+    act(() => {
+      result.current.send("hello");
+    });
+
+    expect(result.current.messages).toHaveLength(2);
+    expect(result.current.messages[1]).toMatchObject({
+      role: "assistant",
+      content: "",
+      isStreaming: true,
+    });
+    const placeholderId = result.current.messages[1].id;
+
+    act(() => {
+      fake.emit("chat-typing", {
+        event: "delta",
+        chat_id: "chat-typing",
+        text: "Hi!",
+      });
+    });
+
+    await act(async () => {
+      await new Promise((resolve) => {
+        requestAnimationFrame(() => resolve(undefined));
+      });
+    });
+
+    expect(result.current.messages).toHaveLength(2);
+    expect(result.current.messages[1]).toMatchObject({
+      id: placeholderId,
+      role: "assistant",
+      content: "Hi!",
+      isStreaming: true,
+    });
   });
 
   it("attaches assistant media_urls to complete messages", () => {
@@ -1553,7 +1600,7 @@ describe("useMinibotStream", () => {
     act(() => {
       result.current.send("long task");
     });
-    expect(result.current.messages).toHaveLength(1);
+    expect(result.current.messages).toHaveLength(2);
     expect(result.current.isStreaming).toBe(true);
 
     act(() => {
