@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import asyncio
+import secrets
 from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, Header, HTTPException, Query, status
 
 from minibot.api.deps import AuthDep, StateDep
 
@@ -21,6 +22,22 @@ BUILTIN_SLASH_COMMANDS: list[dict[str, str]] = [
         "arg_hint": "",
     },
 ]
+
+
+@router.get("/api/desktop/identity")
+async def desktop_identity(
+    state: StateDep,
+    instance_token: str | None = Header(default=None, alias="X-Minibot-Instance-Token"),
+) -> dict[str, str]:
+    """Identify the desktop sidecar without exposing the normal API auth surface."""
+    expected = (getattr(state.settings, "desktop_instance_token", "") or "").strip()
+    supplied = (instance_token or "").strip()
+    if not expected or not supplied or not secrets.compare_digest(supplied, expected):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="desktop instance not found",
+        )
+    return {"runtime": "minibot", "surface": "desktop"}
 
 
 @router.get("/api/commands")

@@ -23,6 +23,8 @@ class Settings(BaseSettings):
     auth_provider: str = "local"
     token_ttl_s: int = 86_400
     require_auth: bool = False
+    # Random token used by the desktop shell to identify its own local sidecar.
+    desktop_instance_token: str = ""
 
     mini_auth_base_url: str = "http://127.0.0.1:8000"
     mini_auth_client_id: str = "minibot"

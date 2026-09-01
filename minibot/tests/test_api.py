@@ -12,6 +12,23 @@ def test_health(client: TestClient) -> None:
     assert res.json()["status"] == "ok"
 
 
+def test_desktop_identity_requires_matching_instance_token(client: TestClient, app) -> None:
+    app.state.app_state.settings.desktop_instance_token = "desktop-test-token"
+
+    assert client.get("/api/desktop/identity").status_code == 404
+    assert client.get(
+        "/api/desktop/identity",
+        headers={"X-Minibot-Instance-Token": "wrong-token"},
+    ).status_code == 404
+
+    res = client.get(
+        "/api/desktop/identity",
+        headers={"X-Minibot-Instance-Token": "desktop-test-token"},
+    )
+    assert res.status_code == 200
+    assert res.json() == {"runtime": "minibot", "surface": "desktop"}
+
+
 def test_bootstrap_and_session_flow(client: TestClient, auth_headers: dict[str, str]) -> None:
     created = client.post("/api/sessions", headers=auth_headers, json={})
     assert created.status_code == 200
