@@ -172,6 +172,11 @@ jobs:
         uses: tauri-apps/tauri-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # linuxdeploy's bundled strip cannot parse modern .relr.dyn ELF sections
+          # (glibc/toolchain on Ubuntu runners) → opaque "failed to run linuxdeploy".
+          # See https://github.com/tauri-apps/tauri/issues/14796
+          NO_STRIP: true
+          APPIMAGE_EXTRACT_AND_RUN: "1"
         with:
           projectPath: desktop
           tagName: desktop-v__VERSION__

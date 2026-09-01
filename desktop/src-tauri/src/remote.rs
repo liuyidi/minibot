@@ -8,9 +8,12 @@ use std::time::{Duration, Instant};
 
 use serde::{Deserialize, Serialize};
 use url::Url;
+use uuid::Uuid;
 
 /// Local gateway default (desktop). Override with `MINIBOT_API_BASE`.
 pub const LOCAL_GATEWAY_API_BASE: &str = "http://127.0.0.1:8766";
+const LOCAL_GATEWAY_START_PORT: u16 = 8766;
+const LOCAL_GATEWAY_MAX_PORT: u16 = 8799;
 const PRODUCTION_LANGFUSE_ENABLED: &str = "true";
 const PRODUCTION_LANGFUSE_HOST: &str = "https://mlf.liuyidi.me";
 const PRODUCTION_LANGFUSE_PUBLIC_KEY: &str = "pk-lf-demo";
@@ -46,6 +49,8 @@ pub struct HostRuntimeInfo {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct ServerConfig {
     api_base: String,
+    #[serde(default)]
+    instance_token: String,
 }
 
 pub struct RemoteServer {
@@ -55,6 +60,7 @@ pub struct RemoteServer {
 struct RemoteInner {
     status: EngineStatus,
     api_base: String,
+    instance_token: String,
     data_dir: PathBuf,
     logs_dir: PathBuf,
     config_path: PathBuf,
@@ -74,11 +80,13 @@ impl RemoteServer {
 
         let config_path = data_dir.join("server.json");
         let api_base = resolve_initial_api_base(&config_path)?;
+        let instance_token = load_or_create_instance_token(&config_path, &api_base)?;
 
         Ok(Self {
             inner: Mutex::new(RemoteInner {
                 status: EngineStatus::Stopped,
                 api_base,
+                instance_token,
                 data_dir,
                 logs_dir,
                 config_path,
@@ -91,22 +99,34 @@ impl RemoteServer {
     }
 
     pub fn runtime_info(&self) -> Result<HostRuntimeInfo, String> {
-        let g = self.inner.lock().map_err(|_| "remote state lock poisoned".to_string())?;
+        let g = self
+            .inner
+            .lock()
+            .map_err(|_| "remote state lock poisoned".to_string())?;
         Ok(runtime_info_from_inner(&g))
     }
 
     pub fn api_base(&self) -> Result<String, String> {
-        let g = self.inner.lock().map_err(|_| "remote state lock poisoned".to_string())?;
+        let g = self
+            .inner
+            .lock()
+            .map_err(|_| "remote state lock poisoned".to_string())?;
         Ok(g.api_base.clone())
     }
 
     pub fn logs_dir(&self) -> Result<PathBuf, String> {
-        let g = self.inner.lock().map_err(|_| "remote state lock poisoned".to_string())?;
+        let g = self
+            .inner
+            .lock()
+            .map_err(|_| "remote state lock poisoned".to_string())?;
         Ok(g.logs_dir.clone())
     }
 
     pub fn set_status(&self, status: EngineStatus) -> Result<(), String> {
-        let mut g = self.inner.lock().map_err(|_| "remote state lock poisoned".to_string())?;
+        let mut g = self
+            .inner
+            .lock()
+            .map_err(|_| "remote state lock poisoned".to_string())?;
         g.status = status;
         Ok(())
     }
@@ -119,7 +139,7 @@ impl RemoteServer {
                 .lock()
                 .map_err(|_| "remote state lock poisoned".to_string())?;
             g.api_base = normalized;
-            persist_server_config(&g.config_path, &g.api_base)?;
+            persist_server_config(&g.config_path, &g.api_base, &g.instance_token)?;
             g.last_error = None;
         }
         self.runtime_info()
@@ -139,38 +159,59 @@ impl RemoteServer {
             );
         }
 
-        // If local gateway is not up yet, spawn sidecar / PATH minibot.
-        if self.wait_until_ready(Duration::from_secs(2)).is_err() {
-            if let Err(spawn_err) = self.ensure_local_engine() {
-                let _ = append_log_path(
-                    &self.logs_dir().unwrap_or_default(),
-                    &format!("engine spawn failed: {spawn_err}"),
-                );
-                {
-                    let mut g = self
-                        .inner
-                        .lock()
-                        .map_err(|_| "remote state lock poisoned".to_string())?;
-                    g.status = EngineStatus::Crashed;
-                    g.last_error = Some(spawn_err.clone());
-                }
-                return Err(spawn_err);
+        let current_base = self.api_base()?;
+        if is_loopback_api_base(&current_base) {
+            if !self.gateway_identity_matches(&current_base) {
+                self.select_available_local_port()?;
+                self.ensure_local_engine()?;
+                self.wait_until_ready(Duration::from_secs(90))?;
             }
-            if let Err(ready_err) = self.wait_until_ready(Duration::from_secs(90)) {
-                {
-                    let mut g = self
-                        .inner
-                        .lock()
-                        .map_err(|_| "remote state lock poisoned".to_string())?;
-                    g.status = EngineStatus::Crashed;
-                    g.last_error = Some(ready_err.clone());
-                }
-                return Err(ready_err);
-            }
+        } else if let Err(remote_err) = self.wait_until_ready(Duration::from_secs(5)) {
+            let message = format!("远程引擎不可用（{current_base}）: {remote_err}");
+            let mut g = self
+                .inner
+                .lock()
+                .map_err(|_| "remote state lock poisoned".to_string())?;
+            g.status = EngineStatus::Crashed;
+            g.last_error = Some(message.clone());
+            return Err(message);
         }
 
         self.set_status(EngineStatus::Ready)?;
         self.runtime_info()
+    }
+
+    fn gateway_identity_matches(&self, api_base: &str) -> bool {
+        let token = self
+            .inner
+            .lock()
+            .ok()
+            .map(|g| g.instance_token.clone())
+            .unwrap_or_default();
+        !token.is_empty() && probe_identity(api_base, &token)
+    }
+
+    fn select_available_local_port(&self) -> Result<(), String> {
+        let selected = first_available_local_port(
+            LOCAL_GATEWAY_START_PORT,
+            LOCAL_GATEWAY_MAX_PORT,
+            local_port_available,
+        )
+        .ok_or_else(|| {
+            format!("本地网关端口 {LOCAL_GATEWAY_START_PORT}-{LOCAL_GATEWAY_MAX_PORT} 均不可用")
+        })?;
+        let api_base = format!("http://127.0.0.1:{selected}");
+        let mut g = self
+            .inner
+            .lock()
+            .map_err(|_| "remote state lock poisoned".to_string())?;
+        if g.api_base != api_base {
+            let token = g.instance_token.clone();
+            persist_server_config(&g.config_path, &api_base, &token)?;
+            g.api_base = api_base.clone();
+        }
+        let _ = append_log(&g.logs_dir, &format!("selected local gateway {api_base}"));
+        Ok(())
     }
 
     pub fn reconnect(&self) -> Result<HostRuntimeInfo, String> {
@@ -198,10 +239,7 @@ impl RemoteServer {
     pub fn complete_desktop_oauth(&self, deep_link: &str) -> Result<String, String> {
         let (code, oauth_state) = parse_desktop_auth_callback(deep_link)?;
         let api_base = self.api_base()?;
-        let complete_url = format!(
-            "{}/auth/desktop/complete",
-            api_base.trim_end_matches('/')
-        );
+        let complete_url = format!("{}/auth/desktop/complete", api_base.trim_end_matches('/'));
         let payload = serde_json::json!({
             "code": code,
             "state": oauth_state,
@@ -259,12 +297,16 @@ impl RemoteServer {
         }
 
         let (bin, label) = resolve_sidecar_command()?;
-        let (_data_dir, logs_dir, api_base) = {
+        let (logs_dir, api_base, instance_token) = {
             let g = self
                 .inner
                 .lock()
                 .map_err(|_| "remote state lock poisoned".to_string())?;
-            (g.data_dir.clone(), g.logs_dir.clone(), g.api_base.clone())
+            (
+                g.logs_dir.clone(),
+                g.api_base.clone(),
+                g.instance_token.clone(),
+            )
         };
 
         let server_data_dir = minibot_home_dir();
@@ -331,14 +373,26 @@ impl RemoteServer {
             );
         }
 
+        // The desktop-generated identity must win over any stale local dotenv value.
+        cmd.env("MINIBOT_SERVER_DESKTOP_INSTANCE_TOKEN", &instance_token);
+
         // Desktop production uses the hosted mini-langfuse service by default.
         // Keep explicit process env overrides, but do not let a developer's
         // ~/.minibot/.env with LANGFUSE_ENABLED=false disable the shipped app.
         for (key, value) in [
-            ("MINIBOT_SERVER_LANGFUSE_ENABLED", PRODUCTION_LANGFUSE_ENABLED),
+            (
+                "MINIBOT_SERVER_LANGFUSE_ENABLED",
+                PRODUCTION_LANGFUSE_ENABLED,
+            ),
             ("MINIBOT_SERVER_LANGFUSE_HOST", PRODUCTION_LANGFUSE_HOST),
-            ("MINIBOT_SERVER_LANGFUSE_PUBLIC_KEY", PRODUCTION_LANGFUSE_PUBLIC_KEY),
-            ("MINIBOT_SERVER_LANGFUSE_SECRET_KEY", PRODUCTION_LANGFUSE_SECRET_KEY),
+            (
+                "MINIBOT_SERVER_LANGFUSE_PUBLIC_KEY",
+                PRODUCTION_LANGFUSE_PUBLIC_KEY,
+            ),
+            (
+                "MINIBOT_SERVER_LANGFUSE_SECRET_KEY",
+                PRODUCTION_LANGFUSE_SECRET_KEY,
+            ),
         ] {
             if std::env::var_os(key).is_none() {
                 cmd.env(key, value);
@@ -346,9 +400,7 @@ impl RemoteServer {
         }
 
         let child = cmd.spawn().map_err(|e| {
-            format!(
-                "无法启动本地引擎（{label}）。请安装 minibot 或设置 MINIBOT_SIDECAR。详情: {e}"
-            )
+            format!("无法启动本地引擎（{label}）。请安装 minibot 或设置 MINIBOT_SIDECAR。详情: {e}")
         })?;
 
         let mut g = self
@@ -512,7 +564,8 @@ fn curl_json_post(url: &str, body: &str) -> Result<serde_json::Value, String> {
         return Err(format!("curl POST failed: {stderr}"));
     }
     let text = String::from_utf8_lossy(&output.stdout);
-    serde_json::from_str(text.trim()).map_err(|e| format!("invalid complete JSON: {e}; body={text}"))
+    serde_json::from_str(text.trim())
+        .map_err(|e| format!("invalid complete JSON: {e}; body={text}"))
 }
 
 fn urlencoding_encode(raw: &str) -> String {
@@ -541,10 +594,7 @@ fn resolve_sidecar_command() -> Result<(String, String), String> {
     if which_command("minibot") {
         return Ok(("minibot".into(), "PATH:minibot".into()));
     }
-    Err(
-        "未找到本地引擎。请打包 sidecar、将 minibot 加入 PATH，或设置 MINIBOT_SIDECAR。"
-            .into(),
-    )
+    Err("未找到本地引擎。请打包 sidecar、将 minibot 加入 PATH，或设置 MINIBOT_SIDECAR。".into())
 }
 
 /// Locate PyInstaller onedir launcher bundled via Tauri `resources`.
@@ -675,6 +725,52 @@ fn probe_curl(probe_url: &str, bypass_proxy: bool) -> Result<(), String> {
     Err(format!("HTTP {code}"))
 }
 
+fn probe_identity(api_base: &str, instance_token: &str) -> bool {
+    let url = format!("{}/api/desktop/identity", api_base.trim_end_matches('/'));
+    let output = Command::new("/usr/bin/curl")
+        .args([
+            "-sS",
+            "-o",
+            "/dev/null",
+            "-w",
+            "%{http_code}",
+            "--noproxy",
+            "*",
+            "--connect-timeout",
+            "1",
+            "--max-time",
+            "2",
+            "-H",
+            &format!("X-Minibot-Instance-Token: {instance_token}"),
+            &url,
+        ])
+        .env_remove("ALL_PROXY")
+        .env_remove("all_proxy")
+        .env_remove("HTTP_PROXY")
+        .env_remove("HTTPS_PROXY")
+        .env_remove("http_proxy")
+        .env_remove("https_proxy")
+        .output();
+    matches!(
+        output
+            .ok()
+            .filter(|result| result.status.success())
+            .map(|result| String::from_utf8_lossy(&result.stdout).trim().to_string()),
+        Some(code) if code == "200"
+    )
+}
+
+fn local_port_available(port: u16) -> bool {
+    std::net::TcpListener::bind(("127.0.0.1", port)).is_ok()
+}
+
+fn first_available_local_port<F>(start: u16, end: u16, mut is_available: F) -> Option<u16>
+where
+    F: FnMut(u16) -> bool,
+{
+    (start..=end).find(|port| is_available(*port))
+}
+
 fn minibot_home_dir() -> PathBuf {
     if let Ok(raw) = std::env::var("MINIBOT_HOME") {
         let trimmed = raw.trim();
@@ -713,8 +809,8 @@ fn resolve_initial_api_base(config_path: &Path) -> Result<String, String> {
     }
     let mut from_file: Option<String> = None;
     if config_path.is_file() {
-        let raw = std::fs::read_to_string(config_path)
-            .map_err(|e| format!("read server.json: {e}"))?;
+        let raw =
+            std::fs::read_to_string(config_path).map_err(|e| format!("read server.json: {e}"))?;
         if let Ok(cfg) = serde_json::from_str::<ServerConfig>(&raw) {
             if let Ok(normalized) = normalize_api_base(&cfg.api_base) {
                 from_file = Some(normalized);
@@ -726,7 +822,8 @@ fn resolve_initial_api_base(config_path: &Path) -> Result<String, String> {
         .unwrap_or_else(|| DEFAULT_API_BASE.to_string());
     if should_prefer_bundled_local_gateway(&base) {
         if from_file.as_deref() != Some(LOCAL_GATEWAY_API_BASE) {
-            let _ = persist_server_config(config_path, LOCAL_GATEWAY_API_BASE);
+            let token = read_instance_token(config_path);
+            let _ = persist_server_config(config_path, LOCAL_GATEWAY_API_BASE, &token);
             eprintln!(
                 "minibot-desktop: migrated api_base {base} → {LOCAL_GATEWAY_API_BASE} (bundled sidecar)"
             );
@@ -754,9 +851,29 @@ fn append_log_path(logs_dir: &Path, line: &str) -> Result<(), String> {
     append_log(logs_dir, line)
 }
 
-fn persist_server_config(path: &Path, api_base: &str) -> Result<(), String> {
+fn read_instance_token(path: &Path) -> String {
+    std::fs::read_to_string(path)
+        .ok()
+        .and_then(|raw| serde_json::from_str::<ServerConfig>(&raw).ok())
+        .map(|cfg| cfg.instance_token)
+        .filter(|token| !token.trim().is_empty())
+        .unwrap_or_default()
+}
+
+fn load_or_create_instance_token(path: &Path, api_base: &str) -> Result<String, String> {
+    let existing = read_instance_token(path);
+    if !existing.is_empty() {
+        return Ok(existing);
+    }
+    let token = Uuid::new_v4().to_string();
+    persist_server_config(path, api_base, &token)?;
+    Ok(token)
+}
+
+fn persist_server_config(path: &Path, api_base: &str, instance_token: &str) -> Result<(), String> {
     let cfg = ServerConfig {
         api_base: api_base.to_string(),
+        instance_token: instance_token.to_string(),
     };
     let json = serde_json::to_string_pretty(&cfg).map_err(|e| e.to_string())?;
     std::fs::write(path, json).map_err(|e| format!("write server.json: {e}"))
@@ -804,4 +921,21 @@ fn chrono_now() -> String {
         return "unknown".into();
     };
     format!("{}", dur.as_secs())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::first_available_local_port;
+
+    #[test]
+    fn local_port_selection_skips_occupied_ports() {
+        let selected = first_available_local_port(8766, 8770, |port| !matches!(port, 8766 | 8767));
+        assert_eq!(selected, Some(8768));
+    }
+
+    #[test]
+    fn local_port_selection_returns_none_when_range_is_full() {
+        let selected = first_available_local_port(8766, 8768, |_| false);
+        assert_eq!(selected, None);
+    }
 }
