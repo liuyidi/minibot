@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import json
 import os
 import re
@@ -27,6 +28,46 @@ def safe_session_filename(session_id: str) -> str:
     return stem
 
 
+def count_webui_thread_messages(messages: list[dict[str, Any]]) -> int:
+    """Count messages that appear in ``GET .../webui-thread`` (user/assistant with body)."""
+    count = 0
+    for msg in messages:
+        role = msg.get("role")
+        if role not in {"user", "assistant"}:
+            continue
+        content = msg.get("content")
+        text = content if isinstance(content, str) else ""
+        media_paths = msg.get("media")
+        paths: list[str] = []
+        if isinstance(media_paths, list):
+            paths = [str(p) for p in media_paths if p]
+        if text.strip() or paths:
+            count += 1
+    return count
+
+
+def messages_before_user_index(
+    messages: list[dict[str, Any]],
+    before_user_index: int,
+) -> list[dict[str, Any]]:
+    """Return a deep copy of messages strictly before the N-th ``role=user`` entry.
+
+    ``before_user_index`` is 0-based among user turns. ``0`` → empty; ``>= user
+    count`` → full history (including tool turns).
+    """
+    if before_user_index <= 0:
+        return []
+    user_i = 0
+    cut = len(messages)
+    for i, msg in enumerate(messages):
+        if msg.get("role") == "user":
+            if user_i == before_user_index:
+                cut = i
+                break
+            user_i += 1
+    return copy.deepcopy(messages[:cut])
+
+
 @dataclass
 class Session:
     id: str
@@ -35,6 +76,8 @@ class Session:
     workspace_path: str = field(default_factory=lambda: str(default_workspace()))
     access_mode: str = "restricted"
     summary: str = ""
+    """UI divider: how many webui-thread messages were inherited from the source."""
+    fork_boundary_message_count: int | None = None
     created_at: str = field(default_factory=_now)
     updated_at: str = field(default_factory=_now)
 
@@ -99,6 +142,49 @@ class SessionStore:
         self._save(session)
         self._cache[session.id] = session
         return session
+
+    def fork_from(
+        self,
+        source_session_id: str,
+        *,
+        before_user_index: int,
+        title: str = "",
+    ) -> Session:
+        """Create a non-destructive fork keeping history before ``before_user_index``.
+
+        Raises ``KeyError`` if the source session is missing.
+        Raises ``ValueError`` if ``before_user_index`` is not an int ``>= 0``.
+        """
+        if not isinstance(before_user_index, int) or isinstance(before_user_index, bool):
+            raise ValueError("before_user_index must be an integer >= 0")
+        if before_user_index < 0:
+            raise ValueError("before_user_index must be an integer >= 0")
+
+        source = self.get(source_session_id)
+        if source is None:
+            raise KeyError(f"unknown session: {source_session_id}")
+
+        prefix = messages_before_user_index(source.messages, before_user_index)
+        boundary = count_webui_thread_messages(prefix) if prefix else None
+        forked = self.create(
+            title=(title or "").strip(),
+            workspace=source.workspace_path,
+            access_mode=source.access_mode,
+        )
+        forked.messages = prefix
+        forked.summary = source.summary if prefix else ""
+        forked.fork_boundary_message_count = boundary
+        if not forked.title and prefix:
+            for msg in prefix:
+                if msg.get("role") == "user" and isinstance(msg.get("content"), str):
+                    text = msg["content"].strip()
+                    if text:
+                        forked.title = text[:60]
+                        break
+        forked.touch()
+        self._save(forked)
+        self._cache[forked.id] = forked
+        return forked
 
     def set_workspace(
         self,
@@ -255,6 +341,7 @@ class SessionStore:
             workspace_path = str(default_workspace())
             access_mode = "restricted"
             summary = ""
+            fork_boundary_message_count: int | None = None
 
             with path.open(encoding="utf-8") as f:
                 for raw in f:
@@ -278,6 +365,9 @@ class SessionStore:
                             access_mode = normalize_access_mode(str(data["access_mode"]))
                         if data.get("summary"):
                             summary = str(data["summary"])
+                        raw_boundary = data.get("fork_boundary_message_count")
+                        if isinstance(raw_boundary, int) and not isinstance(raw_boundary, bool):
+                            fork_boundary_message_count = max(0, raw_boundary)
                     else:
                         messages.append(data)
 
@@ -288,6 +378,7 @@ class SessionStore:
                 workspace_path=workspace_path,
                 access_mode=access_mode,
                 summary=summary,
+                fork_boundary_message_count=fork_boundary_message_count,
                 created_at=created_at,
                 updated_at=updated_at,
             )
@@ -298,7 +389,7 @@ class SessionStore:
         self.sessions_dir.mkdir(parents=True, exist_ok=True)
         path = self._path_for(session.id)
         tmp_path = path.with_suffix(".jsonl.tmp")
-        meta = {
+        meta: dict[str, Any] = {
             "_type": "metadata",
             "id": session.id,
             "title": session.title,
@@ -308,6 +399,8 @@ class SessionStore:
             "created_at": session.created_at,
             "updated_at": session.updated_at,
         }
+        if session.fork_boundary_message_count is not None:
+            meta["fork_boundary_message_count"] = int(session.fork_boundary_message_count)
         try:
             with tmp_path.open("w", encoding="utf-8") as f:
                 f.write(json.dumps(meta, ensure_ascii=False) + "\n")

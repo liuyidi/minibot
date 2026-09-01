@@ -18,6 +18,7 @@ from minibot.providers.base import (
     ToolCallRequest,
     UsageEnd,
 )
+from minibot.providers.http_client import llm_httpx_trust_env
 
 
 def extract_usage(data: dict[str, Any]) -> dict[str, Any] | None:
@@ -110,7 +111,7 @@ class OpenAICompatProvider(LLMProvider):
             "Content-Type": "application/json",
         }
         url = f"{self.base_url}/chat/completions"
-        async with httpx.AsyncClient(timeout=120.0) as client:
+        async with httpx.AsyncClient(timeout=120.0, trust_env=llm_httpx_trust_env()) as client:
             res = await client.post(url, headers=headers, json=payload)
             if res.status_code >= 400:
                 detail = res.text[:500]
@@ -175,7 +176,7 @@ class OpenAICompatProvider(LLMProvider):
         finish_reason = "stop"
         usage: dict[str, Any] | None = None
 
-        async with httpx.AsyncClient(timeout=120.0) as client:
+        async with httpx.AsyncClient(timeout=120.0, trust_env=llm_httpx_trust_env()) as client:
             async with client.stream("POST", url, headers=headers, json=payload) as res:
                 if res.status_code >= 400:
                     body = (await res.aread()).decode("utf-8", errors="replace")[:500]

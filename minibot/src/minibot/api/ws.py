@@ -385,6 +385,57 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
                 )
                 continue
 
+            if msg_type == "fork_chat":
+                source_chat_id = _session_id(str(frame.get("source_chat_id") or ""))
+                title = str(frame.get("title") or "").strip()
+                raw_index = frame.get("before_user_index")
+                try:
+                    before_user_index = int(raw_index)
+                except (TypeError, ValueError):
+                    await websocket.send_json(
+                        {"event": "error", "detail": "invalid_before_user_index"}
+                    )
+                    continue
+                if not source_chat_id:
+                    await websocket.send_json(
+                        {"event": "error", "detail": "missing_source_chat_id"}
+                    )
+                    continue
+                try:
+                    session = state.sessions.fork_from(
+                        source_chat_id,
+                        before_user_index=before_user_index,
+                        title=title,
+                    )
+                except KeyError:
+                    await websocket.send_json(
+                        {
+                            "event": "error",
+                            "chat_id": source_chat_id,
+                            "detail": "unknown_chat",
+                        }
+                    )
+                    continue
+                except ValueError as exc:
+                    await websocket.send_json({"event": "error", "detail": str(exc)})
+                    continue
+                except WorkspaceError as exc:
+                    await websocket.send_json(
+                        {"event": "error", "detail": f"workspace: {exc}"}
+                    )
+                    continue
+                known.add(session.id)
+                hub.attach(session.id, websocket)
+                await websocket.send_json(
+                    {
+                        "event": "attached",
+                        "chat_id": session.id,
+                        "workspace_path": session.workspace_path,
+                        "workspace_scope": _scope_payload(session),
+                    }
+                )
+                continue
+
             if msg_type == "set_workspace_scope":
                 chat_id = _session_id(str(frame.get("chat_id") or default_chat or ""))
                 scope = frame.get("workspace_scope") if isinstance(frame.get("workspace_scope"), dict) else {}

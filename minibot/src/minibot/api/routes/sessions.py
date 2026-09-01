@@ -200,11 +200,17 @@ async def get_webui_thread(_auth: AuthDep, state: StateDep, session_id: str) -> 
                 if all(m.get("kind") == "image" for m in media_att):
                     row["images"] = [{"url": m.get("url"), "name": m.get("name")} for m in media_att]
         ui_messages.append(row)
-    return {
+    payload: dict[str, Any] = {
         "schemaVersion": 1,
         "sessionKey": f"websocket:{session.id}",
         "messages": ui_messages,
     }
+    if session.fork_boundary_message_count is not None:
+        payload["fork_boundary_message_count"] = max(
+            0,
+            min(int(session.fork_boundary_message_count), len(ui_messages)),
+        )
+    return payload
 
 
 @router.get("/{session_id}/file-preview")

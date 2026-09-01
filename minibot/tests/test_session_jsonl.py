@@ -121,3 +121,61 @@ def test_api_sessions_survive_app_restart(
         assert any(m.get("content") == "remember this" for m in messages.json()["messages"])
 
     get_settings.cache_clear()
+
+
+def test_messages_before_user_index_keeps_tool_turns(tmp_path: Path) -> None:
+    from minibot.session.store import messages_before_user_index
+
+    history = [
+        {"role": "user", "content": "u0"},
+        {"role": "assistant", "content": "", "tool_calls": [{"id": "1"}]},
+        {"role": "tool", "tool_call_id": "1", "name": "echo", "content": "ok"},
+        {"role": "assistant", "content": "a0"},
+        {"role": "user", "content": "u1"},
+        {"role": "assistant", "content": "a1"},
+    ]
+    assert messages_before_user_index(history, 0) == []
+    assert [m["role"] for m in messages_before_user_index(history, 1)] == [
+        "user",
+        "assistant",
+        "tool",
+        "assistant",
+    ]
+    assert messages_before_user_index(history, 2) == history
+    assert messages_before_user_index(history, 99) == history
+
+
+def test_fork_from_is_non_destructive_and_sets_boundary(tmp_path: Path) -> None:
+    store = SessionStore(data_dir=tmp_path)
+    source = store.create(title="src", session_id="src-chat")
+    store.append_messages(
+        source.id,
+        [
+            {"role": "user", "content": "first"},
+            {"role": "assistant", "content": "reply-1"},
+            {"role": "user", "content": "second"},
+            {"role": "assistant", "content": "reply-2"},
+        ],
+    )
+
+    forked = store.fork_from(
+        source.id,
+        before_user_index=1,
+        title="Fork of src",
+    )
+    assert forked.id != source.id
+    assert forked.title == "Fork of src"
+    assert forked.messages == [
+        {"role": "user", "content": "first"},
+        {"role": "assistant", "content": "reply-1"},
+    ]
+    assert forked.fork_boundary_message_count == 2
+
+    original = store.get(source.id)
+    assert original is not None
+    assert len(original.messages) == 4
+
+    reloaded = SessionStore(data_dir=tmp_path).get(forked.id)
+    assert reloaded is not None
+    assert reloaded.fork_boundary_message_count == 2
+    assert len(reloaded.messages) == 2

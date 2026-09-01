@@ -1,15 +1,15 @@
-import { useMemo, useState } from "react";
-import { Plus, Search } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { CheckCircle2, Plus, Search, XCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { CapabilityHubNav } from "@/components/capabilities";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useSkillsCatalog } from "@/hooks/skills";
-import type {
-  SkillCatalogTemplate,
-} from "@/lib/apis/skills-api";
+import type { SkillCatalogTemplate } from "@/lib/apis/skills-api";
+import { resolveCatalogLabel } from "@/lib/skills/market";
 import type { SkillSummary } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 import { CatalogSkillPreviewSheet } from "./CatalogSkillPreviewSheet";
 import {
@@ -21,6 +21,11 @@ import {
 import { SkillMarketPanel, UnderlineTab } from "./SkillMarket";
 
 type SkillTab = "market" | "builtin" | "mine";
+
+type SkillToast = {
+  tone: "success" | "error";
+  message: string;
+};
 
 export function SkillsPage() {
   const { t, i18n } = useTranslation();
@@ -43,6 +48,27 @@ export function SkillsPage() {
   const [selectedSkill, setSelectedSkill] = useState<SkillSummary | null>(null);
   const [selectedCatalog, setSelectedCatalog] = useState<SkillCatalogTemplate | null>(null);
   const [addSkillOpen, setAddSkillOpen] = useState(false);
+  const [toast, setToast] = useState<SkillToast | null>(null);
+  const toastTimerRef = useRef<number | null>(null);
+
+  const showToast = useCallback((next: SkillToast) => {
+    if (toastTimerRef.current != null) {
+      window.clearTimeout(toastTimerRef.current);
+    }
+    setToast(next);
+    toastTimerRef.current = window.setTimeout(() => {
+      setToast(null);
+      toastTimerRef.current = null;
+    }, 3_200);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (toastTimerRef.current != null) {
+        window.clearTimeout(toastTimerRef.current);
+      }
+    };
+  }, []);
 
   const openAddSkill = () => {
     clearError();
@@ -62,6 +88,75 @@ export function SkillsPage() {
   }, [skillTemplates]);
 
   const catalogFor = (skillName: string) => catalogById.get(skillName.toLowerCase()) ?? null;
+
+  const labelForTemplateId = useCallback(
+    (id: string) => {
+      const tpl = catalogById.get(id.toLowerCase());
+      if (tpl) return resolveCatalogLabel(tpl, preferZh);
+      return id;
+    },
+    [catalogById, preferZh],
+  );
+
+  const handleAddMarketSkill = useCallback(
+    async (id: string) => {
+      const name = labelForTemplateId(id);
+      const result = await applySkillTemplate(id);
+      if (result.ok) {
+        showToast({
+          tone: "success",
+          message: t("settings.skills.installSuccess", {
+            name,
+            defaultValue: "Added {{name}}",
+          }),
+        });
+        return true;
+      }
+      showToast({
+        tone: "error",
+        message: t("settings.skills.installFailed", {
+          name,
+          detail: result.error || t("settings.skills.installFailedFallback", {
+            defaultValue: "Something went wrong",
+          }),
+          defaultValue: "Failed to add {{name}}: {{detail}}",
+        }),
+      });
+      return false;
+    },
+    [applySkillTemplate, labelForTemplateId, showToast, t],
+  );
+
+  const handleAddMarketPack = useCallback(
+    async (ids: string[], packId: string) => {
+      const result = await applySkillTemplates(ids, `pack:${packId}`);
+      const packTitle = t(`settings.skills.packs.${packId}.title`, {
+        defaultValue: packId,
+      });
+      if (result.ok) {
+        showToast({
+          tone: "success",
+          message: t("settings.skills.installPackSuccess", {
+            name: packTitle,
+            count: result.installedCount ?? ids.length,
+            defaultValue: "Added {{count}} skills from {{name}}",
+          }),
+        });
+        return;
+      }
+      showToast({
+        tone: "error",
+        message: t("settings.skills.installPackFailed", {
+          name: packTitle,
+          detail: result.error || t("settings.skills.installFailedFallback", {
+            defaultValue: "Something went wrong",
+          }),
+          defaultValue: "Failed to add {{name}}: {{detail}}",
+        }),
+      });
+    },
+    [applySkillTemplates, showToast, t],
+  );
 
   const builtinSkills = useMemo(
     () => skills.filter((s) => s.source === "builtin" && match(`${s.name} ${s.description}`)),
@@ -169,8 +264,8 @@ export function SkillsPage() {
           query={query}
           loading={skillCatalogLoading}
           busyKey={busyKey}
-          onAdd={(id) => void applySkillTemplate(id)}
-          onAddMany={(ids, packId) => void applySkillTemplates(ids, `pack:${packId}`)}
+          onAdd={(id) => void handleAddMarketSkill(id)}
+          onAddMany={(ids, packId) => void handleAddMarketPack(ids, packId)}
           onPreview={(tpl) => {
             setSelectedSkill(null);
             setSelectedCatalog(tpl);
@@ -267,7 +362,7 @@ export function SkillsPage() {
           if (!open) setSelectedCatalog(null);
         }}
         onAdd={(id) => {
-          void applySkillTemplate(id).then((ok) => {
+          void handleAddMarketSkill(id).then((ok) => {
             if (ok) setSelectedCatalog(null);
           });
         }}
@@ -279,6 +374,25 @@ export function SkillsPage() {
         busy={busyKey === "install-skill"}
         onInstall={installSkill}
       />
+
+      {toast ? (
+        <div
+          role="status"
+          className={cn(
+            "fixed left-1/2 top-[calc(0.75rem+env(safe-area-inset-top))] z-50 flex max-w-[calc(100vw-1.5rem)] -translate-x-1/2 items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium shadow-lg",
+            toast.tone === "success"
+              ? "border-emerald-500/30 bg-popover text-popover-foreground"
+              : "border-destructive/40 bg-popover text-destructive",
+          )}
+        >
+          {toast.tone === "success" ? (
+            <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" aria-hidden />
+          ) : (
+            <XCircle className="h-4 w-4 shrink-0" aria-hidden />
+          )}
+          <span className="min-w-0 truncate">{toast.message}</span>
+        </div>
+      ) : null}
     </div>
   );
 }

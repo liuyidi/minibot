@@ -5,7 +5,10 @@ import {
   RESERVED_SLASH_COMMAND_NAMES,
   skillsToSlashCommands,
 } from "@/lib/chat/slashSkills";
-import { resolveSlashCommandLabel, resolveSkillTitle } from "@/lib/skills/display";
+import {
+  resolveSlashCommandLabel,
+  resolveSkillTitle,
+} from "@/lib/skills/display";
 import { splitCapabilityMentionSegments } from "@/components/thread/composer/CliAppMentionText";
 import type { SkillSummary, SlashCommand } from "@/lib/types";
 import { vi } from "vitest";
@@ -136,5 +139,34 @@ describe("slashSkills", () => {
         { preferZh: true, catalog },
       ),
     ).toBe("前端开发");
+  });
+
+  it("localizes slash palette skill labels from catalog", () => {
+    const t = vi.fn((key: string, opts?: { defaultValue?: string }) => opts?.defaultValue ?? key);
+    const command: SlashCommand = {
+      command: "/frontend-dev",
+      title: "frontend-dev",
+      description: "Build UI with React",
+      icon: "hammer",
+      argHint: "",
+    };
+    const catalogById = new Map([
+      [
+        "frontend-dev",
+        {
+          id: "frontend-dev",
+          label: "Frontend Development",
+          label_zh: "前端开发",
+          description: "Build UI with React",
+          description_zh: "用 React 做前端",
+        },
+      ],
+    ]);
+    expect(
+      resolveSlashCommandLabel(command, t, "title", { preferZh: true, catalogById }),
+    ).toBe("前端开发");
+    expect(
+      resolveSlashCommandLabel(command, t, "description", { preferZh: true, catalogById }),
+    ).toBe("用 React 做前端");
   });
 });

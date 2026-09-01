@@ -115,3 +115,56 @@ def test_websocket_new_chat_uses_token_account(client: TestClient, data_dir: Pat
 
     assert (data_dir / "users" / "user-gamma" / "sessions" / f"{chat_id}.jsonl").exists()
     assert not (data_dir / "users" / "system" / "sessions" / f"{chat_id}.jsonl").exists()
+
+
+def test_websocket_fork_chat_copies_prefix(client: TestClient, data_dir: Path) -> None:
+    from minibot.api.deps import bind_user_runtime_context
+
+    state = client.app.state.app_state
+    cookie = state.issue_token(account=_account("user-fork", "fork@example.com"))
+    boot = client.get("/webui/bootstrap", cookies={AUTH_COOKIE_NAME: cookie}).json()["token"]
+    headers = {"Authorization": f"Bearer {boot}"}
+
+    created = client.post("/api/sessions", headers=headers, json={"title": "to-fork"})
+    assert created.status_code == 200
+    source_id = created.json()["id"]
+
+    bind_user_runtime_context(state, "user-fork")
+    seeded = state.sessions.get(source_id)
+    assert seeded is not None
+    state.sessions.append_messages(
+        source_id,
+        [
+            {"role": "user", "content": "hello"},
+            {"role": "assistant", "content": "world"},
+            {"role": "user", "content": "again"},
+            {"role": "assistant", "content": "ok"},
+        ],
+    )
+
+    with client.websocket_connect(f"/ws?token={boot}") as sock:
+        assert sock.receive_json().get("event") == "ready"
+        sock.send_json(
+            {
+                "type": "fork_chat",
+                "source_chat_id": f"websocket:{source_id}",
+                "before_user_index": 1,
+                "title": "Fork of to-fork",
+            }
+        )
+        attached = sock.receive_json()
+        assert attached.get("event") == "attached"
+        fork_id = attached["chat_id"]
+        assert fork_id != source_id
+
+    thread = client.get(f"/api/sessions/{fork_id}/webui-thread", headers=headers)
+    assert thread.status_code == 200
+    body = thread.json()
+    assert [m["content"] for m in body["messages"]] == ["hello", "world"]
+    assert body.get("fork_boundary_message_count") == 2
+
+    source_thread = client.get(f"/api/sessions/{source_id}/webui-thread", headers=headers)
+    assert source_thread.status_code == 200
+    assert len(source_thread.json()["messages"]) == 4
+
+    assert (data_dir / "users" / "user-fork" / "sessions" / f"{fork_id}.jsonl").exists()

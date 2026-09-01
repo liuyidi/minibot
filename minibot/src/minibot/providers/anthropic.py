@@ -23,6 +23,7 @@ from minibot.providers.base import (
     ToolCallRequest,
     UsageEnd,
 )
+from minibot.providers.http_client import llm_httpx_trust_env
 
 _ANTHROPIC_VERSION = "2023-06-01"
 
@@ -275,7 +276,7 @@ class AnthropicProvider(LLMProvider):
         payload = self._payload(
             messages, tools=tools, model=model, temperature=temperature, stream=False
         )
-        async with httpx.AsyncClient(timeout=120.0) as client:
+        async with httpx.AsyncClient(timeout=120.0, trust_env=llm_httpx_trust_env()) as client:
             res = await client.post(self._url(), headers=self._headers(), json=payload)
             if res.status_code >= 400:
                 return LLMResponse(
@@ -326,7 +327,7 @@ class AnthropicProvider(LLMProvider):
         finish_reason = "stop"
         usage: dict[str, Any] | None = None
 
-        async with httpx.AsyncClient(timeout=120.0) as client:
+        async with httpx.AsyncClient(timeout=120.0, trust_env=llm_httpx_trust_env()) as client:
             async with client.stream("POST", self._url(), headers=headers, json=payload) as res:
                 if res.status_code >= 400:
                     body = (await res.aread()).decode("utf-8", errors="replace")[:500]

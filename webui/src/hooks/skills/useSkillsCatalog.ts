@@ -48,8 +48,11 @@ export function useSkillsCatalog(): {
   error: string | null;
   clearError: () => void;
   applyTemplate: (templateId: string) => Promise<boolean>;
-  applySkillTemplate: (templateId: string) => Promise<boolean>;
-  applySkillTemplates: (templateIds: string[], busyKey?: string) => Promise<boolean>;
+  applySkillTemplate: (templateId: string) => Promise<{ ok: boolean; error?: string }>;
+  applySkillTemplates: (
+    templateIds: string[],
+    busyKey?: string,
+  ) => Promise<{ ok: boolean; error?: string; installedCount?: number }>;
   /** Returns null on success, or an error message on failure. */
   installSkill: (body: { markdown: string; name?: string }) => Promise<string | null>;
   setSkillEnabled: (name: string, enabled: boolean) => Promise<string | null>;
@@ -139,10 +142,11 @@ export function useSkillsCatalog(): {
       try {
         await apiInstallSkillFromCatalog(token, templateId);
         await refreshSkills();
-        return true;
+        return { ok: true as const };
       } catch (err) {
-        setError(toErrorMessage(err));
-        return false;
+        const message = toErrorMessage(err);
+        setError(message);
+        return { ok: false as const, error: message };
       } finally {
         setBusyKey(null);
       }
@@ -153,19 +157,22 @@ export function useSkillsCatalog(): {
   const applySkillTemplates = useCallback(
     async (templateIds: string[], key?: string) => {
       const ids = templateIds.map((id) => id.trim()).filter(Boolean);
-      if (!ids.length) return true;
+      if (!ids.length) return { ok: true as const, installedCount: 0 };
       setBusyKey(key || `skill-tpl:${ids[0]}`);
       setError(null);
+      let installedCount = 0;
       try {
         for (const templateId of ids) {
           await apiInstallSkillFromCatalog(token, templateId);
+          installedCount += 1;
         }
         await refreshSkills();
-        return true;
+        return { ok: true as const, installedCount };
       } catch (err) {
-        setError(toErrorMessage(err));
+        const message = toErrorMessage(err);
+        setError(message);
         await refreshSkills();
-        return false;
+        return { ok: false as const, error: message, installedCount };
       } finally {
         setBusyKey(null);
       }

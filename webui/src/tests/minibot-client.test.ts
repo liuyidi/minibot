@@ -406,6 +406,27 @@ describe("MinibotClient", () => {
     await expect(promise).resolves.toBe("fresh-id");
   });
 
+  it("resolves forkChat() via attached and sends fork_chat frame", async () => {
+    const client = new MinibotClient({
+      url: "ws://test",
+      reconnect: false,
+      socketFactory: (url) => new FakeSocket(url) as unknown as WebSocket,
+    });
+    client.connect();
+    lastSocket().fakeOpen();
+    const promise = client.forkChat("source-1", 2, "Fork of hello");
+    expect(lastSocket().sent).toContain(
+      JSON.stringify({
+        type: "fork_chat",
+        source_chat_id: "source-1",
+        before_user_index: 2,
+        title: "Fork of hello",
+      }),
+    );
+    lastSocket().fakeMessage({ event: "attached", chat_id: "forked-id" });
+    await expect(promise).resolves.toBe("forked-id");
+  });
+
   it("serializes workspace scope for new chats and messages", async () => {
     const client = new MinibotClient({
       url: "ws://test",

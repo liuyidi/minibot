@@ -98,15 +98,30 @@ function slashBuiltinI18nKey(command: string): string {
   return slashCommandName(command).replace(/-/g, "_");
 }
 
+export type ResolveSlashLabelOptions = ResolveSkillDisplayOptions & {
+  catalogById?: ReadonlyMap<string, SkillCatalogLookup>;
+};
+
 export function resolveSlashCommandLabel(
   command: SlashCommand,
   t: TFunction,
   field: "title" | "description",
+  opts?: ResolveSlashLabelOptions,
 ): string {
   const fallback = field === "title" ? command.title : command.description;
   if (isSkillSlashCommand(command)) {
     const name = slashCommandName(command.command);
-    return t(skillBuiltinI18nKey(name, field), { defaultValue: fallback });
+    if (hasBuiltinTranslation(name, field, t)) {
+      return t(skillBuiltinI18nKey(name, field), { defaultValue: fallback });
+    }
+    const catalog =
+      opts?.catalog ?? opts?.catalogById?.get(name.toLowerCase()) ?? null;
+    if (catalog) {
+      return field === "title"
+        ? resolveCatalogLabel(catalog, Boolean(opts?.preferZh))
+        : resolveCatalogDescription(catalog, Boolean(opts?.preferZh));
+    }
+    return fallback;
   }
   const commandKey = slashBuiltinI18nKey(command.command);
   return t(`thread.composer.slash.commands.${commandKey}.${field}`, { defaultValue: fallback });

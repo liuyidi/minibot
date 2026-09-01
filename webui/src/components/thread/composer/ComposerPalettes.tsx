@@ -33,7 +33,10 @@ import {
 } from "./CliAppMentionText";
 import type { MentionCandidate } from "@/lib/chat/mentions";
 import type { SlashCommand } from "@/lib/types";
-import { resolveSlashCommandLabel } from "@/lib/skills/display";
+import {
+  resolveSlashCommandLabel,
+  type ResolveSlashLabelOptions,
+} from "@/lib/skills/display";
 import { logoFallbackUrls } from "@/lib/constants/provider-brand";
 import { cn } from "@/lib/utils";
 
@@ -285,6 +288,7 @@ export function SlashCommandPalette({
   selectedIndex,
   layout,
   isHero,
+  labelOpts,
   onHover,
   onChoose,
 }: {
@@ -292,6 +296,7 @@ export function SlashCommandPalette({
   selectedIndex: number;
   layout: SlashPaletteLayout;
   isHero: boolean;
+  labelOpts?: ResolveSlashLabelOptions;
   onHover: (index: number) => void;
   onChoose: (command: SlashPaletteCommand) => void;
 }) {
@@ -315,8 +320,8 @@ export function SlashCommandPalette({
         {commands.map((command, index) => {
           const Icon = COMMAND_ICONS[command.icon] ?? CircleHelp;
           const selected = index === selectedIndex;
-          const title = resolveSlashCommandLabel(command, t, "title");
-          const description = resolveSlashCommandLabel(command, t, "description");
+          const title = resolveSlashCommandLabel(command, t, "title", labelOpts);
+          const description = resolveSlashCommandLabel(command, t, "description", labelOpts);
           return (
             <button
               key={command.command}

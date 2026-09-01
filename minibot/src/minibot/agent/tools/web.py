@@ -10,6 +10,7 @@ from urllib.parse import quote_plus
 import httpx
 
 from minibot.agent.tools.base import Tool
+from minibot.providers.http_client import outbound_httpx_trust_env
 from minibot.security.network import NetworkDeniedError, require_safe_url, validate_url_target
 
 _TAG_RE = re.compile(r"<[^>]+>")
@@ -37,7 +38,11 @@ class WebFetchTool(Tool):
         max_chars = int(kwargs.get("max_chars") or 12_000)
         require_safe_url(url)
         try:
-            async with httpx.AsyncClient(follow_redirects=True, timeout=20.0) as client:
+            async with httpx.AsyncClient(
+                follow_redirects=True,
+                timeout=20.0,
+                trust_env=outbound_httpx_trust_env(),
+            ) as client:
                 res = await client.get(url, headers={"User-Agent": "minibot/0.1"})
                 # Re-validate final URL after redirects
                 final = str(res.url)
@@ -79,7 +84,11 @@ class WebSearchTool(Tool):
         url = f"https://html.duckduckgo.com/html/?q={quote_plus(query)}"
         require_safe_url(url)
         try:
-            async with httpx.AsyncClient(follow_redirects=True, timeout=20.0) as client:
+            async with httpx.AsyncClient(
+                follow_redirects=True,
+                timeout=20.0,
+                trust_env=outbound_httpx_trust_env(),
+            ) as client:
                 res = await client.get(url, headers={"User-Agent": "minibot/0.1"})
                 html = res.text
         except Exception as exc:

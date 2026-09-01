@@ -60,7 +60,6 @@ import {
 import { useClipboardAndDrop } from "@/hooks/ui";
 import type { SendImage, SendOptions } from "@/hooks/sessions";
 import { useVoiceRecorder, type VoiceRecorderErrorKey } from "@/hooks/ui";
-import { fetchSkills } from "@/lib/apis/skills-api";
 import {
   attachmentsFromCapabilitySegments,
   buildMentionCandidates,
@@ -79,12 +78,12 @@ import {
   commitComposerMentionPadChange,
   useEnsureComposerMentionPads,
 } from "./useEnsureComposerMentionPads";
+import { useComposerSkillCatalog } from "./useComposerSkillCatalog";
 import { usePendingComposerSelection } from "./usePendingComposerSelection";
 import type {
   CliAppInfo,
   GoalStateWsPayload,
   McpPresetInfo,
-  SkillSummary,
   SlashCommand,
   WorkspaceScopePayload,
   WorkspacesPayload,
@@ -751,7 +750,7 @@ export function ThreadComposer({
   const [selectedCliAppIndex, setSelectedCliAppIndex] = useState(0);
   const [cursorPosition, setCursorPosition] = useState(0);
   const [recentSlashCommands, setRecentSlashCommands] = useState<string[]>(() => readSlashRecents());
-  const [skills, setSkills] = useState<SkillSummary[]>([]);
+  const { skills, slashLabelOpts } = useComposerSkillCatalog(authToken);
   const [queuedPrompts, setQueuedPrompts] = useState<QueuedPrompt[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
@@ -838,24 +837,6 @@ export function ThreadComposer({
 
   usePendingComposerSelection(value, textareaRef, pendingSelectionRef, setCursorPosition);
 
-  useEffect(() => {
-    if (!authToken) {
-      setSkills([]);
-      return;
-    }
-    let cancelled = false;
-    void fetchSkills(authToken)
-      .then((payload) => {
-        if (!cancelled) setSkills(payload.skills);
-      })
-      .catch(() => {
-        if (!cancelled) setSkills([]);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [authToken]);
-
   const readyImages = useMemo(
     () => images.filter((img): img is AttachedImage & { dataUrl: string } =>
       img.status === "ready" && typeof img.dataUrl === "string",
@@ -908,8 +889,8 @@ export function ThreadComposer({
     if (slashQuery === null) return [];
     const withDetails = visibleSlashCommands
       .filter((command) => {
-        const title = resolveSlashCommandLabel(command, t, "title");
-        const description = resolveSlashCommandLabel(command, t, "description");
+        const title = resolveSlashCommandLabel(command, t, "title", slashLabelOpts);
+        const description = resolveSlashCommandLabel(command, t, "description", slashLabelOpts);
         const haystack = [
           command.command,
           command.title,
@@ -921,7 +902,12 @@ export function ThreadComposer({
         return haystack.includes(slashQuery);
       })
       .map((command) => {
-        const description = resolveSlashCommandLabel(command, t, "description");
+        const description = resolveSlashCommandLabel(
+          command,
+          t,
+          "description",
+          slashLabelOpts,
+        );
         let detail = description;
         let badge: string | undefined;
         if (command.command === "/model" && modelLabel) {
@@ -963,7 +949,16 @@ export function ThreadComposer({
 
     return withDetails
       .slice(0, 8);
-  }, [goalState?.active, isStreaming, modelLabel, recentSlashCommands, slashQuery, t, visibleSlashCommands]);
+  }, [
+    goalState?.active,
+    isStreaming,
+    modelLabel,
+    recentSlashCommands,
+    slashLabelOpts,
+    slashQuery,
+    t,
+    visibleSlashCommands,
+  ]);
 
   const showSlashMenu = filteredSlashCommands.length > 0;
   const cliAppMention = useMemo<CliAppMentionQuery | null>(() => {
@@ -1514,6 +1509,7 @@ export function ThreadComposer({
           selectedIndex={selectedCommandIndex}
           layout={slashPaletteLayout}
           isHero={isHero}
+          labelOpts={slashLabelOpts}
           onHover={setSelectedCommandIndex}
           onChoose={chooseSlashCommand}
         />
