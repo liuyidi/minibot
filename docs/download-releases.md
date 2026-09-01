@@ -15,9 +15,9 @@ Use object storage (Aliyun OSS or Tencent COS) behind CDN, for example
 minibot/
   releases.json
   android/minibot-android-v1.0.4.apk
-  macos/minibot-1.0.13-minibot.V2_1.0.13_aarch64.dmg
-  windows/minibot-1.0.13-minibot.V2_1.0.13_x64-setup.exe
-  linux/minibot-1.0.13-minibot.V2_1.0.13_amd64.deb
+  macos/minibot-1.0.20-minibot_1.0.20_arm64.dmg
+  windows/minibot-1.0.20-minibot_1.0.20_x64-setup.exe
+  linux/minibot-1.0.20-minibot_1.0.20_amd64.deb
 ```
 
 The `releases.json` served from OSS should contain absolute artifact URLs, for
@@ -26,8 +26,8 @@ example:
 ```json
 {
   "macos": {
-    "version": "1.0.13",
-    "fileName": "minibot-1.0.13-minibot.V2_1.0.13_aarch64.dmg",
+    "version": "1.0.20",
+    "fileName": "minibot-1.0.20-minibot_1.0.20_arm64.dmg",
     "url": "https://downloads.liuyidi.me/minibot/macos/…"
   },
   "windows": { "version": "1.0.13", "url": "https://downloads.liuyidi.me/minibot/windows/…" },

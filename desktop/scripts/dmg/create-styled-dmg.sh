@@ -57,7 +57,7 @@ resolve_create_dmg
 VERSION="$(node -p "require('$DESKTOP_ROOT/package.json').version")"
 machine="$(uname -m)"
 case "$machine" in
-  arm64) ARCH_TAG=aarch64 ;;
+  arm64) ARCH_TAG=arm64 ;;
   x86_64) ARCH_TAG=x64 ;;
   *) ARCH_TAG="$machine" ;;
 esac

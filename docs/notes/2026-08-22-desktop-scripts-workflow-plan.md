@@ -5,7 +5,7 @@
 
 ## Phase 0 — 验收门槛
 
-- [ ] macOS aarch64 / x86_64：`Import Apple signing certificate` 成功
+- [ ] macOS arm64 / x86_64：`Import Apple signing certificate` 成功
 - [ ] `Build signed macOS release`：sidecar 布局修复 → 签名 → 公证 → DMG
 - [ ] GitHub Release `desktop-v<version>` 资产可下载
 - [ ] （可选）`Sync Desktop Release to OSS` 正常
@@ -50,7 +50,7 @@
 3. **环境开关**（示例）：
    - `SKIP_NOTARIZE=1` — rc 档跳过 `notarize-macos-app.sh`
    - `SKIP_APPLE_IMPORT=1` — beta 档跳过 `import-apple-certificate.sh`
-4. **并发与成本**：beta 可只打当前开发机 triple（如 aarch64），不全矩阵。
+4. **并发与成本**：beta 可只打当前开发机 triple（如 `aarch64-apple-darwin` → 产物 `_arm64.dmg`），不全矩阵。
 5. **文档**：更新 `desktop/scripts/README.md`、`desktop/README.zh.md`、`docs/download-releases.md` 中的触发说明（当前仍写 tauri-action 签名的需一并修正）。
 
 ### 不在本轮范围

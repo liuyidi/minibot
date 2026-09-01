@@ -80,7 +80,7 @@ APPLE_TEAM_ID="$NOTARY_TEAM_ID" \
 DMG_DIR="$CARGO_TARGET_DIR/release/bundle/dmg"
 VERSION="$(node -p "require('$DESKTOP_ROOT/package.json').version")"
 case "$TRIPLE" in
-  aarch64-apple-darwin) ARCH_TAG=aarch64 ;;
+  aarch64-apple-darwin) ARCH_TAG=arm64 ;;
   x86_64-apple-darwin) ARCH_TAG=x64 ;;
   *) ARCH_TAG="$(uname -m)" ;;
 esac

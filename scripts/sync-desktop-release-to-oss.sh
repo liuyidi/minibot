@@ -118,8 +118,9 @@ pick_one() {
   printf '%s' ""
 }
 
-# Prefer explicit arch names from tauri-action (aarch64 / x64).
-macos_arm_file="$(pick_one '*aarch64*.dmg' '*arm64*.dmg')"
+# Prefer explicit arch tags in filenames (arm64 / x64). Keep aarch64 as
+# fallback for older GitHub Release assets.
+macos_arm_file="$(pick_one '*arm64*.dmg' '*aarch64*.dmg')"
 macos_intel_file="$(pick_one '*x64*.dmg' '*x86_64*.dmg')"
 # If only one unnamed .dmg exists, treat it as Apple Silicon primary.
 if [[ -z "$macos_arm_file" && -z "$macos_intel_file" ]]; then
