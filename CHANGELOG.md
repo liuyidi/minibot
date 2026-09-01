@@ -13,6 +13,7 @@ Versions follow SemVer for product narrative. Package metadata may lag until a f
 
 ### Added
 
+- Public download page iOS channel now points at the TestFlight public join link (install via TestFlight while App Store listing is prepared).
 - Non-destructive chat fork: keep history before a chosen user turn (`fork_chat` / session store boundary).
 - Skill Market install success/failure toasts for single skills and packs.
 - Skills capability hub: Experts / Skills / Connectors routes, Skill Market with curated packs, and optional catalog installs (MiniMax, ClawHub, GitHub Anthropic plugins).
@@ -21,6 +22,10 @@ Versions follow SemVer for product narrative. Package metadata may lag until a f
 - Mobile handoff (`/#/open`) is configurable from the gateway: store URLs, fallback download URL, title, and description via settings / `GET /auth/mobile-entry`.
 - Thread titles can be renamed inline: hover shows a pencil control, edit in place, and save on blur.
 - Server implements CLI Apps settings APIs (`/api/settings/cli-apps` plus install/update/uninstall/test) so the composer can `@`-mention installed local CLI apps.
+
+### Changed
+
+- Download page iOS copy: preparing for App Store listing; users can try the client via TestFlight first.
 
 ### Fixed
 

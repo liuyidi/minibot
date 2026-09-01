@@ -9,7 +9,7 @@ description: minibot 移动端入口（iOS / Android），与 Web / Desktop 共�
 
 - 邮箱验证码 / Demo / Google · GitHub 登录
 - 连生产 Gateway（默认 `https://bot.liuyidi.me`）发起对话与流式回复
-- Android 可经 [下载页](/minibot/download/) 安装 APK；iOS 走 App Store / TestFlight（开放后更新）
+- Android 可经 [下载页](/minibot/download/) 安装 APK；iOS 可经同一下载页走 TestFlight（App Store 上架准备中）
 - 适合在手机上跟进任务、查看会话，不替代本机文件类重操作
 
 <ShotStrip label="App 截图（可拖拽滑动）">

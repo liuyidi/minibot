@@ -14,6 +14,7 @@ English: [CHANGELOG.md](./CHANGELOG.md)
 
 ### 新增
 
+- 公开下载页 iOS 渠道已接入 TestFlight 公开链接（App Store 上架准备中，可先经 TestFlight 安装体验）。
 - 非破坏性对话分叉：可保留某一用户回合之前的历史（`fork_chat` / session store 边界）。
 - 技能市场单技能 / 技能包安装成功与失败 Toast 提示。
 - 技能能力中心：专家 / 技能 / 连接器路由、技能市场与精选技能包，以及可选目录安装（MiniMax、ClawHub、GitHub Anthropic plugins）。
@@ -22,6 +23,10 @@ English: [CHANGELOG.md](./CHANGELOG.md)
 - 移动端唤端页（`/#/open`）可由 gateway 配置：商店链接、回退下载地址、标题与说明（设置项 / `GET /auth/mobile-entry`）。
 - 对话标题支持悬停编辑：点击铅笔图标后可内联重命名，失焦自动保存。
 - 后端实现 CLI Apps 设置接口（`/api/settings/cli-apps` 及 install/update/uninstall/test），供 composer `@` 提及已安装本机 CLI 应用。
+
+### 变更
+
+- 下载页 iOS 文案：客户端正在准备上架 App Store，可先通过 TestFlight 安装体验。
 
 ### 修复
 
