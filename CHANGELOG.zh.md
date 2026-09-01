@@ -25,6 +25,7 @@ English: [CHANGELOG.md](./CHANGELOG.md)
 
 ### 修复
 
+- WebUI 发送消息后立即显示助手输入占位（三点），避免首个流式 token 到达前对话区空白。
 - 已安装的目录技能与输入框 `/` 斜杠面板：界面为中文时优先展示市场 `label_zh` / `description_zh`。
 - LLM / `web_search` / `web_fetch` 共用 httpx `trust_env`：在配置了 SOCKS 代理但未安装 `socksio` 时自动绕过（常见 Clash 场景），可用 `MINIBOT_HTTP_IGNORE_PROXY` 覆盖。
 - WebUI 类型检查：能力中心 active utility 类型与技能目录刷新接线，确保 ECS WebUI 发布可构建。
