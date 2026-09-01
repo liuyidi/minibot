@@ -496,6 +496,8 @@
     },
     "about": {
       "version": "버전",
+      "privacy": "개인정보 처리방침",
+      "terms": "서비스 약관",
       "checking": "확인 중...",
       "checkForUpdates": "업데이트 확인",
       "upToDate": "최신 버전입니다",

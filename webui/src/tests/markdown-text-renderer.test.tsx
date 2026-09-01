@@ -73,6 +73,27 @@ describe("MarkdownTextRenderer", () => {
     expect(screen.getByText("src/**/*.json").tagName).toBe("CODE");
   });
 
+  it("renders directory tree fenced blocks as clickable file references", () => {
+    const onOpenFilePreview = vi.fn();
+    render(
+      <MarkdownTextRenderer onOpenFilePreview={onOpenFilePreview} highlightCode={false}>
+        {`项目结构如下：
+
+\`\`\`text
+pm2-app/
+├── app.js
+├── package.json
+└── README.md
+\`\`\``}
+      </MarkdownTextRenderer>,
+    );
+
+    expect(screen.getByTestId("directory-tree-code-block")).toBeInTheDocument();
+    const appJs = screen.getByRole("button", { name: "pm2-app/app.js" });
+    fireEvent.click(appJs);
+    expect(onOpenFilePreview).toHaveBeenCalledWith("pm2-app/app.js");
+  });
+
   it("does not wrap complete fenced code blocks in an extra pre", () => {
     const { container } = render(
       <MarkdownTextRenderer highlightCode={false}>

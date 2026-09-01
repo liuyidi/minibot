@@ -430,6 +430,7 @@ export function ThreadShell({
           cliApps={cliApps}
           mcpPresets={mcpPresets}
           forkBoundaryMessageCount={forkBoundaryMessageCount}
+          runStartedAt={runStartedAt}
           hasMoreBefore={hasMoreBefore}
           loadingOlder={loadingOlder}
           userMessageOffset={userMessageOffset}
@@ -449,6 +450,7 @@ export function ThreadShell({
           desktopWidth={filePreview.filePreviewWidth}
           isClosing={filePreview.filePreviewClosing}
           onResizeStart={filePreview.handleFilePreviewResizeStart}
+          onOpenFilePreview={filePreview.openFilePreview}
           onClose={filePreview.closeFilePreview}
         />
       ) : null}

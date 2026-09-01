@@ -283,6 +283,7 @@
       "securityManagedControls": "Web fetches always protect local, private, and metadata services. Core channel safety stays in config.json.",
       "logs": "Open the native engine log folder.",
       "diagnostics": "Export a small runtime report for support.",
+      "diagnosticsView": "View a snapshot of your Mac and the native host for support.",
       "localServiceAccessNative": "Allow Full Access shell commands to reach services on this Mac.",
       "webuiDefaultAccessNative": "Used by native chats without a project-specific permission.",
       "contextWindow": "Choose the default context budget for this model configuration.",
@@ -330,6 +331,8 @@
     },
     "about": {
       "version": "Version",
+      "privacy": "Privacy Policy",
+      "terms": "Terms of Service",
       "checking": "Checking...",
       "checkForUpdates": "Check for updates",
       "upToDate": "You're up to date",
@@ -433,6 +436,21 @@
       "diagnosticsExported": "Diagnostics exported to {{path}}.",
       "diagnosticsExportFailed": "Could not export diagnostics."
     },
+    "diagnostics": {
+      "title": "Diagnostics",
+      "subtitle": "A snapshot of your Mac and the minibot desktop host. Attach it when reporting issues.",
+      "loading": "Collecting diagnostics…",
+      "detectedIssues": "Detected issues",
+      "refresh": "Refresh",
+      "copyReport": "Copy report",
+      "copied": "Copied",
+      "copyFailed": "Copy failed",
+      "sections": {
+        "environment": "Environment",
+        "system": "System",
+        "runtime": "Runtime"
+      }
+    },
     "actions": {
       "save": "Save",
       "saving": "Saving",
@@ -440,6 +458,7 @@
       "cancel": "Cancel",
       "open": "Open",
       "export": "Export",
+      "view": "View",
       "opening": "Opening...",
       "exporting": "Exporting..."
     },
@@ -1447,7 +1466,12 @@
       "skip": "Skip",
       "submit": "Submit feedback"
     },
-    "turnLatencyTitle": "Response time (end-to-end)"
+    "turnLatencyTitle": "Response time (end-to-end)",
+    "turnStatusDeepThinking": "Deep thinking",
+    "turnStatusThinking": "Thinking",
+    "turnStatusThinkingFor": "Thinking · {{duration}}",
+    "turnStatusCompleted": "Completed",
+    "turnStatusCompletedFor": "Completed · {{duration}}"
   },
   "lightbox": {
     "title": "Image preview",

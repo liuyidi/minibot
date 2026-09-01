@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { getHostApi } from "@/lib/configs/runtime";
 import { cn } from "@/lib/utils";
+import { NATIVE_HOST_TOP_INSET_CLASS } from "@/layouts/constants";
 import { SIDEBAR_ICON } from "./sidebarChrome";
 
 const FALLBACK_APP_VERSION = "0.1.0";
@@ -67,7 +68,7 @@ export function SidebarBrandHeader({
       className={cn(
         // Logo band: 12px top, 32px content, 16px bottom
         "flex h-8 shrink-0 items-center px-3 mt-3 mb-4",
-        hostChromeInset ? "mt-[3.75rem] mb-4" : null,
+        hostChromeInset ? cn(NATIVE_HOST_TOP_INSET_CLASS, "mb-5") : null,
         collapsed ? "w-14 justify-start" : "justify-between",
       )}
     >

@@ -4,8 +4,10 @@ import { AlertCircle, ChevronRight, FileText, Loader2, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { CodeBlock } from "@/components/markdown/CodeBlock";
+import { MarkdownText } from "@/components/markdown/MarkdownText";
 import { splitFilePath } from "@/components/thread/messages/FileReferenceChip";
 import { ApiError, fetchFilePreview } from "@/lib/apis/api";
+import { prepareFilePreviewContent } from "@/lib/markdown/file-preview-content";
 import type { FilePreviewPayload } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -16,6 +18,7 @@ interface FilePreviewPanelProps {
   desktopWidth?: number;
   isClosing?: boolean;
   onResizeStart?: (event: ReactPointerEvent<HTMLButtonElement>) => void;
+  onOpenFilePreview?: (path: string) => void;
   onClose: () => void;
 }
 
@@ -31,6 +34,7 @@ export function FilePreviewPanel({
   desktopWidth = 544,
   isClosing = false,
   onResizeStart,
+  onOpenFilePreview,
   onClose,
 }: FilePreviewPanelProps) {
   const { t } = useTranslation();
@@ -79,6 +83,12 @@ export function FilePreviewPanel({
     [breadcrumbs],
   );
   const hasCompactPrefix = breadcrumbs.length > compactBreadcrumbs.length;
+  const preparedPreview = useMemo(
+    () => (state.status === "ready"
+      ? prepareFilePreviewContent(state.payload.language, state.payload.content)
+      : null),
+    [state],
+  );
 
   return (
     <aside
@@ -213,14 +223,25 @@ export function FilePreviewPanel({
                       })}
                     </div>
                   ) : null}
-                  <CodeBlock
-                    language={state.payload.language}
-                    code={state.payload.content}
-                    chrome="none"
-                    showLineNumbers
-                    wrapLongLines={false}
-                    className="min-h-full"
-                  />
+                  {preparedPreview?.mode === "markdown" ? (
+                    <div className="px-4 py-3">
+                      <MarkdownText
+                        className="text-sm"
+                        onOpenFilePreview={onOpenFilePreview}
+                      >
+                        {preparedPreview.content}
+                      </MarkdownText>
+                    </div>
+                  ) : (
+                    <CodeBlock
+                      language={preparedPreview?.language ?? state.payload.language}
+                      code={preparedPreview?.content ?? state.payload.content}
+                      chrome="none"
+                      showLineNumbers
+                      wrapLongLines={false}
+                      className="min-h-full"
+                    />
+                  )}
                 </div>
               )}
           </div>

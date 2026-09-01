@@ -10,7 +10,10 @@ import {
   SIDEBAR_ICON,
 } from "@/components/sidebar/sidebarChrome";
 import { onHostChromeDragMouseDown } from "@/lib/host-window-drag";
-import { HOST_CHROME_TITLE_INSET_CLASS } from "@/layouts/constants";
+import {
+  HOST_CHROME_TITLE_INSET_CLASS,
+  NATIVE_HOST_TOP_CHROME_ROW,
+} from "@/layouts/constants";
 import { cn } from "@/lib/utils";
 
 interface ThreadHeaderProps {
@@ -50,7 +53,7 @@ export function ThreadHeader({
       data-tauri-drag-region={hostChromeDrag ? true : undefined}
       onMouseDown={hostChromeDrag ? onHostChromeDragMouseDown : undefined}
       className={cn(
-        APP_TOP_CHROME_ROW,
+        hostChromeDrag ? NATIVE_HOST_TOP_CHROME_ROW : APP_TOP_CHROME_ROW,
         "relative z-10 justify-between gap-3 px-3",
         hostChromeDrag && "host-drag-region",
         // Keep title clear of traffic lights + fixed native icon cluster (all widths).

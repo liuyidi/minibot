@@ -1,7 +1,10 @@
-import { Fragment, useMemo } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { MessageBubble } from "./MessageBubble";
+import { AssistantTurnMeta } from "./AssistantTurnMeta";
 import { AgentActivityCluster } from "@/components/thread/activity/AgentActivityCluster";
+import { groupUnitsIntoRenderBlocks } from "@/lib/chat/assistant-turn-blocks";
+import { turnIsLive } from "@/lib/chat/turn-timing";
 import { normalizeActivityTimeline, type TurnUnit } from "@/lib/chat/activity-timeline";
 import type { CliAppInfo, McpPresetInfo, UIMessage } from "@/lib/types";
 
@@ -9,6 +12,8 @@ interface ThreadMessagesProps {
   messages: UIMessage[];
   /** When true, agent turn still in flight — keeps activity timeline expanded. */
   isStreaming?: boolean;
+  /** Unix epoch seconds for the active user turn (live duration). */
+  runStartedAt?: number | null;
   hiddenUserMessageCount?: number;
   cliApps?: CliAppInfo[];
   mcpPresets?: McpPresetInfo[];
@@ -67,6 +72,7 @@ export function assistantCopyFlags(units: DisplayUnit[]): boolean[] {
 export function ThreadMessages({
   messages,
   isStreaming = false,
+  runStartedAt = null,
   hiddenUserMessageCount = 0,
   cliApps = [],
   mcpPresets = [],
@@ -79,6 +85,7 @@ export function ThreadMessages({
 }: ThreadMessagesProps) {
   const { t } = useTranslation();
   const units = useMemo(() => buildDisplayUnits(messages, isStreaming), [isStreaming, messages]);
+  const blocks = useMemo(() => groupUnitsIntoRenderBlocks(units), [units]);
   const forkBoundaryAfterUnitIndex = useMemo(
     () => unitIndexAfterMessageCount(units, forkBoundaryMessageCount),
     [forkBoundaryMessageCount, units],
@@ -97,72 +104,103 @@ export function ThreadMessages({
     () => isStreaming ? currentActivityClusterIndices(units) : new Set<number>(),
     [isStreaming, units],
   );
+  const [expandedTurnIds, setExpandedTurnIds] = useState<Record<string, boolean>>({});
   let nextUserIndex = hiddenUserMessageCount;
 
   return (
     <div className="flex w-full flex-col">
-      {units.map((unit, index) => {
-        const prev = units[index - 1];
-        const marginTop =
-          index > 0
-            ? marginAfterPrevUnit(prev)
-            : "";
-        const next = units[index + 1];
-        const hasBodyBelow =
-          unit.type === "activity"
-          && next?.type === "message"
-          && next.message.role === "assistant";
+      {blocks.map((block) => {
+        if (block.kind === "user") {
+          const { message, index } = block;
+          const prev = units[index - 1];
+          const marginTop = index > 0 ? marginAfterPrevUnit(prev) : "";
+          nextUserIndex += 1;
+          return (
+            <Fragment key={message.message.id}>
+              <div className={marginTop} data-user-prompt-id={message.message.id}>
+                <MessageBubble message={message.message} />
+              </div>
+              {index === forkBoundaryAfterUnitIndex ? (
+                <ForkBoundaryDivider label={t("thread.forkedFromHistory")} />
+              ) : null}
+            </Fragment>
+          );
+        }
 
-        const userPromptId =
-          unit.type === "message" && unit.message.role === "user"
-            ? unit.message.id
-            : undefined;
-        const forkIndex =
-          unit.type === "message" && unit.message.role === "assistant" && copyFlags[index]
-            ? nextUserIndex
-            : undefined;
-        if (unit.type === "message" && unit.message.role === "user") nextUserIndex += 1;
+        const turnUnits = block.units.map(({ unit }) => unit);
+        const live = turnIsLive(turnUnits, isStreaming);
+        const expanded = expandedTurnIds[block.blockId] ?? live;
+        const setExpanded = (open: boolean) => {
+          setExpandedTurnIds((current) => ({ ...current, [block.blockId]: open }));
+        };
+        const firstIndex = block.units[0]?.index ?? 0;
+        const prev = units[firstIndex - 1];
+        const marginTop = firstIndex > 0 ? marginAfterPrevUnit(prev) : "";
 
         return (
-          <Fragment key={unitKey(unit, index)}>
-            <div className={marginTop} data-user-prompt-id={userPromptId}>
-              {unit.type === "activity" ? (
-                <AgentActivityCluster
-                  messages={unit.messages}
-                  isTurnStreaming={liveActivityClusterIndices.has(index)}
-                  hasBodyBelow={hasBodyBelow}
-                  turnLatencyMs={unit.turnLatencyMs}
-                  cliApps={cliApps}
-                  mcpPresets={mcpPresets}
-                  onOpenFilePreview={onOpenFilePreview}
-                />
-              ) : (
-                <MessageBubble
-                  message={unit.message}
-                  showAssistantCopyAction={
-                    unit.message.role === "assistant"
-                      ? copyFlags[index]
-                      : true
-                  }
-                  cliApps={cliApps}
-                  mcpPresets={mcpPresets}
-                  onOpenFilePreview={onOpenFilePreview}
-                  onForkFromHere={
-                    onForkFromMessage && forkIndex !== undefined
-                      ? () => onForkFromMessage(forkIndex)
-                      : undefined
-                  }
-                  allowLatestTraceFeedback={
-                    feedbackEnabled && unit.message.id === latestAssistantMessageId
-                  }
-                  initialFeedback={feedbackByMessageId[unit.message.id] ?? null}
-                  onAssistantFeedback={feedbackEnabled ? onAssistantFeedback : undefined}
-                />
-              )}
+          <Fragment key={block.blockId}>
+            <div className={marginTop}>
+              <AssistantTurnMeta
+                units={turnUnits}
+                isStreaming={isStreaming}
+                runStartedAt={runStartedAt}
+                expanded={expanded}
+                onExpandedChange={setExpanded}
+              />
+              {block.units.map(({ unit, index }, turnUnitIndex) => {
+                const next = units[index + 1];
+                const hasBodyBelow =
+                  unit.type === "activity"
+                  && next?.type === "message"
+                  && next.message.role === "assistant";
+                const forkIndex =
+                  unit.type === "message" && unit.message.role === "assistant" && copyFlags[index]
+                    ? nextUserIndex
+                    : undefined;
+
+                return (
+                  <Fragment key={unitKey(unit, index)}>
+                    <div className={turnUnitIndex > 0 ? marginAfterPrevUnit(block.units[turnUnitIndex - 1]?.unit) : undefined}>
+                      {unit.type === "activity" ? (
+                        <AgentActivityCluster
+                          messages={unit.messages}
+                          isTurnStreaming={liveActivityClusterIndices.has(index)}
+                          hasBodyBelow={hasBodyBelow}
+                          turnLatencyMs={unit.turnLatencyMs}
+                          cliApps={cliApps}
+                          mcpPresets={mcpPresets}
+                          onOpenFilePreview={onOpenFilePreview}
+                          suppressTurnDuration
+                          expanded={expanded}
+                          onExpandedChange={setExpanded}
+                        />
+                      ) : (
+                        <MessageBubble
+                          message={unit.message}
+                          showAssistantCopyAction={copyFlags[index]}
+                          cliApps={cliApps}
+                          mcpPresets={mcpPresets}
+                          onOpenFilePreview={onOpenFilePreview}
+                          onForkFromHere={
+                            onForkFromMessage && forkIndex !== undefined
+                              ? () => onForkFromMessage(forkIndex)
+                              : undefined
+                          }
+                          allowLatestTraceFeedback={
+                            feedbackEnabled && unit.message.id === latestAssistantMessageId
+                          }
+                          initialFeedback={feedbackByMessageId[unit.message.id] ?? null}
+                          onAssistantFeedback={feedbackEnabled ? onAssistantFeedback : undefined}
+                        />
+                      )}
+                    </div>
+                    {index === forkBoundaryAfterUnitIndex ? (
+                      <ForkBoundaryDivider label={t("thread.forkedFromHistory")} />
+                    ) : null}
+                  </Fragment>
+                );
+              })}
             </div>
-            {index === forkBoundaryAfterUnitIndex ? (
-              <ForkBoundaryDivider label={t("thread.forkedFromHistory")} />
-            ) : null}
           </Fragment>
         );
       })}
@@ -220,7 +258,8 @@ function unitKey(unit: DisplayUnit, index: number): string {
   return unit.message.id;
 }
 
-function marginAfterPrevUnit(prev: DisplayUnit): string {
+function marginAfterPrevUnit(prev: DisplayUnit | undefined): string {
+  if (!prev) return "mt-4";
   if (prev.type === "activity") {
     return "mt-4";
   }

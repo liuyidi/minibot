@@ -18,11 +18,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { getHostApi } from "@/lib/configs/runtime";
+import { getHostApi, useHasMinibotHost } from "@/lib/configs/runtime";
 import { SETTINGS_SHOW_RUNTIME_IDENTITY } from "@/lib/configs/ui-entry";
 import type { SettingsPayload } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
+import { HostDiagnosticsDialog } from "@/pages/settings/runtime/HostDiagnosticsDialog";
 import { FALLBACK_TIMEZONES } from "@/pages/settings/shared/constants";
 
 export function RuntimeSettings({
@@ -48,14 +49,15 @@ export function RuntimeSettings({
 }) {
   const { t } = useTranslation();
   const tx = (key: string, fallback: string) => t(key, { defaultValue: fallback });
-  const isNativeHost = getHostApi() !== null || (settings.surface ?? settings.runtime_surface) === "native";
+  const hasHostBridge = useHasMinibotHost();
+  const isNativeHost = hasHostBridge || (settings.surface ?? settings.runtime_surface) === "native";
   const restartActionLabel = isNativeHost
     ? tx("app.system.restartEngine", "Restart engine")
     : t("app.system.restart");
   const restartingActionLabel = isNativeHost
     ? tx("app.system.restartingEngine", "Restarting engine...")
     : t("app.system.restarting");
-  const [diagnosticsPath, setDiagnosticsPath] = useState<string | null>(null);
+  const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
   const [hostActionMessage, setHostActionMessage] = useState<{
     target: "logs" | "diagnostics";
     message: string;
@@ -63,6 +65,8 @@ export function RuntimeSettings({
   const [hostActionBusy, setHostActionBusy] =
     useState<"logs" | "diagnostics" | null>(null);
   const hostApi = getHostApi();
+  const showHostLogs = isNativeHost;
+  const showHostDiagnostics = isNativeHost;
   const engineState = isRestarting
     ? tx("settings.values.restartingEngine", "Restarting")
     : settings.apply_state?.status === "pending"
@@ -148,7 +152,7 @@ export function RuntimeSettings({
           <SettingsSectionTitle>{tx("settings.sections.nativeHost", "Native host")}</SettingsSectionTitle>
           <SettingsGroup>
             <ReadOnlyRow title={tx("settings.rows.engine", "Engine")} value={engineState} />
-            {settings.runtime_capabilities?.can_open_logs ? (
+            {showHostLogs ? (
               <SettingsRow
                 title={tx("settings.rows.logs", "Logs")}
                 description={
@@ -177,47 +181,54 @@ export function RuntimeSettings({
                 </Button>
               </SettingsRow>
             ) : null}
-            {settings.runtime_capabilities?.can_export_diagnostics ? (
+            {showHostDiagnostics ? (
               <SettingsRow
                 title={tx("settings.rows.diagnostics", "Diagnostics")}
                 description={
                   hostActionMessage?.target === "diagnostics"
                     ? hostActionMessage.message
-                    : diagnosticsPath
-                    ? diagnosticsPath
-                    : tx("settings.help.diagnostics", "Export a small runtime report for support.")
+                    : tx(
+                        "settings.help.diagnosticsView",
+                        "View a snapshot of your Mac and the native host for support.",
+                      )
                 }
               >
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() =>
-                    void runHostAction(
-                      "diagnostics",
-                      async () => {
-                        const path = await hostApi!.exportDiagnostics();
-                        setDiagnosticsPath(path);
-                        return path;
-                      },
-                      (path) =>
-                        t("settings.status.diagnosticsExported", {
-                          path: String(path ?? ""),
-                          defaultValue: "Diagnostics exported to {{path}}.",
-                        }),
-                      tx("settings.status.diagnosticsExportFailed", "Could not export diagnostics."),
-                    )
-                  }
-                  disabled={hostActionBusy !== null}
+                  onClick={() => setDiagnosticsOpen(true)}
                   className="rounded-full"
                 >
-                  {hostActionBusy === "diagnostics"
-                    ? tx("settings.actions.exporting", "Exporting...")
-                    : tx("settings.actions.export", "Export")}
+                  {tx("settings.actions.view", "View")}
                 </Button>
               </SettingsRow>
             ) : null}
           </SettingsGroup>
         </section>
+      ) : null}
+
+      {showHostDiagnostics ? (
+        <HostDiagnosticsDialog
+          open={diagnosticsOpen}
+          onOpenChange={setDiagnosticsOpen}
+          loadSnapshot={async () => {
+            const api = getHostApi();
+            if (api?.getDiagnostics) {
+              return api.getDiagnostics();
+            }
+            if (api?.exportDiagnostics) {
+              const report = await api.exportDiagnostics();
+              return {
+                generated_at_ms: Date.now(),
+                app_version: settings.runtime?.gateway_host ?? "minibot-desktop",
+                sections: [],
+                issues: [],
+                report,
+              };
+            }
+            throw new Error("Diagnostics are only available in the desktop app.");
+          }}
+        />
       ) : null}
 
       <section>

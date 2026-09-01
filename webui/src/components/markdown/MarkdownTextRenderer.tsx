@@ -17,11 +17,13 @@ import remarkMath from "remark-math";
 
 import { AttachmentTile } from "@/components/thread/messages/AttachmentTile";
 import { CodeBlock } from "./CodeBlock";
+import { DirectoryTreeCodeBlock } from "./DirectoryTreeCodeBlock";
 import {
   FileReferenceChip,
   isFilePatternReference,
   isLikelyFilePath,
 } from "@/components/thread/messages/FileReferenceChip";
+import { isDirectoryTreeMarkdown } from "@/lib/markdown/directory-tree";
 import { inferMediaKind } from "@/lib/utils/media";
 import { faviconUrls } from "@/lib/constants/provider-brand";
 import { remarkTexMath } from "@/lib/chat/remark-tex-math";
@@ -367,7 +369,11 @@ function useFaviconFallback(host: string) {
 function isRenderedCodeBlock(value: ReactNode): boolean {
   if (!isValidElement(value)) return false;
   const props = value.props as { code?: unknown };
-  return value.type === CodeBlock || typeof props.code === "string";
+  return (
+    value.type === CodeBlock
+    || value.type === DirectoryTreeCodeBlock
+    || typeof props.code === "string"
+  );
 }
 
 function codeFenceFromPreChild(value: ReactNode): { code: string; language?: string } | null {
@@ -380,6 +386,36 @@ function codeFenceFromPreChild(value: ReactNode): { code: string; language?: str
     code: nodeText(props.children).replace(/\n$/, ""),
     language,
   };
+}
+
+function renderFencedCodeBlock({
+  language,
+  code,
+  highlightCode,
+  onOpenFilePreview,
+}: {
+  language?: string;
+  code: string;
+  highlightCode: boolean;
+  onOpenFilePreview?: (path: string) => void;
+}) {
+  if (onOpenFilePreview && isDirectoryTreeMarkdown(code)) {
+    return (
+      <DirectoryTreeCodeBlock
+        language={language || "text"}
+        code={code}
+        onOpenFilePreview={onOpenFilePreview}
+      />
+    );
+  }
+  return (
+    <CodeBlock
+      language={language || "text"}
+      code={code}
+      className="my-3"
+      highlight={highlightCode}
+    />
+  );
 }
 
 /**
@@ -398,14 +434,12 @@ export default function MarkdownTextRenderer({
         const match = /language-(\w+)/.exec(cls || "");
         if (match) {
           const code = String(kids).replace(/\n$/, "");
-          return (
-            <CodeBlock
-              language={match[1]}
-              code={code}
-              className="my-3"
-              highlight={highlightCode}
-            />
-          );
+          return renderFencedCodeBlock({
+            language: match[1],
+            code,
+            highlightCode,
+            onOpenFilePreview,
+          });
         }
         const raw = String(kids).replace(/\n$/, "");
         if (isLikelyFilePath(raw)) {
@@ -448,14 +482,12 @@ export default function MarkdownTextRenderer({
         }
         const fence = codeFenceFromPreChild(lone);
         if (fence) {
-          return (
-            <CodeBlock
-              language={fence.language || "text"}
-              code={fence.code}
-              className="my-3"
-              highlight={highlightCode}
-            />
-          );
+          return renderFencedCodeBlock({
+            language: fence.language,
+            code: fence.code,
+            highlightCode,
+            onOpenFilePreview,
+          });
         }
         return (
           <pre

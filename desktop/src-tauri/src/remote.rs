@@ -227,29 +227,20 @@ impl RemoteServer {
     }
 
     pub fn export_diagnostics(&self) -> Result<String, String> {
-        let info = self.runtime_info()?;
-        let g = self.inner.lock().map_err(|_| "remote state lock poisoned".to_string())?;
+        Ok(self.diagnostics_snapshot()?.report)
+    }
+
+    pub fn diagnostics_snapshot(
+        &self,
+    ) -> Result<crate::diagnostics::HostDiagnosticsSnapshot, String> {
+        let g = self
+            .inner
+            .lock()
+            .map_err(|_| "remote state lock poisoned".to_string())?;
+        let runtime = runtime_info_from_inner(&g);
+        let last_error = g.last_error.clone();
         let log_tail = read_log_tail(&g.logs_dir.join("connection.log"), 8_000);
-        Ok(format!(
-            "minibot-desktop diagnostics\n\
-             app_version: {}\n\
-             engine_status: {:?}\n\
-             api_base: {}\n\
-             sidecar: {}\n\
-             last_error: {}\n\
-             data_dir: {}\n\
-             logs_dir: {}\n\
-             --- connection.log (tail) ---\n\
-             {}\n",
-            info.app_version,
-            info.engine_status,
-            info.api_base,
-            info.python,
-            g.last_error.as_deref().unwrap_or("(none)"),
-            info.data_dir,
-            info.logs_dir,
-            log_tail,
-        ))
+        crate::diagnostics::collect_snapshot(runtime, last_error, log_tail)
     }
 
     fn ensure_local_engine(&self) -> Result<(), String> {
@@ -702,16 +693,43 @@ fn resolve_initial_api_base(config_path: &Path) -> Result<String, String> {
             return normalize_api_base(trimmed);
         }
     }
+    let mut from_file: Option<String> = None;
     if config_path.is_file() {
         let raw = std::fs::read_to_string(config_path)
             .map_err(|e| format!("read server.json: {e}"))?;
         if let Ok(cfg) = serde_json::from_str::<ServerConfig>(&raw) {
             if let Ok(normalized) = normalize_api_base(&cfg.api_base) {
-                return Ok(normalized);
+                from_file = Some(normalized);
             }
         }
     }
-    Ok(DEFAULT_API_BASE.to_string())
+    let base = from_file
+        .clone()
+        .unwrap_or_else(|| DEFAULT_API_BASE.to_string());
+    if should_prefer_bundled_local_gateway(&base) {
+        if from_file.as_deref() != Some(LOCAL_GATEWAY_API_BASE) {
+            let _ = persist_server_config(config_path, LOCAL_GATEWAY_API_BASE);
+            eprintln!(
+                "minibot-desktop: migrated api_base {base} → {LOCAL_GATEWAY_API_BASE} (bundled sidecar)"
+            );
+        }
+        return Ok(LOCAL_GATEWAY_API_BASE.to_string());
+    }
+    Ok(base)
+}
+
+fn should_prefer_bundled_local_gateway(api_base: &str) -> bool {
+    bundled_sidecar_path().is_some() && !is_loopback_api_base(api_base)
+}
+
+fn is_loopback_api_base(api_base: &str) -> bool {
+    let Ok(url) = Url::parse(api_base) else {
+        return false;
+    };
+    matches!(
+        url.host_str(),
+        Some("127.0.0.1") | Some("localhost") | Some("::1")
+    )
 }
 
 fn append_log_path(logs_dir: &Path, line: &str) -> Result<(), String> {

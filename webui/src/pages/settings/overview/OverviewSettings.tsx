@@ -1,12 +1,11 @@
 import {
-  ArrowUpCircle,
   Bot,
-  Check,
   ChevronRight,
   ExternalLink,
   HardDrive,
-  Loader2,
+  Scale,
   Server,
+  Shield,
   type LucideIcon,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -14,14 +13,23 @@ import { useTranslation } from "react-i18next";
 
 import { settingsProviderConfigured } from "@/components/settings/agent-draft";
 import { SettingsGroup, SettingsSectionTitle } from "@/components/settings/form";
-import { Button } from "@/components/ui/button";
-import { checkVersion } from "@/lib/apis/api";
 import { providerBrand, providerDisplayLabel } from "@/lib/constants/provider-brand";
 import type { SettingsPayload } from "@/lib/types";
 import { shortWorkspacePath } from "@/lib/utils/workspace";
-import { useClient } from "@/providers/ClientProvider";
 
 import type { SettingsSectionKey } from "@/pages/settings/shared/types";
+
+const PRIVACY_URL = "https://auth.liuyidi.me/privacy";
+const TERMS_URL = "https://auth.liuyidi.me/terms";
+
+function formatAboutVersion(raw?: string): string {
+  const trimmed = (raw ?? "").trim();
+  if (!trimmed || trimmed.toLowerCase() === "minibot") {
+    return "minibot";
+  }
+  const version = trimmed.startsWith("v") ? trimmed.slice(1) : trimmed;
+  return `minibot v${version}`;
+}
 
 export function OverviewSettings({
   settings,
@@ -101,106 +109,73 @@ export function OverviewSettings({
       <section>
         <SettingsSectionTitle>{tx("settings.sections.about", "About")}</SettingsSectionTitle>
         <SettingsGroup>
-          <VersionCheckRow currentVersion={settings.version?.current} />
+          <AboutVersionRow currentVersion={settings.version?.current} />
+          <AboutLinkRow
+            icon={Shield}
+            title={tx("settings.about.privacy", "Privacy Policy")}
+            href={PRIVACY_URL}
+          />
+          <AboutLinkRow
+            icon={Scale}
+            title={tx("settings.about.terms", "Terms of Service")}
+            href={TERMS_URL}
+          />
         </SettingsGroup>
       </section>
     </div>
   );
 }
 
-export function VersionCheckRow({ currentVersion }: { currentVersion?: string }) {
+export function AboutVersionRow({ currentVersion }: { currentVersion?: string }) {
   const { t } = useTranslation();
   const tx = (key: string, fallback: string) => t(key, { defaultValue: fallback });
-  const { token } = useClient();
-  const [checking, setChecking] = useState(false);
-  const [result, setResult] = useState<
-    | { type: "up-to-date" }
-    | { type: "update"; latestVersion: string; pypiUrl?: string }
-    | { type: "error"; message: string }
-    | null
-  >(null);
-
-  const handleCheck = async () => {
-    setChecking(true);
-    setResult(null);
-    try {
-      const res = await checkVersion(token);
-      if (res.updateAvailable) {
-        setResult({
-          type: "update",
-          latestVersion: res.updateAvailable.latestVersion,
-          pypiUrl: res.updateAvailable.pypiUrl,
-        });
-      } else {
-        setResult({ type: "up-to-date" });
-      }
-    } catch (err) {
-      setResult({ type: "error", message: (err as Error).message });
-    } finally {
-      setChecking(false);
-    }
-  };
-
   return (
-    <div className="flex min-h-[62px] flex-col gap-3 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+    <div className="flex min-h-[62px] items-center justify-between gap-3 px-4 py-3.5 sm:px-5">
       <div className="min-w-0">
         <div className="text-[14px] font-medium leading-5 text-foreground">
           {tx("settings.about.version", "Version")}
         </div>
         <div className="mt-0.5 text-[12px] leading-5 text-muted-foreground">
-          {currentVersion ? `v${currentVersion}` : "minibot"}
+          {formatAboutVersion(currentVersion)}
         </div>
-      </div>
-      <div className="flex shrink-0 flex-col items-end gap-2">
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => void handleCheck()}
-          disabled={checking}
-          className="rounded-full"
-        >
-          {checking ? (
-            <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" aria-hidden />
-          ) : (
-            <ArrowUpCircle className="mr-1.5 h-3.5 w-3.5" aria-hidden />
-          )}
-          {checking
-            ? tx("settings.about.checking", "Checking...")
-            : tx("settings.about.checkForUpdates", "Check for updates")}
-        </Button>
-        {result?.type === "up-to-date" ? (
-          <span className="inline-flex items-center gap-1.5 text-[12px] text-emerald-600 dark:text-emerald-300">
-            <Check className="h-3 w-3" aria-hidden />
-            {tx("settings.about.upToDate", "You're up to date")}
-          </span>
-        ) : null}
-        {result?.type === "update" ? (
-          <span className="inline-flex items-center gap-1.5 text-[12px] text-blue-600 dark:text-blue-300">
-            <ArrowUpCircle className="h-3 w-3" aria-hidden />
-            {t("settings.about.updateAvailable", {
-              defaultValue: "Update available v{{version}}",
-              version: result.latestVersion,
-            })}
-            {result.pypiUrl ? (
-              <a
-                href={result.pypiUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-0.5 underline-offset-2 hover:underline"
-              >
-                PyPI
-                <ExternalLink className="h-2.5 w-2.5" aria-hidden />
-              </a>
-            ) : null}
-          </span>
-        ) : null}
-        {result?.type === "error" ? (
-          <span className="text-[12px] text-destructive">{result.message}</span>
-        ) : null}
       </div>
     </div>
   );
 }
+
+/** @deprecated Prefer AboutVersionRow — update check UI is temporarily hidden. */
+export function VersionCheckRow({ currentVersion }: { currentVersion?: string }) {
+  return <AboutVersionRow currentVersion={currentVersion} />;
+}
+
+export function AboutLinkRow({
+  icon: Icon,
+  title,
+  href,
+}: {
+  icon: LucideIcon;
+  title: string;
+  href: string;
+}) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="group flex min-h-[62px] w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-muted/30 sm:px-5"
+    >
+      <OverviewRowIcon icon={Icon} />
+      <span className="min-w-0 flex-1 text-[14px] font-medium leading-5 text-foreground">
+        {title}
+      </span>
+      <ExternalLink
+        className="h-3.5 w-3.5 shrink-0 text-muted-foreground/60 transition-colors group-hover:text-muted-foreground"
+        aria-hidden
+      />
+    </a>
+  );
+}
+
 export function OverviewRowIcon({
   icon: Icon,
 }: {

@@ -174,6 +174,10 @@ interface AgentActivityClusterProps {
   cliApps?: CliAppInfo[];
   mcpPresets?: McpPresetInfo[];
   onOpenFilePreview?: (path: string) => void;
+  /** Hide duration in the cluster header when turn meta owns elapsed time. */
+  suppressTurnDuration?: boolean;
+  expanded?: boolean;
+  onExpandedChange?: (expanded: boolean) => void;
 }
 
 /**
@@ -188,6 +192,9 @@ export function AgentActivityCluster({
   cliApps = [],
   mcpPresets = [],
   onOpenFilePreview,
+  suppressTurnDuration = false,
+  expanded: expandedProp,
+  onExpandedChange,
 }: AgentActivityClusterProps) {
   const { t } = useTranslation();
   const fileEdits = useMemo(
@@ -236,9 +243,10 @@ export function AgentActivityCluster({
   const wasTurnStreamingRef = useRef(isTurnStreaming);
   const wasTurnStreaming = wasTurnStreamingRef.current;
   /** Live work stays open; completed work briefly shows the done state, then tucks away. */
-  const outerExpanded = userToggledOuter
+  const outerExpandedUncontrolled = userToggledOuter
     ? outerOpenLocal
     : isTurnStreaming || completionHoldOpen || (wasTurnStreaming && !isTurnStreaming);
+  const outerExpanded = expandedProp ?? outerExpandedUncontrolled;
 
   const hasLiveEditingFiles = isTurnStreaming && hasEditingFiles;
   const singleFilePath = fileCount === 1 ? primaryFilePath : undefined;
@@ -351,9 +359,17 @@ export function AgentActivityCluster({
   }, [cancelActivityScrollFrame, scrollActivityToBottom]);
 
   const toggleOuter = () => {
-    const nextOpen = userToggledOuter ? !outerOpenLocal : !outerExpanded;
+    const nextOpen = onExpandedChange
+      ? !outerExpanded
+      : userToggledOuter
+        ? !outerOpenLocal
+        : !outerExpanded;
     if (nextOpen) {
       autoFollowActivityRef.current = true;
+    }
+    if (onExpandedChange) {
+      onExpandedChange(nextOpen);
+      return;
     }
     setUserToggledOuter(true);
     setOuterOpenLocal(nextOpen);
@@ -391,6 +407,7 @@ export function AgentActivityCluster({
   useEffect(() => {
     const wasStreaming = wasTurnStreamingRef.current;
     wasTurnStreamingRef.current = isTurnStreaming;
+    if (onExpandedChange) return undefined;
     if (isTurnStreaming) {
       setCompletionHoldOpen(false);
       return undefined;
@@ -399,7 +416,7 @@ export function AgentActivityCluster({
     setCompletionHoldOpen(true);
     const timeout = window.setTimeout(() => setCompletionHoldOpen(false), 900);
     return () => window.clearTimeout(timeout);
-  }, [isTurnStreaming, userToggledOuter]);
+  }, [isTurnStreaming, onExpandedChange, userToggledOuter]);
 
   const onActivityScroll = useCallback(() => {
     const el = activityScrollRef.current;
@@ -446,7 +463,9 @@ export function AgentActivityCluster({
           active={isTurnStreaming}
           className="min-w-0"
         >
-          {singleFilePath ? fileActivityVerb(hasLiveEditingFiles, hasFailedFiles, hasDeletedFiles) : thoughtLabel}
+          {singleFilePath ? fileActivityVerb(hasLiveEditingFiles, hasFailedFiles, hasDeletedFiles) : (
+            suppressTurnDuration ? summary : thoughtLabel
+          )}
         </StreamingLabelSheen>
         {singleFilePath ? (
           <FileReferenceChip

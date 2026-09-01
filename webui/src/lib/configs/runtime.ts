@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+
 import type { RuntimeCapabilities, RuntimeSurface } from "@/lib/types";
 
 export interface RuntimeHost {
@@ -23,8 +25,33 @@ export interface HostRuntimeInfo {
   engine_transport?: "unix_socket";
 }
 
+export interface HostDiagnosticsSnapshot {
+  generated_at_ms: number;
+  app_version: string;
+  sections: DiagnosticSection[];
+  issues: DiagnosticIssue[];
+  report: string;
+}
+
+export interface DiagnosticSection {
+  id: string;
+  title: string;
+  rows: DiagnosticRow[];
+}
+
+export interface DiagnosticRow {
+  key: string;
+  value: string;
+}
+
+export interface DiagnosticIssue {
+  severity: string;
+  message: string;
+}
+
 export interface MinibotHostApi {
   getRuntimeInfo(): Promise<HostRuntimeInfo>;
+  getDiagnostics?(): Promise<HostDiagnosticsSnapshot>;
   restartEngine(): Promise<void>;
   reconnect?(): Promise<void>;
   pickFolder(): Promise<string | null>;
@@ -63,12 +90,78 @@ const HOST_WS_CLOSED = 3;
 declare global {
   interface Window {
     minibotHost?: MinibotHostApi;
+    __TAURI__?: {
+      core?: {
+        invoke?: (command: string, payload?: Record<string, unknown>) => Promise<unknown>;
+      };
+    };
   }
 }
 
 export function getHostApi(): MinibotHostApi | null {
   if (typeof window === "undefined") return null;
   return window.minibotHost ?? null;
+}
+
+export function isTauriDesktopShell(): boolean {
+  if (typeof window === "undefined") return false;
+  if (document.documentElement.dataset.minibotDesktopShell === "1") {
+    return true;
+  }
+  return !!(
+    window.__TAURI__?.core?.invoke
+    || (window as Window & { __TAURI_INTERNALS__?: { invoke?: unknown } }).__TAURI_INTERNALS__?.invoke
+  );
+}
+
+export function useHasMinibotHost(): boolean {
+  const [present, setPresent] = useState(() => getHostApi() !== null || isTauriDesktopShell());
+  useEffect(() => {
+    if (present) return;
+    const markReady = () => {
+      if (getHostApi() !== null || isTauriDesktopShell()) {
+        setPresent(true);
+      }
+    };
+    markReady();
+    window.addEventListener("minibot-host-ready", markReady);
+    const id = window.setInterval(markReady, 50);
+    const stop = window.setTimeout(() => window.clearInterval(id), 5_000);
+    return () => {
+      window.removeEventListener("minibot-host-ready", markReady);
+      window.clearInterval(id);
+      window.clearTimeout(stop);
+    };
+  }, [present]);
+  return present;
+}
+
+export function hostBridgeCapabilities(
+  api: MinibotHostApi | null = getHostApi(),
+): Partial<RuntimeCapabilities> {
+  const tauri = isTauriDesktopShell();
+  if (!api && !tauri) return {};
+  return {
+    can_export_diagnostics: !!(api?.getDiagnostics ?? api?.exportDiagnostics ?? tauri),
+    can_open_logs: !!(api?.openLogs ?? tauri),
+    can_pick_folder: !!api?.pickFolder,
+    can_restart_engine: !!(api?.reconnect ?? api?.restartEngine ?? tauri),
+  };
+}
+
+export function resolveRuntimeCapabilities(
+  capabilities?: Partial<RuntimeCapabilities> | null,
+  api: MinibotHostApi | null = getHostApi(),
+): RuntimeCapabilities {
+  const fromHost = hostBridgeCapabilities(api);
+  return {
+    can_export_diagnostics: false,
+    can_open_logs: false,
+    can_pick_folder: false,
+    can_restart_engine: false,
+    ...(capabilities ?? {}),
+    ...fromHost,
+  };
 }
 
 export function toRuntimeSurface(surface: string | null | undefined): RuntimeSurface {
@@ -80,13 +173,7 @@ export function createRuntimeHost(
   capabilities?: Partial<RuntimeCapabilities> | null,
 ): RuntimeHost {
   const api = getHostApi();
-  const mergedCapabilities = {
-    can_export_diagnostics: false,
-    can_open_logs: false,
-    can_pick_folder: false,
-    can_restart_engine: false,
-    ...(capabilities ?? {}),
-  };
+  const mergedCapabilities = resolveRuntimeCapabilities(capabilities, api);
   const bridge = getHostSocketBridge();
   return {
     surface,

@@ -7,9 +7,9 @@ use objc2::rc::Retained;
 use objc2::runtime::{AnyObject, Sel};
 use objc2::{define_class, msg_send, sel, MainThreadOnly};
 use objc2_app_kit::{
-    NSBezelStyle, NSButton, NSColor, NSControlSize, NSCursor, NSImage, NSImageScaling,
-    NSImageSymbolConfiguration, NSLayoutAttribute, NSTitlebarAccessoryViewController, NSView,
-    NSWindow, NSWindowButton,
+    NSAutoresizingMaskOptions, NSBezelStyle, NSButton, NSColor, NSControlSize, NSCursor, NSImage,
+    NSImageScaling, NSImageSymbolConfiguration, NSLayoutAttribute, NSTitlebarAccessoryViewController,
+    NSView, NSWindow, NSWindowButton, NSWindowOrderingMode,
 };
 use objc2_foundation::{
     ns_string, MainThreadMarker, NSArray, NSInteger, NSObject, NSObjectProtocol, NSPoint, NSRect,
@@ -17,7 +17,9 @@ use objc2_foundation::{
 };
 use tauri::{AppHandle, Manager, WebviewWindow};
 
-use crate::{CHROME_DOWN, TRAFFIC_LIGHT_X, TRAFFIC_LIGHT_Y};
+use crate::{
+    CHROME_DOWN, TRAFFIC_LIGHT_BTN_H, TRAFFIC_LIGHT_SPACE, TRAFFIC_LIGHT_X, TRAFFIC_LIGHT_Y,
+};
 
 /// Match WebUI `NATIVE_SIDEBAR_WIDTH` (desktop host) — kept for reference / future layout.
 #[allow(dead_code)]
@@ -25,9 +27,11 @@ const NATIVE_SIDEBAR_WIDTH: f64 = 240.0;
 /// Approximate width of the three traffic-light buttons + gaps.
 #[allow(dead_code)]
 const TRAFFIC_LIGHT_CLUSTER_WIDTH: f64 = 62.0;
-/// Icon hit target. Accessory height adds top pad from `CHROME_DOWN` so the
-/// cluster sits lower while AppKit still centers the accessory view.
+/// Icon hit target. Vertical position follows traffic-light center via `chrome_icon_origin_y`.
 const BUTTON: f64 = 28.0;
+const SYMBOL_POINT_SIZE: f64 = 13.0;
+/// Extra lift for the new-chat SF Symbol (bottom stroke can clip in titlebar band).
+const NEW_CHAT_ICON_Y_LIFT: f64 = 2.0;
 /// Gap between chrome icons.
 const CLUSTER_GAP: f64 = 5.0;
 /// Extra space between traffic lights and the first chrome icon.
@@ -44,6 +48,8 @@ static CHROME_DARK: Mutex<bool> = Mutex::new(false);
 struct ChromeState {
     accessory: Retained<NSTitlebarAccessoryViewController>,
     container: Retained<ChromeAccessoryView>,
+    /// Sits in the traffic-light button superview; `layout` re-pins before paint.
+    traffic_pin: Retained<TrafficLightPinView>,
     toggle: Retained<ChromeButton>,
     search: Retained<ChromeButton>,
     new_chat: Retained<ChromeButton>,
@@ -105,9 +111,32 @@ define_class!(
     }
 );
 
-// Accessory container: re-apply traffic-light frames on every layout.
-// AppKit / wry otherwise reset button Y each pass, so one-shot insets look like
-// TRAFFIC_LIGHT_Y "does nothing".
+// Zero-size sibling of the traffic lights. Added last so its `layout` runs after
+// AppKit positions the buttons — we re-pin in the same layout pass (no flicker).
+define_class!(
+    #[unsafe(super(NSView))]
+    #[thread_kind = MainThreadOnly]
+    #[name = "MinibotTrafficLightPinView"]
+    struct TrafficLightPinView;
+
+    impl TrafficLightPinView {
+        #[unsafe(method(layout))]
+        fn layout(&self) {
+            let _: () = unsafe { msg_send![super(self), layout] };
+            if let Some(window) = self.window() {
+                pin_traffic_light_buttons(&window);
+            }
+        }
+
+        #[unsafe(method(hitTest:))]
+        fn hit_test(&self, _point: NSPoint) -> *const NSView {
+            // Never intercept clicks meant for the traffic lights.
+            std::ptr::null()
+        }
+    }
+);
+
+// Accessory only lays out chrome icons — traffic lights are owned by TrafficLightPinView.
 define_class!(
     #[unsafe(super(NSView))]
     #[thread_kind = MainThreadOnly]
@@ -118,9 +147,6 @@ define_class!(
         #[unsafe(method(layout))]
         fn layout(&self) {
             let _: () = unsafe { msg_send![super(self), layout] };
-            if let Some(window) = self.window() {
-                apply_traffic_light_inset(&window);
-            }
         }
     }
 );
@@ -172,7 +198,8 @@ fn apply_button_theme(btn: &ChromeButton, symbol: &NSString, tooltip: &NSString,
     let tint = chrome_tint(dark);
     // Always palette-bake: titlebar accessories ignore template contentTintColor
     // (both light and dark end up looking washed / white).
-    let size_cfg = NSImageSymbolConfiguration::configurationWithPointSize_weight(13.0, 0.0);
+    let size_cfg =
+        NSImageSymbolConfiguration::configurationWithPointSize_weight(SYMBOL_POINT_SIZE, 0.0);
     let palette = NSArray::from_slice(&[tint.as_ref()]);
     let palette_cfg = NSImageSymbolConfiguration::configurationWithPaletteColors(&palette);
     let cfg = size_cfg.configurationByApplyingConfiguration(&palette_cfg);
@@ -238,10 +265,19 @@ fn cluster_width(show_new_chat: bool) -> f64 {
     LEADING_GAP + icons * BUTTON + gaps * CLUSTER_GAP
 }
 
+fn titlebar_band_h() -> f64 {
+    TRAFFIC_LIGHT_BTN_H + TRAFFIC_LIGHT_Y
+}
+
+/// Origin.y for 32px chrome icons so their vertical center matches traffic lights.
+fn chrome_icon_origin_y() -> f64 {
+    let (_, traffic_btn_y, _) = traffic_light_geometry();
+    let tl_center = traffic_btn_y + TRAFFIC_LIGHT_BTN_H / 2.0;
+    tl_center - BUTTON / 2.0
+}
+
 fn accessory_height() -> f64 {
-    // Top pad = 2 * CHROME_DOWN so AppKit-centered accessory shifts icon centers
-    // down by exactly CHROME_DOWN (icons sit on the bottom of the taller view).
-    BUTTON + CHROME_DOWN * 2.0
+    titlebar_band_h()
 }
 
 fn apply_chrome_layout(state: &ChromeState) {
@@ -253,28 +289,36 @@ fn apply_chrome_layout(state: &ChromeState) {
     let show_new_chat = !sidebar_open;
     let cw = cluster_width(show_new_chat);
     let h = accessory_height();
+    let icon_y = chrome_icon_origin_y();
     state.new_chat.setHidden(!show_new_chat);
     state.container.setFrame(NSRect::new(
         NSPoint::new(0.0, 0.0),
         NSSize::new(cw, h),
     ));
-    // y=0 → bottom of accessory → optically lower when CHROME_DOWN > 0.
     let x0 = LEADING_GAP;
-    state.toggle.setFrameOrigin(NSPoint::new(x0, 0.0));
+    state.toggle.setFrameOrigin(NSPoint::new(x0, icon_y));
     state
         .search
-        .setFrameOrigin(NSPoint::new(x0 + BUTTON + CLUSTER_GAP, 0.0));
+        .setFrameOrigin(NSPoint::new(x0 + BUTTON + CLUSTER_GAP, icon_y));
     if show_new_chat {
-        state
-            .new_chat
-            .setFrameOrigin(NSPoint::new(x0 + (BUTTON + CLUSTER_GAP) * 2.0, 0.0));
+        state.new_chat.setFrameOrigin(NSPoint::new(
+            x0 + (BUTTON + CLUSTER_GAP) * 2.0,
+            icon_y + NEW_CHAT_ICON_Y_LIFT,
+        ));
     }
 }
 
-/// Re-assert traffic-light inset. Called from accessory `layout` so it sticks
-/// against wry's drawRect / AppKit resets. `CHROME_DOWN` shifts the cluster down
-/// from the vertical mid of the titlebar strip.
-fn apply_traffic_light_inset(ns_window: &NSWindow) {
+/// Fixed titlebar band geometry — never read live `close.frame()` (unstable during
+/// accessory relayout when the sidebar opens/closes).
+fn traffic_light_geometry() -> (f64, f64, f64) {
+    let title_bar_h = TRAFFIC_LIGHT_BTN_H + TRAFFIC_LIGHT_Y;
+    let btn_y = ((title_bar_h - TRAFFIC_LIGHT_BTN_H) / 2.0 - CHROME_DOWN).max(0.0);
+    (title_bar_h, btn_y, TRAFFIC_LIGHT_SPACE)
+}
+
+/// Fixed button origins — never resize the titlebar container (wry owns that).
+/// Fighting wry's `drawRect` inset on container height causes resize flicker.
+fn pin_traffic_light_buttons(ns_window: &NSWindow) {
     let Some(close) = ns_window.standardWindowButton(NSWindowButton::CloseButton) else {
         return;
     };
@@ -283,26 +327,7 @@ fn apply_traffic_light_inset(ns_window: &NSWindow) {
     };
     let zoom = ns_window.standardWindowButton(NSWindowButton::ZoomButton);
 
-    let Some(btn_superview) = (unsafe { close.superview() }) else {
-        return;
-    };
-    let Some(title_bar_container) = (unsafe { btn_superview.superview() }) else {
-        return;
-    };
-
-    let close_rect = close.frame();
-    let btn_h = close_rect.size.height;
-    // Same height formula as wry `inset_traffic_lights` so drawRect won't fight it.
-    let title_bar_h = btn_h + TRAFFIC_LIGHT_Y;
-    let mut title_bar_rect = title_bar_container.frame();
-    title_bar_rect.size.height = title_bar_h;
-    title_bar_rect.origin.y = ns_window.frame().size.height - title_bar_h;
-    title_bar_container.setFrame(title_bar_rect);
-
-    let space_between = miniaturize.frame().origin.x - close_rect.origin.x;
-    // Center, then push down (AppKit y-up → smaller y).
-    let btn_y = ((title_bar_h - btn_h) / 2.0 - CHROME_DOWN).max(0.0);
-
+    let (_, btn_y, space_between) = traffic_light_geometry();
     let mut buttons = vec![close, miniaturize];
     if let Some(zoom) = zoom {
         buttons.push(zoom);
@@ -313,6 +338,37 @@ fn apply_traffic_light_inset(ns_window: &NSWindow) {
             btn_y,
         ));
     }
+}
+
+fn install_traffic_light_pin(
+    mtm: MainThreadMarker,
+    ns_window: &NSWindow,
+) -> Result<Retained<TrafficLightPinView>, String> {
+    let Some(close) = ns_window.standardWindowButton(NSWindowButton::CloseButton) else {
+        return Err("close button missing".into());
+    };
+    let Some(btn_superview) = (unsafe { close.superview() }) else {
+        return Err("traffic-light superview missing".into());
+    };
+
+    let pin = {
+        let allocated = TrafficLightPinView::alloc(mtm).set_ivars(());
+        let view: Retained<TrafficLightPinView> = unsafe { msg_send![super(allocated), init] };
+        view
+    };
+    // Fill the button container so any width/height change triggers our layout.
+    pin.setFrame(btn_superview.bounds());
+    pin.setAutoresizingMask(
+        NSAutoresizingMaskOptions::ViewWidthSizable | NSAutoresizingMaskOptions::ViewHeightSizable,
+    );
+    // Last subview → layout runs after AppKit positions the traffic lights.
+    btn_superview.addSubview_positioned_relativeTo(
+        &pin,
+        NSWindowOrderingMode::Above,
+        None,
+    );
+    pin_traffic_light_buttons(ns_window);
+    Ok(pin)
 }
 
 fn remove_our_accessory(ns_window: &NSWindow, accessory: &NSTitlebarAccessoryViewController) {
@@ -345,6 +401,7 @@ pub fn install_native_chrome(app: &AppHandle, window: &WebviewWindow) -> Result<
 
     if let Ok(mut slot) = CHROME.lock() {
         if let Some(existing) = slot.take() {
+            existing.0.traffic_pin.removeFromSuperview();
             remove_our_accessory(ns_window, &existing.0.accessory);
         }
     }
@@ -399,9 +456,12 @@ pub fn install_native_chrome(app: &AppHandle, window: &WebviewWindow) -> Result<
     // Keep accessory_height() (includes CHROME_DOWN pad); don't let AppKit shrink it.
     accessory.setAutomaticallyAdjustsSize(false);
 
+    let traffic_pin = install_traffic_light_pin(mtm, ns_window)?;
+
     let state = ChromeState {
         accessory,
         container,
+        traffic_pin,
         toggle,
         search,
         new_chat,
@@ -409,8 +469,8 @@ pub fn install_native_chrome(app: &AppHandle, window: &WebviewWindow) -> Result<
     apply_chrome_layout(&state);
 
     ns_window.addTitlebarAccessoryViewController(&state.accessory);
-    // Accessory install resets traffic lights; re-apply our inset (x + vertical center).
-    apply_traffic_light_inset(ns_window);
+    // Accessory install can nudge lights once; pin view will keep them stable after.
+    pin_traffic_light_buttons(ns_window);
     ns_window.invalidateCursorRectsForView(&state.container);
 
     if let Ok(mut slot) = CHROME.lock() {
@@ -428,6 +488,21 @@ pub fn install_native_chrome(app: &AppHandle, window: &WebviewWindow) -> Result<
     );
 
     Ok(())
+}
+
+/// Kept for install-time / future callers. Live resize is handled by `TrafficLightPinView`.
+#[allow(dead_code)]
+pub fn reassert_traffic_lights(window: &WebviewWindow) {
+    let Ok(ns_ptr) = window.ns_window() else {
+        return;
+    };
+    let ns_ptr = ns_ptr as *mut NSWindow;
+    if ns_ptr.is_null() {
+        return;
+    }
+    // SAFETY: Tauri returns a valid NSWindow pointer for this WebviewWindow.
+    let ns_window = unsafe { &*ns_ptr };
+    pin_traffic_light_buttons(ns_window);
 }
 
 /// Reposition the native cluster when the WebUI sidebar open state changes.

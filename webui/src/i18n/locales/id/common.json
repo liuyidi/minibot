@@ -496,6 +496,8 @@
     },
     "about": {
       "version": "Versi",
+      "privacy": "Kebijakan Privasi",
+      "terms": "Ketentuan Layanan",
       "checking": "Memeriksa pembaruan...",
       "checkForUpdates": "Periksa pembaruan",
       "upToDate": "Anda sudah menggunakan versi terbaru",

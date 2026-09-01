@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import { NATIVE_HOST_TOP_PADDING_CLASS } from "@/layouts/constants";
 import { cn } from "@/lib/utils";
 
 /** Standalone hub chrome (skills / automations / channels) — not Settings. */
@@ -23,9 +24,9 @@ export function UtilityPageFrame({
       <main className="min-w-0 flex-1">
         <div
           className={cn(
-            "mx-auto w-full px-4 pb-8 pt-6 sm:px-8 sm:pb-10 sm:pt-8 lg:pt-10",
+            "mx-auto w-full px-4 pb-8 sm:px-8 sm:pb-10",
             wide ? "max-w-[1400px]" : "max-w-[920px]",
-            hostChromeInset && "pt-[4.25rem] sm:pt-[4.25rem] lg:pt-[4.75rem]",
+            hostChromeInset ? NATIVE_HOST_TOP_PADDING_CLASS : "pt-6 sm:pt-8 lg:pt-10",
           )}
         >
           {header ? (

@@ -283,6 +283,7 @@
       "securityManagedControls": "网页抓取始终保护本机、内网和元数据服务。核心渠道安全仍由 config.json 管理。",
       "logs": "打开原生引擎日志文件夹。",
       "diagnostics": "导出一份用于支持排查的小型运行报告。",
+      "diagnosticsView": "查看 Mac 与原生宿主的状态快照，反馈问题时可以一并附上。",
       "localServiceAccessNative": "允许完全访问权限下的 shell 命令访问这台 Mac 上的服务。",
       "webuiDefaultAccessNative": "用于没有单独项目权限的原生聊天。",
       "contextWindow": "选择此模型配置的默认上下文预算。",
@@ -330,6 +331,8 @@
     },
     "about": {
       "version": "版本",
+      "privacy": "隐私协议",
+      "terms": "服务条款",
       "checking": "正在检查...",
       "checkForUpdates": "检查更新",
       "upToDate": "已是最新版本",
@@ -433,6 +436,21 @@
       "diagnosticsExported": "诊断已导出到 {{path}}。",
       "diagnosticsExportFailed": "无法导出诊断。"
     },
+    "diagnostics": {
+      "title": "诊断",
+      "subtitle": "Mac 与 minibot 桌面宿主的状态快照，遇到问题反馈时可一并附上。",
+      "loading": "正在收集诊断信息…",
+      "detectedIssues": "检测到的问题",
+      "refresh": "刷新",
+      "copyReport": "复制报告",
+      "copied": "已复制",
+      "copyFailed": "复制失败",
+      "sections": {
+        "environment": "环境",
+        "system": "系统状态",
+        "runtime": "运行状态"
+      }
+    },
     "actions": {
       "save": "保存",
       "saving": "正在保存",
@@ -440,6 +458,7 @@
       "cancel": "取消",
       "open": "打开",
       "export": "导出",
+      "view": "查看",
       "opening": "正在打开...",
       "exporting": "正在导出..."
     },
@@ -1447,7 +1466,12 @@
       "skip": "跳过",
       "submit": "提交反馈"
     },
-    "turnLatencyTitle": "本轮耗时（端到端）"
+    "turnLatencyTitle": "本轮耗时（端到端）",
+    "turnStatusDeepThinking": "深度思考",
+    "turnStatusThinking": "思考中",
+    "turnStatusThinkingFor": "思考中 · {{duration}}",
+    "turnStatusCompleted": "已完成",
+    "turnStatusCompletedFor": "已完成 · {{duration}}"
   },
   "lightbox": {
     "title": "图片预览",

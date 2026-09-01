@@ -496,6 +496,8 @@
     },
     "about": {
       "version": "Versión",
+      "privacy": "Política de privacidad",
+      "terms": "Términos del servicio",
       "checking": "Buscando actualizaciones...",
       "checkForUpdates": "Buscar actualizaciones",
       "upToDate": "Estás al día",

@@ -31,7 +31,6 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { copyTextToClipboard } from "@/lib/utils/clipboard";
-import { formatTurnLatency } from "@/lib/utils/format";
 import { toMediaAttachment } from "@/lib/utils/media";
 import type {
   CliAppInfo,
@@ -195,12 +194,7 @@ export function MessageBubble({
     && !!onAssistantFeedback;
   const copyReplyLabel = copied ? t("message.copiedReply") : t("message.copyReply");
   const forkLabel = t("message.forkFromHere");
-  const latencyMs = message.latencyMs;
-  const showLatencyFooter = message.role === "assistant"
-    && latencyMs != null
-    && !message.isStreaming
-    && (!empty || hasReasoning || media.length > 0);
-  const showAssistantFooterRow = showCopyButton || showForkButton || showFeedbackButtons || showLatencyFooter;
+  const showAssistantFooterRow = showCopyButton || showForkButton || showFeedbackButtons;
   const onFeedback = (helpful: boolean) => {
     if (!onAssistantFeedback || feedbackPending) return;
     setFeedbackPending(true);
@@ -328,14 +322,6 @@ export function MessageBubble({
                     </TooltipTrigger>
                     <TooltipContent side="top" align="center">{forkLabel}</TooltipContent>
                   </Tooltip>
-                ) : null}
-                {showLatencyFooter ? (
-                  <span
-                    className="text-[11px] leading-none text-muted-foreground/70 tabular-nums"
-                    title={t("message.turnLatencyTitle")}
-                  >
-                    {formatTurnLatency(latencyMs)}
-                  </span>
                 ) : null}
               </div>
             </TooltipProvider>

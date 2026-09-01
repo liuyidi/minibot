@@ -496,6 +496,8 @@
     },
     "about": {
       "version": "Phiên bản",
+      "privacy": "Chính sách quyền riêng tư",
+      "terms": "Điều khoản dịch vụ",
       "checking": "Đang kiểm tra...",
       "checkForUpdates": "Kiểm tra bản cập nhật",
       "upToDate": "Bạn đang dùng phiên bản mới nhất",

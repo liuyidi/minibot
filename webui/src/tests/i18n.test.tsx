@@ -262,6 +262,8 @@ describe("webui i18n", () => {
       expect(common.settings.byok.hideApiKey).toBeTruthy();
       expect(common.settings.byok.configuredKeyHint).toBeTruthy();
       expect(common.settings.about.version).toBeTruthy();
+      expect(common.settings.about.privacy).toBeTruthy();
+      expect(common.settings.about.terms).toBeTruthy();
       expect(common.settings.about.checkForUpdates).toBeTruthy();
       expect(common.settings.about.updateAvailable).toContain("{{version}}");
     }

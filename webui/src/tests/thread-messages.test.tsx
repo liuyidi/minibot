@@ -50,9 +50,10 @@ describe("ThreadMessages", () => {
     );
     const rows = Array.from(container.firstElementChild?.children ?? []);
 
-    expect(rows).toHaveLength(2);
+    expect(rows).toHaveLength(1);
     expect(rows[0]).not.toHaveClass("mt-2", "mt-4", "mt-5");
-    expect(rows[1]).toHaveClass("mt-4");
+    expect(screen.getByText("final answer")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /tool call/i })).toBeInTheDocument();
   });
 
   it("renders a fork boundary divider after the copied history", () => {
@@ -308,7 +309,7 @@ describe("ThreadMessages", () => {
 
     render(<ThreadMessages messages={messages} isStreaming={false} />);
     expect(screen.queryByRole("button", { name: /^thinking$/i })).not.toBeInTheDocument();
-    expect(screen.getByText("Thought for 9s")).toBeInTheDocument();
+    expect(screen.getByText(/Completed ·/)).toBeInTheDocument();
     expect(screen.getByText("final answer")).toBeInTheDocument();
   });
 
@@ -405,7 +406,7 @@ describe("ThreadMessages", () => {
     render(<ThreadMessages messages={messages} isStreaming={false} />);
 
     const answer = screen.getByText("Hong Kong is hot today.");
-    const laterActivity = screen.getAllByText(/thought/i).at(-1);
+    const laterActivity = screen.getAllByRole("button", { name: /tool call/i }).at(-1);
     expect(laterActivity).toBeTruthy();
     expect(laterActivity!.compareDocumentPosition(answer) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
@@ -446,10 +447,10 @@ describe("ThreadMessages", () => {
 
     render(<ThreadMessages messages={messages} isStreaming={false} />);
 
-    const thought = screen.getAllByText(/thought/i).at(-1);
+    const activity = screen.getAllByRole("button", { name: /tool call/i }).at(-1);
     const answer = screen.getByText("知道，IEM Cologne Major 2026 今天开打了。");
-    expect(thought).toBeTruthy();
-    expect(thought!.compareDocumentPosition(answer) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(activity).toBeTruthy();
+    expect(activity!.compareDocumentPosition(answer) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it("normalizes completed prior turns while the next user turn is streaming", () => {
@@ -626,7 +627,7 @@ describe("ThreadMessages", () => {
 
     render(<ThreadMessages messages={messages} isStreaming={false} />);
 
-    expect(screen.getByText("Thought for 15s")).toBeInTheDocument();
+    expect(screen.getByText(/Completed ·/)).toBeInTheDocument();
     expect(screen.queryByText("Thought for 0s")).not.toBeInTheDocument();
   });
 

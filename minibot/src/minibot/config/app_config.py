@@ -8,6 +8,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
+from minibot import __version__
 from minibot.config.presets import (
     ModelPreset,
     apply_live_to_active_preset,
@@ -419,5 +420,5 @@ def settings_public_payload(config: AppConfig) -> dict[str, Any]:
                 "requests": 0,
             },
         },
-        "version": {"current": "minibot"},
+        "version": {"current": __version__},
     }

@@ -1,3 +1,4 @@
+mod diagnostics;
 mod remote;
 
 #[cfg(target_os = "macos")]
@@ -18,12 +19,15 @@ mod macos_chrome {
     pub fn set_dark_appearance(_dark: bool) -> Result<(), String> {
         Ok(())
     }
+
+    pub fn reassert_traffic_lights(_window: &WebviewWindow) {}
 }
 
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
+use diagnostics::HostDiagnosticsSnapshot;
 use remote::{EngineStatus, HostRuntimeInfo, RemoteServer};
 use tauri::{Emitter, Manager, RunEvent, Runtime, State, WebviewUrl, WebviewWindowBuilder};
 use tauri_plugin_dialog::DialogExt;
@@ -63,8 +67,13 @@ fn is_desktop_auth_done_link(deep_link: &str) -> bool {
 /// - **CHROME_DOWN**: 红绿灯 + 三个图标整体下移（越大越靠下）
 pub(crate) const TRAFFIC_LIGHT_X: f64 = 18.0;
 pub(crate) const TRAFFIC_LIGHT_Y: f64 = 20.0;
+/// macOS standard traffic-light button height (logical px) — fixed so sidebar toggles
+/// don't re-read unstable AppKit frames and shift the cluster vertically.
+pub(crate) const TRAFFIC_LIGHT_BTN_H: f64 = 12.0;
+/// Horizontal origin spacing between adjacent traffic-light buttons.
+pub(crate) const TRAFFIC_LIGHT_SPACE: f64 = 20.0;
 /// Positive = move traffic lights and titlebar icons down together (logical px).
-pub(crate) const CHROME_DOWN: f64 = 4.0;
+pub(crate) const CHROME_DOWN: f64 = 10.0;
 
 fn install_native_chrome_on_main(app: &tauri::AppHandle, window: &tauri::WebviewWindow) {
     let app2 = app.clone();
@@ -82,7 +91,6 @@ fn host_bridge_script() -> String {
     r#"
 (() => {
   const install = () => {
-    if (window.minibotHost && typeof window.minibotHost.openLogin === "function") return;
     const invoke = window.__TAURI__?.core?.invoke
       || window.__TAURI_INTERNALS__?.invoke;
     if (typeof invoke !== "function") {
@@ -91,11 +99,13 @@ fn host_bridge_script() -> String {
     }
     const reconnect = () => invoke("host_reconnect");
     window.minibotHost = {
+      ...(window.minibotHost ?? {}),
       getRuntimeInfo: () => invoke("host_get_runtime_info"),
       restartEngine: reconnect,
       reconnect,
       pickFolder: () => invoke("host_pick_folder"),
       openLogs: () => invoke("host_open_logs"),
+      getDiagnostics: () => invoke("host_get_diagnostics"),
       exportDiagnostics: () => invoke("host_export_diagnostics"),
       openLogin: (url) => invoke("host_open_login", { url }),
       openInBrowser: () => invoke("open_in_browser"),
@@ -107,6 +117,7 @@ fn host_bridge_script() -> String {
         return invoke("plugin:window|start_dragging");
       },
     };
+    try { document.documentElement.dataset.minibotDesktopShell = "1"; } catch (_) {}
     window.dispatchEvent(new Event("minibot-host-ready"));
   };
   install();
@@ -136,9 +147,6 @@ fn host_chrome_polish_script() -> String {
       position: fixed !important;
       inset: 0 !important;
       width: 100% !important;
-    }
-    html.native-host nav[aria-label] > div:first-child {
-      padding-top: 3.75rem !important;
     }
   `;
   document.documentElement.appendChild(style);
@@ -352,6 +360,11 @@ async fn host_open_logs(app: tauri::AppHandle, state: State<'_, AppState>) -> Re
     app.opener()
         .open_path(logs_dir.display().to_string(), None::<&str>)
         .map_err(|e| format!("open logs failed: {e}"))
+}
+
+#[tauri::command]
+fn host_get_diagnostics(state: State<'_, AppState>) -> Result<HostDiagnosticsSnapshot, String> {
+    state.server.diagnostics_snapshot()
 }
 
 #[tauri::command]
@@ -575,6 +588,7 @@ pub fn run() {
             host_reconnect,
             host_pick_folder,
             host_open_logs,
+            host_get_diagnostics,
             host_export_diagnostics,
             host_open_login,
             host_set_native_chrome_sidebar_open,

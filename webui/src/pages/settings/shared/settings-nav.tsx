@@ -15,6 +15,8 @@ import {
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { NATIVE_HOST_TOP_PADDING_CLASS } from "@/layouts/constants";
+
 import { LogoutConfirm } from "@/components/auth/LogoutConfirm";
 import { Button } from "@/components/ui/button";
 import { SETTINGS_SECTIONS } from "@/lib/configs/ui-entry";
@@ -66,7 +68,7 @@ export function SettingsSidebar({
     <aside
       className={cn(
         "flex w-full shrink-0 flex-col border-b border-border/55 bg-card/62 px-3 pb-2 shadow-[inset_0_-1px_0_rgba(255,255,255,0.55)] backdrop-blur-xl dark:bg-card/45 dark:shadow-none md:w-[17rem] md:border-b-0 md:border-r md:px-3 md:pb-4 md:shadow-[inset_-1px_0_0_rgba(255,255,255,0.55)]",
-        hostChromeInset ? "pt-[4.25rem] md:pt-[4.25rem]" : "pt-4 md:pt-4",
+        hostChromeInset ? NATIVE_HOST_TOP_PADDING_CLASS : "pt-4 md:pt-4",
       )}
     >
       <button

@@ -16,7 +16,9 @@ def test_settings_public_payload_has_overview_runtime_keys() -> None:
     assert payload["runtime"]["workspace_path"]
     assert payload["runtime"]["config_path"]
     assert payload["usage"]["days"] == []
-    assert payload["version"]["current"] == "minibot"
+    from minibot import __version__
+
+    assert payload["version"]["current"] == __version__
     assert payload["advanced"]["webui_allow_local_service_access"] is True
     assert payload["image_generation"]["enabled"] is False
     assert payload["image_generation"]["providers"] == []

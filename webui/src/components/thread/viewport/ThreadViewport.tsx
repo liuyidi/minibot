@@ -38,6 +38,7 @@ interface ThreadViewportProps {
   cliApps?: CliAppInfo[];
   mcpPresets?: McpPresetInfo[];
   forkBoundaryMessageCount?: number | null;
+  runStartedAt?: number | null;
   hasMoreBefore?: boolean;
   loadingOlder?: boolean;
   userMessageOffset?: number;
@@ -111,6 +112,7 @@ export const ThreadViewport = forwardRef<ThreadViewportHandle, ThreadViewportPro
   cliApps = [],
   mcpPresets = [],
   forkBoundaryMessageCount = null,
+  runStartedAt = null,
   hasMoreBefore = false,
   loadingOlder = false,
   userMessageOffset = 0,
@@ -456,6 +458,7 @@ export const ThreadViewport = forwardRef<ThreadViewportHandle, ThreadViewportPro
                 <ThreadMessages
                   messages={visibleMessages}
                   isStreaming={isStreaming}
+                  runStartedAt={runStartedAt}
                   hiddenUserMessageCount={hiddenUserMessageCount}
                   cliApps={cliApps}
                   mcpPresets={mcpPresets}

@@ -15,6 +15,7 @@ import {
   type SettingsSectionKey,
 } from "@/pages/settings/shared";
 import type { SettingsPageProps } from "@/pages/settings/shared";
+import { getHostApi, resolveRuntimeCapabilities } from "@/lib/configs/runtime";
 import { useClient } from "@/providers/ClientProvider";
 
 export type SettingsShellModel = ReturnType<typeof useSettingsShellModel>;
@@ -143,10 +144,12 @@ export function useSettingsShellModel({
   );
 
   const restartViaSettingsSurface = useCallback(async () => {
-    const isNativeHost = (settings?.surface ?? settings?.runtime_surface) === "native";
+    const isNativeHost =
+      getHostApi() !== null || (settings?.surface ?? settings?.runtime_surface) === "native";
+    const capabilities = resolveRuntimeCapabilities(settings?.runtime_capabilities);
     if (
       isNativeHost &&
-      settings?.runtime_capabilities?.can_restart_engine &&
+      capabilities.can_restart_engine &&
       onNativeEngineRestart
     ) {
       setHostEngineApplying(true);
@@ -170,12 +173,15 @@ export function useSettingsShellModel({
     async (payload: RestartAwarePayload) => {
       const surface =
         payload.surface ?? payload.runtime_surface ?? settings?.surface ?? settings?.runtime_surface;
-      const capabilities = payload.runtime_capabilities ?? settings?.runtime_capabilities;
-      const isNativeHost = surface === "native";
+      const isNativeHost =
+        getHostApi() !== null || surface === "native";
+      const capabilities = resolveRuntimeCapabilities(
+        payload.runtime_capabilities ?? settings?.runtime_capabilities,
+      );
       if (
         !payload.requires_restart ||
         !isNativeHost ||
-        !capabilities?.can_restart_engine ||
+        !capabilities.can_restart_engine ||
         !onNativeEngineRestart
       ) {
         return;

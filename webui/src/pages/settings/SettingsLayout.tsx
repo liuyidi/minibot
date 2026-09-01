@@ -9,6 +9,7 @@ import {
   type SettingsPageProps,
   type SettingsSectionKey,
 } from "@/pages/settings/shared";
+import { NATIVE_HOST_TOP_PADDING_CLASS } from "@/layouts/constants";
 import { cn } from "@/lib/utils";
 import { AdvancedPage } from "./advanced/AdvancedPage";
 import { AppearancePage } from "./appearance/AppearancePage";
@@ -115,8 +116,10 @@ export function SettingsLayout({
         <main className="min-w-0 flex-1 overflow-y-auto [scrollbar-gutter:stable]">
           <div
             className={cn(
-              "mx-auto w-full max-w-[920px] px-4 py-6 sm:px-8 sm:py-8 lg:py-12",
-              hostChromeInset && "pt-[4.25rem] sm:pt-[4.25rem] lg:pt-[4.75rem]",
+              "mx-auto w-full max-w-[920px] px-4 sm:px-8",
+              hostChromeInset
+                ? cn(NATIVE_HOST_TOP_PADDING_CLASS, "pb-6 sm:pb-8 lg:pb-12")
+                : "py-6 sm:py-8 lg:py-12",
             )}
           >
             <div className={cn(activeSection === "profile" ? "mb-2" : "mb-7")}>

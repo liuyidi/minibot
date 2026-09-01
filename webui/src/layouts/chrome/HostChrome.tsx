@@ -3,7 +3,7 @@ import { PanelLeft, Search } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
-import { NATIVE_SIDEBAR_WIDTH } from "@/layouts/constants";
+import { NATIVE_HOST_CHROME_TOP_PX, NATIVE_SIDEBAR_WIDTH } from "@/layouts/constants";
 import { onHostChromeDragMouseDown } from "@/lib/host-window-drag";
 import { cn } from "@/lib/utils";
 
@@ -42,6 +42,8 @@ function useNativeChromeControls(): boolean {
 
 /** Absolute top for web fallback chrome actions (tests / non-native). */
 const CHROME_ACTIONS_TOP = 16;
+/** Native cluster width (3×28px icons) — drag strip starts after this. */
+const NATIVE_DRAG_STRIP_LEFT_PX = 168;
 
 /** Vite / plain browser on loopback — not packaged desktop (always 127.0.0.1). */
 function useShowLocalWebuiDebugMark(): boolean {
@@ -98,7 +100,7 @@ export function HostChrome({
   const nativeChrome = useNativeChromeControls();
   // Desktop installs AppKit buttons; keep web controls only as fallback (e.g. Vitest).
   const showChromeActions = !nativeChrome && Boolean(onToggleSidebar || onOpenSearch);
-  const actionsTop = CHROME_ACTIONS_TOP;
+  const chromeActionsTop = nativeChrome ? NATIVE_HOST_CHROME_TOP_PX : CHROME_ACTIONS_TOP;
   const showDebugMark = useShowLocalWebuiDebugMark();
 
   return (
@@ -109,7 +111,7 @@ export function HostChrome({
         data-tauri-drag-region
         onMouseDown={onHostChromeDragMouseDown}
         className="host-drag-region pointer-events-auto absolute inset-y-0"
-        style={{ left: nativeChrome ? 168 : 0, right: 112 }}
+        style={{ left: nativeChrome ? NATIVE_DRAG_STRIP_LEFT_PX : 0, right: 112 }}
       />
       {showDebugMark ? (
         <div
@@ -128,11 +130,11 @@ export function HostChrome({
           style={
             sidebarOpen
               ? {
-                  top: actionsTop,
+                  top: chromeActionsTop,
                   left: sidebarWidth - 10,
                   transform: "translateX(-100%)",
                 }
-              : { top: actionsTop, left: 80 }
+              : { top: chromeActionsTop, left: 80 }
           }
         >
           {onToggleSidebar ? (
@@ -170,7 +172,7 @@ export function HostChrome({
       {rightAction ? (
         <div
           className="host-no-drag pointer-events-auto absolute right-3 flex h-8 items-center"
-          style={{ top: actionsTop }}
+          style={{ top: chromeActionsTop }}
         >
           {rightAction}
         </div>
