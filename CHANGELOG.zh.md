@@ -12,6 +12,12 @@ English: [CHANGELOG.md](./CHANGELOG.md)
 <!-- #region site-changelog -->
 ## [Unreleased]
 
+## [1.0.28] - 2026-09-09
+
+### 变更
+
+- WebUI 生产构建将语法高亮固定到 CDN vendor 路径（`…/webui/vendor/syntax-highlight/<react-syntax-highlighterVersion>/`），不再随每次应用发版重新上传约 270 个语言包。
+
 ## [1.0.27] - 2026-09-09
 
 ### 变更

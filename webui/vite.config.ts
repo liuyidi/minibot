@@ -15,6 +15,10 @@ export default defineConfig(({ mode }) => {
   const katexVendorBase = (
     env.VITE_KATEX_VENDOR_BASE || process.env.VITE_KATEX_VENDOR_BASE || ""
   ).trim();
+  // Vitest must keep the local loader (mocks target prism-async-light paths).
+  const syntaxVendorBase = mode === "test"
+    ? ""
+    : (env.VITE_SYNTAX_VENDOR_BASE || process.env.VITE_SYNTAX_VENDOR_BASE || "").trim();
 
   return {
     base,
@@ -22,10 +26,24 @@ export default defineConfig(({ mode }) => {
       react(),
       ...(katexVendorBase ? [katexVendorCdnPlugin(katexVendorBase)] : []),
     ],
+    define: {
+      // Expose to CodeBlock even when only set via process.env (CI).
+      "import.meta.env.VITE_SYNTAX_VENDOR_BASE": JSON.stringify(syntaxVendorBase),
+    },
     resolve: {
-      alias: {
-        "@": path.resolve(__dirname, "./src"),
-      },
+      alias: [
+        // Must precede the `@` alias so this exact module is swapped for CDN builds.
+        {
+          find: "@/lib/syntax/load",
+          replacement: path.resolve(
+            __dirname,
+            syntaxVendorBase
+              ? "./src/lib/syntax/load-vendor.ts"
+              : "./src/lib/syntax/load-local.ts",
+          ),
+        },
+        { find: "@", replacement: path.resolve(__dirname, "./src") },
+      ],
     },
     optimizeDeps: {
       // Radix dialog was introduced mid-session for the mobile sidebar sheet.
@@ -41,6 +59,16 @@ export default defineConfig(({ mode }) => {
       rollupOptions: {
         output: {
           manualChunks(id) {
+            // When syntax vendor CDN is on, CodeBlock loads via @vite-ignore URL —
+            // skip local syntax/lang chunking if anything still resolves these.
+            if (syntaxVendorBase) {
+              if (
+                id.includes("node_modules/react-syntax-highlighter")
+                || id.includes("node_modules/refractor")
+              ) {
+                return;
+              }
+            }
             if (id.includes("node_modules/refractor/lang/")) {
               return;
             }

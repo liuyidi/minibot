@@ -17,6 +17,7 @@ on:
       - "deploy/promote-webui.sh"
       - "scripts/publish-oss-webui-assets.sh"
       - "scripts/publish-oss-katex-vendor.sh"
+      - "scripts/publish-oss-syntax-vendor.sh"
       - ".github/workflows/publish-webui.yml"
 
 concurrency:
@@ -118,6 +119,17 @@ jobs:
           echo "vendor_base=${vendor}" >> "$GITHUB_OUTPUT"
           echo "VITE_KATEX_VENDOR_BASE=${vendor}" >> "$GITHUB_ENV"
 
+      - name: Publish syntax-highlight vendor (version-pinned)
+        id: syntax
+        run: |
+          chmod +x scripts/publish-oss-syntax-vendor.sh
+          out="$(scripts/publish-oss-syntax-vendor.sh)"
+          printf '%s\n' "$out"
+          vendor="$(printf '%s\n' "$out" | sed -n 's/^VITE_SYNTAX_VENDOR_BASE=//p' | tail -1)"
+          test -n "$vendor"
+          echo "vendor_base=${vendor}" >> "$GITHUB_OUTPUT"
+          echo "VITE_SYNTAX_VENDOR_BASE=${vendor}" >> "$GITHUB_ENV"
+
       - name: Build WebUI
         working-directory: webui
         env:
@@ -125,6 +137,7 @@ jobs:
           VITE_PORTAL_DOWNLOAD: https://liuyidi.me/minibot/download/
           VITE_ASSET_BASE: ${{ env.VITE_ASSET_BASE }}
           VITE_KATEX_VENDOR_BASE: ${{ env.VITE_KATEX_VENDOR_BASE }}
+          VITE_SYNTAX_VENDOR_BASE: ${{ env.VITE_SYNTAX_VENDOR_BASE }}
         run: |
           npm run build
           test -f dist/index.html
@@ -136,6 +149,18 @@ jobs:
             ls dist/assets/katex-* >&2 || true
             exit 1
           fi
+          # Syntax langs / highlighter must live on the vendor CDN, not per-app assets.
+          if ls dist/assets/syntax-highlight-*.js >/dev/null 2>&1; then
+            echo "FAIL: syntax-highlight chunk still present in dist/assets" >&2
+            ls dist/assets/syntax-highlight-* >&2 || true
+            exit 1
+          fi
+          if ls dist/assets/typescript-*.js dist/assets/python-*.js >/dev/null 2>&1; then
+            echo "FAIL: language grammar chunks still present in dist/assets" >&2
+            ls dist/assets/typescript-* dist/assets/python-* >&2 || true
+            exit 1
+          fi
+          grep -R -F 'webui/vendor/syntax-highlight/' dist/assets/*.js
 
       - name: Sync WebUI assets to OSS/CDN
         run: |
@@ -229,6 +254,12 @@ jobs:
           katex_css="$(printf '%s' "$html" | grep -oE 'https://downloads\.liuyidi\.me/minibot/webui/vendor/katex/[^"]+/katex\.min\.css' | head -1)"
           test -n "$katex_css"
           curl -fsS -o /dev/null -H 'Accept-Encoding: gzip' "$katex_css"
+          syntax_base="${{ steps.syntax.outputs.vendor_base }}"
+          test -n "$syntax_base"
+          curl -fsS -o /dev/null -H 'Accept-Encoding: gzip' "${syntax_base}/syntax-highlight.js"
+          # App JS must embed the vendor base (not ship local lang chunks).
+          app_js="$(curl -fsS "$js")"
+          printf '%s' "$app_js" | grep -F 'webui/vendor/syntax-highlight/'
           curl -fsS -o /dev/null -w "public bot %{http_code}\n" https://bot.liuyidi.me/
 
   notify-serverlessship:

@@ -3,6 +3,7 @@ import { Check, Copy } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { useThemeValue } from "@/hooks/ui";
+import { loadSyntaxHighlighterModules } from "@/lib/syntax/load";
 import { hasAnsi, parseAnsiSegments, stripAnsi } from "@/lib/utils/ansi";
 import { cn } from "@/lib/utils";
 
@@ -42,15 +43,7 @@ const CODE_SURFACE_LIGHT = "#f4f4f5";
 const CODE_SURFACE_DARK = "#27272a";
 
 const LazyHighlightedCode = lazy(async () => {
-  const [
-    { default: SyntaxHighlighter },
-    { default: oneDark },
-    { default: oneLight },
-  ] = await Promise.all([
-    import("react-syntax-highlighter/dist/esm/prism-async-light"),
-    import("react-syntax-highlighter/dist/esm/styles/prism/one-dark"),
-    import("react-syntax-highlighter/dist/esm/styles/prism/one-light"),
-  ]);
+  const { SyntaxHighlighter, oneDark, oneLight } = await loadSyntaxHighlighterModules();
 
   return {
     default({

@@ -38,6 +38,18 @@ minibot/webui/vendor/katex/<katexVersion>/
 
 Publish WebUI sets `VITE_KATEX_VENDOR_BASE` to that URL and externalizes katex
 from the app bundle.
+
+Syntax highlighting is pinned the same way (keyed by `react-syntax-highlighter`
+version; React is shared with the SPA via a window bridge):
+
+```text
+minibot/webui/vendor/syntax-highlight/<rshVersion>/
+  syntax-highlight.js
+  chunks/…
+```
+
+Publish WebUI sets `VITE_SYNTAX_VENDOR_BASE` so CodeBlock loads that entry
+instead of re-bundling ~270 language grammars into each app release.
 The `releases.json` served from OSS should contain absolute artifact URLs, for
 example:
 

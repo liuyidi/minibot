@@ -11,6 +11,12 @@ Versions follow SemVer for product narrative. Package metadata may lag until a f
 
 ## [Unreleased]
 
+## [1.0.28] - 2026-09-09
+
+### Changed
+
+- WebUI production builds load syntax highlighting from a version-pinned CDN vendor path (`…/webui/vendor/syntax-highlight/<react-syntax-highlighterVersion>/`) instead of re-uploading ~270 language grammars with every app release.
+
 ## [1.0.27] - 2026-09-09
 
 ### Changed
