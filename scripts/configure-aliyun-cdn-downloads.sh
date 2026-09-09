@@ -57,7 +57,14 @@ else
       --DomainName "$DOMAIN" \
       --CdnType web \
       --Sources "$sources"; then
-    echo "AddCdnDomain failed. Grant cdn:AddCdnDomain (or use OSS console → CDN 加速). See docs/downloads-cdn.md" >&2
+    echo >&2
+    echo "AddCdnDomain failed (often Forbidden.RAM — CI key has OSS only)." >&2
+    echo "Do this in the console instead (≈10 min):" >&2
+    echo "  1) OSS → Bucket liuyidi → 域名管理 → downloads.liuyidi.me → 开启 CDN 加速" >&2
+    echo "  2) 云解析：downloads CNAME → CDN 给出的新域名（替换 *.taihangcda.cn）" >&2
+    echo "  3) CDN：HTTPS + HTTP/2，关闭智能压缩" >&2
+    echo "  4) REQUIRE_CDN_HIT=1 REQUIRE_HTTP2=1 scripts/verify-downloads-cdn.sh" >&2
+    echo "Full guide: docs/downloads-cdn.md" >&2
     exit 1
   fi
   echo "Created. Waiting for CNAME…"
