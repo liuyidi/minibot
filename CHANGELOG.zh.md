@@ -12,6 +12,8 @@ English: [CHANGELOG.md](./CHANGELOG.md)
 <!-- #region site-changelog -->
 ## [Unreleased]
 
+## [1.0.24] - 2026-09-09
+
 ### 新增
 
 - 公开下载页 iOS 渠道已接入 TestFlight 公开链接（App Store 上架准备中，可先经 TestFlight 安装体验）。
@@ -27,6 +29,7 @@ English: [CHANGELOG.md](./CHANGELOG.md)
 ### 变更
 
 - 下载页 iOS 文案：客户端正在准备上架 App Store，可先通过 TestFlight 安装体验。
+- bot.liuyidi.me 的 hashed WebUI `/assets` 改为 nginx 直出（gzip + 长缓存 + http2），不再经 Python；应用侧保留 GZip/缓存兜底。
 
 ### 修复
 

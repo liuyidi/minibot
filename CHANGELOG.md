@@ -11,6 +11,8 @@ Versions follow SemVer for product narrative. Package metadata may lag until a f
 
 ## [Unreleased]
 
+## [1.0.24] - 2026-09-09
+
 ### Added
 
 - Public download page iOS channel now points at the TestFlight public join link (install via TestFlight while App Store listing is prepared).
@@ -26,6 +28,7 @@ Versions follow SemVer for product narrative. Package metadata may lag until a f
 ### Changed
 
 - Download page iOS copy: preparing for App Store listing; users can try the client via TestFlight first.
+- bot.liuyidi.me serves hashed WebUI `/assets` from nginx (gzip + long-cache + http2) instead of the Python process; app keeps GZip/cache as fallback.
 
 ### Fixed
 
