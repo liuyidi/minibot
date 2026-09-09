@@ -2,11 +2,11 @@
 # Apply P0/P1 nginx perf for bot.liuyidi.me (+ apex /assets cache) on this host.
 #
 # Surgical patch of the live site conf (keeps auth / other server blocks):
-#   - gzip on (once, near top of the included file)
+#   - gzip via /etc/nginx/conf.d/zz-minibot-gzip.conf (no duplicate gzip on)
 #   - bot location /assets/ → webui-dist (alias), immutable cache
 #   - apex location /assets/ long-cache when root is site dist
 #   - listen 443 ssl http2 for existing 443 listeners
-#   - nginx -t && systemctl reload nginx
+#   - nginx -t && systemctl reload nginx (restore backup on failed -t)
 #   - smoke-check gzip + Cache-Control on bot /assets
 #
 # Env:
@@ -18,6 +18,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 WEBUI_DIST="${WEBUI_DIST:-${ROOT}/deploy/webui-dist}"
 ASSETS_ALIAS="${WEBUI_DIST}/assets/"
+GZIP_SNIPPET="/etc/nginx/conf.d/zz-minibot-gzip.conf"
 
 if [[ ! -d "${WEBUI_DIST}/assets" ]]; then
   echo "apply-nginx-perf: WARN ${WEBUI_DIST}/assets missing — /assets will 404 until Publish WebUI" >&2
@@ -49,44 +50,47 @@ LIVE="$(detect_conf)" || {
 echo "apply-nginx-perf: live=${LIVE}"
 echo "apply-nginx-perf: assets_alias=${ASSETS_ALIAS}"
 
+# If a previous failed apply left a broken conf, restore newest backup first.
+if ! nginx -t >/dev/null 2>&1; then
+  latest_bak="$(ls -1t "${LIVE}".bak.* 2>/dev/null | head -1 || true)"
+  if [[ -n "${latest_bak}" ]]; then
+    echo "apply-nginx-perf: nginx -t failed; restoring ${latest_bak}"
+    cp -a "${latest_bak}" "${LIVE}"
+  fi
+  nginx -t
+fi
+
 TMP="$(mktemp)"
 BACKUP="${LIVE}.bak.$(date +%Y%m%d%H%M%S)"
+GZIP_BACKUP=""
+if [[ -f "$GZIP_SNIPPET" ]]; then
+  GZIP_BACKUP="${GZIP_SNIPPET}.bak.$(date +%Y%m%d%H%M%S)"
+  cp -a "$GZIP_SNIPPET" "$GZIP_BACKUP"
+fi
 trap 'rm -f "$TMP"' EXIT
 
-python3 - "$LIVE" "$TMP" "$ASSETS_ALIAS" <<'PY'
+python3 - "$LIVE" "$TMP" "$ASSETS_ALIAS" "$GZIP_SNIPPET" <<'PY'
 import re
 import sys
 from pathlib import Path
 
-live_path, out_path, assets_alias = Path(sys.argv[1]), Path(sys.argv[2]), sys.argv[3]
-if not assets_alias.endswith("/"):
-    assets_alias += "/"
+live_path, out_path, assets_alias, gzip_snippet = map(Path, sys.argv[1:5])
+alias_path = str(assets_alias)
+if not alias_path.endswith("/"):
+    alias_path += "/"
 
 text = live_path.read_text(encoding="utf-8")
 
-GZIP_BLOCK = """# minibot perf: compression for text assets
-gzip on;
-gzip_vary on;
-gzip_proxied any;
-gzip_comp_level 5;
-gzip_min_length 256;
-gzip_types
-    text/plain
-    text/css
-    text/javascript
-    application/javascript
-    application/json
-    application/xml
-    application/wasm
-    image/svg+xml
-    font/ttf
-    font/otf
-    application/vnd.ms-fontobject;
-"""
+# Remove a prior failed insert of gzip into the site file.
+text = re.sub(
+    r"(?ms)^# minibot perf: compression for text assets\n(?:[ \t]*gzip[^\n]*\n|[ \t]+[^\n]*\n)*\n?",
+    "",
+    text,
+)
 
 BOT_ASSETS = f"""    # minibot perf: hashed SPA assets (bypass Python)
     location /assets/ {{
-        alias {assets_alias};
+        alias {alias_path};
         access_log off;
         expires 1y;
         add_header Cache-Control "public, max-age=31536000, immutable";
@@ -102,16 +106,6 @@ APEX_ASSETS = """    # minibot perf: VitePress hashed /assets
 """
 
 
-def ensure_gzip(src: str) -> str:
-    if re.search(r"(?m)^\s*gzip\s+on\s*;", src):
-        return src
-    # Insert before the first server { in this included file (http context).
-    m = re.search(r"(?m)^server\s*\{", src)
-    if not m:
-        return GZIP_BLOCK + "\n" + src
-    return src[: m.start()] + GZIP_BLOCK + "\n" + src[m.start() :]
-
-
 def ensure_http2(src: str) -> str:
     return re.sub(
         r"listen(\s+(?:\[::\]:)?443\s+ssl)(?!\s+http2)(\s*;)",
@@ -121,7 +115,6 @@ def ensure_http2(src: str) -> str:
 
 
 def iter_server_blocks(src: str):
-    """Yield (start, end, body) for top-level server { ... } blocks."""
     i = 0
     while True:
         m = re.search(r"(?m)^server\s*\{", src[i:])
@@ -129,7 +122,7 @@ def iter_server_blocks(src: str):
             break
         start = i + m.start()
         brace = 0
-        j = i + m.end() - 1  # at '{'
+        j = i + m.end() - 1
         while j < len(src):
             ch = src[j]
             if ch == "{":
@@ -154,7 +147,6 @@ def server_names(body: str) -> set[str]:
 
 
 def strip_assets_location(body: str) -> str:
-    """Remove existing location /assets/ blocks (any nesting depth of braces)."""
     out = []
     i = 0
     while i < len(body):
@@ -187,14 +179,31 @@ def insert_before_location_slash(body: str, block: str) -> str:
     m = re.search(r"(?m)^(\s*)location\s+/\s*\{", body)
     if m:
         return body[: m.start()] + block + "\n" + body[m.start() :]
-    # Fallback: before closing brace of server
     last = body.rstrip()
     if not last.endswith("}"):
         raise SystemExit("apply-nginx-perf: cannot find insert point in server block")
     return last[:-1] + "\n" + block + "}\n"
 
 
-text = ensure_gzip(text)
+def gzip_on_present() -> bool:
+    root = Path("/etc/nginx")
+    if not root.is_dir():
+        return False
+    for path in root.rglob("*.conf"):
+        try:
+            raw = path.read_text(encoding="utf-8", errors="ignore")
+        except OSError:
+            continue
+        # Ignore commented gzip on
+        for line in raw.splitlines():
+            s = line.strip()
+            if s.startswith("#"):
+                continue
+            if re.match(r"gzip\s+on\s*;", s):
+                return True
+    return False
+
+
 text = ensure_http2(text)
 
 pieces: list[str] = []
@@ -210,7 +219,6 @@ for start, end, body in iter_server_blocks(text):
     elif names & {"liuyidi.me", "www.liuyidi.me"} and re.search(
         r"listen\s+(?:\[::\]:)?443\b", body
     ):
-        # Only add cache location when this server roots the VitePress dist.
         if "site/.vitepress/dist" in body or re.search(r"(?m)^\s*root\s+", body):
             body = insert_before_location_slash(body, APEX_ASSETS)
             patched_apex = True
@@ -223,8 +231,53 @@ if not patched_bot:
     raise SystemExit("apply-nginx-perf: did not find bot.liuyidi.me 443 server block")
 
 out_path.write_text(text, encoding="utf-8")
+
+already = gzip_on_present()
+# gzip snippet: never duplicate `gzip on` if already enabled in tree.
+if already:
+    gzip_body = """# minibot perf — extend gzip types (gzip on already enabled elsewhere)
+gzip_vary on;
+gzip_proxied any;
+gzip_comp_level 5;
+gzip_min_length 256;
+gzip_types
+    text/plain
+    text/css
+    text/javascript
+    application/javascript
+    application/json
+    application/xml
+    application/wasm
+    image/svg+xml
+    font/ttf
+    font/otf
+    application/vnd.ms-fontobject;
+"""
+else:
+    gzip_body = """# minibot perf — enable gzip for SPA / docs assets
+gzip on;
+gzip_vary on;
+gzip_proxied any;
+gzip_comp_level 5;
+gzip_min_length 256;
+gzip_types
+    text/plain
+    text/css
+    text/javascript
+    application/javascript
+    application/json
+    application/xml
+    application/wasm
+    image/svg+xml
+    font/ttf
+    font/otf
+    application/vnd.ms-fontobject;
+"""
+gzip_snippet.parent.mkdir(parents=True, exist_ok=True)
+gzip_snippet.write_text(gzip_body, encoding="utf-8")
 print(
-    f"apply-nginx-perf: patched bot={patched_bot} apex={patched_apex} -> {out_path}"
+    f"apply-nginx-perf: patched bot={patched_bot} apex={patched_apex} "
+    f"gzip_on_present={already} snippet={gzip_snippet}"
 )
 PY
 
@@ -232,7 +285,18 @@ cp -a "$LIVE" "$BACKUP"
 echo "apply-nginx-perf: backup ${BACKUP}"
 cp "$TMP" "$LIVE"
 
-nginx -t
+if ! nginx -t; then
+  echo "apply-nginx-perf: nginx -t failed; restoring ${BACKUP}" >&2
+  cp -a "$BACKUP" "$LIVE"
+  if [[ -n "${GZIP_BACKUP}" ]]; then
+    cp -a "$GZIP_BACKUP" "$GZIP_SNIPPET"
+  else
+    rm -f "$GZIP_SNIPPET"
+  fi
+  nginx -t
+  exit 1
+fi
+
 systemctl reload nginx
 echo "apply-nginx-perf: reloaded nginx"
 
