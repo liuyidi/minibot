@@ -20,9 +20,12 @@ minibot/
   macos/…
 ```
 
-WebUI production builds set `VITE_ASSET_BASE=https://downloads.liuyidi.me/minibot/webui/`
-so `index.html` on `bot.liuyidi.me` loads JS/CSS from the CDN. HTML/API/WebSocket
-stay on the bot origin.
+WebUI production builds set
+`VITE_ASSET_BASE=https://downloads.liuyidi.me/minibot/webui/<version>/`
+so `index.html` on `bot.liuyidi.me` loads JS/CSS from the CDN. Assets are
+uploaded **pre-gzipped** (`Content-Encoding: gzip`) because OSS/CDN does not
+compress `application/javascript` by default. HTML/API/WebSocket stay on the
+bot origin.
 The `releases.json` served from OSS should contain absolute artifact URLs, for
 example:
 

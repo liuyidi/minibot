@@ -11,6 +11,12 @@ Versions follow SemVer for product narrative. Package metadata may lag until a f
 
 ## [Unreleased]
 
+## [1.0.26] - 2026-09-09
+
+### Fixed
+
+- WebUI CDN assets are uploaded pre-gzipped (`Content-Encoding: gzip`) under a versioned path (`…/webui/<version>/`) so the main bundle is ~0.5MB on the wire.
+
 ## [1.0.25] - 2026-09-09
 
 ### Changed

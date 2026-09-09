@@ -12,6 +12,12 @@ English: [CHANGELOG.md](./CHANGELOG.md)
 <!-- #region site-changelog -->
 ## [Unreleased]
 
+## [1.0.26] - 2026-09-09
+
+### 修复
+
+- WebUI CDN 资源改为预压缩上传（`Content-Encoding: gzip`），并使用版本路径（`…/webui/<version>/`），主包线上体积约 0.5MB。
+
 ## [1.0.25] - 2026-09-09
 
 ### 变更

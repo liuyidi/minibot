@@ -40,7 +40,7 @@ jobs:
       OSS_OBJECT_ACL: ${{ vars.OSS_OBJECT_ACL || 'public-read' }}
       OSS_ACCESS_KEY_ID: ${{ secrets.OSS_ACCESS_KEY_ID }}
       OSS_ACCESS_KEY_SECRET: ${{ secrets.OSS_ACCESS_KEY_SECRET }}
-      VITE_ASSET_BASE: https://downloads.liuyidi.me/minibot/webui/
+      # Set per-build in "Resolve CDN base" (versioned path + pre-gzip on OSS).
 
     outputs:
       short_sha: ${{ steps.meta.outputs.short_sha }}
@@ -53,6 +53,19 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Resolve CDN base
+        id: cdn
+        run: |
+          version="$(node -p "require('./webui/package.json').version")"
+          base="https://downloads.liuyidi.me/minibot/webui/${version}/"
+          path="minibot/webui/${version}"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "asset_base=${base}" >> "$GITHUB_OUTPUT"
+          echo "cdn_path=${path}" >> "$GITHUB_OUTPUT"
+          echo "VITE_ASSET_BASE=${base}" >> "$GITHUB_ENV"
+          echo "WEBUI_CDN_PATH=${path}" >> "$GITHUB_ENV"
+          echo "CDN base ${base}"
 
       - name: Check OSS credentials
         run: |
@@ -82,7 +95,7 @@ jobs:
           npm ci
           npm run build
           test -f dist/index.html
-          grep -F 'downloads.liuyidi.me/minibot/webui/' dist/index.html
+          grep -F "downloads.liuyidi.me/minibot/webui/${{ steps.cdn.outputs.version }}/" dist/index.html
 
       - name: Install ossutil
         run: |
@@ -104,7 +117,7 @@ jobs:
       - name: Sync WebUI assets to OSS/CDN
         run: |
           chmod +x scripts/publish-oss-webui-assets.sh
-          scripts/publish-oss-webui-assets.sh --dist webui/dist
+          scripts/publish-oss-webui-assets.sh --dist webui/dist --cdn-path "${{ steps.cdn.outputs.cdn_path }}"
 
       - name: Stage dist for upload
         run: |
@@ -178,12 +191,17 @@ jobs:
       - name: Verify public bot + CDN asset URLs
         run: |
           set -euo pipefail
+          version="${{ steps.cdn.outputs.version }}"
           html="$(curl -fsS https://bot.liuyidi.me/)"
-          printf '%s' "$html" | grep -F 'downloads.liuyidi.me/minibot/webui/'
-          js="$(printf '%s' "$html" | grep -oE 'https://downloads\.liuyidi\.me/minibot/webui/assets/index-[^"[:space:]]+\.js' | head -1)"
+          printf '%s' "$html" | grep -F "downloads.liuyidi.me/minibot/webui/${version}/"
+          js="$(printf '%s' "$html" | grep -oE "https://downloads\\.liuyidi\\.me/minibot/webui/${version}/assets/index-[^\"[:space:]]+\\.js" | head -1)"
           test -n "$js"
           echo "checking $js"
-          curl -fsS -o /dev/null -H 'Accept-Encoding: gzip' "$js"
+          hdrs="$(curl -fsS -D - -o /dev/null -H 'Accept-Encoding: gzip' "$js")"
+          printf '%s\n' "$hdrs" | tr -d '\r' | grep -qiE '^content-encoding:[[:space:]]*gzip'
+          size="$(curl -fsS -o /dev/null -H 'Accept-Encoding: gzip' -w '%{size_download}' "$js")"
+          echo "on-wire=${size}"
+          test "$size" -lt 900000
           curl -fsS -o /dev/null -w "public bot %{http_code}\n" https://bot.liuyidi.me/
 
   notify-serverlessship:
