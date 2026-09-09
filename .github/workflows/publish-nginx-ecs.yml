@@ -1,0 +1,62 @@
+name: Publish Nginx Perf (ECS)
+
+# Apply deploy/nginx.liuyidi.me.conf.example on Aliyun ECS (gzip, /assets
+# direct, Cache-Control, http2). Preserves live ssl_certificate lines.
+# Does not rebuild Docker images or WebUI dist.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "deploy/nginx.liuyidi.me.conf.example"
+      - "deploy/apply-nginx-perf.sh"
+      - ".github/workflows/publish-nginx-ecs.yml"
+
+concurrency:
+  group: aliyun-ecs-demo-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish-nginx:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    env:
+      ECS_HOST: ${{ vars.ECS_HOST || '116.62.35.76' }}
+      ECS_USER: ${{ vars.ECS_USER || 'root' }}
+      ECS_SSH_PORT: ${{ vars.ECS_SSH_PORT || 22 }}
+
+    steps:
+      - name: Pull minibot commit on ECS
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ env.ECS_HOST }}
+          username: ${{ env.ECS_USER }}
+          key: ${{ secrets.ECS_SSH_PRIVATE_KEY }}
+          port: ${{ env.ECS_SSH_PORT }}
+          command_timeout: 5m
+          script: |
+            set -euo pipefail
+            git config --global --add safe.directory /opt/demo/minibot
+            cd /opt/demo/minibot
+            git fetch origin "${{ github.sha }}"
+            git reset --hard "${{ github.sha }}"
+            echo "HEAD=$(git rev-parse --short HEAD)"
+            chmod +x deploy/apply-nginx-perf.sh
+            bash deploy/apply-nginx-perf.sh
+
+      - name: Verify public bot asset headers
+        run: |
+          set -euo pipefail
+          html="$(curl -fsS https://bot.liuyidi.me/)"
+          js="$(printf '%s' "$html" | grep -oE '/assets/index-[^"[:space:]]+\.js' | head -1)"
+          test -n "$js"
+          echo "checking https://bot.liuyidi.me${js}"
+          hdrs="$(curl -fsS -D - -o /dev/null -H 'Accept-Encoding: gzip' "https://bot.liuyidi.me${js}")"
+          printf '%s\n' "$hdrs" | tr -d '\r' | grep -iE '^(HTTP/|content-encoding:|cache-control:)' 
+          printf '%s\n' "$hdrs" | tr -d '\r' | grep -qiE '^content-encoding:[[:space:]]*gzip'
+          printf '%s\n' "$hdrs" | tr -d '\r' | grep -qiE '^cache-control:.*immutable'
+          ver="$(curl -fsS -o /dev/null -w '%{http_version}' --http2 https://bot.liuyidi.me/)"
+          echo "http_version=${ver}"

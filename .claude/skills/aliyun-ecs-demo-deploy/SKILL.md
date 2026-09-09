@@ -34,6 +34,7 @@ description: >-
 | `liuyidi.me` site | `publish-site.yml`（`Publish Site (ECS)`） | `site/**` |
 | `bot` WebUI SPA | `publish-webui.yml`（`Publish WebUI (ECS)`） | `webui/**` |
 | `bot` Python server | `publish-server-ecs.yml`（`Publish Server (ECS)`） | `minibot/**`、`Dockerfile.minibot` |
+| nginx gzip/`/assets` | `publish-nginx-ecs.yml`（`Publish Nginx Perf (ECS)`） | `deploy/nginx*.example`、`apply-nginx-perf.sh` |
 
 共用 concurrency group `aliyun-ecs-demo-<ref>`，避免同机 `git reset` 互踩。
 

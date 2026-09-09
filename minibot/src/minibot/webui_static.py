@@ -6,9 +6,10 @@ import os
 import sys
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse, RedirectResponse
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import FileResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 
 # Paths that must never be swallowed by the SPA fallback.
 _SPA_RESERVED_PREFIXES = (
@@ -23,6 +24,19 @@ _SPA_RESERVED_PREFIXES = (
     "openapi.json",
     "redoc",
 )
+
+# Hashed Vite assets — long cache when served by the app (nginx should prefer /assets).
+_ASSETS_CACHE_CONTROL = "public, max-age=31536000, immutable"
+
+
+class WebUIAssetsCacheMiddleware(BaseHTTPMiddleware):
+    """Attach immutable Cache-Control for ``/assets/*`` responses."""
+
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+        response = await call_next(request)
+        if request.url.path.startswith("/assets/"):
+            response.headers.setdefault("Cache-Control", _ASSETS_CACHE_CONTROL)
+        return response
 
 
 def resolve_webui_dist() -> Path | None:
@@ -66,6 +80,7 @@ def mount_webui(app: FastAPI) -> Path | None:
     assets = dist / "assets"
     if assets.is_dir():
         app.mount("/assets", StaticFiles(directory=str(assets)), name="webui-assets")
+        app.add_middleware(WebUIAssetsCacheMiddleware)
 
     index = dist / "index.html"
     @app.get("/")

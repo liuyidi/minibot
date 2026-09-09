@@ -8,6 +8,7 @@ from typing import Any
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
@@ -99,6 +100,9 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+    # Fallback when nginx is not compressing (local / misconfigured edge).
+    # Production bot /assets should be served by nginx with gzip (see deploy/).
+    app.add_middleware(GZipMiddleware, minimum_size=500)
     mount_metrics(app)
 
     @app.get("/health")

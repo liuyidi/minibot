@@ -7,7 +7,14 @@
 #
 # Layout on ECS:
 #   /opt/demo/minibot/site/.vitepress/dist  → https://liuyidi.me
-#   minibot container                       → 127.0.0.1:8766
+#   /opt/demo/minibot/deploy/webui-dist     → bot /assets (nginx direct)
+#   minibot container                       → 127.0.0.1:8766 (API / WS / SPA HTML)
+#
+# Perf (P0/P1):
+#   - gzip on (http context; this file is included from http {})
+#   - bot /assets served from disk (not Python StaticFiles)
+#   - hashed /assets long-cache; listen 443 ssl http2
+# Apply on ECS: bash deploy/apply-nginx-perf.sh  (or Publish Nginx workflow)
 #
 # Install (after Certbot already issued certs for liuyidi.me / www / bot):
 #   1. Merge ssl_certificate lines from the live site into each 443 server
@@ -23,6 +30,25 @@ map $http_upgrade $connection_upgrade {
 }
 
 upstream demo_bot { server 127.0.0.1:8766; keepalive 16; }
+
+# Compression for text assets (JS/CSS/SVG/JSON). Prefer nginx over app gzip.
+gzip on;
+gzip_vary on;
+gzip_proxied any;
+gzip_comp_level 5;
+gzip_min_length 256;
+gzip_types
+    text/plain
+    text/css
+    text/javascript
+    application/javascript
+    application/json
+    application/xml
+    application/wasm
+    image/svg+xml
+    font/ttf
+    font/otf
+    application/vnd.ms-fontobject;
 
 # ---------- Landing: liuyidi.me ----------
 server {
@@ -50,6 +76,13 @@ server {
     root /opt/demo/minibot/site/.vitepress/dist;
     index index.html;
     error_page 404 /404.html;
+
+    # VitePress hashed bundles under /assets/
+    location /assets/ {
+        expires 1y;
+        add_header Cache-Control "public, max-age=31536000, immutable";
+        try_files $uri =404;
+    }
 
     location / {
         try_files $uri $uri.html $uri/index.html =404;
@@ -80,6 +113,15 @@ server {
     # ssl_certificate_key /etc/letsencrypt/live/mlf.liuyidi.me/privkey.pem;
 
     client_max_body_size 16m;
+
+    # Hashed SPA assets: nginx → disk (bind-mounted webui-dist). Bypass Python.
+    # Do not use try_files with alias (nginx resolves try_files against root).
+    location /assets/ {
+        alias /opt/demo/minibot/deploy/webui-dist/assets/;
+        access_log off;
+        expires 1y;
+        add_header Cache-Control "public, max-age=31536000, immutable";
+    }
 
     location / {
         proxy_pass http://demo_bot;
