@@ -21,6 +21,9 @@ export default defineConfig({
   cleanUrls: true,
   lastUpdated: false,
   srcExclude: ["README.md", ".generated/**"],
+  sitemap: {
+    hostname: "https://liuyidi.me",
+  },
   themeConfig: {
     siteTitle: "Minibot",
     nav: [

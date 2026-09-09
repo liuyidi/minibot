@@ -160,6 +160,38 @@ mustRead("mini-langfuse/ui-preview.png");
 mustRead("minibot/download/index.html");
 mustRead("brand/minibot_mark.svg");
 
+const robots = mustRead("robots.txt");
+if (!robots.includes("Allow: /")) {
+  throw new Error("robots.txt should allow crawling");
+}
+if (!robots.includes("Sitemap: https://liuyidi.me/sitemap.xml")) {
+  throw new Error("robots.txt is missing the sitemap URL");
+}
+
+const sitemap = mustRead("sitemap.xml");
+for (const path of [
+  "https://liuyidi.me/",
+  "https://liuyidi.me/minibot/",
+  "https://liuyidi.me/minibot/download/",
+  "https://liuyidi.me/minibot/web/",
+  "https://liuyidi.me/minibot/desktop/",
+  "https://liuyidi.me/minibot/app/",
+  "https://liuyidi.me/minibot/cli/",
+  "https://liuyidi.me/minibot/changelog/",
+  "https://liuyidi.me/minikb/",
+  "https://liuyidi.me/minikb/changelog/",
+  "https://liuyidi.me/mini-langfuse/",
+  "https://liuyidi.me/mini-langfuse/changelog/",
+  "https://liuyidi.me/mini-auth/",
+  "https://liuyidi.me/mini-auth/changelog/",
+  "https://liuyidi.me/serverless-ship/",
+  "https://liuyidi.me/serverless-ship/changelog/",
+]) {
+  if (!sitemap.includes(`<loc>${path}</loc>`)) {
+    throw new Error(`sitemap.xml is missing ${path}`);
+  }
+}
+
 const downloadPage = mustRead("minibot/download/index.html");
 if (!downloadPage.includes("选择适合你的设备") && !downloadPage.includes("Pick your device")) {
   throw new Error("download page is missing platform section copy");

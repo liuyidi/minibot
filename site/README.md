@@ -4,6 +4,7 @@ VitePress SSG for `https://liuyidi.me` (portal) and product docs:
 
 - `/` portal · `/minibot/` `/minibot/download/` `/mini-langfuse/` `/minikb/` `/mini-auth/` `/serverless-ship/`
 - each product has `/changelog/` (except download is a custom layout page)
+- `/robots.txt` (allow crawl) · `/sitemap.xml` (VitePress build from pages)
 
 ```bash
 cd site
