@@ -12,6 +12,12 @@ English: [CHANGELOG.md](./CHANGELOG.md)
 <!-- #region site-changelog -->
 ## [Unreleased]
 
+## [1.0.25] - 2026-09-09
+
+### 变更
+
+- WebUI 生产静态资源改走 downloads CDN（`downloads.liuyidi.me/minibot/webui/`）；HTML 仍由 `bot.liuyidi.me` 提供。
+
 ## [1.0.24] - 2026-09-09
 
 ### 新增

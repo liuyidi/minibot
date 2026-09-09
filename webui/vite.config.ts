@@ -6,8 +6,13 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
   const target = env.MINIBOT_API_URL ?? "http://127.0.0.1:8766";
   const hmrPath = "/__minibot_vite_hmr";
+  // Production (Publish WebUI): absolute CDN base so hashed assets load from
+  // downloads.liuyidi.me. Local/dev keeps relative "/" (served by Vite or ECS).
+  const rawBase = (env.VITE_ASSET_BASE || process.env.VITE_ASSET_BASE || "/").trim() || "/";
+  const base = rawBase.endsWith("/") ? rawBase : `${rawBase}/`;
 
   return {
+    base,
     plugins: [react()],
     resolve: {
       alias: {

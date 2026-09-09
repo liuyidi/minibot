@@ -1,8 +1,9 @@
 name: Publish WebUI (ECS)
 
-# Build the React WebUI on GitHub Actions, then promote dist on Aliyun ECS
-# (served by minibot at bot.liuyidi.me via bind-mount). Does not rebuild the
-# Python server image — use Publish Server (ECS) for that.
+# Build the React WebUI on GitHub Actions, sync hashed assets to OSS/CDN
+# (downloads.liuyidi.me/minibot/webui/), then promote dist on Aliyun ECS
+# (HTML + fallback assets at bot.liuyidi.me). Does not rebuild the Python
+# server image — use Publish Server (ECS) for that.
 #
 # Trigger: push to main touching webui/** (or promote script / this workflow),
 # or Actions → Run workflow.
@@ -14,6 +15,7 @@ on:
     paths:
       - "webui/**"
       - "deploy/promote-webui.sh"
+      - "scripts/publish-oss-webui-assets.sh"
       - ".github/workflows/publish-webui.yml"
 
 concurrency:
@@ -30,6 +32,15 @@ jobs:
       ECS_HOST: ${{ vars.ECS_HOST || '116.62.35.76' }}
       ECS_USER: ${{ vars.ECS_USER || 'root' }}
       ECS_SSH_PORT: ${{ vars.ECS_SSH_PORT || 22 }}
+      OSS_BUCKET: ${{ vars.OSS_BUCKET }}
+      OSS_REGION: ${{ vars.OSS_REGION }}
+      OSS_ENDPOINT: ${{ vars.OSS_ENDPOINT }}
+      OSS_PUBLIC_BASE_URL: ${{ vars.OSS_PUBLIC_BASE_URL }}
+      OSS_PREFIX: ${{ vars.OSS_PREFIX || 'minibot' }}
+      OSS_OBJECT_ACL: ${{ vars.OSS_OBJECT_ACL || 'public-read' }}
+      OSS_ACCESS_KEY_ID: ${{ secrets.OSS_ACCESS_KEY_ID }}
+      OSS_ACCESS_KEY_SECRET: ${{ secrets.OSS_ACCESS_KEY_SECRET }}
+      VITE_ASSET_BASE: https://downloads.liuyidi.me/minibot/webui/
 
     outputs:
       short_sha: ${{ steps.meta.outputs.short_sha }}
@@ -43,6 +54,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Check OSS credentials
+        run: |
+          missing=0
+          for name in OSS_BUCKET OSS_REGION OSS_ENDPOINT OSS_PUBLIC_BASE_URL OSS_ACCESS_KEY_ID OSS_ACCESS_KEY_SECRET; do
+            if [[ -z "${!name:-}" ]]; then
+              echo "Missing required secret/variable: $name" >&2
+              missing=1
+            fi
+          done
+          exit "$missing"
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -55,10 +77,34 @@ jobs:
         env:
           VITE_MINIBOT_RELEASES_URL: https://downloads.liuyidi.me/minibot/releases.json
           VITE_PORTAL_DOWNLOAD: https://liuyidi.me/minibot/download/
+          VITE_ASSET_BASE: ${{ env.VITE_ASSET_BASE }}
         run: |
           npm ci
           npm run build
           test -f dist/index.html
+          grep -F 'downloads.liuyidi.me/minibot/webui/' dist/index.html
+
+      - name: Install ossutil
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq unzip
+          curl -fsSL -o /tmp/ossutil.zip \
+            "https://gosspublic.alicdn.com/ossutil/1.7.19/ossutil-v1.7.19-linux-amd64.zip"
+          unzip -qo /tmp/ossutil.zip -d /tmp/ossutil
+          bin="$(find /tmp/ossutil -type f \( -name 'ossutil64' -o -name 'ossutil' \) | head -n1)"
+          sudo install -m 755 "$bin" /usr/local/bin/ossutil
+          ossutil --version
+          ossutil config \
+            -e "$OSS_ENDPOINT" \
+            -i "$OSS_ACCESS_KEY_ID" \
+            -k "$OSS_ACCESS_KEY_SECRET" \
+            -L CH \
+            --config-file "$HOME/.ossutilconfig"
+
+      - name: Sync WebUI assets to OSS/CDN
+        run: |
+          chmod +x scripts/publish-oss-webui-assets.sh
+          scripts/publish-oss-webui-assets.sh --dist webui/dist
 
       - name: Stage dist for upload
         run: |
@@ -129,17 +175,16 @@ jobs:
             fi
             curl -fsS -o /dev/null -w "local webui %{http_code}\n" http://127.0.0.1:8766/
 
-      - name: Verify public bot URL
-        uses: appleboy/ssh-action@v1.2.2
-        with:
-          host: ${{ env.ECS_HOST }}
-          username: ${{ env.ECS_USER }}
-          key: ${{ secrets.ECS_SSH_PRIVATE_KEY }}
-          port: ${{ env.ECS_SSH_PORT }}
-          command_timeout: 2m
-          script: |
-            set -euo pipefail
-            curl -fsS -o /dev/null -w "public bot %{http_code}\n" https://bot.liuyidi.me/
+      - name: Verify public bot + CDN asset URLs
+        run: |
+          set -euo pipefail
+          html="$(curl -fsS https://bot.liuyidi.me/)"
+          printf '%s' "$html" | grep -F 'downloads.liuyidi.me/minibot/webui/'
+          js="$(printf '%s' "$html" | grep -oE 'https://downloads\.liuyidi\.me/minibot/webui/assets/index-[^"[:space:]]+\.js' | head -1)"
+          test -n "$js"
+          echo "checking $js"
+          curl -fsS -o /dev/null -H 'Accept-Encoding: gzip' "$js"
+          curl -fsS -o /dev/null -w "public bot %{http_code}\n" https://bot.liuyidi.me/
 
   notify-serverlessship:
     needs: publish-webui

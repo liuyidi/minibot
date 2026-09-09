@@ -32,7 +32,7 @@ description: >-
 | 产物 | Workflow | 触发 path |
 |------|----------|-----------|
 | `liuyidi.me` site | `publish-site.yml`（`Publish Site (ECS)`） | `site/**` |
-| `bot` WebUI SPA | `publish-webui.yml`（`Publish WebUI (ECS)`） | `webui/**` |
+| `bot` WebUI SPA | `publish-webui.yml`（`Publish WebUI (ECS)`） | `webui/**`；构建时同步 `/assets` → OSS CDN |
 | `bot` Python server | `publish-server-ecs.yml`（`Publish Server (ECS)`） | `minibot/**`、`Dockerfile.minibot` |
 | nginx gzip/`/assets` | `publish-nginx-ecs.yml`（`Publish Nginx Perf (ECS)`） | `deploy/nginx*.example`、`apply-nginx-perf.sh` |
 

@@ -14,12 +14,15 @@ Use object storage (Aliyun OSS or Tencent COS) behind CDN, for example
 ```text
 minibot/
   releases.json
-  android/minibot-android-v1.0.4.apk
-  macos/minibot-1.0.20-minibot_1.0.20_arm64.dmg
-  windows/minibot-1.0.20-minibot_1.0.20_x64-setup.exe
-  linux/minibot-1.0.20-minibot_1.0.20_amd64.deb
+  webui/                 # WebUI hashed assets (Publish WebUI → OSS/CDN)
+    assets/
+  android/…
+  macos/…
 ```
 
+WebUI production builds set `VITE_ASSET_BASE=https://downloads.liuyidi.me/minibot/webui/`
+so `index.html` on `bot.liuyidi.me` loads JS/CSS from the CDN. HTML/API/WebSocket
+stay on the bot origin.
 The `releases.json` served from OSS should contain absolute artifact URLs, for
 example:
 

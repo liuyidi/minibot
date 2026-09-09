@@ -11,6 +11,12 @@ Versions follow SemVer for product narrative. Package metadata may lag until a f
 
 ## [Unreleased]
 
+## [1.0.25] - 2026-09-09
+
+### Changed
+
+- WebUI production assets load from the downloads CDN (`downloads.liuyidi.me/minibot/webui/`); HTML stays on `bot.liuyidi.me`.
+
 ## [1.0.24] - 2026-09-09
 
 ### Added
