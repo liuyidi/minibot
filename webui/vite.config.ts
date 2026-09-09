@@ -2,6 +2,8 @@ import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "node:path";
 
+import { katexVendorCdnPlugin } from "./vite.katex-vendor";
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
   const target = env.MINIBOT_API_URL ?? "http://127.0.0.1:8766";
@@ -10,10 +12,16 @@ export default defineConfig(({ mode }) => {
   // downloads.liuyidi.me. Local/dev keeps relative "/" (served by Vite or ECS).
   const rawBase = (env.VITE_ASSET_BASE || process.env.VITE_ASSET_BASE || "/").trim() || "/";
   const base = rawBase.endsWith("/") ? rawBase : `${rawBase}/`;
+  const katexVendorBase = (
+    env.VITE_KATEX_VENDOR_BASE || process.env.VITE_KATEX_VENDOR_BASE || ""
+  ).trim();
 
   return {
     base,
-    plugins: [react()],
+    plugins: [
+      react(),
+      ...(katexVendorBase ? [katexVendorCdnPlugin(katexVendorBase)] : []),
+    ],
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "./src"),
@@ -54,7 +62,8 @@ export default defineConfig(({ mode }) => {
             ) {
               return "markdown-vendor";
             }
-            if (id.includes("node_modules/katex")) {
+            // When vendor CDN is on, katex is external — skip manual chunk.
+            if (!katexVendorBase && id.includes("node_modules/katex")) {
               return "katex";
             }
           },
@@ -71,7 +80,7 @@ export default defineConfig(({ mode }) => {
         host: "192.168.112.159",
         path: hmrPath,
       },
-        proxy: {
+      proxy: {
         "/webui": { target, changeOrigin: true },
         "/api": { target, changeOrigin: true },
         "/auth": { target, changeOrigin: true },

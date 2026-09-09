@@ -26,6 +26,18 @@ so `index.html` on `bot.liuyidi.me` loads JS/CSS from the CDN. Assets are
 uploaded **pre-gzipped** (`Content-Encoding: gzip`) because OSS/CDN does not
 compress `application/javascript` by default. HTML/API/WebSocket stay on the
 bot origin.
+
+KaTeX is pinned separately (only changes when the `katex` npm version changes):
+
+```text
+minibot/webui/vendor/katex/<katexVersion>/
+  katex.min.css
+  katex.mjs
+  fonts/…
+```
+
+Publish WebUI sets `VITE_KATEX_VENDOR_BASE` to that URL and externalizes katex
+from the app bundle.
 The `releases.json` served from OSS should contain absolute artifact URLs, for
 example:
 

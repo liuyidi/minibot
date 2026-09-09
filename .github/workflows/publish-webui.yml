@@ -16,6 +16,7 @@ on:
       - "webui/**"
       - "deploy/promote-webui.sh"
       - "scripts/publish-oss-webui-assets.sh"
+      - "scripts/publish-oss-katex-vendor.sh"
       - ".github/workflows/publish-webui.yml"
 
 concurrency:
@@ -85,17 +86,9 @@ jobs:
           cache: npm
           cache-dependency-path: webui/package-lock.json
 
-      - name: Build WebUI
+      - name: Install WebUI deps
         working-directory: webui
-        env:
-          VITE_MINIBOT_RELEASES_URL: https://downloads.liuyidi.me/minibot/releases.json
-          VITE_PORTAL_DOWNLOAD: https://liuyidi.me/minibot/download/
-          VITE_ASSET_BASE: ${{ env.VITE_ASSET_BASE }}
-        run: |
-          npm ci
-          npm run build
-          test -f dist/index.html
-          grep -F "downloads.liuyidi.me/minibot/webui/${{ steps.cdn.outputs.version }}/" dist/index.html
+        run: npm ci
 
       - name: Install ossutil
         run: |
@@ -113,6 +106,36 @@ jobs:
             -k "$OSS_ACCESS_KEY_SECRET" \
             -L CH \
             --config-file "$HOME/.ossutilconfig"
+
+      - name: Publish KaTeX vendor (version-pinned)
+        id: katex
+        run: |
+          chmod +x scripts/publish-oss-katex-vendor.sh
+          out="$(scripts/publish-oss-katex-vendor.sh)"
+          printf '%s\n' "$out"
+          vendor="$(printf '%s\n' "$out" | sed -n 's/^VITE_KATEX_VENDOR_BASE=//p' | tail -1)"
+          test -n "$vendor"
+          echo "vendor_base=${vendor}" >> "$GITHUB_OUTPUT"
+          echo "VITE_KATEX_VENDOR_BASE=${vendor}" >> "$GITHUB_ENV"
+
+      - name: Build WebUI
+        working-directory: webui
+        env:
+          VITE_MINIBOT_RELEASES_URL: https://downloads.liuyidi.me/minibot/releases.json
+          VITE_PORTAL_DOWNLOAD: https://liuyidi.me/minibot/download/
+          VITE_ASSET_BASE: ${{ env.VITE_ASSET_BASE }}
+          VITE_KATEX_VENDOR_BASE: ${{ env.VITE_KATEX_VENDOR_BASE }}
+        run: |
+          npm run build
+          test -f dist/index.html
+          grep -F "downloads.liuyidi.me/minibot/webui/${{ steps.cdn.outputs.version }}/" dist/index.html
+          grep -F 'webui/vendor/katex/' dist/index.html
+          # KaTeX must not be re-bundled into app assets when vendor CDN is on.
+          if ls dist/assets/katex-*.js >/dev/null 2>&1; then
+            echo "FAIL: katex chunk still present in dist/assets" >&2
+            ls dist/assets/katex-* >&2 || true
+            exit 1
+          fi
 
       - name: Sync WebUI assets to OSS/CDN
         run: |
@@ -194,6 +217,7 @@ jobs:
           version="${{ steps.cdn.outputs.version }}"
           html="$(curl -fsS https://bot.liuyidi.me/)"
           printf '%s' "$html" | grep -F "downloads.liuyidi.me/minibot/webui/${version}/"
+          printf '%s' "$html" | grep -F 'webui/vendor/katex/'
           js="$(printf '%s' "$html" | grep -oE "https://downloads\\.liuyidi\\.me/minibot/webui/${version}/assets/index-[^\"[:space:]]+\\.js" | head -1)"
           test -n "$js"
           echo "checking $js"
@@ -202,6 +226,9 @@ jobs:
           size="$(curl -fsS -o /dev/null -H 'Accept-Encoding: gzip' -w '%{size_download}' "$js")"
           echo "on-wire=${size}"
           test "$size" -lt 900000
+          katex_css="$(printf '%s' "$html" | grep -oE 'https://downloads\.liuyidi\.me/minibot/webui/vendor/katex/[^"]+/katex\.min\.css' | head -1)"
+          test -n "$katex_css"
+          curl -fsS -o /dev/null -H 'Accept-Encoding: gzip' "$katex_css"
           curl -fsS -o /dev/null -w "public bot %{http_code}\n" https://bot.liuyidi.me/
 
   notify-serverlessship:

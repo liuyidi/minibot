@@ -12,6 +12,12 @@ English: [CHANGELOG.md](./CHANGELOG.md)
 <!-- #region site-changelog -->
 ## [Unreleased]
 
+## [1.0.27] - 2026-09-09
+
+### 变更
+
+- WebUI 生产构建将 KaTeX 固定到 CDN vendor 路径（`…/webui/vendor/katex/<katexVersion>/`），不再随每次应用发版重新打包上传。
+
 ## [1.0.26] - 2026-09-09
 
 ### 修复

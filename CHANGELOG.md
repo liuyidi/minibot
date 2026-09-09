@@ -11,6 +11,12 @@ Versions follow SemVer for product narrative. Package metadata may lag until a f
 
 ## [Unreleased]
 
+## [1.0.27] - 2026-09-09
+
+### Changed
+
+- WebUI production builds load KaTeX from a version-pinned CDN vendor path (`…/webui/vendor/katex/<katexVersion>/`) instead of re-bundling it into each app release.
+
 ## [1.0.26] - 2026-09-09
 
 ### Fixed
