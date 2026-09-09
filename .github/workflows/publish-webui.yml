@@ -258,7 +258,8 @@ jobs:
           test -n "$syntax_base"
           curl -fsS -o /dev/null -H 'Accept-Encoding: gzip' "${syntax_base}/syntax-highlight.js"
           # App JS must embed the vendor base (not ship local lang chunks).
-          app_js="$(curl -fsS "$js")"
+          # OSS stores pre-gzipped objects; --compressed decompresses for grep.
+          app_js="$(curl -fsS --compressed "$js")"
           printf '%s' "$app_js" | grep -F 'webui/vendor/syntax-highlight/'
           curl -fsS -o /dev/null -w "public bot %{http_code}\n" https://bot.liuyidi.me/
 
