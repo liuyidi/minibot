@@ -47,12 +47,31 @@ LIVE="$(detect_conf)" || {
   exit 1
 }
 
+BACKUP_DIR="${NGINX_BACKUP_DIR:-/var/backups/minibot-nginx}"
+mkdir -p "$BACKUP_DIR"
+
+# Accidental *.bak.* inside sites-enabled are loaded by nginx and break -t.
+shopt -s nullglob
+for stray in /etc/nginx/sites-enabled/*.bak.* /etc/nginx/sites-available/*.bak.* /etc/nginx/conf.d/*.bak.*; do
+  dest="$BACKUP_DIR/$(basename "$stray")"
+  echo "apply-nginx-perf: moving stray backup ${stray} -> ${dest}"
+  mv -f "$stray" "$dest"
+done
+shopt -u nullglob
+
 echo "apply-nginx-perf: live=${LIVE}"
 echo "apply-nginx-perf: assets_alias=${ASSETS_ALIAS}"
 
 # If a previous failed apply left a broken conf, restore newest backup first.
 if ! nginx -t >/dev/null 2>&1; then
-  latest_bak="$(ls -1t "${LIVE}".bak.* 2>/dev/null | head -1 || true)"
+  latest_bak="$(ls -1t "$BACKUP_DIR"/="$(basename "$LIVE")".* 2>/dev/null | head -1 || true)"
+  # also accept older naming if moved from sites-enabled
+  if [[ -z "${latest_bak}" ]]; then
+    latest_bak="$(ls -1t "$BACKUP_DIR"/$(basename "$LIVE").bak.* 2>/dev/null | head -1 || true)"
+  fi
+  if [[ -z "${latest_bak}" ]]; then
+    latest_bak="$(ls -1t "$BACKUP_DIR"/* 2>/dev/null | head -1 || true)"
+  fi
   if [[ -n "${latest_bak}" ]]; then
     echo "apply-nginx-perf: nginx -t failed; restoring ${latest_bak}"
     cp -a "${latest_bak}" "${LIVE}"
@@ -61,10 +80,10 @@ if ! nginx -t >/dev/null 2>&1; then
 fi
 
 TMP="$(mktemp)"
-BACKUP="${LIVE}.bak.$(date +%Y%m%d%H%M%S)"
+BACKUP="${BACKUP_DIR}/$(basename "$LIVE").$(date +%Y%m%d%H%M%S)"
 GZIP_BACKUP=""
 if [[ -f "$GZIP_SNIPPET" ]]; then
-  GZIP_BACKUP="${GZIP_SNIPPET}.bak.$(date +%Y%m%d%H%M%S)"
+  GZIP_BACKUP="${BACKUP_DIR}/$(basename "$GZIP_SNIPPET").$(date +%Y%m%d%H%M%S)"
   cp -a "$GZIP_SNIPPET" "$GZIP_BACKUP"
 fi
 trap 'rm -f "$TMP"' EXIT
