@@ -6,7 +6,8 @@ mini-langfuse 在腾讯云（`https://mlf.liuyidi.me`）；minikb 在火山引�
 | 域名 | 本机角色 | 发布 |
 |------|----------|------|
 | https://liuyidi.me | VitePress SSG（`site/` → `site/.vitepress/dist`） | `Publish Site (ECS)` |
-| https://bot.liuyidi.me | minibot `:8766` + 挂载 `deploy/webui-dist` | Server / WebUI 分开 |
+| https://bot.liuyidi.me | minibot `:8766` + 挂载 `deploy/webui-dist`；hashed `/assets` 经 `downloads.liuyidi.me` | Server / WebUI 分开 |
+| https://downloads.liuyidi.me | OSS `liuyidi`；**应**再套阿里云 CDN 边缘（见 `docs/downloads-cdn.md`） | 控制台 / `Configure Downloads CDN` |
 
 ECS：`root@116.62.35.76`，代码 `/opt/demo/minibot/`。  
 `/opt/demo/mini-langfuse/` 只在 **构建镜像** 时提供 `sdk-python`（`LANGFUSE_SDK_DIR`），不要在阿里云再起 mlf。

@@ -35,6 +35,7 @@ description: >-
 | `bot` WebUI SPA | `publish-webui.yml`（`Publish WebUI (ECS)`） | `webui/**`；构建时同步 `/assets` → OSS CDN |
 | `bot` Python server | `publish-server-ecs.yml`（`Publish Server (ECS)`） | `minibot/**`、`Dockerfile.minibot` |
 | nginx gzip/`/assets` | `publish-nginx-ecs.yml`（`Publish Nginx Perf (ECS)`） | `deploy/nginx*.example`、`apply-nginx-perf.sh` |
+| `downloads` 边缘 CDN | `configure-downloads-cdn.yml` + `docs/downloads-cdn.md` | 手动；DNS 从 `*.taihangcda.cn` 切到 CDN |
 
 共用 concurrency group `aliyun-ecs-demo-<ref>`，避免同机 `git reset` 互踩。
 

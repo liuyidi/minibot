@@ -1,0 +1,41 @@
+name: Configure Downloads CDN
+
+# Best-effort Aliyun CDN setup for downloads.liuyidi.me (OSS origin).
+# Does not change DNS — prints the CNAME to set at hichina.
+#
+# Trigger: Actions → Run workflow
+# Needs: OSS_ACCESS_KEY_* (or dedicated CDN keys) with cdn:* on the account.
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: configure-downloads-cdn
+  cancel-in-progress: false
+
+jobs:
+  configure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    env:
+      OSS_ACCESS_KEY_ID: ${{ secrets.OSS_ACCESS_KEY_ID }}
+      OSS_ACCESS_KEY_SECRET: ${{ secrets.OSS_ACCESS_KEY_SECRET }}
+      CDN_DOMAIN: downloads.liuyidi.me
+      CDN_OSS_ORIGIN: liuyidi.oss-cn-hangzhou.aliyuncs.com
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure / inspect CDN domain
+        run: |
+          chmod +x scripts/configure-aliyun-cdn-downloads.sh
+          scripts/configure-aliyun-cdn-downloads.sh
+
+      - name: Probe public URL (informational)
+        run: |
+          chmod +x scripts/verify-downloads-cdn.sh
+          REQUIRE_CDN_HIT=0 REQUIRE_HTTP2=0 scripts/verify-downloads-cdn.sh || true
+          echo "If FAIL/WARN: update DNS CNAME per docs/downloads-cdn.md, wait for propagation, re-run verify."

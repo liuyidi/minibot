@@ -23,9 +23,14 @@ minibot/
 WebUI production builds set
 `VITE_ASSET_BASE=https://downloads.liuyidi.me/minibot/webui/<version>/`
 so `index.html` on `bot.liuyidi.me` loads JS/CSS from the CDN. Assets are
-uploaded **pre-gzipped** (`Content-Encoding: gzip`) because OSS/CDN does not
+uploaded **pre-gzipped** (`Content-Encoding: gzip`) because OSS itself does not
 compress `application/javascript` by default. HTML/API/WebSocket stay on the
 bot origin.
+
+> **Important:** binding `downloads.liuyidi.me` as an OSS custom domain
+> (`*.taihangcda.cn`) is **not** edge CDN. For real HIT / HTTP/2 see
+> [downloads-cdn.md](./downloads-cdn.md). Verify with
+> `scripts/verify-downloads-cdn.sh`.
 
 KaTeX is pinned separately (only changes when the `katex` npm version changes):
 

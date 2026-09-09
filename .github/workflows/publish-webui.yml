@@ -283,6 +283,14 @@ jobs:
           printf '%s' "$app_js" | grep -F 'webui/vendor/katex/'
           curl -fsS -o /dev/null -w "public bot %{http_code}\n" https://bot.liuyidi.me/
 
+          # CDN edge: prefer HIT + HTTP/2. Soft by default; set repo var CDN_EDGE_REQUIRED=1 to enforce.
+          chmod +x scripts/verify-downloads-cdn.sh
+          if [[ "${{ vars.CDN_EDGE_REQUIRED || '0' }}" == "1" ]]; then
+            REQUIRE_CDN_HIT=1 REQUIRE_HTTP2=1 scripts/verify-downloads-cdn.sh "$js"
+          else
+            REQUIRE_CDN_HIT=0 REQUIRE_HTTP2=0 scripts/verify-downloads-cdn.sh "$js" || true
+          fi
+
   notify-serverlessship:
     needs: publish-webui
     if: ${{ needs.publish-webui.result == 'success' }}
