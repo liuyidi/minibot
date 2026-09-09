@@ -12,6 +12,12 @@ English: [CHANGELOG.md](./CHANGELOG.md)
 <!-- #region site-changelog -->
 ## [Unreleased]
 
+## [1.0.29] - 2026-09-09
+
+### 变更
+
+- WebUI 延后加载 KaTeX CSS/JS，并取消对 `markdown-vendor` 的 `modulepreload`，冷启动不再与主包争抢约 200KB 的数学/Markdown 资源。
+
 ## [1.0.28] - 2026-09-09
 
 ### 变更

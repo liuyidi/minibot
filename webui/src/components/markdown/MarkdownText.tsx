@@ -11,6 +11,7 @@ import {
 } from "react";
 
 import { cn } from "@/lib/utils";
+import { ensureKatexStylesheet } from "@/lib/markdown/ensure-katex-assets";
 
 interface MarkdownTextProps {
   children: string;
@@ -19,7 +20,10 @@ interface MarkdownTextProps {
   onOpenFilePreview?: (path: string) => void;
 }
 
-const loadMarkdownRenderer = () => import("@/components/markdown/MarkdownTextRenderer");
+const loadMarkdownRenderer = () => {
+  ensureKatexStylesheet();
+  return import("@/components/markdown/MarkdownTextRenderer");
+};
 const LazyMarkdownRenderer = lazy(loadMarkdownRenderer);
 
 const MemoizedMarkdownRenderer = memo(function MemoizedMarkdownRenderer({
@@ -50,6 +54,7 @@ const LONG_STREAM_COMMIT_MS = 220;
 const STREAMING_HIGHLIGHT_CHAR_LIMIT = 16_000;
 
 export function preloadMarkdownText(): void {
+  ensureKatexStylesheet();
   void loadMarkdownRenderer();
 }
 

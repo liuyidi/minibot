@@ -37,7 +37,8 @@ minibot/webui/vendor/katex/<katexVersion>/
 ```
 
 Publish WebUI sets `VITE_KATEX_VENDOR_BASE` to that URL and externalizes katex
-from the app bundle.
+from the app bundle. The HTML only injects an import map — stylesheet / JS are
+loaded on demand when markdown with math is first rendered (not modulepreloaded).
 
 Syntax highlighting is pinned the same way (keyed by `react-syntax-highlighter`
 version; React is shared with the SPA via a window bridge):

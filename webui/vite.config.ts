@@ -27,8 +27,11 @@ export default defineConfig(({ mode }) => {
       ...(katexVendorBase ? [katexVendorCdnPlugin(katexVendorBase)] : []),
     ],
     define: {
-      // Expose to CodeBlock even when only set via process.env (CI).
+      // Expose vendor bases even when only set via process.env (CI).
       "import.meta.env.VITE_SYNTAX_VENDOR_BASE": JSON.stringify(syntaxVendorBase),
+      "import.meta.env.VITE_KATEX_VENDOR_BASE": JSON.stringify(
+        mode === "test" ? "" : katexVendorBase,
+      ),
     },
     resolve: {
       alias: [
@@ -56,6 +59,18 @@ export default defineConfig(({ mode }) => {
       outDir: path.resolve(__dirname, "dist"),
       emptyOutDir: true,
       sourcemap: false,
+      // Do not modulepreload markdown/math stacks — they load via React.lazy
+      // when the first chat message needs rendering.
+      modulePreload: {
+        resolveDependencies(_filename, deps) {
+          return deps.filter(
+            (dep) =>
+              !dep.includes("markdown-vendor")
+              && !dep.includes("MarkdownTextRenderer")
+              && !/\/katex[^/]*\.js$/.test(dep),
+          );
+        },
+      },
       rollupOptions: {
         output: {
           manualChunks(id) {

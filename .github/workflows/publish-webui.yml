@@ -142,7 +142,16 @@ jobs:
           npm run build
           test -f dist/index.html
           grep -F "downloads.liuyidi.me/minibot/webui/${{ steps.cdn.outputs.version }}/" dist/index.html
+          # Import map only — no eager katex stylesheet / modulepreload.
           grep -F 'webui/vendor/katex/' dist/index.html
+          if grep -E 'katex\.min\.css|modulepreload[^>]+katex' dist/index.html; then
+            echo "FAIL: katex must not be eagerly linked/preloaded in index.html" >&2
+            exit 1
+          fi
+          if grep -F 'markdown-vendor-' dist/index.html | grep -q modulepreload; then
+            echo "FAIL: markdown-vendor must not be modulepreloaded" >&2
+            exit 1
+          fi
           # KaTeX must not be re-bundled into app assets when vendor CDN is on.
           if ls dist/assets/katex-*.js >/dev/null 2>&1; then
             echo "FAIL: katex chunk still present in dist/assets" >&2
@@ -243,6 +252,15 @@ jobs:
           html="$(curl -fsS https://bot.liuyidi.me/)"
           printf '%s' "$html" | grep -F "downloads.liuyidi.me/minibot/webui/${version}/"
           printf '%s' "$html" | grep -F 'webui/vendor/katex/'
+          # Deferred: no eager katex CSS / modulepreload in HTML.
+          if printf '%s' "$html" | grep -E 'katex\.min\.css|modulepreload[^>]+katex'; then
+            echo "FAIL: katex still eagerly linked in live HTML" >&2
+            exit 1
+          fi
+          if printf '%s' "$html" | grep -F 'markdown-vendor-' | grep -q modulepreload; then
+            echo "FAIL: markdown-vendor still modulepreloaded in live HTML" >&2
+            exit 1
+          fi
           js="$(printf '%s' "$html" | grep -oE "https://downloads\\.liuyidi\\.me/minibot/webui/${version}/assets/index-[^\"[:space:]]+\\.js" | head -1)"
           test -n "$js"
           echo "checking $js"
@@ -251,16 +269,18 @@ jobs:
           size="$(curl -fsS -o /dev/null -H 'Accept-Encoding: gzip' -w '%{size_download}' "$js")"
           echo "on-wire=${size}"
           test "$size" -lt 900000
-          katex_css="$(printf '%s' "$html" | grep -oE 'https://downloads\.liuyidi\.me/minibot/webui/vendor/katex/[^"]+/katex\.min\.css' | head -1)"
-          test -n "$katex_css"
-          curl -fsS -o /dev/null -H 'Accept-Encoding: gzip' "$katex_css"
+          katex_base="${{ steps.katex.outputs.vendor_base }}"
+          test -n "$katex_base"
+          curl -fsS -o /dev/null -H 'Accept-Encoding: gzip' "${katex_base}/katex.min.css"
+          curl -fsS -o /dev/null -H 'Accept-Encoding: gzip' "${katex_base}/katex.mjs"
           syntax_base="${{ steps.syntax.outputs.vendor_base }}"
           test -n "$syntax_base"
           curl -fsS -o /dev/null -H 'Accept-Encoding: gzip' "${syntax_base}/syntax-highlight.js"
-          # App JS must embed the vendor base (not ship local lang chunks).
+          # App JS must embed vendor bases (not ship local lang / katex chunks).
           # OSS stores pre-gzipped objects; --compressed decompresses for grep.
           app_js="$(curl -fsS --compressed "$js")"
           printf '%s' "$app_js" | grep -F 'webui/vendor/syntax-highlight/'
+          printf '%s' "$app_js" | grep -F 'webui/vendor/katex/'
           curl -fsS -o /dev/null -w "public bot %{http_code}\n" https://bot.liuyidi.me/
 
   notify-serverlessship:

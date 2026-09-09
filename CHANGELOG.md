@@ -11,6 +11,12 @@ Versions follow SemVer for product narrative. Package metadata may lag until a f
 
 ## [Unreleased]
 
+## [1.0.29] - 2026-09-09
+
+### Changed
+
+- WebUI defers KaTeX CSS/JS and skips `modulepreload` for `markdown-vendor`, so cold load no longer competes with the main bundle for ~200KB of math/markdown assets.
+
 ## [1.0.28] - 2026-09-09
 
 ### Changed

@@ -1,8 +1,10 @@
 import type { Plugin } from "vite";
 
 /**
- * When ``VITE_KATEX_VENDOR_BASE`` is set (CDN publish), load KaTeX JS/CSS/fonts
- * from a version-pinned vendor URL instead of bundling them into app assets.
+ * When ``VITE_KATEX_VENDOR_BASE`` is set (CDN publish), resolve ``katex`` via
+ * an import map to a version-pinned vendor URL. Stylesheet / JS are NOT
+ * eagerly preloaded — ``ensureKatexStylesheet`` + the first markdown import
+ * pull them when chat content actually needs math.
  */
 export function katexVendorCdnPlugin(vendorBase: string): Plugin {
   const base = vendorBase.replace(/\/+$/, "");
@@ -38,23 +40,20 @@ export function katexVendorCdnPlugin(vendorBase: string): Plugin {
     },
     load(id) {
       if (id === cssStub) {
-        return "/* katex CSS loaded from vendor CDN */\n";
+        return "/* katex CSS loaded on demand from vendor CDN */\n";
       }
       return null;
     },
     transformIndexHtml: {
       order: "pre",
       handler(html) {
+        // Import map only — no stylesheet / modulepreload on the critical path.
         const importMap = JSON.stringify({
           imports: {
             katex: `${base}/katex.mjs`,
           },
         });
-        const inject = [
-          `    <link rel="stylesheet" crossorigin href="${base}/katex.min.css" />`,
-          `    <link rel="modulepreload" crossorigin href="${base}/katex.mjs" />`,
-          `    <script type="importmap">${importMap}</script>`,
-        ].join("\n");
+        const inject = `    <script type="importmap">${importMap}</script>`;
         if (html.includes("type=\"importmap\"")) {
           return html;
         }
