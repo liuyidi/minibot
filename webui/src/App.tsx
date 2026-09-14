@@ -11,6 +11,7 @@ import {
   BootLoadingScreen,
   BrowserLoginWaiting,
 } from "@/components/auth/BootScreens";
+import { UmamiAnalytics } from "@/components/telemetry/UmamiAnalytics";
 import { useGatewayBoot, type AppBootState } from "@/hooks/auth/useGatewayBoot";
 import { AppLayout } from "@/layouts";
 import { HashChangeSync } from "@/routes";
@@ -245,6 +246,7 @@ export default function App() {
       modelName={state.modelName}
     >
       <HashRouter>
+        <UmamiAnalytics userId={authConfigRef.current?.account?.id} />
         <Routes>
           <Route
             path="*"

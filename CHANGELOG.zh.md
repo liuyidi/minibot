@@ -12,6 +12,12 @@ English: [CHANGELOG.md](./CHANGELOG.md)
 <!-- #region site-changelog -->
 ## [Unreleased]
 
+## [1.0.31] - 2026-09-14
+
+### 新增
+
+- 共用一个 Umami Cloud Website，用事件属性 `app=site|auth|bot` 区分落地页 / 登录 / WebUI（CTA、下载、邮箱登录注册、SPA 浏览与 identify）。
+
 ## [1.0.30] - 2026-09-14
 
 ### 新增

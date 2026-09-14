@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, ref } from "vue";
 import "./portal.css";
+import { track } from "./umami.js";
 
 const STORAGE_KEY = "landing.locale";
 
@@ -156,9 +157,24 @@ function onLocaleChange(event) {
         <h1>{{ t("hero.title") }}</h1>
         <p class="lede">{{ t("hero.lede") }}</p>
         <div class="cta">
-          <a class="btn primary" href="https://bot.liuyidi.me/">{{ t("cta.agent") }}</a>
-          <a class="btn ghost" href="/minibot/download/">{{ t("cta.desktop") }}</a>
-          <a class="btn ghost" href="/minibot/download/">{{ t("cta.app") }}</a>
+          <a
+            class="btn primary"
+            href="https://bot.liuyidi.me/"
+            @click="track('cta_click', { name: 'open_agent', place: 'hero' })"
+            >{{ t("cta.agent") }}</a
+          >
+          <a
+            class="btn ghost"
+            href="/minibot/download/"
+            @click="track('cta_click', { name: 'download_desktop', place: 'hero' })"
+            >{{ t("cta.desktop") }}</a
+          >
+          <a
+            class="btn ghost"
+            href="/minibot/download/"
+            @click="track('cta_click', { name: 'download_app', place: 'hero' })"
+            >{{ t("cta.app") }}</a
+          >
         </div>
       </section>
 
@@ -197,7 +213,11 @@ function onLocaleChange(event) {
 
       <p class="section-title">{{ t("series.title") }}</p>
       <section class="entries" aria-label="Product entries">
-        <a class="entry" href="https://bot.liuyidi.me/">
+        <a
+          class="entry"
+          href="https://bot.liuyidi.me/"
+          @click="track('cta_click', { name: 'entry_bot' })"
+        >
           <span class="kicker">{{ t("entry.bot.kicker") }}</span>
           <h2>minibot</h2>
           <p>{{ t("entry.bot.desc") }}</p>
@@ -215,7 +235,11 @@ function onLocaleChange(event) {
           <p>{{ t("entry.kb.desc") }}</p>
           <span class="go">{{ t("entry.kb.go") }}</span>
         </a>
-        <a class="entry" href="https://auth.liuyidi.me/">
+        <a
+          class="entry"
+          href="https://auth.liuyidi.me/"
+          @click="track('cta_click', { name: 'entry_auth' })"
+        >
           <span class="kicker">{{ t("entry.auth.kicker") }}</span>
           <h2>mini-auth</h2>
           <p>{{ t("entry.auth.desc") }}</p>

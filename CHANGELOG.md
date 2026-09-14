@@ -11,6 +11,12 @@ Versions follow SemVer for product narrative. Package metadata may lag until a f
 
 ## [Unreleased]
 
+## [1.0.31] - 2026-09-14
+
+### Added
+
+- Shared Umami Cloud website tracks landing, auth, and WebUI funnels via `app=site|auth|bot` event properties (CTAs, downloads, email login/sign-up, SPA pageviews + identify).
+
 ## [1.0.30] - 2026-09-14
 
 ### Added

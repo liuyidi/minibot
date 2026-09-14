@@ -2,6 +2,7 @@
 import { computed, onMounted, ref, watch } from "vue";
 import QRCode from "qrcode";
 import "./download.css";
+import { track } from "./umami.js";
 
 const RELEASE_MANIFEST_URL = "https://downloads.liuyidi.me/minibot/releases.json";
 const BOT_URL = "https://bot.liuyidi.me/";
@@ -127,12 +128,26 @@ async function copyCommand(key, text) {
   try {
     await navigator.clipboard.writeText(text);
     copiedKey.value = key;
+    track("cli_copy", { which: key });
     window.setTimeout(() => {
       if (copiedKey.value === key) copiedKey.value = "";
     }, 1600);
   } catch {
     /* ignore */
   }
+}
+
+function selectPlatform(id) {
+  activePlatform.value = id;
+  track("platform_tab", { platform: id });
+}
+
+function trackDownload(platform, url, variant) {
+  track("download_click", {
+    platform,
+    url,
+    ...(variant ? { variant } : {}),
+  });
 }
 
 function onLocaleChange(event) {
@@ -338,7 +353,12 @@ onMounted(() => {
           <h1>{{ t("title") }}</h1>
           <p class="lede">{{ t("subtitle") }}</p>
           <div class="cta">
-            <a class="btn primary" :href="BOT_URL">{{ t("primary") }}</a>
+            <a
+              class="btn primary"
+              :href="BOT_URL"
+              @click="track('cta_click', { name: 'open_agent', place: 'download_hero' })"
+              >{{ t("primary") }}</a
+            >
           </div>
           <ul class="benefits">
             <li>{{ t("benefitNoInstall") }}</li>
@@ -382,7 +402,7 @@ onMounted(() => {
             :class="{ active: activePlatform === p.id }"
             :aria-selected="activePlatform === p.id"
             :aria-label="p.label"
-            @click="activePlatform = p.id"
+            @click="selectPlatform(p.id)"
           >
             <svg
               v-if="p.icon === 'ios'"
@@ -429,9 +449,20 @@ onMounted(() => {
               <li>{{ panelFooter }}</li>
             </ul>
             <div class="actions">
-              <a v-if="primaryUrl" class="btn download" :href="primaryUrl">{{ primaryLabel }}</a>
+              <a
+                v-if="primaryUrl"
+                class="btn download"
+                :href="primaryUrl"
+                @click="trackDownload(activePlatform, primaryUrl)"
+                >{{ primaryLabel }}</a
+              >
               <span v-else class="btn soon">{{ t("platformStatusSoon") }}</span>
-              <a v-if="alternate" class="alt" :href="alternate.url">
+              <a
+                v-if="alternate"
+                class="alt"
+                :href="alternate.url"
+                @click="trackDownload(activePlatform, alternate.url, 'alternate')"
+              >
                 {{ t("macosAlsoAvailable") }}{{ alternate.label }}
               </a>
             </div>
