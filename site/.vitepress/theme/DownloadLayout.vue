@@ -3,8 +3,13 @@ import { computed, onMounted, ref, watch } from "vue";
 import QRCode from "qrcode";
 import "./download.css";
 import { track } from "./umami.js";
+import {
+  EMPTY_MANIFEST,
+  mergeManifest,
+  RELEASE_MANIFEST_URL,
+} from "./releaseManifest.js";
+import { data as releaseData } from "./releases.data";
 
-const RELEASE_MANIFEST_URL = "https://downloads.liuyidi.me/minibot/releases.json";
 const BOT_URL = "https://bot.liuyidi.me/";
 const ICP = "浙ICP备2026062548号-1";
 
@@ -112,13 +117,7 @@ const qrDataUrl = ref(null);
 const copiedKey = ref("");
 const CLI_INSTALL = "npm i -g @liuyidi/minibot";
 const CLI_START = "minibot login && minibot chat";
-const manifest = ref({
-  android: { version: null, url: null },
-  ios: { version: null, url: null },
-  macos: { version: null, url: null, intelUrl: null },
-  windows: { version: null, url: null },
-  linux: { version: null, url: null },
-});
+const manifest = ref(mergeManifest(EMPTY_MANIFEST, releaseData?.manifest));
 
 function t(key) {
   return messages[locale.value]?.[key] ?? messages["zh-CN"][key] ?? key;
@@ -185,20 +184,14 @@ async function detectMacArch() {
   macArch.value = "arm";
 }
 
-async function loadManifest() {
+async function refreshManifest() {
   try {
     const response = await fetch(RELEASE_MANIFEST_URL);
     if (!response.ok) return;
     const payload = await response.json();
-    manifest.value = {
-      android: { ...manifest.value.android, ...payload.android },
-      ios: { ...manifest.value.ios, ...payload.ios },
-      macos: { ...manifest.value.macos, ...payload.macos },
-      windows: { ...manifest.value.windows, ...payload.windows },
-      linux: { ...manifest.value.linux, ...payload.linux },
-    };
+    manifest.value = mergeManifest(manifest.value, payload);
   } catch {
-    /* keep empty */
+    /* keep build-time snapshot */
   }
 }
 
@@ -327,7 +320,7 @@ onMounted(() => {
   }
   activePlatform.value = detectPreferredPlatform();
   void detectMacArch();
-  void loadManifest();
+  void refreshManifest();
 });
 </script>
 

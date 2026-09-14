@@ -228,6 +228,12 @@ const assetHasManifest = downloadJs.some((src) =>
 if (!assetHasManifest) {
   throw new Error("download page JS is missing the releases manifest URL");
 }
+const assetHasBuildTimeUrls = downloadJs.some((src) =>
+  /downloads\.liuyidi\.me\/minibot\/(android|macos|windows|linux)\//.test(src),
+);
+if (!assetHasBuildTimeUrls) {
+  throw new Error("download page JS is missing build-time release download URLs");
+}
 if (!downloadJs.some((src) => src.includes("macos-client-preview") && src.includes("app-chat"))) {
   throw new Error("download page JS is missing platform screenshots");
 }
