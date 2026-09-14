@@ -19,6 +19,18 @@ const portal = mustRead("index.html");
 if (!portal.includes("Minibot")) {
   throw new Error("portal is missing the Minibot brand");
 }
+if (
+  !portal.includes('src="https://cloud.umami.is/script.js"') ||
+  !portal.includes('data-website-id="dcc92778-4c55-4181-b006-d2085fdb1d20"') ||
+  !portal.includes("defer")
+) {
+  throw new Error("portal is missing deferred Umami analytics");
+}
+const umamiAt = portal.indexOf("cloud.umami.is/script.js");
+const bodyCloseAt = portal.lastIndexOf("</body>");
+if (umamiAt < 0 || bodyCloseAt < 0 || umamiAt > bodyCloseAt) {
+  throw new Error("Umami script should sit before </body>");
+}
 if (portal.includes("核心能力")) {
   throw new Error("portal HTML looks like the overview page");
 }

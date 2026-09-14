@@ -24,6 +24,15 @@ export default defineConfig({
   sitemap: {
     hostname: "https://liuyidi.me",
   },
+  transformHtml(code) {
+    if (code.includes("cloud.umami.is/script.js")) {
+      return code;
+    }
+    return code.replace(
+      "</body>",
+      '<script defer src="https://cloud.umami.is/script.js" data-website-id="dcc92778-4c55-4181-b006-d2085fdb1d20"></script>\n</body>',
+    );
+  },
   themeConfig: {
     siteTitle: "Minibot",
     nav: [
