@@ -5,6 +5,7 @@ import { FilePreviewPanel } from "@/components/thread/preview/FilePreviewPanel";
 import { useFilePreviewController } from "@/components/thread/preview/useFilePreviewController";
 import { PromptNavigator } from "@/components/thread/shell/PromptNavigator";
 import { SessionInfoPopover } from "@/components/thread/shell/SessionInfoPopover";
+import { ThreadEmptyHero } from "@/components/thread/shell/ThreadEmptyHero";
 import { ThreadComposer } from "@/components/thread/composer/ThreadComposer";
 import { useComposerModelOptions } from "@/components/thread/composer/composerModelOptions";
 import { ThreadHeader } from "@/components/thread/shell/ThreadHeader";
@@ -379,16 +380,8 @@ export function ThreadShell({
     </>
   );
 
-  const emptyState = loading ? (
-    <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-      {t("thread.loadingConversation")}
-    </div>
-  ) : (
-    <div className="flex w-full flex-col items-center text-center animate-in fade-in-0 slide-in-from-bottom-2 duration-500">
-      <h1 className="max-w-[30rem] text-balance text-[34px] font-normal leading-[1.08] tracking-normal text-foreground sm:text-[48px] sm:leading-tight">
-        {t(heroGreetingKey)}
-      </h1>
-    </div>
+  const emptyState = (
+    <ThreadEmptyHero loading={loading} greetingKey={heroGreetingKey} />
   );
   const sessionInfoAction = historyKey ? (
     <SessionInfoPopover sessionKey={historyKey} token={token} title={title} />
