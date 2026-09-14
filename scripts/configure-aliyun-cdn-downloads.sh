@@ -97,8 +97,44 @@ set_cfg '[{"functionName":"https_option","functionArgs":[{"argName":"http2","arg
 # Ignore query string for static assets caching (hashed paths).
 set_cfg '[{"functionName":"set_hashkey_args","functionArgs":[{"argName":"disable","argValue":"on"},{"argName":"keep_args","argValue":""}]}]' || true
 
-# CORS outbound (module scripts from bot.liuyidi.me).
-set_cfg '[{"functionName":"set_resp_header","functionArgs":[{"argName":"key","argValue":"Access-Control-Allow-Origin"},{"argName":"value","argValue":"*"},{"argName":"duplicate","argValue":"off"},{"argName":"header_operation_type","argValue":"add"}]}]' || true
+# CORS outbound for bot.liuyidi.me (module scripts) and liuyidi.me (download page fetch).
+# Prefer Access-Control-Allow-Origin: * — a fixed single origin breaks the apex site.
+# Replace any stale fixed-origin rule (delete + add) so we do not leave bot-only ACAO.
+cors_cfg_id="$(
+  aliyun "${profile[@]}" cdn DescribeCdnDomainConfigs \
+    --DomainName "$DOMAIN" \
+    --FunctionNames set_resp_header 2>/dev/null \
+  | python3 -c '
+import json, sys
+try:
+    data = json.load(sys.stdin)
+except Exception:
+    raise SystemExit(0)
+cfgs = (data.get("DomainConfigs") or {}).get("DomainConfig") or []
+if isinstance(cfgs, dict):
+    cfgs = [cfgs]
+for cfg in cfgs:
+    args = ((cfg.get("FunctionArgs") or {}).get("FunctionArg")) or []
+    if isinstance(args, dict):
+        args = [args]
+    kv = {a.get("ArgName"): a.get("ArgValue") for a in args if isinstance(a, dict)}
+    if kv.get("key") == "Access-Control-Allow-Origin":
+        print(cfg.get("ConfigId") or "")
+        raise SystemExit(0)
+' || true
+)"
+
+if [[ -n "${cors_cfg_id}" ]]; then
+  echo "Removing stale Access-Control-Allow-Origin rule ConfigId=${cors_cfg_id}"
+  aliyun "${profile[@]}" cdn DeleteSpecificConfig \
+    --DomainName "$DOMAIN" \
+    --ConfigId "$cors_cfg_id" \
+    && echo "  OK: deleted ConfigId=${cors_cfg_id}" \
+    || echo "  WARN: delete ConfigId=${cors_cfg_id} failed" >&2
+fi
+
+echo "Adding Access-Control-Allow-Origin: * (with origin control)"
+set_cfg '[{"functionName":"set_resp_header","functionArgs":[{"argName":"key","argValue":"Access-Control-Allow-Origin"},{"argName":"value","argValue":"*"},{"argName":"duplicate","argValue":"off"},{"argName":"header_operation_type","argValue":"add"},{"argName":"access_origin_control","argValue":"on"}]}]' || true
 
 echo
 echo "Next:"
@@ -106,4 +142,5 @@ echo "  1) Bind HTTPS cert for $DOMAIN in CDN console if not already."
 echo "  2) DNS: CNAME downloads → <Cname from above>  (replace *.taihangcda.cn)"
 echo "  3) Disable CDN 智能压缩 in console (pre-gzipped objects)."
 echo "  4) REQUIRE_CDN_HIT=1 REQUIRE_HTTP2=1 scripts/verify-downloads-cdn.sh"
+echo "  5) CORS check: Origin https://liuyidi.me → Access-Control-Allow-Origin: *"
 echo "Docs: docs/downloads-cdn.md"

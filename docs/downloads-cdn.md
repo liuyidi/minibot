@@ -24,7 +24,7 @@ OSS **不支持** HTTP/2；要 HTTP/2/3 必须走 CDN。
 | 缓存 | 带 hash / `immutable` 的 `/minibot/webui/**` 长缓存；二次请求 `X-Cache: HIT` |
 | 协议 | HTTPS + **HTTP/2**（可选 HTTP/3） |
 | 压缩 | **保持** 对象上已有的 `Content-Encoding: gzip`（Publish WebUI 预压缩）；CDN **关闭智能压缩**，避免二次压缩 |
-| CORS | 允许 `bot.liuyidi.me` 拉 module script（已在 OSS CORS；CDN 出站头建议再配一遍） |
+| CORS | `Access-Control-Allow-Origin: *`（OSS 已是 `*`；CDN 出站头也必须是 `*` 或同时覆盖 `bot` + apex）。**不要**写成固定的 `https://bot.liuyidi.me`，否则 `liuyidi.me` 下载页 fetch `releases.json` 会被浏览器拦 CORS |
 
 ## 推荐操作（控制台，约 10 分钟）
 
@@ -71,7 +71,8 @@ OSS **不支持** HTTP/2；要 HTTP/2/3 必须走 CDN。
    - 目录 `/minibot/webui/` → 缓存时间 **30 天+**（或遵循源站 `Cache-Control`）
    - 建议「遵循源站」：对象已是 `public,max-age=31536000,immutable`
 6. **出站响应头**（CORS，可选但建议）：
-   - `Access-Control-Allow-Origin: *`（或精确 `https://bot.liuyidi.me`）
+   - `Access-Control-Allow-Origin: *`（消费者含 `bot.liuyidi.me` 与 `liuyidi.me`；勿只写 bot）
+   - 建议开启「跨域验证」：值 `*` 时固定回 `*`
    - `Access-Control-Allow-Methods: GET, HEAD`
    - `Access-Control-Expose-Headers: ETag, Content-Length, Content-Encoding`
 7. **Range 回源**：大安装包可开；WebUI 小文件可开可关

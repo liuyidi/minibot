@@ -39,3 +39,26 @@ jobs:
           chmod +x scripts/verify-downloads-cdn.sh
           REQUIRE_CDN_HIT=0 REQUIRE_HTTP2=0 scripts/verify-downloads-cdn.sh || true
           echo "If FAIL/WARN: update DNS CNAME per docs/downloads-cdn.md, wait for propagation, re-run verify."
+          echo
+          echo "CORS probe (liuyidi.me must not receive bot-only ACAO):"
+          fail=0
+          for origin in https://liuyidi.me https://bot.liuyidi.me; do
+            acao="$(
+              curl -fsS --noproxy '*' -D - -o /dev/null \
+                -H "Origin: ${origin}" \
+                https://downloads.liuyidi.me/minibot/releases.json \
+              | tr -d '\r' \
+              | awk -F': ' 'tolower($1)=="access-control-allow-origin"{print $2; exit}'
+            )"
+            echo "  Origin ${origin} → ${acao:-<missing>}"
+            if [[ -z "$acao" ]]; then
+              echo "  FAIL: missing Access-Control-Allow-Origin" >&2
+              fail=1
+              continue
+            fi
+            if [[ "$origin" == "https://liuyidi.me" && "$acao" == "https://bot.liuyidi.me" ]]; then
+              echo "  FAIL: apex Origin still gets bot-only ACAO" >&2
+              fail=1
+            fi
+          done
+          exit "$fail"
