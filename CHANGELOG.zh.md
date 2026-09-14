@@ -12,6 +12,12 @@ English: [CHANGELOG.md](./CHANGELOG.md)
 <!-- #region site-changelog -->
 ## [Unreleased]
 
+## [1.0.30] - 2026-09-14
+
+### 新增
+
+- WebUI 空状态欢迎标题增加 CursorBlend（difference 反色光标）交互效果。
+
 ## [1.0.29] - 2026-09-09
 
 ### 变更

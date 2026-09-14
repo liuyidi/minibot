@@ -11,6 +11,12 @@ Versions follow SemVer for product narrative. Package metadata may lag until a f
 
 ## [Unreleased]
 
+## [1.0.30] - 2026-09-14
+
+### Added
+
+- WebUI empty-state hero uses a CursorBlend difference-mode cursor highlight on the greeting title.
+
 ## [1.0.29] - 2026-09-09
 
 ### Changed
