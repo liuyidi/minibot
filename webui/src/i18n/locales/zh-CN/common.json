@@ -194,7 +194,7 @@
         "platform-deepseek-v4-flash": "面向日常对话与轻量编码的快速 DeepSeek 模型。",
         "platform-deepseek-v4-pro": "面向复杂推理与编码任务的更强 DeepSeek 模型。",
         "platform-qwen3.7-plus": "均衡的通义千问 Plus，适合多语言对话与 Agent。",
-        "platform-glm-5.2": "通用推理与中文工作流友好的 GLM 模型。",
+        "platform-glm-5.3": "通用推理与中文工作流友好的 GLM 模型。",
         "platform-kimi-k2.7-code": "面向仓库级改动的 Kimi 编程模型。",
         "platform-minimax-m3": "高吞吐 OpenAI 兼容调用的 MiniMax M3。"
       }

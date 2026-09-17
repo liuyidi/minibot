@@ -88,10 +88,10 @@ PLATFORM_MODELS: tuple[PlatformModel, ...] = (
         brand="qwen",
     ),
     PlatformModel(
-        id="platform-glm-5.2",
-        label="GLM 5.2",
+        id="platform-glm-5.3",
+        label="GLM 5.3",
         slot="glm",
-        default_model="glm-5.2",
+        default_model="glm-5.3",
         default_api_base="",
         brand="glm",
     ),

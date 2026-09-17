@@ -425,7 +425,7 @@ function platformModelFallbackDescription(id: string, label: string): string {
       return "Stronger DeepSeek model for harder reasoning and coding tasks.";
     case "platform-qwen3.7-plus":
       return "Qwen Plus for balanced multilingual chat and agent work.";
-    case "platform-glm-5.2":
+    case "platform-glm-5.3":
       return "GLM for general reasoning and Chinese-centric workflows.";
     case "platform-kimi-k2.7-code":
       return "Kimi coding model tuned for repository-scale edits.";

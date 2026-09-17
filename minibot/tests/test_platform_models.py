@@ -58,7 +58,7 @@ def test_platform_models_load_from_slot_env(monkeypatch: pytest.MonkeyPatch) -> 
     assert rows["platform-deepseek-v4-flash"]["model"] == "deepseek-v4-flash"
     assert rows["platform-qwen3.7-plus"]["available"] is True
     assert rows["platform-qwen3.7-plus"]["api_base"] == "https://qwen.example/v1"
-    assert rows["platform-glm-5.2"]["available"] is False
+    assert rows["platform-glm-5.3"]["available"] is False
     assert rows["platform-doubao-seed-2.0-lite"]["backend"] == "anthropic"
     assert rows["platform-doubao-seed-2.0-lite"]["available"] is False
 

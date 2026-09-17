@@ -453,7 +453,7 @@
         "platform-deepseek-v4-flash": "Fast DeepSeek model for everyday chat and light coding.",
         "platform-deepseek-v4-pro": "Stronger DeepSeek model for harder reasoning and coding tasks.",
         "platform-qwen3.7-plus": "Qwen Plus for balanced multilingual chat and agent work.",
-        "platform-glm-5.2": "GLM for general reasoning and Chinese-centric workflows.",
+        "platform-glm-5.3": "GLM for general reasoning and Chinese-centric workflows.",
         "platform-kimi-k2.7-code": "Kimi coding model tuned for repository-scale edits.",
         "platform-minimax-m3": "MiniMax M3 for high-throughput OpenAI-compatible calls."
       }
