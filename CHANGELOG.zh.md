@@ -12,6 +12,12 @@ English: [CHANGELOG.md](./CHANGELOG.md)
 <!-- #region site-changelog -->
 ## [Unreleased]
 
+## [1.0.32] - 2026-09-17
+
+### 变更
+
+- 平台内置 GLM 模型槽位由 `glm-5.2` 升级为 `glm-5.3`。
+
 ## [1.0.31] - 2026-09-14
 
 ### 新增

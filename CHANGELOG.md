@@ -11,6 +11,12 @@ Versions follow SemVer for product narrative. Package metadata may lag until a f
 
 ## [Unreleased]
 
+## [1.0.32] - 2026-09-17
+
+### Changed
+
+- Platform GLM model slot bumped from `glm-5.2` to `glm-5.3`.
+
 ## [1.0.31] - 2026-09-14
 
 ### Added
