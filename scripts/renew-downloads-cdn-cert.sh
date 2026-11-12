@@ -73,21 +73,35 @@ mkdir -p "$WORKDIR/hooks" "$WORKDIR/config" "$WORKDIR/work" "$WORKDIR/logs"
 HOOK_AUTH="$WORKDIR/hooks/auth.sh"
 HOOK_CLEAN="$WORKDIR/hooks/cleanup.sh"
 
+# ossutil ignores env AK/SK unless flags or ~/.ossutilconfig are set.
+cat >"${HOME}/.ossutilconfig" <<EOF
+[Credentials]
+language=EN
+endpoint=${ENDPOINT#https://}
+accessKeyID=${AK}
+accessKeySecret=${SK}
+EOF
+chmod 600 "${HOME}/.ossutilconfig"
+
 cat >"$HOOK_AUTH" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 : "${CERTBOT_TOKEN:?}" "${CERTBOT_VALIDATION:?}"
 : "${OSS_BUCKET:?}" "${OSS_ENDPOINT:?}" "${CDN_DOMAIN:?}"
+: "${OSS_ACCESS_KEY_ID:?}" "${OSS_ACCESS_KEY_SECRET:?}"
 
 obj=".well-known/acme-challenge/${CERTBOT_TOKEN}"
 body_file="$(mktemp)"
 printf '%s' "$CERTBOT_VALIDATION" >"$body_file"
 
-ossutil -e "$OSS_ENDPOINT" cp "$body_file" "oss://${OSS_BUCKET}/${obj}" \
+auth=(--access-key-id "$OSS_ACCESS_KEY_ID" --access-key-secret "$OSS_ACCESS_KEY_SECRET")
+ossutil cp "$body_file" "oss://${OSS_BUCKET}/${obj}" \
   -f --acl public-read \
-  --meta "Cache-Control:no-cache,max-age=0"
+  --endpoint "$OSS_ENDPOINT" \
+  --meta "Cache-Control:no-cache,max-age=0" \
+  "${auth[@]}"
 
-# Best-effort CDN purge so a prior 404 is not sticky.
+# Best-effort CDN purge so a prior 403/404 is not sticky.
 if command -v aliyun >/dev/null 2>&1; then
   aliyun --profile minibot-cdn cdn RefreshObjectCaches \
     --ObjectPath "http://${CDN_DOMAIN}/${obj}" \
@@ -96,17 +110,20 @@ fi
 
 url="http://${CDN_DOMAIN}/${obj}"
 ok=0
-for i in $(seq 1 30); do
-  got="$(curl -fsS --noproxy '*' --max-time 10 "$url" 2>/dev/null || true)"
-  if [[ "$got" == "$CERTBOT_VALIDATION" ]]; then
+for i in $(seq 1 45); do
+  code="$(curl -sS --noproxy '*' --max-time 10 -o /tmp/acme-chal.out -w '%{http_code}' "$url" 2>/dev/null || echo 000)"
+  got="$(cat /tmp/acme-chal.out 2>/dev/null || true)"
+  if [[ "$code" == "200" && "$got" == "$CERTBOT_VALIDATION" ]]; then
     ok=1
     break
   fi
+  echo "waiting for challenge ($i): http=$code"
   sleep 2
 done
 rm -f "$body_file"
 if [[ "$ok" != 1 ]]; then
   echo "ACME challenge not reachable at $url" >&2
+  curl -sS --noproxy '*' -D - -o - "$url" | head -40 >&2 || true
   exit 1
 fi
 echo "Challenge OK: $url"
@@ -117,13 +134,18 @@ cat >"$HOOK_CLEAN" <<'EOF'
 set -euo pipefail
 : "${CERTBOT_TOKEN:?}"
 : "${OSS_BUCKET:?}" "${OSS_ENDPOINT:?}"
+: "${OSS_ACCESS_KEY_ID:?}" "${OSS_ACCESS_KEY_SECRET:?}"
 obj=".well-known/acme-challenge/${CERTBOT_TOKEN}"
-ossutil -e "$OSS_ENDPOINT" rm "oss://${OSS_BUCKET}/${obj}" -f >/dev/null 2>&1 || true
+ossutil rm "oss://${OSS_BUCKET}/${obj}" -f \
+  --endpoint "$OSS_ENDPOINT" \
+  --access-key-id "$OSS_ACCESS_KEY_ID" \
+  --access-key-secret "$OSS_ACCESS_KEY_SECRET" >/dev/null 2>&1 || true
 EOF
 
 chmod +x "$HOOK_AUTH" "$HOOK_CLEAN"
 
 export OSS_BUCKET OSS_ENDPOINT CDN_DOMAIN="$DOMAIN"
+export OSS_ACCESS_KEY_ID="$AK" OSS_ACCESS_KEY_SECRET="$SK"
 
 echo "Issuing Let's Encrypt certificate for $DOMAIN …"
 certbot certonly \
