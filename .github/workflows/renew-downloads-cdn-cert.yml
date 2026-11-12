@@ -1,0 +1,52 @@
+name: Renew Downloads CDN Cert
+
+# Issue Let's Encrypt for downloads.liuyidi.me (HTTP-01 via OSS) and upload to CDN.
+# Trigger: Actions → Run workflow
+# Needs: OSS_ACCESS_KEY_* with oss:PutObject + cdn:SetCdnDomainSSLCertificate (+ optional RefreshObjectCaches)
+
+on:
+  workflow_dispatch:
+    inputs:
+      email:
+        description: Let's Encrypt subscriber email
+        required: false
+        default: ""
+  schedule:
+    # ~30 days before a typical 90-day LE cert would expire if last run was mid-cycle.
+    # Safe no-op if someone renews manually more often (LE rate limits still apply).
+    - cron: "17 3 1 */2 *"
+
+concurrency:
+  group: renew-downloads-cdn-cert
+  cancel-in-progress: false
+
+jobs:
+  renew:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    env:
+      OSS_ACCESS_KEY_ID: ${{ secrets.OSS_ACCESS_KEY_ID }}
+      OSS_ACCESS_KEY_SECRET: ${{ secrets.OSS_ACCESS_KEY_SECRET }}
+      OSS_BUCKET: ${{ vars.OSS_BUCKET }}
+      OSS_ENDPOINT: ${{ vars.OSS_ENDPOINT }}
+      CDN_DOMAIN: downloads.liuyidi.me
+      LE_EMAIL: ${{ github.event.inputs.email || vars.LE_EMAIL || 'certs@liuyidi.me' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Renew + deploy CDN certificate
+        run: |
+          chmod +x scripts/renew-downloads-cdn-cert.sh
+          scripts/renew-downloads-cdn-cert.sh
+
+      - name: Probe HTTPS (must verify)
+        run: |
+          set -euo pipefail
+          curl -fsS --noproxy '*' -o /dev/null -w "https %{http_code} proto=%{http_version}\n" \
+            "https://${CDN_DOMAIN}/minibot/releases.json"
+          echo | openssl s_client -connect "${CDN_DOMAIN}:443" -servername "$CDN_DOMAIN" 2>/dev/null \
+            | openssl x509 -noout -dates -subject
