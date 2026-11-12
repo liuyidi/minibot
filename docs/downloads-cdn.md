@@ -65,7 +65,7 @@ OSS **不支持** HTTP/2；要 HTTP/2/3 必须走 CDN。
 
 1. **HTTPS**：上传/选用已有证书（与 `downloads.liuyidi.me` 匹配）；开启强制 HTTPS  
    - 阿里云 CDN「免费证书」**不会自动续期**；过期会出现浏览器 `ERR_CERT_DATE_INVALID`。  
-   - 续期：Actions → **Renew Downloads CDN Cert**（`scripts/renew-downloads-cdn-cert.sh`：Let's Encrypt HTTP-01 → OSS → `SetCdnDomainSSLCertificate`）。可选仓库变量 `LE_EMAIL`。  
+   - 续期：Actions → **Renew Downloads CDN Cert**（`scripts/renew-downloads-cdn-cert.sh`：Let's Encrypt **DNS-01** via 阿里云解析 → `SetCdnDomainSSLCertificate`）。RAM 需 `alidns:*`（至少增删 TXT）+ `cdn:SetCdnDomainSSLCertificate`。可选仓库变量 `LE_EMAIL`。  
 2. **HTTP/2**：开启  
 3. **HTTP/3（QUIC）**：可选开启  
 4. **智能压缩**：关闭（我们已预 gzip 上传）  

@@ -1,20 +1,23 @@
 #!/usr/bin/env bash
-# Issue a Let's Encrypt cert for downloads.liuyidi.me (HTTP-01 via OSS) and
-# deploy it to Aliyun CDN with SetCdnDomainSSLCertificate.
+# Issue a Let's Encrypt cert for downloads.liuyidi.me (DNS-01 via Aliyun DNS)
+# and deploy it to Aliyun CDN with SetCdnDomainSSLCertificate.
+#
+# HTTP-01 via OSS is unreliable: LE validators outside CN often time out on
+# Aliyun CDN edges even when the challenge object is public.
 #
 # Requires:
 #   OSS_ACCESS_KEY_ID / OSS_ACCESS_KEY_SECRET  (or ALIBABA_CLOUD_*)
-#   OSS_BUCKET, OSS_ENDPOINT (optional; defaults match publish scripts)
+#     with alidns:AddDomainRecord / DeleteDomainRecord + cdn:SetCdnDomainSSLCertificate
 #   LE_EMAIL (subscriber email for Let's Encrypt)
 #
 # Optional:
 #   CDN_DOMAIN (default downloads.liuyidi.me)
+#   DNS_ROOT_DOMAIN (default liuyidi.me)
 #   CERTBOT_WORKDIR (default mktemp)
 set -euo pipefail
 
 DOMAIN="${CDN_DOMAIN:-downloads.liuyidi.me}"
-BUCKET="${OSS_BUCKET:-liuyidi}"
-ENDPOINT="${OSS_ENDPOINT:-https://oss-cn-hangzhou.aliyuncs.com}"
+ROOT_DOMAIN="${DNS_ROOT_DOMAIN:-liuyidi.me}"
 REGION="${CDN_REGION:-cn-hangzhou}"
 LE_EMAIL="${LE_EMAIL:-}"
 WORKDIR="${CERTBOT_WORKDIR:-}"
@@ -30,19 +33,13 @@ if [[ -z "$LE_EMAIL" ]]; then
   exit 2
 fi
 
-export OSS_ACCESS_KEY_ID="$AK"
-export OSS_ACCESS_KEY_SECRET="$SK"
+if [[ "$DOMAIN" != *".$ROOT_DOMAIN" && "$DOMAIN" != "$ROOT_DOMAIN" ]]; then
+  echo "CDN_DOMAIN=$DOMAIN is not under DNS_ROOT_DOMAIN=$ROOT_DOMAIN" >&2
+  exit 2
+fi
+
 export ALIYUN_ACCESS_KEY_ID="$AK"
 export ALIYUN_ACCESS_KEY_SECRET="$SK"
-
-if ! command -v ossutil >/dev/null 2>&1; then
-  echo "Installing ossutil…"
-  tmp="$(mktemp -d)"
-  curl -fsSL -o "$tmp/ossutil.zip" \
-    "https://gosspublic.alicdn.com/ossutil/1.7.19/ossutil-v1.7.19-linux-amd64.zip"
-  unzip -qo "$tmp/ossutil.zip" -d "$tmp"
-  sudo install -m 755 "$tmp"/ossutil-*/ossutil /usr/local/bin/ossutil
-fi
 
 if ! command -v aliyun >/dev/null 2>&1; then
   echo "Installing aliyun CLI…"
@@ -53,10 +50,13 @@ if ! command -v aliyun >/dev/null 2>&1; then
   sudo install -m 755 "$tmp/aliyun" /usr/local/bin/aliyun
 fi
 
-if ! command -v certbot >/dev/null 2>&1; then
-  echo "Installing certbot…"
+need_apt=()
+command -v certbot >/dev/null 2>&1 || need_apt+=(certbot)
+command -v dig >/dev/null 2>&1 || need_apt+=(dnsutils)
+if ((${#need_apt[@]})); then
+  echo "Installing ${need_apt[*]}…"
   sudo apt-get update -qq
-  sudo apt-get install -y -qq certbot
+  sudo apt-get install -y -qq "${need_apt[@]}"
 fi
 
 aliyun configure set --profile minibot-cdn \
@@ -69,91 +69,113 @@ profile=(--profile minibot-cdn)
 if [[ -z "$WORKDIR" ]]; then
   WORKDIR="$(mktemp -d)"
 fi
-mkdir -p "$WORKDIR/hooks" "$WORKDIR/config" "$WORKDIR/work" "$WORKDIR/logs"
+mkdir -p "$WORKDIR/hooks" "$WORKDIR/config" "$WORKDIR/work" "$WORKDIR/logs" "$WORKDIR/state"
 HOOK_AUTH="$WORKDIR/hooks/auth.sh"
 HOOK_CLEAN="$WORKDIR/hooks/cleanup.sh"
+STATE_DIR="$WORKDIR/state"
 
-# ossutil ignores env AK/SK unless flags or ~/.ossutilconfig are set.
-cat >"${HOME}/.ossutilconfig" <<EOF
-[Credentials]
-language=EN
-endpoint=${ENDPOINT#https://}
-accessKeyID=${AK}
-accessKeySecret=${SK}
-EOF
-chmod 600 "${HOME}/.ossutilconfig"
-
-cat >"$HOOK_AUTH" <<'EOF'
-#!/usr/bin/env bash
-set -euo pipefail
-: "${CERTBOT_TOKEN:?}" "${CERTBOT_VALIDATION:?}"
-: "${OSS_BUCKET:?}" "${OSS_ENDPOINT:?}" "${CDN_DOMAIN:?}"
-: "${OSS_ACCESS_KEY_ID:?}" "${OSS_ACCESS_KEY_SECRET:?}"
-
-obj=".well-known/acme-challenge/${CERTBOT_TOKEN}"
-body_file="$(mktemp)"
-printf '%s' "$CERTBOT_VALIDATION" >"$body_file"
-
-auth=(--access-key-id "$OSS_ACCESS_KEY_ID" --access-key-secret "$OSS_ACCESS_KEY_SECRET")
-ossutil cp "$body_file" "oss://${OSS_BUCKET}/${obj}" \
-  -f --acl public-read \
-  --endpoint "$OSS_ENDPOINT" \
-  --meta "Cache-Control:no-cache,max-age=0" \
-  "${auth[@]}"
-
-# Best-effort CDN purge so a prior 403/404 is not sticky.
-if command -v aliyun >/dev/null 2>&1; then
-  aliyun --profile minibot-cdn cdn RefreshObjectCaches \
-    --ObjectPath "http://${CDN_DOMAIN}/${obj}" \
-    --ObjectType File >/dev/null 2>&1 || true
+# Relative host under ROOT_DOMAIN, e.g. downloads.liuyidi.me → downloads
+relative="${DOMAIN%"$ROOT_DOMAIN"}"
+relative="${relative%.}"
+if [[ -z "$relative" ]]; then
+  ACME_RR="_acme-challenge"
+else
+  ACME_RR="_acme-challenge.${relative}"
 fi
 
-url="http://${CDN_DOMAIN}/${obj}"
+cat >"$HOOK_AUTH" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+: "\${CERTBOT_VALIDATION:?}"
+ROOT_DOMAIN=$(printf '%q' "$ROOT_DOMAIN")
+ACME_RR=$(printf '%q' "$ACME_RR")
+STATE_DIR=$(printf '%q' "$STATE_DIR")
+profile=(--profile minibot-cdn)
+
+# Remove stale challenge records for this RR.
+old_ids="\$(
+  aliyun "\${profile[@]}" alidns DescribeDomainRecords \
+    --DomainName "\$ROOT_DOMAIN" \
+    --RRKeyWord "\$ACME_RR" \
+    --Type TXT \
+  | python3 -c '
+import json,sys
+j=json.load(sys.stdin)
+recs=(j.get("DomainRecords") or {}).get("Record") or []
+if isinstance(recs, dict):
+  recs=[recs]
+rr=sys.argv[1]
+for r in recs:
+  if r.get("RR")==rr and r.get("Type")=="TXT":
+    print(r.get("RecordId") or "")
+' "\$ACME_RR" 2>/dev/null || true
+)"
+for id in \$old_ids; do
+  [[ -n "\$id" ]] || continue
+  aliyun "\${profile[@]}" alidns DeleteDomainRecord --RecordId "\$id" >/dev/null || true
+done
+
+resp="\$(
+  aliyun "\${profile[@]}" alidns AddDomainRecord \
+    --DomainName "\$ROOT_DOMAIN" \
+    --RR "\$ACME_RR" \
+    --Type TXT \
+    --Value "\$CERTBOT_VALIDATION" \
+    --TTL 600
+)"
+record_id="\$(printf '%s' "\$resp" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("RecordId") or "")')"
+if [[ -z "\$record_id" ]]; then
+  echo "Failed to create TXT record: \$resp" >&2
+  exit 1
+fi
+printf '%s' "\$record_id" >"\$STATE_DIR/record_id"
+echo "Created TXT \${ACME_RR}.\${ROOT_DOMAIN} RecordId=\$record_id"
+
+fqdn="\${ACME_RR}.\${ROOT_DOMAIN}"
 ok=0
-for i in $(seq 1 45); do
-  code="$(curl -sS --noproxy '*' --max-time 10 -o /tmp/acme-chal.out -w '%{http_code}' "$url" 2>/dev/null || echo 000)"
-  got="$(cat /tmp/acme-chal.out 2>/dev/null || true)"
-  if [[ "$code" == "200" && "$got" == "$CERTBOT_VALIDATION" ]]; then
+for i in \$(seq 1 60); do
+  got="\$(dig +short TXT "\$fqdn" @8.8.8.8 2>/dev/null | tr -d '"' | head -1 || true)"
+  if [[ "\$got" == "\$CERTBOT_VALIDATION" ]]; then
     ok=1
     break
   fi
-  echo "waiting for challenge ($i): http=$code"
-  sleep 2
+  echo "waiting for DNS TXT (\$i): got=\${got:-<empty>}"
+  sleep 5
 done
-rm -f "$body_file"
-if [[ "$ok" != 1 ]]; then
-  echo "ACME challenge not reachable at $url" >&2
-  curl -sS --noproxy '*' -D - -o - "$url" | head -40 >&2 || true
+if [[ "\$ok" != 1 ]]; then
+  echo "DNS TXT not visible at \$fqdn via 8.8.8.8" >&2
+  dig +short TXT "\$fqdn" @223.5.5.5 || true
   exit 1
 fi
-echo "Challenge OK: $url"
+echo "DNS challenge OK: \$fqdn"
+# Extra settle time for LE multi-perspective checks.
+sleep 15
 EOF
 
-cat >"$HOOK_CLEAN" <<'EOF'
+cat >"$HOOK_CLEAN" <<EOF
 #!/usr/bin/env bash
 set -euo pipefail
-: "${CERTBOT_TOKEN:?}"
-: "${OSS_BUCKET:?}" "${OSS_ENDPOINT:?}"
-: "${OSS_ACCESS_KEY_ID:?}" "${OSS_ACCESS_KEY_SECRET:?}"
-obj=".well-known/acme-challenge/${CERTBOT_TOKEN}"
-ossutil rm "oss://${OSS_BUCKET}/${obj}" -f \
-  --endpoint "$OSS_ENDPOINT" \
-  --access-key-id "$OSS_ACCESS_KEY_ID" \
-  --access-key-secret "$OSS_ACCESS_KEY_SECRET" >/dev/null 2>&1 || true
+STATE_DIR=$(printf '%q' "$STATE_DIR")
+profile=(--profile minibot-cdn)
+if [[ -f "\$STATE_DIR/record_id" ]]; then
+  rid="\$(cat "\$STATE_DIR/record_id")"
+  if [[ -n "\$rid" ]]; then
+    aliyun "\${profile[@]}" alidns DeleteDomainRecord --RecordId "\$rid" >/dev/null || true
+    echo "Deleted TXT RecordId=\$rid"
+  fi
+  rm -f "\$STATE_DIR/record_id"
+fi
 EOF
 
 chmod +x "$HOOK_AUTH" "$HOOK_CLEAN"
 
-export OSS_BUCKET OSS_ENDPOINT CDN_DOMAIN="$DOMAIN"
-export OSS_ACCESS_KEY_ID="$AK" OSS_ACCESS_KEY_SECRET="$SK"
-
-echo "Issuing Let's Encrypt certificate for $DOMAIN …"
+echo "Issuing Let's Encrypt certificate for $DOMAIN (DNS-01, RR=$ACME_RR)…"
 certbot certonly \
   --non-interactive \
   --agree-tos \
   --email "$LE_EMAIL" \
   --manual \
-  --preferred-challenges http \
+  --preferred-challenges dns \
   --manual-auth-hook "$HOOK_AUTH" \
   --manual-cleanup-hook "$HOOK_CLEAN" \
   --config-dir "$WORKDIR/config" \

@@ -1,8 +1,8 @@
 name: Renew Downloads CDN Cert
 
-# Issue Let's Encrypt for downloads.liuyidi.me (HTTP-01 via OSS) and upload to CDN.
+# Issue Let's Encrypt for downloads.liuyidi.me (DNS-01 via Aliyun DNS) and upload to CDN.
 # Trigger: Actions → Run workflow
-# Needs: OSS_ACCESS_KEY_* with oss:PutObject + cdn:SetCdnDomainSSLCertificate (+ optional RefreshObjectCaches)
+# Needs: OSS_ACCESS_KEY_* (or CDN keys) with alidns TXT + cdn:SetCdnDomainSSLCertificate
 
 on:
   workflow_dispatch:
